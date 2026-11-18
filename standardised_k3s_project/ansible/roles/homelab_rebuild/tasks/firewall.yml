@@ -1,0 +1,29 @@
+---
+- name: "Firewall firewalld | Enable and start service"
+  ansible.builtin.systemd:
+    name: firewalld
+    enabled: true
+    state: started
+
+- name: "Firewall interfaces | Reconcile configured interface"
+  ansible.builtin.include_tasks: firewall_interface.yml
+  loop:
+    - "{{ homelab_lan_vlan_iface }}"
+    - "{{ homelab_dmz_iface }}"
+  loop_control:
+    loop_var: firewall_interface_target
+    label: "{{ firewall_interface_target }}"
+
+- name: "Firewall services | Reconcile configured service"
+  ansible.builtin.include_tasks: firewall_service.yml
+  loop: "{{ homelab_firewall_services }}"
+  loop_control:
+    loop_var: firewall_service_target
+    label: "{{ firewall_service_target }}"
+
+- name: "Firewall ports | Reconcile configured port"
+  ansible.builtin.include_tasks: firewall_port.yml
+  loop: "{{ homelab_firewall_ports }}"
+  loop_control:
+    loop_var: firewall_port_target
+    label: "{{ firewall_port_target }}"

@@ -1,0 +1,118 @@
+---
+- name: "Host Health | Gather service facts"
+  ansible.builtin.service_facts:
+
+- name: "Host Health services | Validate required service"
+  ansible.builtin.include_tasks: service.yml
+  loop:
+    - NetworkManager
+    - docker
+    - k3s
+  loop_control:
+    loop_var: host_health_service_target
+    label: "{{ host_health_service_target }}"
+
+- name: "Host Health | Read LAN interface state"
+  ansible.builtin.command:
+    argv:
+      - ip
+      - -brief
+      - address
+      - show
+      - dev
+      - "{{ homelab_lan_interface }}"
+  register: homelab_lan_interface_state
+  changed_when: false
+
+- name: "Host Health | Read DMZ interface state"
+  ansible.builtin.command:
+    argv:
+      - ip
+      - -brief
+      - address
+      - show
+      - dev
+      - "{{ homelab_dmz_interface }}"
+  register: homelab_dmz_interface_state
+  changed_when: false
+
+- name: "Host Health | Assert LAN address is configured"
+  ansible.builtin.assert:
+    that:
+      - homelab_lan_address in homelab_lan_interface_state.stdout
+    fail_msg: >-
+      {{ homelab_lan_address }} is not configured on
+      {{ homelab_lan_interface }}
+
+- name: "Host Health | Assert DMZ address is configured"
+  ansible.builtin.assert:
+    that:
+      - homelab_dmz_address in homelab_dmz_interface_state.stdout
+    fail_msg: >-
+      {{ homelab_dmz_address }} is not configured on
+      {{ homelab_dmz_interface }}
+
+- name: "Host Health | Check default route"
+  ansible.builtin.command:
+    argv:
+      - ip
+      - route
+      - show
+      - default
+  register: homelab_default_route
+  changed_when: false
+
+- name: "Host Health | Assert default route uses homelab gateway"
+  ansible.builtin.assert:
+    that:
+      - homelab_gateway in homelab_default_route.stdout
+    fail_msg: >-
+      Expected default gateway {{ homelab_gateway }} was not found.
+
+- name: "Host Health | Check gateway reachability"
+  ansible.builtin.command:
+    argv:
+      - ping
+      - -c
+      - "2"
+      - -W
+      - "2"
+      - "{{ homelab_gateway }}"
+  changed_when: false
+
+- name: "Host Health | Check Docker daemon"
+  ansible.builtin.command:
+    argv:
+      - docker
+      - info
+  changed_when: false
+  no_log: true
+
+- name: "Host Health | Query Kubernetes nodes"
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Node
+    kubeconfig: "{{ k3s_kubeconfig }}"
+  register: homelab_nodes
+  changed_when: false
+
+- name: "Host Health | Assert at least one Kubernetes node is Ready"
+  ansible.builtin.assert:
+    that:
+      - >-
+        homelab_nodes.resources
+        | map(attribute='status.conditions', default=[])
+        | map('selectattr', 'type', 'equalto', 'Ready')
+        | map('selectattr', 'status', 'equalto', 'True')
+        | map('list')
+        | select
+        | list
+        | length > 0
+    fail_msg: No Kubernetes node reports the Ready condition as True.
+
+- name: "Host Health | Report host network state"
+  ansible.builtin.debug:
+    msg:
+      - "LAN: {{ homelab_lan_interface_state.stdout }}"
+      - "DMZ: {{ homelab_dmz_interface_state.stdout }}"
+      - "Default route: {{ homelab_default_route.stdout }}"

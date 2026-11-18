@@ -1,0 +1,23 @@
+{
+  "sourceCommit": "734dca121dbf26cb0e5466ea7ab3bee42d8f6018",
+  "baseCommit": "520aca54ea4a49640f91ebe819983c89dc30e558",
+  "image": "127.0.0.1:5000/watoom-code@sha256:d6fc9fe21a9a51992dfc95d3dc00bee9b7f7fb857cdbc6b5caaba016fc72d5dd",
+  "bundle": "watoom-code-handoff-recovery-final-20261026.bundle",
+  "bundleSha256": "e84d26e4c2ae390deee995af2a42ca07d56e749adbc87a3927615712fd38f784",
+  "stageWorkerSkill": true,
+  "approval": "User requested fixing the missing Magpie session handoff on 2026-10-26",
+  "checks": {
+    "sessionRunnerTests": 216,
+    "postCompactionHandoffRecovery": "PASS",
+    "boundedRecoveryAcrossResume": "PASS",
+    "noToolReplay": "PASS",
+    "coreTypecheck": "PASS",
+    "repositoryLint": "PASS",
+    "canonicalCheck": "Blocked by pre-existing Turbo/Bun SIGSEGV",
+    "immutableBuild": "PASS",
+    "controllerCompatibility": "Accept supported model-ready or qwen-ready phase; preserve exact phase and generation, require no owner, uncertainty, worker jobs or inference leases",
+    "checkpointFallback": "Persisted, historically labelled, deduplicated native notice; no additional model or tool execution",
+    "sessionUITypecheck": "PASS"
+  },
+  "applicationOnly": true
+}

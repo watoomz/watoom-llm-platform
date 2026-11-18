@@ -1,0 +1,310 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "watoom-toolkit",
+        "namespace": "opencode",
+        "labels": {
+          "app": "watoom-toolkit",
+          "app.kubernetes.io/managed-by": "watoom-toolkit-installer"
+        }
+      },
+      "spec": {
+        "progressDeadlineSeconds": 600,
+        "replicas": 0,
+        "revisionHistoryLimit": 10,
+        "selector": {
+          "matchLabels": {
+            "app": "watoom-toolkit"
+          }
+        },
+        "strategy": {
+          "type": "Recreate"
+        },
+        "template": {
+          "metadata": {
+            "annotations": {
+              "kubectl.kubernetes.io/restartedAt": "2026-10-14T19:38:17+10:00"
+            },
+            "labels": {
+              "app": "watoom-toolkit",
+              "app.kubernetes.io/managed-by": "watoom-toolkit-installer"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": true,
+            "containers": [
+              {
+                "env": [
+                  {
+                    "name": "WATOOM_TOKEN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "key": "token",
+                        "name": "watoom-toolkit"
+                      }
+                    }
+                  },
+                  {
+                    "name": "WATOOM_STATE",
+                    "value": "/state"
+                  },
+                  {
+                    "name": "WATOOM_WORKSPACE",
+                    "value": "/workspace"
+                  },
+                  {
+                    "name": "WATOOM_WORKER_IMAGE",
+                    "value": "127.0.0.1:5000/watoom-toolkit@sha256:580aa8ba8bff3ac09781b9f0f9dc555cd429eb84d6d9c298223be15b79f55097"
+                  },
+                  {
+                    "name": "WATOOM_HOST_STATE",
+                    "value": "/data/ai/toolkit"
+                  },
+                  {
+                    "name": "WATOOM_HOST_WORKSPACE",
+                    "value": "/data/ai/projects"
+                  },
+                  {
+                    "name": "WATOOM_WORKER_NAMESPACE",
+                    "value": "opencode"
+                  },
+                  {
+                    "name": "WATOOM_3D_PUBLISH",
+                    "value": "/generated"
+                  },
+                  {
+                    "name": "WATOOM_3D_PUBLIC_REFERENCE",
+                    "value": "generated/watoom-toolkit-3d/v1"
+                  }
+                ],
+                "image": "127.0.0.1:5000/watoom-toolkit@sha256:580aa8ba8bff3ac09781b9f0f9dc555cd429eb84d6d9c298223be15b79f55097",
+                "imagePullPolicy": "IfNotPresent",
+                "livenessProbe": {
+                  "failureThreshold": 3,
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8879,
+                    "scheme": "HTTP"
+                  },
+                  "initialDelaySeconds": 10,
+                  "periodSeconds": 20,
+                  "successThreshold": 1,
+                  "timeoutSeconds": 1
+                },
+                "name": "toolkit",
+                "ports": [
+                  {
+                    "containerPort": 8879,
+                    "name": "http",
+                    "protocol": "TCP"
+                  }
+                ],
+                "readinessProbe": {
+                  "failureThreshold": 3,
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8879,
+                    "scheme": "HTTP"
+                  },
+                  "initialDelaySeconds": 3,
+                  "periodSeconds": 10,
+                  "successThreshold": 1,
+                  "timeoutSeconds": 1
+                },
+                "resources": {
+                  "limits": {
+                    "cpu": "2",
+                    "ephemeral-storage": "5Gi",
+                    "memory": "3Gi"
+                  },
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "256Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  },
+                  "seccompProfile": {
+                    "type": "RuntimeDefault"
+                  },
+                  "readOnlyRootFilesystem": true
+                },
+                "terminationMessagePath": "/dev/termination-log",
+                "terminationMessagePolicy": "File",
+                "volumeMounts": [
+                  {
+                    "mountPath": "/workspace",
+                    "name": "workspace"
+                  },
+                  {
+                    "mountPath": "/assets",
+                    "name": "assets",
+                    "readOnly": true
+                  },
+                  {
+                    "mountPath": "/unreal-engine",
+                    "name": "unreal",
+                    "readOnly": true
+                  },
+                  {
+                    "mountPath": "/state",
+                    "name": "state"
+                  },
+                  {
+                    "mountPath": "/tmp",
+                    "name": "tmp"
+                  },
+                  {
+                    "mountPath": "/home/toolkit",
+                    "name": "home"
+                  },
+                  {
+                    "name": "generated-3d",
+                    "mountPath": "/generated"
+                  }
+                ]
+              }
+            ],
+            "dnsPolicy": "ClusterFirst",
+            "restartPolicy": "Always",
+            "schedulerName": "default-scheduler",
+            "securityContext": {
+              "fsGroup": 1009,
+              "runAsGroup": 1009,
+              "runAsNonRoot": true,
+              "runAsUser": 1009
+            },
+            "serviceAccountName": "watoom-toolkit-controller",
+            "terminationGracePeriodSeconds": 30,
+            "volumes": [
+              {
+                "hostPath": {
+                  "path": "/data/ai/projects",
+                  "type": "Directory"
+                },
+                "name": "workspace"
+              },
+              {
+                "hostPath": {
+                  "path": "/data/ai/assets",
+                  "type": "Directory"
+                },
+                "name": "assets"
+              },
+              {
+                "hostPath": {
+                  "path": "/data/ai/assets/unreal-engine",
+                  "type": "Directory"
+                },
+                "name": "unreal"
+              },
+              {
+                "hostPath": {
+                  "path": "/data/ai/toolkit",
+                  "type": "Directory"
+                },
+                "name": "state"
+              },
+              {
+                "emptyDir": {
+                  "sizeLimit": "1Gi"
+                },
+                "name": "tmp"
+              },
+              {
+                "emptyDir": {
+                  "sizeLimit": "256Mi"
+                },
+                "name": "home"
+              },
+              {
+                "name": "generated-3d",
+                "hostPath": {
+                  "path": "/data/ai/assets/generated/watoom-toolkit-3d/v1",
+                  "type": "Directory"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "watoom-toolkit",
+        "namespace": "opencode",
+        "labels": {
+          "app": "watoom-toolkit",
+          "app.kubernetes.io/managed-by": "watoom-toolkit-installer"
+        }
+      },
+      "spec": {
+        "type": "ClusterIP",
+        "selector": {
+          "app": "watoom-toolkit"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8879,
+            "targetPort": 8879
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "watoom-toolkit",
+        "namespace": "opencode",
+        "labels": {
+          "app": "watoom-toolkit",
+          "app.kubernetes.io/managed-by": "watoom-toolkit-installer"
+        }
+      },
+      "spec": {
+        "podSelector": {
+          "matchLabels": {
+            "app": "watoom-toolkit"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ],
+        "ingress": [
+          {
+            "from": [
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app": "opencode-v2-canary",
+                    "app.kubernetes.io/name": "opencode-v2-canary"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "protocol": "TCP",
+                "port": 8879
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+---
+- name: Install approved native skills without restarting services
+  hosts: homelab
+  become: true
+  tasks:
+    - name: Reconcile maintained native skills only
+      ansible.builtin.include_role:
+        name: watoom-code
+        tasks_from: native-skills

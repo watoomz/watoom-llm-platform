@@ -1,0 +1,14 @@
+{
+  "schema": 3,
+  "target": "sims4",
+  "format": "blend",
+  "source_immutable": true,
+  "required_tools": [
+    "Sims4 Studio",
+    "s4animtools",
+    "TS4 Creator Tools"
+  ],
+  "game_deployable": false,
+  "maximum_weights": 4,
+  "uv_required": true
+}

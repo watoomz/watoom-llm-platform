@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Operations and change control · Agent Export</title><meta name="description" content="How changes are made — the IaC layout, the playbooks for routine work, validation tiers, Git discipline and how this documentation is published."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link active" aria-current="page" href="/guide/operations.html">Operations</a><div class="toc"><a class="toc-link" href="#operating-model">Operating model</a><a class="toc-link" href="#routine-playbooks">Routine playbooks</a><a class="toc-link" href="#validation-tiers">Validation tiers</a><a class="toc-link" href="#change-sequence">Change sequence</a><a class="toc-link" href="#git-discipline">Git discipline</a><a class="toc-link" href="#documentation">Documentation</a><a class="toc-link" href="#project-and-source-reference">Project and source reference</a><a class="toc-link" href="#environment-disaster-recovery">Environment disaster recovery</a><a class="toc-link" href="#tickets-to-do-list-with-discord-alerts">Tickets (to-do list with Discord alerts)</a></div><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">Operations</p><h1>Operations and change control</h1><p class="lede">How changes are made — the IaC layout, the playbooks for routine work, validation tiers, Git discipline and how this documentation is published.</p></header>
+<div class="content">
+<h2 id="operating-model">Operating model</h2>
+<p><strong>Git stores desired state. Ansible performs changes. The menu and IaC console are front ends.</strong></p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Location</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Operator checkout (serves Glance, runs host timers)</td>
+<td><code>/data/github/watoom-standardised-homelab/standardised_k3s_project</code></td>
+</tr>
+<tr>
+<td>Wrapper</td>
+<td><code>./ansible-run &lt;playbook&gt;</code> (inventory, vault and execution environment preset)</td>
+</tr>
+<tr>
+<td>Interactive menu</td>
+<td><code>scripts/watoom-menu.sh</code>, or <code>https://iac-console.internal.homelab.example/menu</code></td>
+</tr>
+<tr>
+<td>Inventory and registries</td>
+<td><code>ansible/inventories/homelab/group_vars/all.yml</code></td>
+</tr>
+<tr>
+<td>Roles / playbooks</td>
+<td><code>ansible/roles</code>, <code>ansible/playbooks</code></td>
+</tr>
+<tr>
+<td>Manifests</td>
+<td><code>manifests/00-namespaces</code> … <code>manifests/40-rbac</code></td>
+</tr>
+<tr>
+<td>Source config and render inputs</td>
+<td><code>config/</code></td>
+</tr>
+<tr>
+<td>Maintained helpers</td>
+<td><code>scripts/</code>, <code>tools/</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Before editing, check whether a file is authoritative or generated. Generated files (Glance ConfigMaps, guide HTML, Secret manifests) are rebuilt from their sources by a renderer.</p>
+<h2 id="routine-playbooks">Routine playbooks</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Health check</td>
+<td><code>./ansible-run playbooks/health.yml</code></td>
+</tr>
+<tr>
+<td>Production validation</td>
+<td><code>./ansible-run playbooks/validate.yml</code></td>
+</tr>
+<tr>
+<td>One Kubernetes app</td>
+<td><code>./ansible-run playbooks/kubernetes-app.yml -e kubernetes_app_name=radarr -e kubernetes_app_namespace=radarr -e kubernetes_app_action=restart</code></td>
+</tr>
+<tr>
+<td>One Docker stack</td>
+<td><code>./ansible-run playbooks/docker-stack.yml -e docker_stack_target=wireguard -e docker_action=restart</code></td>
+</tr>
+<tr>
+<td>One game server</td>
+<td><code>./ansible-run playbooks/game.yml -e game_name=valheim -e game_action=start</code></td>
+</tr>
+<tr>
+<td>Secrets</td>
+<td><code>./ansible-run playbooks/secrets.yml</code>, then <code>playbooks/kubernetes-secrets.yml</code></td>
+</tr>
+<tr>
+<td>Image drift</td>
+<td><code>./ansible-run playbooks/image-audit.yml -e image_audit_action=check</code></td>
+</tr>
+<tr>
+<td>Broad reconcile</td>
+<td><code>./ansible-run playbooks/site.yml</code> (not a host installer)</td>
+</tr>
+</tbody>
+</table></div>
+<p>App actions: <code>status</code>, <code>start</code>, <code>stop</code>, <code>restart</code>, <code>reconcile</code>, <code>set_image</code>. Docker actions: <code>status</code>, <code>up</code>, <code>down</code>, <code>restart</code>, <code>pull</code>, <code>reconcile</code>; stack targets: <code>wireguard</code>, <code>azuracast</code>, <code>dispatcharr_cloudflare</code> or <code>all</code>. Use the smallest owner that covers the change; restart through the owner before deleting pods.</p>
+<p>The AI stack and WatooM Code have dedicated playbooks (<code>gpu-controller.yml</code>, <code>llm-model-lab.yml</code>, <code>watoom-code-*.yml</code>, <code>watoom-native-skills.yml</code>). Inspect their variables and fences before running them.</p>
+<h2 id="validation-tiers">Validation tiers</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Checks</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fast</code></td>
+<td>YAML, production-profile <code>ansible-lint</code>, WatooM policy</td>
+<td>Local iteration</td>
+</tr>
+<tr>
+<td><code>standard</code></td>
+<td><code>fast</code> + syntax check in the production execution environment</td>
+<td>Production-bound content</td>
+</tr>
+<tr>
+<td><code>full</code></td>
+<td><code>standard</code> + safe dynamic and idempotence hook</td>
+<td>High-assurance changes</td>
+</tr>
+</tbody>
+</table></div>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">./scripts/watoom-ansible-validate.sh standard
+</code></pre></div>
+<p>Choose acceptance to match the change. Documentation needs renderer, link and served-content checks; runtime changes need real behaviour and rollback evidence. A zero exit code from <code>kubectl apply</code> is not acceptance.</p>
+<h2 id="change-sequence">Change sequence</h2>
+<ol>
+<li>Inspect current source and nearby conventions; reuse existing roles and helpers.</li>
+<li>Make the smallest source change; keep environment values in vars and templates.</li>
+<li>Validate (<code>git diff --check</code>, the relevant tier, renderer <code>--check</code>).</li>
+<li>Deploy only the affected component through its owner.</li>
+<li>Verify the live result and the health signals on <a href="/guide/monitoring.html">Monitoring</a>.</li>
+<li>Confirm the Git index holds only the intended paths.</li>
+</ol>
+<h2 id="git-discipline">Git discipline</h2>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">git status --short --untracked-files=all
+git diff --check
+git add &lt;explicit paths&gt;
+</code></pre></div>
+<p>Never use <code>git add .</code>, <code>git add -A</code>, <code>git reset --hard</code>, <code>git clean -fd</code>, <code>git checkout .</code> or broad <code>git restore</code>. A dirty tree may hold other approved work; isolate a fix by path, not by discarding changes.</p>
+<h2 id="documentation">Documentation</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Output</th>
+<th>Source</th>
+<th>Renderer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Guide pages (<code>config/glance/guide/*.html</code>)</td>
+<td><code>docs/guide/*.md</code></td>
+<td><code>scripts/render-glance-guide.py</code></td>
+</tr>
+<tr>
+<td>Job reference</td>
+<td><code>config/glance/job-reference.json</code></td>
+<td><code>scripts/render-job-reference.py</code></td>
+</tr>
+<tr>
+<td>Pipeline prompts</td>
+<td><code>config/glance/pipeline-prompts.json</code></td>
+<td><code>scripts/render-pipeline-prompts.py</code></td>
+</tr>
+<tr>
+<td>Glance Knowledge page</td>
+<td>skill registry catalogue</td>
+<td><code>scripts/render-glance-knowledge.py --catalog …</code></td>
+</tr>
+<tr>
+<td>Glance ConfigMaps</td>
+<td><code>config/glance/glance.yml</code>, <code>helper.py</code></td>
+<td><code>scripts/render-glance-configmaps.py</code></td>
+</tr>
+</tbody>
+</table></div>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">/data/ai/toolchains/docs-render/bin/python scripts/render-glance-guide.py          # write
+/data/ai/toolchains/docs-render/bin/python scripts/render-glance-guide.py --check  # drift + link check
+</code></pre></div>
+<p>Guide HTML is served by hostPath from the operator checkout, so it goes live when that checkout updates; no restart is needed. Dashboard changes need the ConfigMap rendered and applied, then a Glance rollout.</p>
+<h3 id="feature-and-reference-releases">Feature and reference releases</h3>
+<p>Changes to agents, skills, language-knowledge, Bazzite routing, game workers and the RIG lane belong to their owning roles/tools and deployment pins. Updating a skill does not rebuild the application image; changing the language-knowledge package does not update the main app pin. Review the exact owner and immutable release identity before promotion. For worker changes, validate the source/receipt path and keep job reconciliation separate from rollout. Never use production playbooks or restart services as part of a documentation-only update.</p>
+<p>The server catalogue is generated from maintained comments/contracts. If a catalogue entry is thin, improve its source docstring/comment and regenerate; never edit <code>docs/guide/server-*.md</code> or the corresponding guide HTML by hand. The guide's maintained source is Markdown under <code>docs/guide/</code>, and all generated pages should be rendered and checked with the established scripts before commit.
+| <code>/data/ai/projects/development</code>, <code>/data/ai/projects/pipelines</code> | Project groups; <code>llm/pipelines</code> |</p>
+<h2 id="project-and-source-reference">Project and source reference</h2>
+<p>See the <a href="/guide/llm-project.html">LLM project guide</a> for requirements, configuration, deployment,
+development and troubleshooting; <a href="/guide/llm-extensions.html">custom extensions</a> for plugins,
+agents, skills and worker integrations; and the <a href="/guide/server-catalogue.html">server automation reference</a>
+for every tracked script, playbook, role and tool. <a href="/guide/llm-publication.html">GitHub publication</a>
+covers the separate private distribution and source provenance.</p>
+<h2 id="environment-disaster-recovery">Environment disaster recovery</h2>
+<p>The <a href="/guide/disaster-recovery.html">disaster recovery guide</a> defines the environment/project/service-state scope, private capture, off-host verification, isolated restoration and guarded replacement-host phases. Git alone is not a full backup; readiness remains blocked until the required recovery evidence exists. Media and purchased libraries may be reacquired, while private state and authored projects need independent protection.</p>
+<h2 id="tickets-to-do-list-with-discord-alerts">Tickets (to-do list with Discord alerts)</h2>
+<p>A shared to-do list for you and the models, with every change posted to Discord. Log an item with <code>watoom-ticket add &quot;title&quot;</code>; the models log and update tickets through request files. See <a href="/guide/tickets.html">Tickets</a> for the commands, the model workflow, the Discord setup and troubleshooting.</p>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/operations.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

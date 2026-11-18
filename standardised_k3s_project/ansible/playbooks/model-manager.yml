@@ -1,0 +1,7 @@
+---
+- name: Install isolated model manager and narrow lifecycle broker
+  hosts: homelab
+  become: true
+  gather_facts: false
+  roles:
+    - role: model-manager

@@ -1,0 +1,62 @@
+- name: "Validation Secrets | Initialise missing Secret list"
+  ansible.builtin.set_fact:
+    missing_kubernetes_secrets: []
+
+- name: "Validation Secrets | Check configured Secret"
+  ansible.builtin.include_tasks: required_secret.yml
+  loop: "{{ required_kubernetes_secrets }}"
+  loop_control:
+    loop_var: validation_secret_target
+    label: "{{ validation_secret_target.namespace }}/{{ validation_secret_target.name }}"
+
+- name: "Validation Secrets | Assert required Kubernetes Secrets exist"
+  ansible.builtin.assert:
+    that:
+      - missing_kubernetes_secrets | length == 0
+    fail_msg: >-
+      Missing Kubernetes Secrets:
+      {{
+        missing_kubernetes_secrets
+        | map(attribute='namespace')
+        | zip(missing_kubernetes_secrets | map(attribute='name'))
+        | map('join', '/')
+        | join(', ')
+      }}
+    success_msg: "All required Kubernetes Secrets exist"
+
+- name: "Validation | Collect pods"
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    kubeconfig: '{{ k3s_kubeconfig }}'
+  register: all_pods
+  changed_when: false
+- name: "Validation | Build unhealthy pod list"
+  ansible.builtin.set_fact:
+    unhealthy_pods: "{{ all_pods.resources\n   | rejectattr('status.phase', 'in', ['Running', 'Succeeded'])\n   | map(attribute='metadata')\n   | map(attribute='name')\n   | list }}"
+- name: "Validation | Assert there are no failed or pending pods"
+  ansible.builtin.assert:
+    that:
+    - unhealthy_pods | length == 0
+    fail_msg: 'Unhealthy pods: {{ unhealthy_pods | join('', '') }}'
+- name: "Validation | Check Glance guide endpoint"
+  ansible.builtin.uri:
+    url: https://glance.internal.homelab.example/guide/
+    validate_certs: false
+    status_code: 200
+  register: glance_guide
+  changed_when: false
+  failed_when: false
+- name: "Validation | Check Grafana health endpoint"
+  ansible.builtin.uri:
+    url: https://grafana.internal.homelab.example/api/health
+    validate_certs: false
+    status_code: 200
+  register: grafana_health
+  changed_when: false
+  failed_when: false
+- name: "Validation | Report web health checks"
+  ansible.builtin.debug:
+    msg:
+    - 'Glance guide HTTP: {{ glance_guide.status | default(''unreachable'') }}'
+    - 'Grafana HTTP: {{ grafana_health.status | default(''unreachable'') }}'

@@ -1,0 +1,46 @@
+---
+- name: "Preflight | Verify project root exists"
+  ansible.builtin.stat:
+    path: "{{ project_root }}"
+  register: project_root_stat
+
+- name: "Preflight | Assert project root exists"
+  ansible.builtin.assert:
+    that:
+      - project_root_stat.stat.exists
+      - project_root_stat.stat.isdir
+    fail_msg: "Project root does not exist: {{ project_root }}"
+
+- name: "Preflight | Verify required executables"
+  ansible.builtin.command: "bash -lc 'command -v {{ item }}'"
+  loop:
+    - kubectl
+    - docker
+    - python3
+  changed_when: false
+
+- name: "Preflight | Verify kubeconfig is readable"
+  ansible.builtin.stat:
+    path: "{{ k3s_kubeconfig }}"
+  register: kubeconfig_stat
+
+- name: "Preflight | Assert kubeconfig is readable"
+  ansible.builtin.assert:
+    that:
+      - kubeconfig_stat.stat.exists
+      - kubeconfig_stat.stat.readable
+    fail_msg: "Unreadable kubeconfig: {{ k3s_kubeconfig }}"
+
+- name: "Preflight | Check k3s API connectivity"
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Node
+    kubeconfig: "{{ k3s_kubeconfig }}"
+  register: k3s_nodes
+  changed_when: false
+
+- name: "Preflight | Assert expected node is registered"
+  ansible.builtin.assert:
+    that:
+      - k3s_nodes.resources | selectattr('metadata.name', 'equalto', k3s_node_name) | list | length == 1
+    fail_msg: "Expected k3s node {{ k3s_node_name }} not found"

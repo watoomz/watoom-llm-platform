@@ -1,0 +1,57 @@
+---
+- name: Promote the verified native memory and catalogue candidate only
+  hosts: homelab
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../roles/watoom-code/defaults/main.yml
+    - ../vars/watoom-code.yml
+  tasks:
+    - name: Require native release fence and an immutable candidate
+      ansible.builtin.assert:
+        that:
+          - watoom_memory_catalogue_guard_held | default(false) | bool
+          - watoom_code_image is defined
+          - "'@sha256:' in watoom_code_image"
+    - name: Install reviewed pipeline descriptions and dependencies
+      ansible.builtin.copy:
+        src: "../roles/watoom-code/files/skills/{{ item }}/SKILL.md"
+        dest: "{{ watoom_code_root }}/config/skills/{{ item }}/SKILL.md"
+        owner: '1001'
+        group: '1001'
+        mode: '0644'
+      loop: [watoom-prompt-writing, watoom-prompt-image, watoom-prompt-development]
+    - name: Preserve explicitly verified model capabilities
+      ansible.builtin.import_role:
+        name: watoom-code
+        tasks_from: verified_model_capabilities
+    - name: Set candidate image and read-only observation access
+      kubernetes.core.k8s:
+        state: patched
+        merge_type: strategic-merge
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: watoom-code
+            namespace: "{{ watoom_code_namespace }}"
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: app
+                    image: "{{ watoom_code_image }}"
+                    env:
+                      - {name: WATOOM_MEMORY_REQUIRED, value: 'true'}
+                      - {name: WATOOM_GPU_OBSERVATION_FILE, value: /run/watoom-ownership/status.json}
+                    volumeMounts:
+                      - {name: ownership-observations, mountPath: /run/watoom-ownership, readOnly: true}
+                volumes:
+                  - name: ownership-observations
+                    hostPath:
+                      path: "{{ watoom_code_gpu_observability_root }}"
+                      type: Directory
+    - name: Wait for the pinned application rollout
+      ansible.builtin.command:
+        argv: [kubectl, -n, "{{ watoom_code_namespace }}", rollout, status, deployment/watoom-code, --timeout=240s]
+      changed_when: false

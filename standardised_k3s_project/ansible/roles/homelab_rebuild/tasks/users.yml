@@ -1,0 +1,36 @@
+---
+- name: "Homelab Rebuild | Ensure docker group exists"
+  ansible.builtin.group:
+    name: docker
+    state: present
+
+- name: "Homelab Rebuild | Ensure primary user exists"
+  ansible.builtin.user:
+    name: "{{ homelab_primary_user }}"
+    uid: "{{ homelab_primary_uid }}"
+    shell: /bin/bash
+    create_home: true
+    groups:
+      - wheel
+      - docker
+    append: true
+
+- name: "Homelab Rebuild | Ensure codex user exists"
+  ansible.builtin.user:
+    name: "{{ homelab_codex_user }}"
+    uid: "{{ homelab_codex_uid }}"
+    shell: /bin/bash
+    create_home: true
+    groups:
+      - wheel
+    append: true
+
+- name: "Homelab Rebuild | Configure codex passwordless sudo"
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/90-codex
+    owner: root
+    group: root
+    mode: "0440"
+    content: "{{ homelab_codex_user }} ALL=(ALL) NOPASSWD: ALL\n"
+    validate: "visudo -cf %s"
+  when: homelab_codex_passwordless_sudo | bool

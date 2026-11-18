@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "product": "esp32-div-v2-engineering",
+  "version": "lab-2026-11-17",
+  "language": "internal engineering guide",
+  "license": "proprietary",
+  "trust_tier": "internal_doc",
+  "note": "First-party WatooM engineering guide for the lab's ESP32-DIV v2 board, written 2026-11-17 from lab jobs (t45-r29 to t45-r33 and t45-h1 serial captures and the heap ledger), the application's resolved V2 headers, the pinned Arduino core 2.0.10 configuration, tools/esp32 and the stored vendor manual. Each statement carries an evidence label (MEASURED, CONFIG, VENDOR, DATASHEET, INFERRED); treat CONFIG, DATASHEET and INFERRED statements as hypotheses until confirmed on the physical board. Companion to the verbatim vendor manual 'esp32-div'.",
+  "pages": [
+    {"file": "00-overview.md", "uri": "internal:tools/language-knowledge/manuals/esp32-div-v2-engineering/sources/00-overview.md"},
+    {"file": "01-board-identity.md", "uri": "internal:tools/language-knowledge/manuals/esp32-div-v2-engineering/sources/01-board-identity.md"},
+    {"file": "02-pin-map-and-buses.md", "uri": "internal:tools/language-knowledge/manuals/esp32-div-v2-engineering/sources/02-pin-map-and-buses.md"},
+    {"file": "03-chips-and-modules.md", "uri": "internal:tools/language-knowledge/manuals/esp32-div-v2-engineering/sources/03-chips-and-modules.md"},
+    {"file": "04-vendor-vs-firmware-pins.md", "uri": "internal:tools/language-knowledge/manuals/esp32-div-v2-engineering/sources/04-vendor-vs-firmware-pins.md"},
+    {"file": "05-firmware-architecture.md", "uri": "internal:tools/language-knowledge/manuals/esp32-div-v2-engineering/sources/05-firmware-architecture.md"},
+    {"file": "06-build-flash-serial-workflow.md", "uri": "internal:tools/language-knowledge/manuals/esp32-div-v2-engineering/sources/06-build-flash-serial-workflow.md"},
+    {"file": "07-sd-card-and-shared-spi.md", "uri": "internal:tools/language-knowledge/manuals/esp32-div-v2-engineering/sources/07-sd-card-and-shared-spi.md"},
+    {"file": "08-memory-and-heap.md", "uri": "internal:tools/language-knowledge/manuals/esp32-div-v2-engineering/sources/08-memory-and-heap.md"},
+    {"file": "09-debugging-and-troubleshooting.md", "uri": "internal:tools/language-knowledge/manuals/esp32-div-v2-engineering/sources/09-debugging-and-troubleshooting.md"}
+  ]
+}

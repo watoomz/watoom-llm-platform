@@ -1,0 +1,61 @@
+---
+- name: Apply only an explicitly authorised WatooM learning configuration
+  hosts: watoom-homelab
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Require the exact approval and scoped release paths
+      ansible.builtin.assert:
+        that:
+          - watoom_learning_production_approved | bool
+          - watoom_learning_evidence is match('^/data/ai/helper-scripts/watoom-self-learning-[0-9TZ]+$')
+          - watoom_learning_installed_package is match('^/data/ai/watoom-code/config/watoom-tools/self-learning-[a-f0-9]{64}$')
+    - name: Install the immutable native plugin package
+      ansible.builtin.copy:
+        src: '{{ watoom_learning_source_package }}/'
+        dest: '{{ watoom_learning_installed_package }}/'
+        remote_src: true
+        owner: root
+        group: root
+        mode: preserve
+        directory_mode: '0755'
+    - name: Create only the new owned learning directories
+      ansible.builtin.file:
+        path: '{{ item.path }}'
+        state: directory
+        owner: '{{ item.owner }}'
+        group: '{{ item.owner }}'
+        mode: '{{ item.mode }}'
+      loop:
+        - {path: /data/ai/watoom-code/self-learning, owner: '1001', mode: '0700'}
+        - {path: /data/ai/watoom-code/self-learning/acceptance-project, owner: '1001', mode: '0700'}
+        - {path: /data/ai/watoom-code/config/watoom-tools/self-learning-evaluations, owner: root, mode: '0755'}
+    - name: Install the reviewed configuration atomically
+      ansible.builtin.copy:
+        src: '{{ watoom_learning_candidate_config }}'
+        dest: /data/ai/watoom-code/config/opencode.json
+        remote_src: true
+        owner: '1001'
+        group: '1001'
+        mode: '0600'
+      no_log: true
+    - name: Apply existing SELinux labels only to new release paths
+      ansible.builtin.command:
+        argv: [restorecon, -R, -v, '{{ item }}']
+      loop:
+        - '{{ watoom_learning_installed_package }}'
+        - /data/ai/watoom-code/self-learning
+        - /data/ai/watoom-code/config/watoom-tools/self-learning-evaluations
+        - /data/ai/watoom-code/config/opencode.json
+      register: watoom_learning_production_labels
+      changed_when: "'Relabeled' in watoom_learning_production_labels.stdout"
+    - name: Apply the checksum-pinned application deployment
+      ansible.builtin.command:
+        argv: [kubectl, apply, -f, '{{ watoom_learning_candidate_deployment }}']
+      register: watoom_learning_production_apply
+      changed_when: "'configured' in watoom_learning_production_apply.stdout or 'created' in watoom_learning_production_apply.stdout"
+      no_log: true
+    - name: Wait for actual candidate rollout
+      ansible.builtin.command:
+        argv: [kubectl, -n, watoom-code, rollout, status, deployment/watoom-code, --timeout=600s]
+      changed_when: false

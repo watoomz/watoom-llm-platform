@@ -1,0 +1,135 @@
+---
+- name: Require explicit opt-in for the CPU-intensive source build
+  ansible.builtin.assert:
+    that:
+      - unreal_engine_build | bool
+      - unreal_engine_parallel_actions | int >= 1
+      - unreal_engine_parallel_actions | int <= 7
+    fail_msg: "Build is opt-in. Run with -e unreal_engine_build=true after resource preflight."
+
+- name: Read actual available host memory
+  ansible.builtin.command:
+    argv: [awk, "/MemAvailable/ {print $2}", /proc/meminfo]
+  register: unreal_memory
+  changed_when: false
+
+- name: Read actual available data storage
+  ansible.builtin.command: df --output=avail -B1 /data
+  register: unreal_disk
+  changed_when: false
+
+- name: Preserve the host reserve and download/build storage
+  ansible.builtin.assert:
+    that:
+      - unreal_memory.stdout | trim | int > 14680064
+      - unreal_disk.stdout_lines[-1] | trim | int > 322122547200
+    fail_msg: "Need >14 GiB available RAM and >300 GiB free storage. Do not stop active services automatically."
+
+- name: Resolve existing build user
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ unreal_engine_user }}"
+
+- name: Create the normal versioned toolchain layout
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ unreal_engine_user }}"
+    mode: "0755"
+  loop:
+    - "{{ unreal_engine_root }}"
+    - "{{ unreal_engine_root }}/RuntimeBuild"
+    - "{{ unreal_engine_root }}/RuntimeBuild/Content"
+    - "{{ unreal_engine_root }}/RuntimeBuild/Config"
+
+- name: Checkout the pinned clean engine source without discarding local changes
+  become: true
+  become_user: "{{ unreal_engine_user }}"
+  ansible.builtin.git:
+    repo: "{{ unreal_engine_repository }}"
+    dest: "{{ unreal_engine_source }}"
+    version: "{{ unreal_engine_revision }}"
+    force: false
+    recursive: false
+    accept_hostkey: false
+  environment:
+    GIT_CONFIG_COUNT: "1"
+    GIT_CONFIG_KEY_0: safe.directory
+    GIT_CONFIG_VALUE_0: "{{ unreal_engine_repository if unreal_engine_repository.startswith('/') else unreal_engine_source }}"
+
+- name: Install the maintained complete runtime build target
+  ansible.builtin.template:
+    src: RuntimeBuild.uproject.j2
+    dest: "{{ unreal_engine_project }}"
+    owner: "{{ unreal_engine_user }}"
+    mode: "0644"
+
+- name: Discover CPU count for bounded runtime shader workers
+  ansible.builtin.command: getconf _NPROCESSORS_ONLN
+  register: unreal_cpu_count
+  changed_when: false
+
+- name: Install bounded runtime shader compilation settings
+  ansible.builtin.template:
+    src: DefaultEngine.ini.j2
+    dest: "{{ unreal_engine_root }}/RuntimeBuild/Config/DefaultEngine.ini"
+    owner: "{{ unreal_engine_user }}"
+    mode: "0644"
+
+- name: Fetch official engine dependencies using the existing licensed account
+  become: true
+  become_user: "{{ unreal_engine_user }}"
+  ansible.builtin.command:
+    argv:
+      - bash
+      - "{{ unreal_engine_source }}/Setup.sh"
+      - --force
+    chdir: "{{ unreal_engine_source }}"
+  changed_when: true
+
+- name: Generate official build files
+  become: true
+  become_user: "{{ unreal_engine_user }}"
+  ansible.builtin.command:
+    argv:
+      - bash
+      - "{{ unreal_engine_source }}/GenerateProjectFiles.sh"
+    chdir: "{{ unreal_engine_source }}"
+  changed_when: true
+
+- name: Build real target outputs and metadata within the bounded CPU memory envelope
+  ansible.builtin.command:
+    argv:
+      - systemd-run
+      - --wait
+      - --pipe
+      - --collect
+      - "--property=User={{ unreal_engine_user }}"
+      - "--property=MemoryMax={{ unreal_engine_memory_limit }}"
+      - "--property=CPUQuota={{ unreal_engine_cpu_quota }}"
+      - "--property=RuntimeMaxSec={{ unreal_engine_build_seconds }}"
+      - "--working-directory={{ unreal_engine_source }}"
+      - bash
+      - "{{ unreal_engine_source }}/Engine/Build/BatchFiles/Linux/Build.sh"
+      - "{{ item }}"
+      - Linux
+      - Development
+      - "-Project={{ unreal_engine_project }}"
+      - -NoUBA
+      - -NoDumpSyms
+      - "-MaxParallelActions={{ unreal_engine_parallel_actions }}"
+  loop:
+    - ShaderCompileWorker
+    - UnrealEditor
+  changed_when: true
+
+- name: Record the normal build identity without promoting an unvalidated engine
+  ansible.builtin.copy:
+    dest: "{{ unreal_engine_root }}/build-identity.json"
+    owner: "{{ unreal_engine_user }}"
+    mode: "0644"
+    content: "{{ {'version': unreal_engine_version, 'revision': unreal_engine_revision, 'source': unreal_engine_source, 'target': unreal_engine_project, 'acceptance': 'REQUIRED_BEFORE_PROMOTION', 'symbols': 'Breakpad generation omitted; separate matching debug symbol acceptance required'} | to_nice_json }}"
+
+- name: Publish an explicitly selected normal build output
+  ansible.builtin.include_tasks: publish.yml
+  when: unreal_engine_publish | bool

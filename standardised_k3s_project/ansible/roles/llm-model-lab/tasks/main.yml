@@ -1,0 +1,78 @@
+---
+- name: Require reviewed controller gates before any model-lab apply
+  ansible.builtin.assert:
+    that:
+      - gpu_controller_cutover_verified | default(false) | bool
+      - gpu_controller_backup_verified | default(false) | bool
+      - gpu_controller_legacy_drain_verified | default(false) | bool
+      - gpu_controller_rollback_verified | default(false) | bool
+  when: gpu_controller_enabled | default(false) | bool
+
+- name: Create model-lab root directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ llm_model_lab_root }}"
+    - "{{ llm_model_lab_root }}/models"
+    - "{{ llm_model_lab_root }}/models/gguf"
+    - "{{ llm_model_lab_root }}/state"
+    - "{{ llm_model_lab_root }}/results"
+    - "{{ llm_model_lab_root }}/cache"
+    - "{{ llm_model_lab_root }}/change-backups"
+  tags: [llm-model-lab, kubernetes]
+
+# Primary model's llamAmpere prompt-cache disk tier (hostPath); entries hold conversation state.
+- name: Create private prompt-cache disk tier directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  loop:
+    - "{{ llm_model_lab_prompt_cache_root }}"
+    - "{{ llm_model_lab_prompt_cache_root }}/prompt-cache"
+  tags: [llm-model-lab, kubernetes]
+
+- name: Create per-model directories
+  ansible.builtin.file:
+    path: "{{ llm_model_lab_root }}/models/gguf/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop: "{{ llm_model_lab_models }}"
+  tags: [llm-model-lab, kubernetes]
+
+- name: Apply model-lab backend objects
+  kubernetes.core.k8s:
+    kubeconfig: "{{ llm_model_lab_kubeconfig }}"
+    state: present
+    definition: "{{ item }}"
+  loop: "{{ lookup('file', llm_model_lab_manifest) | from_yaml_all | list }}"
+  loop_control:
+    label: "{{ item.kind | default('object') }}/{{ item.metadata.name | default('unknown') }}"
+  tags: [llm-model-lab, kubernetes]
+
+- name: Apply updated LLM router
+  when: not (gpu_controller_enabled | default(false) | bool)
+  kubernetes.core.k8s:
+    kubeconfig: "{{ llm_model_lab_kubeconfig }}"
+    state: present
+    definition: "{{ item }}"
+  loop: "{{ lookup('file', llm_model_lab_router_manifest) | from_yaml_all | list }}"
+  loop_control:
+    label: "{{ item.kind | default('object') }}/{{ item.metadata.name | default('unknown') }}"
+  tags: [llm-model-lab, kubernetes]
+
+- name: Maintain exclusive GPU controller integration
+  ansible.builtin.include_tasks:
+    file: gpu-controller.yml
+    apply:
+      tags: [gpu-controller]
+  when: gpu_controller_enabled | default(false) | bool
+  tags: [gpu-controller]

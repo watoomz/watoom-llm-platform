@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+PROJECT="${PROJECT_ROOT:-/data/github/watoom-standardised-homelab/standardised_k3s_project}"
+ENGINE="$PROJECT/ansible/roles/pi-kali-agent/files/lotce-engine.py"
+REFERENCE_ROOT="${WATOOM_KALI_TOOL_REFERENCE_HOST_ROOT:-/data/pi-agent/kali/tool-reference}"
+COMPILER_ROOT="${WATOOM_LOTCE_COMPILER_ROOT:-$PROJECT/ansible/roles/pi-kali-agent/files/pi-mcp-bridge/lotce/compilers}"
+exec python3 "$ENGINE" \
+  --reference-root "$REFERENCE_ROOT" \
+  --compiler-root "$COMPILER_ROOT" \
+  "$@"

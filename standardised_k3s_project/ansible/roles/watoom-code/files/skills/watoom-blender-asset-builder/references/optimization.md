@@ -1,0 +1,2 @@
+blender-game-optimization: reduce evaluated triangles with a new version; recheck silhouette, UVs and export after decimation. Generate collision proxies (collision_mesh.py: hull for simple/convex props, compound for concave/multi-part meshes) before export, not after -- the engine-naming convention (UCX_/-convcolonly) must already be on the objects exported into the same FBX/GLB.
+Resolve installed compatible scripts under /config/skills/<skill>/scripts. Original 5.2 guidance is reference-only.

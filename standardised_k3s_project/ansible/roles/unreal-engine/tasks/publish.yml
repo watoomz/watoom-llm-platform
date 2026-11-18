@@ -1,0 +1,86 @@
+---
+- name: Require a pinned output before runtime publication
+  ansible.builtin.assert:
+    that:
+      - unreal_engine_publish | bool
+      - unreal_engine_publish_sha256 is match('^[a-f0-9]{64}$')
+    fail_msg: "Publication requires explicit opt-in and the validated editor SHA256."
+
+- name: Preflight a self-contained copy and preserve the storage reserve
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - |
+        import pathlib,os,hashlib,shutil,json,sys
+        source=pathlib.Path(sys.argv[1]).resolve(); dest=pathlib.Path(sys.argv[2])
+        assert source.is_dir()
+        assert dest.is_absolute() and dest.resolve().is_relative_to(pathlib.Path('/data/ai/toolchains'))
+        assert not any(p.is_symlink() for p in [dest,*dest.parents])
+        assert not dest.exists(), 'preserve existing releases; select a new version'
+        assert hashlib.sha256((source/'Engine/Binaries/Linux/UnrealEditor').read_bytes()).hexdigest()==sys.argv[3]
+        size=0; count=0
+        for parent,dirs,files in os.walk(source,followlinks=False):
+          dirs[:]=[n for n in dirs if n not in {'.git','.vscode','DerivedDataCache','Saved'}]
+          for n in dirs+files:
+            p=pathlib.Path(parent)/n
+            if p.is_symlink():
+              assert not os.path.isabs(os.readlink(p)) and p.resolve().is_relative_to(source), 'runtime must have no external/absolute symlinks'
+          for n in files:
+            p=pathlib.Path(parent)/n
+            if not p.is_symlink(): size+=p.stat().st_size;count+=1
+        assert shutil.disk_usage('/data').free > size+300*1024**3, 'preserve 300GiB storage reserve'
+        print(json.dumps({'files':count,'bytes':size}))
+      - "{{ unreal_engine_publish_source }}"
+      - "{{ unreal_engine_runtime }}"
+      - "{{ unreal_engine_publish_sha256 }}"
+  register: unreal_publication_preflight
+  changed_when: false
+
+- name: Create the normal runtime parent
+  ansible.builtin.file:
+    path: "{{ unreal_engine_runtime | dirname }}"
+    state: directory
+    mode: "0755"
+
+- name: Reserve a new versioned runtime without overwriting any release
+  ansible.builtin.command:
+    argv: [mkdir, "--", "{{ unreal_engine_runtime }}"]
+  changed_when: true
+
+- name: Materialize real runtime and C++ build outputs without recovery dependencies
+  ansible.builtin.command:
+    argv:
+      - bash
+      - -c
+      - 'ulimit -v 1048576 || exit 1; exec nice -n 10 "$@"'
+      - unreal-runtime-copy
+      - rsync
+      - -a
+      - --exclude=.git
+      - --exclude=.vscode
+      - --exclude=DerivedDataCache
+      - --exclude=Saved
+      - --exclude=.watoom-*
+      - "{{ unreal_engine_publish_source }}/"
+      - "{{ unreal_engine_runtime }}/"
+  async: 10800
+  poll: 5
+  changed_when: true
+
+- name: Verify the copied editor identity
+  ansible.builtin.stat:
+    path: "{{ unreal_engine_runtime }}/Engine/Binaries/Linux/UnrealEditor"
+    checksum_algorithm: sha256
+  register: unreal_published_editor
+
+- name: Require the exact validated binary after copy
+  ansible.builtin.assert:
+    that:
+      - unreal_published_editor.stat.checksum == unreal_engine_publish_sha256
+
+- name: Record output provenance without claiming clean-rebuild acceptance
+  ansible.builtin.copy:
+    dest: "{{ unreal_engine_runtime }}/runtime-identity.json"
+    mode: "0644"
+    content: "{{ {'version':unreal_engine_version,'source_revision':unreal_engine_revision,'editor_sha256':unreal_engine_publish_sha256,'layout':'self-contained build output; no recovery mount required','relocation_acceptance':'REQUIRED_BEFORE_PROMOTION'} | to_nice_json }}"

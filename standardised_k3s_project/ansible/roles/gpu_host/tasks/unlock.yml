@@ -1,0 +1,129 @@
+---
+- name: Require supported host and exact target device
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.distribution == 'Fedora'
+      - gpu_host_unlock_revision is match('^[0-9a-f]{40}$')
+      - gpu_host_unlock_target is match('^[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-7]$')
+
+- name: Read target PCI device
+  ansible.builtin.slurp:
+    src: "/sys/bus/pci/devices/{{ gpu_host_unlock_target }}/device"
+  register: unlock_device
+
+- name: Read target PCI vendor
+  ansible.builtin.slurp:
+    src: "/sys/bus/pci/devices/{{ gpu_host_unlock_target }}/vendor"
+  register: unlock_vendor
+
+- name: Assert qualified GPU identity
+  ansible.builtin.assert:
+    that:
+      - (unlock_device.content | b64decode | trim) == '0x2206'
+      - (unlock_vendor.content | b64decode | trim) == '0x10de'
+
+- name: Verify Secure Boot is disabled
+  ansible.builtin.command: mokutil --sb-state
+  register: unlock_secure_boot
+  changed_when: false
+  failed_when: "unlock_secure_boot.rc != 0 or 'SecureBoot disabled' not in unlock_secure_boot.stdout"
+
+- name: Ensure build dependencies and matching headers are present
+  ansible.builtin.dnf:
+    name:
+      - git
+      - gcc
+      - make
+      - rpm-build
+      - python3
+      - zstd
+      - dkms
+      - "kernel-devel-{{ ansible_facts.kernel }}"
+    state: present
+
+- name: Create application and recovery directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ gpu_host_unlock_build_user if item == gpu_host_unlock_root else 'root' }}"
+    group: "{{ gpu_host_unlock_build_user if item == gpu_host_unlock_root else 'root' }}"
+    mode: "{{ '0755' if item == gpu_host_unlock_root else '0700' }}"
+  loop:
+    - "{{ gpu_host_unlock_root }}"
+    - "{{ gpu_host_unlock_backup }}"
+
+- name: Checkout the reviewed immutable upstream revision
+  become_user: "{{ gpu_host_unlock_build_user }}"
+  ansible.builtin.git:
+    repo: https://github.com/Zagitta/gpu-unlock.git
+    dest: "{{ gpu_host_unlock_root }}/source"
+    version: "{{ gpu_host_unlock_revision }}"
+    force: false
+
+- name: Build firmware and RPMs with upstream hash checks and test suite
+  become_user: "{{ gpu_host_unlock_build_user }}"
+  ansible.builtin.command:
+    argv: [make, rpm]
+    chdir: "{{ gpu_host_unlock_root }}/source"
+    creates: "{{ gpu_host_unlock_root }}/source/build/rpm/RPMS/noarch/gpu-unlock-firmware-{{ gpu_host_unlock_rpm_release }}.noarch.rpm"
+
+- name: Preserve all boot images and entries before package installation
+  ansible.builtin.command:
+    argv: [tar, -C, /, -cpf, "{{ gpu_host_unlock_backup }}/boot-before.tar", boot]
+    creates: "{{ gpu_host_unlock_backup }}/boot-before.tar"
+
+- name: Install the locally built reviewed packages
+  ansible.builtin.dnf:
+    name:
+      - "{{ gpu_host_unlock_root }}/source/build/rpm/RPMS/noarch/gpu-unlock-dkms-{{ gpu_host_unlock_rpm_release }}.noarch.rpm"
+      - "{{ gpu_host_unlock_root }}/source/build/rpm/RPMS/noarch/gpu-unlock-firmware-{{ gpu_host_unlock_rpm_release }}.noarch.rpm"
+    state: present
+    disable_gpg_check: true
+
+- name: Require successful DKMS build for the running kernel
+  ansible.builtin.command:
+    argv: [modinfo, -k, "{{ ansible_facts.kernel }}", gpu_unlock]
+  changed_when: false
+
+- name: Inspect the resulting boot image
+  ansible.builtin.command:
+    argv: [lsinitrd, "/boot/initramfs-{{ ansible_facts.kernel }}.img"]
+  register: unlock_initrd
+  changed_when: false
+  failed_when: "unlock_initrd.rc != 0 or 'gpu_unlock.ko' not in unlock_initrd.stdout or 'v67-ga102' not in unlock_initrd.stdout"
+
+- name: Inspect only the running kernel boot entry
+  ansible.builtin.command:
+    argv: [grubby, "--info=/boot/vmlinuz-{{ ansible_facts.kernel }}"]
+  register: unlock_boot_entry
+  changed_when: false
+
+- name: Reject a conflicting pre-existing target argument
+  ansible.builtin.assert:
+    that:
+      - "'gpu_unlock.targets=' not in unlock_boot_entry.stdout or ('gpu_unlock.targets=' ~ gpu_host_unlock_target) in unlock_boot_entry.stdout"
+    fail_msg: 'Review the existing target selection before changing this boot entry.'
+
+- name: Enable scoped opt-in for the running kernel at next boot
+  ansible.builtin.command:
+    argv:
+      - grubby
+      - "--update-kernel=/boot/vmlinuz-{{ ansible_facts.kernel }}"
+      - "--args=gpu_unlock.targets={{ gpu_host_unlock_target }}"
+  when:
+    - gpu_host_unlock_boot_enabled | bool
+    - "('gpu_unlock.targets=' ~ gpu_host_unlock_target) not in unlock_boot_entry.stdout"
+
+- name: Remove this scoped opt-in when disabled
+  ansible.builtin.command:
+    argv:
+      - grubby
+      - "--update-kernel=/boot/vmlinuz-{{ ansible_facts.kernel }}"
+      - "--remove-args=gpu_unlock.targets={{ gpu_host_unlock_target }}"
+  when:
+    - not (gpu_host_unlock_boot_enabled | bool)
+    - "('gpu_unlock.targets=' ~ gpu_host_unlock_target) in unlock_boot_entry.stdout"
+
+- name: Report activation boundary
+  ansible.builtin.debug:
+    msg: 'Installed and boot-configured only. No reboot or driver unload is performed. Verify boot logs and actual workload performance after an approved reboot.'

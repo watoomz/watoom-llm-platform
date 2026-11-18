@@ -1,0 +1,15 @@
+FROM 127.0.0.1:5000/watoom-blender-runtime@sha256:959cce39ec5bdd8c65e710bab489f4d3001ffe6d26fe842cf6ebe8cd9274ce55 AS native_blender
+FROM registry.fedoraproject.org/fedora@sha256:4031272b5578da0aafbf8e83b041778a4d0385e8f49df408067c4a43e0afa036
+ARG WATOOM_DNF_PACKAGES
+ARG WATOOM_PACKS
+RUN dnf -y --setopt=install_weak_deps=False install ${WATOOM_DNF_PACKAGES} && dnf clean all
+RUN groupadd -g 1009 toolkit && useradd -u 1009 -g 1009 -M -d /home/toolkit toolkit
+COPY --from=native_blender /opt/blender /opt/blender
+RUN ln -s /opt/blender/blender /usr/local/bin/blender
+COPY job_admission.py agent.py /opt/watoom/
+COPY catalog.json /opt/watoom/catalog.json
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 HOME=/home/toolkit XDG_CACHE_HOME=/tmp/.cache WATOOM_PACKS=${WATOOM_PACKS}
+USER 1009:1009
+WORKDIR /workspace
+EXPOSE 8879
+CMD ["python3", "-B", "/opt/watoom/agent.py"]

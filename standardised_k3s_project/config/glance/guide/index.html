@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Agent Export</title><meta name="description" content="A single-node k3s and Docker platform for media, game servers, local AI inference and the WatooM Code agent workspace. This guide describes how it is built, how requests flow and how to operate it safely."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link active" aria-current="page" href="/guide/">Overview</a><div class="toc"><a class="toc-link" href="#operator-manual">Operator manual</a><a class="toc-link" href="#complete-llm-documentation">Complete LLM documentation</a><a class="toc-link" href="#system-at-a-glance">System at a glance</a><a class="toc-link" href="#architecture">Architecture</a><a class="toc-link" href="#request-paths">Request paths</a><a class="toc-link" href="#storage-layout">Storage layout</a><a class="toc-link" href="#using-this-guide">Using this guide</a><a class="toc-link" href="#project-and-source-reference">Project and source reference</a></div><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">Overview</p><h1>Agent Export</h1><p class="lede">A single-node k3s and Docker platform for media, game servers, local AI inference and the WatooM Code agent workspace. This guide describes how it is built, how requests flow and how to operate it safely.</p></header>
+<section class="live" aria-label="Live status"><div class="live-grid"><div class="live-card"><span>Applications</span><b id="live-apps">—</b><small id="live-apps-sub"></small></div><div class="live-card"><span>Pods</span><b id="live-pods">—</b><small id="live-pods-sub"></small></div><div class="live-card"><span>Memory</span><b id="live-mem">—</b><small>host RAM in use</small></div><div class="live-card"><span>Disk</span><b id="live-disk">—</b><small>cluster filesystems</small></div></div><div id="live-problems" class="live-problems"></div></section><section class="flows" aria-label="Request flows"><div class="flow-tabs" role="tablist"><button class="flow-tab active" type="button" data-flow="local">Internal web</button><button class="flow-tab" type="button" data-flow="media">Media</button><button class="flow-tab" type="button" data-flow="stream">Stream</button><button class="flow-tab" type="button" data-flow="llm">AI inference</button><button class="flow-tab" type="button" data-flow="public">Public web</button></div><div class="flow-board"><svg id="flow-svg" viewBox="0 70 1000 144" role="img" aria-label="Request flow diagram"></svg></div><p id="flow-explain" class="flow-explain"></p></section><div class="content">
+<h2 id="operator-manual">Operator manual</h2>
+<p>New to running this system? The <a href="/guide/operator-manual.html">Operator manual</a> is a task-first guide to checking health, fixing, approving, starting, stopping and restarting things safely, including every approval gate and when to stop and ask the owner.</p>
+<h2 id="complete-llm-documentation">Complete LLM documentation</h2>
+<p>The <a href="/guide/llm-api.html">LLM API &amp; reference</a> covers the native, router, controller, Model Manager and Toolkit contracts, the platform source map and operations, with pinned API schemas and reference clients. The <a href="/guide/llm-user-guide.html">LLM user guide</a> covers day-to-day use.</p>
+<p>For features added from 2026-11-03 to 2026-11-07, start at <a href="/guide/llm-extensions.html#what-s-new-2026-11-03-to-2026-11-07">What's new in custom extensions</a>. It links detailed explanations of language-knowledge triggers, Bazzite-first routing and RIG eligibility, MetaHuman conversion, terrain and game-template workflows, owned-asset discovery, learning, model/UI changes, and Glance observability.</p>
+<h2 id="system-at-a-glance">System at a glance</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Implementation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Host</td>
+<td><code>watoom-homelab</code>, Fedora 44 Server, AMD Ryzen 5 5500 (6C/12T), 32 GiB RAM</td>
+</tr>
+<tr>
+<td>GPU</td>
+<td>NVIDIA GeForce GPU, 20 GiB VRAM, 300 W power limit</td>
+</tr>
+<tr>
+<td>Orchestration</td>
+<td>k3s <code>v1.36.3+k3s1</code> single node, containerd, Traefik ingress</td>
+</tr>
+<tr>
+<td>Edge stacks</td>
+<td>Docker Compose: WireGuard, AzuraCast, browser stream publication</td>
+</tr>
+<tr>
+<td>Network</td>
+<td>router RB5009, VLAN-segmented; host on VLAN 20 (<code>10.99.20.225</code>) and DMZ (<code>192.168.250.225</code>)</td>
+</tr>
+<tr>
+<td>DNS</td>
+<td>Pi-hole on the host network; internal names under <code>*.internal.homelab.example</code></td>
+</tr>
+<tr>
+<td>Desired state</td>
+<td>Git + Ansible in <code>standardised_k3s_project</code>; the operator menu and IaC console are front ends</td>
+</tr>
+<tr>
+<td>AI</td>
+<td>llama.cpp backends behind <code>llm-router</code>, with GPU ownership held by an exclusive controller</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="architecture">Architecture</h2>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-text">Internet
+  │
+  ├── router RB5009 ── VLAN 10 mgmt · 20 homelab · 30/40 Wi-Fi · 50 DMZ
+  │        │
+  │        └── dst-nat (selected game ports) ─────────────► 192.168.250.225 (DMZ NIC)
+  │
+  └── Cloudflare Tunnel (outbound only) ◄── cloudflared connectors
+                                                    │
+watoom-homelab (10.99.20.225)                        │
+  ├── k3s
+  │    ├── Traefik :80/:443 ── *.internal.homelab.example routes
+  │    ├── Pi-hole (hostNetwork :53)
+  │    ├── media · monitoring · games · platform-workers
+  │    ├── llama-cpp: llm-router ── managed llama.cpp backends ── GPU
+  │    └── WatooM Code: app · AgentMemory · Toolkit workers
+  ├── host services: GPU controller · model-manager broker · dispatch timers
+  └── Docker Compose: wg-easy · AzuraCast · stream-app/nginx · cloudflared
+</code></pre></div>
+<h2 id="request-paths">Request paths</h2>
+<p>Each path below is drawn interactively above. They are the routes to check, in order, when something is unreachable.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Hops</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Internal web app</td>
+<td>client → Pi-hole (<code>10.99.20.225:53</code>) → Traefik (<code>:443</code>, wildcard TLS) → Service (<code>10.243.0.0/16</code>) → pod (<code>10.242.0.0/24</code>)</td>
+</tr>
+<tr>
+<td>Media request</td>
+<td>Seerr → Radarr / Sonarr / Lidarr → Prowlarr → SABnzbd / qBittorrent → <code>/data</code> library → Jellyfin</td>
+</tr>
+<tr>
+<td>Browser stream</td>
+<td>Dispatcharr M3U (<code>:9191</code>) → stream-app (FFmpeg → HLS) → stream-nginx (<code>:8888</code>) → cloudflared → <code>stream.homelab.example</code></td>
+</tr>
+<tr>
+<td>AI inference</td>
+<td>WatooM Code → <code>llm-router:8000/v1</code> → GPU controller admission → llama.cpp backend → GPU</td>
+</tr>
+<tr>
+<td>Public web</td>
+<td>browser → Cloudflare Access → tunnel → origin container; no inbound web port is opened</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="storage-layout">Storage layout</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Mount</th>
+<th>Size</th>
+<th>Holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/</code></td>
+<td>117 GiB</td>
+<td>OS, k3s and containerd images (<code>/var/lib/rancher/k3s</code>)</td>
+</tr>
+<tr>
+<td><code>/app</code></td>
+<td>218 GiB</td>
+<td>application configuration and state (<code>/app/&lt;service&gt;</code>), AI service state under <code>/app/ai</code></td>
+</tr>
+<tr>
+<td><code>/data</code></td>
+<td>3.5 TiB</td>
+<td>media libraries, downloads, AI models, projects, toolchains, backups</td>
+</tr>
+</tbody>
+</table></div>
+<p>Under <code>/data/ai</code>: <code>models/</code> (weights), <code>projects/&lt;group&gt;/&lt;project&gt;</code> (work), <code>toolchains/</code> (Blender, Unreal, Godot), <code>assets/</code> (shared library), <code>artifacts/</code> (ESP32 builds, Unreal exports) and <code>helper-scripts/</code> (host tooling, worker state and reports).</p>
+<h2 id="using-this-guide">Using this guide</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>If you need to…</th>
+<th>Go to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Find a service URL, namespace or port</td>
+<td>Service catalogue</td>
+</tr>
+<tr>
+<td>Understand VLANs, DNS, TLS or public exposure</td>
+<td><a href="/guide/network.html">Network</a></td>
+</tr>
+<tr>
+<td>Run or change something through IaC</td>
+<td><a href="/guide/operations.html">Operations</a></td>
+</tr>
+<tr>
+<td>Work with models, GPU ownership or the router</td>
+<td><a href="/guide/ai.html">AI platform</a></td>
+</tr>
+<tr>
+<td>Build, flash or fix the ESP32 voice companion</td>
+<td><a href="/guide/voice-companion.html">Voice companion</a></td>
+</tr>
+<tr>
+<td>Log a to-do, or see what models have logged</td>
+<td><a href="/guide/tickets.html">Tickets</a></td>
+</tr>
+<tr>
+<td>Run a skill or pipeline in WatooM Code</td>
+<td><a href="/guide/watoom-code.html">WatooM Code</a>, <a href="/guide/job-reference.html">Job reference</a></td>
+</tr>
+<tr>
+<td>Recover after a reboot or failure</td>
+<td><a href="/guide/recovery.html">Recovery</a>, <a href="/guide/troubleshooting.html">Troubleshooting</a></td>
+</tr>
+</tbody>
+</table></div>
+<blockquote class="callout callout-rule" data-kind="Rule">
+<p>Git holds desired state, Ansible makes changes, and the GPU controller is the only writer of model replicas. Fix defects in source and redeploy through the owning playbook; do not patch live objects by hand.</p>
+</blockquote>
+<h2 id="project-and-source-reference">Project and source reference</h2>
+<p>See the <a href="/guide/llm-project.html">LLM project guide</a> for requirements, configuration, deployment,
+development and troubleshooting; <a href="/guide/llm-extensions.html">custom extensions</a> for plugins,
+agents, skills and worker integrations; and the <a href="/guide/server-catalogue.html">server automation reference</a>
+for every tracked script, playbook, role and tool. <a href="/guide/llm-publication.html">GitHub publication</a>
+covers the separate private distribution and source provenance.</p>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/index.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

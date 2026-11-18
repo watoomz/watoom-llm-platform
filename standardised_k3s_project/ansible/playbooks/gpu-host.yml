@@ -1,0 +1,8 @@
+---
+- name: Reconcile WatooM GPU host policy
+  hosts: homelab
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: gpu_host

@@ -1,0 +1,363 @@
+---
+watoom_code_namespace: watoom-code
+watoom_code_root: /data/ai/watoom-code
+# Application, Toolkit and AgentMemory image/source pins live only in ansible/vars/watoom-code.yml;
+# the role fails closed without them.
+# Owner-confirmed stable WatooM Code *application* context budget (the opencode compaction trigger),
+# separate from each model's llama.cpp KV/backend capacity. Kept at 100000: lowering it only compacts
+# sooner (extra summarisation cost) without reducing retained reasoning — opencode does NOT store or
+# resend prior-turn reasoning/thinking (assistant messages persist only content/tool-calls/text), so
+# reasoning is already ephemeral. Context growth comes from accumulated tool outputs/messages, not reasoning.
+watoom_code_swift_context_tokens: 100000
+# Per-step output budget (limit.output). Reasoning counts against it; 4096 truncated tool calls (finish=length).
+watoom_code_model_output_tokens: 16384
+# Reasoning levels selectable per message in the WatooM-Code GUI (model variant picker).
+# The Qwen3.8 chat templates accept reasoning_effort xhigh|medium|low and enable_thinking=false;
+# any other effort raises a template error, so only list models whose template was checked.
+# CyberTiel's template has no effort levels and stays on its server default.
+watoom_code_reasoning_models:
+  - swift-qwen38-coder
+  - qwen38-uncensored-mtp
+  - mm-73306b413506f44b
+# preserve_thinking:false (owner 2026-11-06) keeps the model thinking each turn but
+# drops older turns' thinking from context instead of re-expanding the whole trace,
+# so long sessions stay lean. enable_thinking:false ('off') disables thinking entirely.
+watoom_code_reasoning_variants:
+  - {id: xhigh, body: {reasoning_effort: xhigh, chat_template_kwargs: {preserve_thinking: false}}}
+  - {id: medium, body: {reasoning_effort: medium, chat_template_kwargs: {preserve_thinking: false}}}
+  - {id: low, body: {reasoning_effort: low, chat_template_kwargs: {preserve_thinking: false}}}
+  - {id: "off", body: {chat_template_kwargs: {enable_thinking: false}}}
+watoom_code_router_url: http://llm-router.llama-cpp.svc.cluster.local:8000/v1
+watoom_code_apply: true
+watoom_code_rollout_timeout: 180s
+
+
+# Owner project groups (2026-10-29 layout): each <root>/<group>/<project> is mounted read-write
+# into the app at the same path. Images keep their dedicated root below.
+watoom_code_project_groups_root: /data/ai/projects
+watoom_code_project_groups: [work, writing, games, homelab, llm]
+# Dedicated writable image projects; the parent AI tree stays read-only.
+watoom_code_image_projects_root: /data/ai/projects/images
+watoom_code_image_output_root: /data/ai/projects/images/generated
+
+# Project spaces shown in the new-session picker: existing projects are grouped under their space and
+# creating a new project is guided by space. Rendered to {{ watoom_code_root }}/config/watoom-spaces.json
+# (coordinator_guard.yml) and read by the app over /api config. Each space root is
+# {{ watoom_code_project_groups_root }}/<id>; every id must be a configured group or the images root.
+# Order here is the display order; the AGENTS.md group table is the source for labels and descriptions.
+watoom_code_project_spaces:
+  - {id: games, label: Games, description: "Game builds (Godot, Unreal)"}
+  - {id: work, label: Work, description: "Employer work"}
+  - {id: writing, label: Writing, description: "Stories and documents"}
+  - {id: images, label: Images, description: "Image and render projects"}
+  - {id: homelab, label: Homelab, description: "Homelab infrastructure"}
+  - {id: llm, label: "LLM & tooling", description: "Model, agent and WatooM-Code tooling"}
+
+watoom_code_kali_mcp_enabled: true
+watoom_code_kali_mcp_url: http://watoom-kali-workbench-mcp.kali-agent.svc.cluster.local:8088/mcp
+
+# Base egress NetworkPolicy for the watoom-code pod (DNS, agentmemory, toolkit, the model router,
+# model-manager, the Kali MCP workbench, SearXNG, and the public internet except LAN/private ranges).
+# Off by default: the namespace currently has no NetworkPolicy at all, so flipping this on for the
+# first time is a real behaviour change, not a no-op redeploy, and should be done deliberately with
+# the owner, not as a side effect of an unrelated change. When true, the three additive MCP egress
+# rules below are also rendered automatically for whichever of the godot/ue/unreal MCP routes are
+# enabled (never render an additive rule without this base policy: see the godot-mcp/ue-mcp READMEs).
+watoom_code_egress_policy_enabled: false
+# Nwiro Unreal MCP over the rig's reverse SSH tunnel (tools/rig-unreal-mcp). Off until the tunnel, proxy and egress policy are installed.
+watoom_code_unreal_mcp_enabled: false
+watoom_code_unreal_mcp_url: http://10.242.0.1:15354/mcp
+
+# NPGameDev Godot MCP toolkit, reached by SSHing directly to a restricted, ForceCommand-only
+# account on the rig (tools/rig-godot-mcp). Off until the rig's sshd, the router rule and the
+# egress policy are installed. See that README: UNTESTED against the real editor/plugin/bridge.
+watoom_code_godot_mcp_enabled: false
+watoom_code_godot_mcp_host: 10.99.1.44
+watoom_code_godot_mcp_port: 2223
+watoom_code_godot_mcp_user: godotmcp
+
+# db-lyon ue-mcp (Unreal Engine), reached the same way through its own restricted account and policy wrapper
+# (tools/rig-ue-mcp). Off until the rig side, the router rule and the egress policy are installed; the rig steps are in
+# that README. UNTESTED on the rig and against the real ue-mcp server.
+watoom_code_ue_mcp_enabled: false
+watoom_code_ue_mcp_host: 10.99.1.44
+watoom_code_ue_mcp_port: 2224
+watoom_code_ue_mcp_user: uemcp
+
+watoom_code_mesh_enabled: true
+watoom_code_mesh_bridge_host: /app/ai/services/opencode/home/.config/opencode/mesh-bridge
+watoom_code_uid: 1001
+watoom_code_gid: 1001
+
+# Application and Toolkit images have separate committed source identities.
+
+
+watoom_code_creative_enabled: true
+
+# Retained discovery source; native review never executes or rescrapes it.
+watoom_code_skill_collection: /data/ai/skill-registry/wp-sk1-20261014/repositories
+
+watoom_code_skills_enabled: true
+
+# Owner-approved native skill sources; bytes are maintained and pinned in Git.
+watoom_code_native_skills:
+  # Conversational Sims routing; skill availability does not add worker capabilities.
+  - sims
+  - sims4-package-inspector
+  - sims4-asset-editor
+  - sims4-cas
+  - sims4-textures
+  - sims4-animation
+  - sims4-render
+  - sims4-gameplay
+  - sims4-package-builder
+  - sims4-release
+  - sims4-unreal
+  - asset-image-clip-capture
+  - human-pose-agent
+  - watoom-engine-visual-diagnosis
+  - watoom-terrain-map
+  - watoom-texture-layering
+  # Unreal GAS combat (melee/guns/magic, VFX, pickups) + WatooMCombat plugin source; owner-requested 2026-11-18 (T-0063).
+  - watoom-unreal-combat
+  - watoom-godot-game
+  - watoom-poo-vfx
+  - watoom-landscape-mesh-builder
+  - watoom-fab-owned-assets
+  - watoom-asset-archive
+  - watoom-metahuman
+  - watoom-tickets
+  - blackhat-go
+  - botnet-disruption
+  - botnet-studies
+  - cat
+  - consensus
+  - crdt
+  - cybernetic-open-game
+  - derangement-crdt
+  - doc
+  - embedded-medical-device
+  - ghidra-mcp
+  - ies
+  - join-semilattice
+  - kubernetes
+  - miasm-symbolic
+  - modal
+  - r2frida
+  - radare2-hatchery
+  - redteam
+  - rust
+  - sdf
+  - security
+  - signal-isolated-auth
+  - skill-embedding-vss
+  - synchronization
+  - rhel-sysadmin
+  - red-hat-cve-explainer
+  - red-hat-diagnostics
+  - red-hat-product-lifecycle
+  - red-hat-security-mcp-setup
+  - red-hat-support-severity
+
+  - adaptation
+  - chapter-writing
+  - character-management
+  - discovery-drafting
+  - editorial-review
+  - feedback-triage
+  - fantasy-world-building
+  - genre-craft
+  - interactive-fiction
+  - line-editing
+  - plot-structure
+  - premise-workshop
+  - publishing
+  - reader-panel
+  - research
+  - revision-continuity
+  - scene-craft
+  - series-continuity
+  - story-init
+  - story-maintenance
+  - submission
+  - theme-craft
+  - verse-craft
+  - voice-style
+  - worldbuilding
+
+  # EL4CTEO pinned CPU/Blender 4.2 port; original guidance preserved on demand.
+  - blender-addon-development
+  - blender-animation
+  - blender-asset-qa
+  - blender-character-rigging
+  - blender-core
+  - blender-export-pipelines
+  - blender-facial-shapekeys
+  - blender-game-optimization
+  - blender-geometry-nodes
+  - blender-hardsurface-modeling
+  - blender-lighting-lookdev
+  - blender-pbr-materials
+  - blender-pipeline-automation
+  - blender-rendering
+  - blender-retopology-uv
+  - blender-scene-setup
+  - blender-sculpting
+  - blender-simulation
+  - blender-texture-baking
+  - blender-time-of-day
+  - blender-weather-fx
+  - blender-workflow-recipes
+  - watoom-blender-asset-builder
+  - watoom-prompt-creator
+  - watoom-prompt-asset-search
+  - watoom-prompt-asset-index
+  - watoom-prompt-fab-acquire
+  - watoom-prompt-inspect
+  - watoom-prompt-optimize
+  - watoom-prompt-repair
+  - watoom-prompt-mesh-generate
+  - watoom-prompt-procedural-mesh
+  - watoom-prompt-material
+  - watoom-prompt-character
+  - watoom-prompt-dungeon
+  - watoom-prompt-fixed-map
+  - watoom-prompt-hyper
+  - watoom-prompt-unreal-godot
+  - watoom-prompt-plugin-qualification
+  - watoom-prompt-blender-godot
+  - watoom-prompt-godot
+  - watoom-prompt-captures
+  - watoom-prompt-effects
+  - watoom-prompt-image
+  - watoom-explicit-image-creator
+  - watoom-prompt-models
+  - watoom-prompt-research
+  - watoom-prompt-writing
+  - watoom-prompt-kali
+  # Game templates, blueprint and terrain-map skills; owner-approved 2026-11-13.
+  - game-template-godot-open-rts
+  - game-template-kenney-3d-platformer-starter
+  - game-template-maaack-game-template
+  - game-template-metroidvania-system
+  - game-template-modular-souls-like-template
+  - game-template-nezvers-godot-gametemplate
+  - game-template-quiver-tower-defense
+  - game-template-slay-the-robot
+  - game-template-vehicle-sample-racing
+  - watoom-game-blueprint
+  - watoom-prompt-game-blueprint
+  - watoom-prompt-game-template
+  - watoom-prompt-terrain-map
+  - watoom-prompt-development
+  - watoom-prompt-iac
+  - watoom-prompt-blender-builder
+  # Enrolled-hardware development guidance for the native watoom_esp32 worker. The skill is guidance only;
+  # the tool stays gated to worker roles in /data/ai/projects/llm/esp32 (coordinator-guard). Keeping it in the
+  # managed set makes it a first-class, reconciled native skill instead of an orphan of watoom-code-esp32.yml.
+  - esp32-development
+
+# Validated shared native runtime; preserve its immutable editor pin and read-only mount.
+watoom_code_dungeon_enabled: true
+watoom_code_unreal_root: /data/ai/toolchains/unreal/5.8.3/runtime-74dc43e1a653
+
+watoom_code_unreal_editor_sha256: 74dc43e1a653fe3a46f68a1b3db6c3500d04d0f68a8878c9aa1b76b36a08fad3
+
+# Owner-sensitive instructions stay on the server and are never published in Git.
+watoom_code_private_native_skills:
+  - name: reverse-engineer-feature
+    source: /data/ai/private/native-skills/reverse-engineer-feature
+
+# Capture folders explicitly exposed in the owner's common viewing tree.
+watoom_code_capture_projects:
+  - /data/ai/projects/games/heroquest-quest1-poc
+  - /data/ai/projects/games/magpie-flight-godot-candidate
+  - /data/ai/projects/games/moonstone-remake
+
+# Existing project homes the app keeps access to (IDX in work/ is deliberately not enrolled).
+watoom_code_migrated_project_roots:
+  - /data/ai/projects/homelab/homelab-llm
+  - /data/ai/projects/llm/watoom-code
+
+# Additive isolated development integration; maintained by watoom-code-dev.yml.
+watoom_code_dev_enabled: true
+watoom_code_dev_host: 10.99.20.225
+watoom_code_dev_package_sha: 453bdc38279c7a85e1af0c03f3f8af4be4712322c899711c607fda28a362464b
+
+# Explicit candidate edit paths; original asset-library trees stay outside this scope.
+watoom_code_editable_project_scopes:
+  - project: /data/ai/projects/games/magpie-flight-godot-candidate
+    directories: [assets/generated]
+    trees: [scripts, scenes, theme, assets/m7/env]
+  # Owner request 2026-11-10: the model may edit the source of every game project. Original asset libraries
+  # (assets/, references/, reference/, reference-baseline) stay out of scope; widen deliberately per path if needed.
+  - project: /data/ai/projects/games/heroquest-quest1-poc
+    directories: []
+    trees: [UnrealProject]
+  - project: /data/ai/projects/games/moonstone-remake
+    directories: []
+    trees: [Source, Config, docs]
+  - project: /data/ai/projects/games/zombie-animal-survival
+    directories: []
+    trees: [scenes, scripts, World, Player, objects]
+
+# Game worker: projects that may request bounded import/regression/capture without any app write scope
+# (the editable scopes above are enrolled too).
+watoom_game_worker_extra_projects:
+  - /data/ai/projects/games/zombie-animal-survival
+  - /data/ai/projects/games/idle-rpg-strip   # T-0057/T-0058: the gg_ui overlay game
+# Operations run on the Bazzite worker (8 GiB, 6 CPUs, 600 s; tools/watoom-code/game_bazzite.py) instead of the
+# homelab. If Bazzite cannot start the request stays QUEUED and is retried: the local route parks the production model
+# (reserve_headroom) so it is off by default (owner policy 2026-11-07: Bazzite first, then the rig, never this server).
+# The rig stage is retired (tools/rig-async-stage/README.md); reviving it is a separate owner decision. Captures use Xvfb/llvmpipe.
+watoom_game_worker_bazzite_operations: [import, regression, capture, capture-scene, capture-p7, blender]
+watoom_game_worker_local_fallback: false
+# Root-owned mirror the dispatcher and its operator scripts run from (never the checkout); layout mirrors the repo because they resolve helpers relative to it
+watoom_game_worker_release_root: /data/ai/helper-scripts/watoom-code/release
+
+# Narrow installed-image queue; never exposes Model Manager administrator credentials.
+watoom_code_image_mcp_enabled: true
+watoom_code_image_mcp_url: http://model-manager.glance.svc.cluster.local:8787/model-manager/mcp
+watoom_code_image_mcp_token_file: /data/ai/private/model-manager/image-mcp-token
+
+# Native memory is mandatory; ownership is a controller-published read-only snapshot.
+watoom_code_memory_required: true
+watoom_code_gpu_observability_enabled: true
+watoom_code_gpu_observability_root: /data/ai/helper-scripts/state/gpu-controller-observability
+
+# Qualified RIG route; existing admitted host captures retain their worker.
+watoom_asset_capture_workstation_enabled: true
+# Mount /config read-only into the app so agents cannot rewrite their guard, agents or
+# permissions (Ansible remains the writer). Enable only after a candidate confirms no
+# runtime writer (e.g. Settings UI saves) depends on it.
+watoom_code_config_read_only: false
+# Hybrid BM25 + vector recall in AgentMemory through the GPU-resident BGE service
+# (playbooks/llm-bge-embeddings.yml). Off restores BM25-only recall; stored memories are unchanged.
+watoom_code_memory_embeddings: false
+watoom_code_memory_embedding_url: http://bge-embeddings.llama-cpp.svc.cluster.local:8000
+# Shared by resources.json.j2 and playbooks/watoom-code-memory-embeddings.yml.
+watoom_code_memory_embedding_env:
+  - {name: EMBEDDING_PROVIDER, value: openai}
+  - {name: OPENAI_EMBEDDING_BASE_URL, value: "{{ watoom_code_memory_embedding_url }}"}
+  - {name: OPENAI_EMBEDDING_API_KEY, value: internal-no-auth}
+  - {name: OPENAI_EMBEDDING_MODEL, value: bge-small-en-v1.5}
+  - {name: OPENAI_EMBEDDING_DIMENSIONS, value: "384"}
+  - {name: OPENAI_API_KEY_FOR_LLM, value: "false"}
+  - {name: AGENTMEMORY_LLM_TIMEOUT_MS, value: "15000"}
+  - {name: REBUILD_EMBED_BATCH_SIZE, value: "32"}
+# Routes the WatooM-Code server cannot observe itself; profile availability reads them from
+# {{ watoom_code_root }}/config/watoom-routes.json (only known profile dependency names count).
+#   unreal-editor: game-worker unreal-export (export_pack.py, Bazzite first)
+#   avian-approved-compatible-runtime: Toolkit generator asset-assistant.avian
+#   blender: game-worker blender operation (qualified server-cpu Blender 5.2.1)
+watoom_code_declared_routes:
+  - unreal-editor
+  - avian-approved-compatible-runtime
+  - blender
+# MOSS Image tools (moss_presets/moss_status/moss_generate) calling the internal Studio service; see tools/moss-image/plugin.
+watoom_code_moss_image_enabled: false
+watoom_code_moss_image_url: http://10.242.0.1:8791
+# RAM-resident language/API reference plugin (tools/language-knowledge); generate cards first, then enable.
+watoom_code_language_knowledge_enabled: false
+# Full Godot + Blender set (124k cards, ~650 MiB resident); cards-godot.jsonl is the Godot-only subset.
+watoom_code_language_knowledge_cards: /data/ai/knowledge/cards.jsonl

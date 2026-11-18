@@ -1,0 +1,5 @@
+{
+  "unknown": {"description": "Natural-language-first; conventions and checkpoint sampling unverified", "pony_compatible": false, "positive_quality": [], "negative_quality": [], "weights_supported": false},
+  "sdxl": {"description": "SDXL descriptive prose plus optional relevant visual tags", "pony_compatible": false, "positive_quality": [], "negative_quality": [], "weights_supported": false},
+  "pony": {"description": "Only after revision-scoped checkpoint documentation explicitly verifies Pony score conventions", "pony_compatible": true, "positive_quality": ["score_9", "score_8_up", "score_7_up"], "negative_quality": ["score_6", "score_5", "score_4"], "weights_supported": false}
+}

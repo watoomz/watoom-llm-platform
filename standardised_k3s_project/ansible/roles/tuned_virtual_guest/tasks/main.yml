@@ -1,0 +1,30 @@
+---
+# TuneD provides host performance profiles. Keep this role small and explicit so
+# it can be safely reused from Ansible Automation Platform job templates.
+- name: "TuneD virtual guest | Install package"
+  ansible.builtin.package:
+    name: tuned
+    state: present
+
+- name: "TuneD virtual guest | Enable and start service"
+  ansible.builtin.service:
+    name: tuned
+    enabled: true
+    state: started
+
+# There is no stable built-in TuneD profile module, so read current state before
+# using tuned-adm to change the profile.
+- name: "TuneD virtual guest | Check active profile"
+  ansible.builtin.command:
+    cmd: tuned-adm active
+  register: tuned_virtual_guest_active
+  changed_when: false
+  failed_when: false
+
+- name: "TuneD virtual guest | Activate requested profile"
+  ansible.builtin.command:
+    cmd: "tuned-adm profile {{ tuned_virtual_guest_profile }}"
+  register: tuned_virtual_guest_profile_change
+  changed_when: true
+  failed_when: tuned_virtual_guest_profile_change.rc != 0
+  when: tuned_virtual_guest_profile not in tuned_virtual_guest_active.stdout

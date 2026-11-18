@@ -1,0 +1,5 @@
+---
+- name: "Host Path {{ host_path_target }} | Ensure directory"
+  ansible.builtin.file:
+    path: "{{ host_path_target }}"
+    state: directory

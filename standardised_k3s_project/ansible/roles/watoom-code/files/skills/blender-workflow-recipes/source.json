@@ -1,0 +1,8 @@
+{
+  "upstream_commit": "71d031dab8bc6729504d11a78cbe91945401045f",
+  "original_skill_sha256": "4994cf41939797e193fef00b6f5eda1a7ba6ae169e6287b5eda3f50a849b576f",
+  "files": {
+    "SKILL.md": "b1e540b4b10952cdadbeee484726dd3b9ea41ece56fe4c1d062bbd3b30f50e42",
+    "references/upstream-SKILL.md": "4994cf41939797e193fef00b6f5eda1a7ba6ae169e6287b5eda3f50a849b576f"
+  }
+}

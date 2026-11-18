@@ -1,0 +1,22 @@
+---
+- name: "Kubernetes manifests | Initialise ordered manifest list"
+  ansible.builtin.set_fact:
+    k3s_apply_manifest_list: []
+
+- name: "Kubernetes manifests | Build ordered manifest list"
+  ansible.builtin.set_fact:
+    k3s_apply_manifest_list: >-
+      {{
+        k3s_apply_manifest_list
+        + (k3s_manifest_groups[item] | default([]))
+      }}
+  loop: "{{ k3s_apply_groups }}"
+  loop_control:
+    label: "{{ item }}"
+
+- name: "Kubernetes manifests | Reconcile declared manifest"
+  ansible.builtin.include_tasks: manifest.yml
+  loop: "{{ k3s_apply_manifest_list }}"
+  loop_control:
+    loop_var: k3s_manifest_target
+    label: "{{ k3s_manifest_target }}"

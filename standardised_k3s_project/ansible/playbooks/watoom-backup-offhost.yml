@@ -1,0 +1,171 @@
+---
+# Off-host copy of verified WatooM-Code backups (audit S3).
+# The rig (network.rig_host) has no listening services, so it pulls: a jailed,
+# key-only SFTP account reads the export tree and writes only receipts. Each
+# backup run publishes the newest verified runs; a timer checks rig receipts
+# against the manifests and feeds WatoomOffhostBackupStale.
+# Without tools/watoom-code/rig/watoom-backup-pull.pub the account has no key
+# and cannot log in.
+- name: Publish verified backups for the rig to pull
+  hosts: homelab
+  become: true
+  gather_facts: false
+  vars:
+    offhost_user: watoom-backup-pull
+    offhost_root: /data/backups/offhost
+    offhost_jail: /var/lib/watoom-backup-pull
+    offhost_keep: 3
+    offhost_pubkey: "{{ playbook_dir }}/../../tools/watoom-code/rig/watoom-backup-pull.pub"
+    offhost_tool: "/usr/bin/python3 -I {{ watoom_backup_libexec }}/backup_offhost.py"
+  tasks:
+    - name: Install the backup tools outside any checkout
+      ansible.builtin.include_tasks: tasks/watoom-backup-libexec.yml
+    - name: Maintain the pull group
+      ansible.builtin.group:
+        name: "{{ offhost_user }}"
+        system: true
+    - name: Maintain the jailed pull-only account
+      ansible.builtin.user:
+        name: "{{ offhost_user }}"
+        group: "{{ offhost_user }}"
+        system: true
+        shell: /sbin/nologin
+        home: /
+        create_home: false
+        password: '!'
+    - name: Maintain the off-host export and receipt trees
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: "{{ item.owner }}"
+        group: "{{ item.group }}"
+        mode: "{{ item.mode }}"
+      loop:
+        - {path: "{{ offhost_root }}", owner: root, group: root, mode: '0700'}
+        - {path: "{{ offhost_root }}/export", owner: root, group: "{{ offhost_user }}", mode: '0750'}
+        - {path: "{{ offhost_root }}/receipts", owner: "{{ offhost_user }}", group: "{{ offhost_user }}", mode: '0750'}
+        - {path: "{{ offhost_jail }}", owner: root, group: root, mode: '0755'}
+    - name: Check existing jail bind mounts
+      ansible.builtin.command:
+        argv: [findmnt, -rn, --mountpoint, "{{ offhost_jail }}/{{ item }}"]
+      loop:
+        - export
+        - receipts
+      register: offhost_jail_mounts
+      changed_when: false
+      failed_when: false
+
+    - name: Create jail mountpoints only when not mounted
+      ansible.builtin.file:
+        path: "{{ offhost_jail }}/{{ item.item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      loop: "{{ offhost_jail_mounts.results }}"
+      when: item.rc != 0
+      loop_control:
+        label: "{{ item.item }}"
+    - name: Bind the export read-only and the receipts writable into the jail
+      ansible.posix.mount:
+        path: "{{ offhost_jail }}/{{ item.name }}"
+        src: "{{ offhost_root }}/{{ item.name }}"
+        fstype: none
+        opts: "{{ item.opts }}"
+        state: mounted
+      loop:
+        - {name: export, opts: 'bind,ro,nodev,nosuid,noexec'}
+        - {name: receipts, opts: 'bind,nodev,nosuid,noexec'}
+      loop_control: {label: "{{ item.name }}"}
+    - name: Label only the off-host tree for SSH access
+      community.general.sefcontext:
+        target: "{{ offhost_root }}(/.*)?"
+        setype: ssh_home_t
+        state: present
+    - name: Apply the off-host labels
+      ansible.builtin.command:
+        argv: [restorecon, -RF, "{{ offhost_root }}"]
+      changed_when: false
+    - name: Install only the dedicated pull public key (none means no access)
+      ansible.builtin.copy:
+        content: "{{ ('restrict ' + lookup('ansible.builtin.file', offhost_pubkey) | trim + '\n') if offhost_pubkey is file else '' }}"
+        dest: "/etc/ssh/authorized_keys/{{ offhost_user }}"
+        owner: root
+        group: root
+        mode: '0644'
+    - name: Maintain the narrow pull-only SFTP configuration
+      ansible.builtin.copy:
+        dest: /etc/ssh/sshd_config.d/61-watoom-backup-pull.conf
+        owner: root
+        group: root
+        mode: '0600'
+        content: |
+          # Off-host backup pull only; existing users are unaffected.
+          Match User {{ offhost_user }}
+              ChrootDirectory {{ offhost_jail }}
+              ForceCommand internal-sftp -d /export -u 0077
+              AuthorizedKeysFile /etc/ssh/authorized_keys/{{ offhost_user }}
+              AuthenticationMethods publickey
+              PasswordAuthentication no
+              KbdInteractiveAuthentication no
+              DisableForwarding yes
+              PermitTTY no
+          Match all
+      register: offhost_sftp_config
+    - name: Validate SSH configuration before reload
+      ansible.builtin.command: /usr/sbin/sshd -t
+      changed_when: false
+    - name: Reload SSH configuration without disconnecting sessions
+      ansible.builtin.systemd_service:
+        name: sshd
+        state: reloaded
+      when: offhost_sftp_config.changed
+    - name: Maintain the backup service drop-in directory
+      ansible.builtin.file:
+        path: /etc/systemd/system/watoom-code-backup.service.d
+        state: directory
+        mode: '0755'
+    - name: Publish the export after every verified backup run
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/watoom-code-backup.service.d/offhost.conf
+        mode: '0644'
+        content: |
+          [Service]
+          ExecStartPost={{ offhost_tool }} export --export {{ offhost_root }}/export --keep {{ offhost_keep }} --group {{ offhost_user }}
+      register: offhost_dropin
+    - name: Install the off-host receipt check and timer
+      ansible.builtin.copy:
+        dest: "/etc/systemd/system/{{ item.name }}"
+        mode: '0644'
+        content: "{{ item.content }}"
+      loop:
+        - name: watoom-backup-offhost-check.service
+          content: |
+            [Unit]
+            Description=Check rig receipts for off-host WatooM-Code backups
+            [Service]
+            Type=oneshot
+            ExecStart={{ offhost_tool }} receipts --export {{ offhost_root }}/export --receipts {{ offhost_root }}/receipts
+        - name: watoom-backup-offhost-check.timer
+          content: |
+            [Unit]
+            Description=Hourly off-host backup receipt check
+            [Timer]
+            OnCalendar=hourly
+            Persistent=true
+            [Install]
+            WantedBy=timers.target
+      loop_control: {label: "{{ item.name }}"}
+    - name: Enable the receipt check
+      ansible.builtin.systemd_service:
+        name: watoom-backup-offhost-check.timer
+        enabled: true
+        state: started
+        daemon_reload: true
+    - name: Publish the current verified runs now
+      ansible.builtin.command: "{{ offhost_tool }} export --export {{ offhost_root }}/export --keep {{ offhost_keep }} --group {{ offhost_user }}"
+      register: offhost_export
+      changed_when: false
+    - name: Report key status
+      ansible.builtin.debug:
+        msg: "{{ 'Pull key installed.' if offhost_pubkey is file else 'No pull key yet: add tools/watoom-code/rig/watoom-backup-pull.pub and re-run.' }} {{ offhost_export.stdout }}"

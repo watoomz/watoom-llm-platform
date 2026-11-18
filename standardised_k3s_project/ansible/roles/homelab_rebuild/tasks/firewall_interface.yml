@@ -1,0 +1,8 @@
+---
+- name: "Firewall interface | Add to configured zone"
+  ansible.posix.firewalld:
+    zone: "{{ homelab_firewall_zone }}"
+    interface: "{{ firewall_interface_target }}"
+    permanent: true
+    immediate: true
+    state: enabled

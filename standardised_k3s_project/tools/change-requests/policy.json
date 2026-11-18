@@ -1,0 +1,15 @@
+{
+  "repo": "/data/github/watoom-standardised-homelab",
+  "audit": "/data/ai/helper-scripts/reports/change-requests/audit.jsonl",
+  "push": true,
+  "queue_root": "/data/ai/projects",
+  "queue_globs": ["/data/ai/projects/*/*/.opencode/change-requests"],
+  "queues": [],
+  "limits": {"max_request_bytes": 65536, "max_text_bytes": 16384, "max_changed_lines": 40},
+  "targets": {
+    "standardised_k3s_project/tools/esp32/contract.py": {"checks": [["python3", "-c", "import ast,sys; ast.parse(open(sys.argv[1]).read())", "{file}"], ["python3", "-m", "unittest", "test_contract.Tests.test_source_profiles_cap_budgets", "test_contract.Tests.test_source_snapshot_and_escape", "test_contract.Tests.test_build_psram_override"]], "cwd": "standardised_k3s_project/tools/esp32"},
+    "standardised_k3s_project/tools/esp32/runner.py": {"checks": [["python3", "-c", "import ast,sys; ast.parse(open(sys.argv[1]).read())", "{file}"]]},
+    "standardised_k3s_project/tools/esp32/worker.py": {"checks": [["python3", "-c", "import ast,sys; ast.parse(open(sys.argv[1]).read())", "{file}"]]},
+    "standardised_k3s_project/ansible/roles/watoom-code/files/skills/esp32-development/references/operations.md": {"checks": []}
+  }
+}

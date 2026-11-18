@@ -1,0 +1,18 @@
+---
+# Shared by watoom-code-backup.yml and watoom-backup-offhost.yml: install a root-owned
+# copy of the backup tools so systemd units never execute from a git checkout.
+- name: Maintain the root-owned backup tool directory
+  ansible.builtin.file:
+    path: "{{ watoom_backup_libexec }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+- name: Install the backup tools from the reviewed source
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../tools/watoom-code/{{ item }}"
+    dest: "{{ watoom_backup_libexec }}/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop: [backup.py, backup_offhost.py]

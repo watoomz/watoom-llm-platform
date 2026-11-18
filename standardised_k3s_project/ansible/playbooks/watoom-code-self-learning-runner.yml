@@ -1,0 +1,44 @@
+---
+- name: Run the reviewed learning migration independently of Codex
+  hosts: watoom-homelab
+  become: true
+  gather_facts: false
+  vars:
+    watoom_learning_runner_root: /data/ai/helper-scripts/watoom-self-learning-20261023T000524Z
+    watoom_learning_runner_production_approved: false
+  tasks:
+    - name: Require a dedicated private evidence root
+      ansible.builtin.assert:
+        that:
+          - watoom_learning_runner_root is match('^/data/ai/helper-scripts/watoom-self-learning-[0-9TZ]+$')
+    - name: Install the bounded resumable runner
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/watoom-learning-runner.service
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Reviewed native WatooM learning migration
+          After=k3s.service
+          StartLimitIntervalSec=900
+          StartLimitBurst=3
+          [Service]
+          Type=exec
+          User=root
+          WorkingDirectory=/
+          ExecStart=/usr/bin/python3 -I {{ playbook_dir }}/../../tools/watoom-code/self_learning/runner.py \
+            --evidence {{ watoom_learning_runner_root }} --resume {{ '--i-approve' if watoom_learning_runner_production_approved | bool else '--stage-only' }}
+          Restart=on-failure
+          RestartSec=30
+          RuntimeMaxSec=3600
+          TimeoutStopSec=20
+          MemoryMax=1G
+          CPUQuota=200%
+          StandardOutput=journal
+          StandardError=journal
+    - name: Start the approved runner
+      ansible.builtin.systemd_service:
+        name: watoom-learning-runner.service
+        daemon_reload: true
+        state: started

@@ -1,0 +1,2472 @@
+{
+  "version": 1,
+  "verified_on": "25 October 2026 (Australia/Brisbane)",
+  "installed_skill_count": 131,
+  "pipeline_count": 27,
+  "items": [
+    {
+      "id": "pipeline-blender-builder",
+      "name": "Build a Blender game asset",
+      "category": "3D assets",
+      "kind": "Pipeline",
+      "status": "available",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nCreate [ASSET_DESCRIPTION] using watoom-blender-asset-builder with dimensions [DIMENSIONS], target [TARGET_ENGINE] and budget [POLYGON_BUDGET]. Use semantic named parts and materials, a dimension/contact plan and an empty scene. Preserve versioned source, run the request checkpoints including mandatory final packed-source QA, real engine validation and actual multi-view image review. Use the Prompt Builder page for guided questions and safe defaults.",
+      "inputs": [
+        "ASSET_DESCRIPTION",
+        "DIMENSIONS",
+        "POLYGON_BUDGET",
+        "PROJECT_PATH",
+        "TARGET_ENGINE"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#blender-builder"
+    },
+    {
+      "id": "pipeline-asset-search",
+      "name": "Find assets for a project",
+      "category": "Assets",
+      "kind": "Pipeline",
+      "status": "available",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nFind suitable existing assets for [ASSET_DESCRIPTION]. Search the shared asset Catalog first using the installed asset.search route. Return a short ranked list with asset IDs, formats, dependencies, licence/source and actual compatibility evidence. Inspect only selected candidates. Do not download or copy whole packs.",
+      "inputs": [
+        "ASSET_DESCRIPTION",
+        "PROJECT_PATH"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#asset-search"
+    },
+    {
+      "id": "pipeline-asset-index",
+      "name": "Index selected downloaded assets",
+      "category": "Assets",
+      "kind": "Pipeline",
+      "status": "available",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nIndex the receipt-verified files in [SOURCE_DIRECTORY] using the existing asset.index route and shared Catalog. Reuse existing IDs/adapters, preserve prior records and verify a subsequent search. Exclude incomplete downloads and unsupported formats; do not create another Catalog.",
+      "inputs": [
+        "PROJECT_PATH",
+        "SOURCE_DIRECTORY"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#asset-index"
+    },
+    {
+      "id": "pipeline-fab-acquire",
+      "name": "Acquire owned FAB assets",
+      "category": "Assets",
+      "kind": "Pipeline",
+      "status": "host workflow",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nCheck my existing server-authenticated FAB library for [ASSET_NAME]. Reconcile acquisition receipts before downloading. Use the maintained single-owner queue with hashes and resource bounds; never duplicate a downloader or re-download PASS assets. Index only verified complete files into the shared Catalog. Separate downloaded, indexed and runtime-compatible states. Do not purchase anything or expose account credentials. If host acquisition is unavailable to this session, report the precise missing capability once.",
+      "inputs": [
+        "ASSET_NAME",
+        "PROJECT_PATH"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#fab-acquire"
+    },
+    {
+      "id": "pipeline-inspect",
+      "name": "Inspect a mesh",
+      "category": "3D assets",
+      "kind": "Pipeline",
+      "status": "available",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nInspect the indexed asset [ASSET_ID] through the installed asset.inspect or mesh-inspection route. Report topology, finite bounds, scale, pivot, normals, UV/material slots and collision/rig information actually verified. Produce a project-local preview and inspect its pixels. Preserve the source.",
+      "inputs": [
+        "ASSET_ID",
+        "PROJECT_PATH"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#inspect"
+    },
+    {
+      "id": "pipeline-optimize",
+      "name": "Optimise an asset",
+      "category": "3D assets",
+      "kind": "Pipeline",
+      "status": "available",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nPrepare an optimised copy of indexed asset [ASSET_ID] for [TARGET_ENGINE], targeting [POLYGON_BUDGET] triangles and [TEXTURE_BUDGET]. Use asset.optimize after inspecting its installed schema. Preserve source materials/UVs and record before/after counts, bounds and visual differences. Import and validate the output before calling it game-ready.",
+      "inputs": [
+        "ASSET_ID",
+        "POLYGON_BUDGET",
+        "PROJECT_PATH",
+        "TARGET_ENGINE",
+        "TEXTURE_BUDGET"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#optimize"
+    },
+    {
+      "id": "pipeline-repair",
+      "name": "Repair and export a mesh",
+      "category": "3D assets",
+      "kind": "Pipeline",
+      "status": "available",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nRepair [PROJECT_MESH_FILE] using the installed mesh-repair/export route. Fix only confirmed geometry defects, preserve an original copy and record changes. Validate topology, normals, UVs, scale and exported geometry; compare actual before/after previews. Do not claim automatic rigging or animation.",
+      "inputs": [
+        "PROJECT_MESH_FILE",
+        "PROJECT_PATH"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#repair"
+    },
+    {
+      "id": "pipeline-mesh-generate",
+      "name": "Generate a prototype with LLaMA-Mesh",
+      "category": "3D assets",
+      "kind": "Pipeline",
+      "status": "available",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nGenerate one simple [OBJECT_DESCRIPTION] prototype with the existing synchronous watoom-llama-mesh MCP generate tool. Discover its actual arguments and use one stable request ID. Let the existing GPU controller own switching/restoration; never direct-scale models. Validate output geometry, then use Blender cleanup, sensible scale/pivot and an actual preview. Keep raw, cleaned and game-ready stages distinct. This is a prototype; do not claim textures, rigging or production quality without evidence.",
+      "inputs": [
+        "OBJECT_DESCRIPTION",
+        "PROJECT_PATH"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#mesh-generate"
+    },
+    {
+      "id": "pipeline-procedural-mesh",
+      "name": "Generate a procedural asset on CPU",
+      "category": "3D assets",
+      "kind": "Pipeline",
+      "status": "available",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nGenerate [ASSET_DESCRIPTION] with the installed typed CPU procedural generator registry: avian, quadruped, human, tree, terrain, building or rock. Discover the actual generator ID, bounded parameters and output contract before using the native 3D route. Use only the requested supported generator; do not execute downloaded code or substitute LLaMA-Mesh inference. Validate scale, geometry and export, and inspect the produced views. If rigging/animation is provided, verify actual motion and engine import before acceptance.",
+      "inputs": [
+        "ASSET_DESCRIPTION",
+        "PROJECT_PATH"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#procedural-mesh"
+    },
+    {
+      "id": "pipeline-material",
+      "name": "Derive a material",
+      "category": "3D assets",
+      "kind": "Pipeline",
+      "status": "available",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nUse material.derive for indexed source [ASSET_ID] to prepare [MATERIAL_DESCRIPTION] for [TARGET_ENGINE]. Inspect supported fields and output maps first. Verify map roles, colour spaces, dimensions and material assignment, then inspect an actual rendered surface. Do not invent missing PBR channels or claim shader fidelity from texture files alone.",
+      "inputs": [
+        "ASSET_ID",
+        "MATERIAL_DESCRIPTION",
+        "PROJECT_PATH",
+        "TARGET_ENGINE"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#material"
+    },
+    {
+      "id": "pipeline-character",
+      "name": "Prepare a character",
+      "category": "3D assets",
+      "kind": "Pipeline",
+      "status": "available",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nUse character.prepare for indexed character [ASSET_ID] and target [TARGET_ENGINE]. Inspect the installed requirements for skeleton/animations before running. Preserve hierarchy, scale, materials and existing clips. Validate actual Idle/Walk/Run motion where supplied, check two times per clip and review captures. Report missing rigging or animation rather than claiming it was created.",
+      "inputs": [
+        "ASSET_ID",
+        "PROJECT_PATH",
+        "TARGET_ENGINE"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#character"
+    },
+    {
+      "id": "pipeline-dungeon",
+      "name": "Create a procedural dungeon",
+      "category": "Worlds",
+      "kind": "Pipeline",
+      "status": "available",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nCreate a small editable Unreal dungeon for [DUNGEON_DESCRIPTION], using [BUILDER_OR_FORGE_OR_MIXED], [ROOM_COUNT] rooms, [LEVEL_COUNT] levels and seed [SEED]. Search the shared Catalog for a verified adapter, inspect the installed world.compose schema and submit one stable job ID. Reconcile the job before retrying. Require native floor/wall/capsule checks and Recast connectivity including stairs, editable-map reopening and actual textured previews. Procedural generation is not an exact source-map replica.",
+      "inputs": [
+        "BUILDER_OR_FORGE_OR_MIXED",
+        "DUNGEON_DESCRIPTION",
+        "LEVEL_COUNT",
+        "PROJECT_PATH",
+        "ROOM_COUNT",
+        "SEED"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#dungeon"
+    },
+    {
+      "id": "pipeline-fixed-map",
+      "name": "Recreate a supplied map",
+      "category": "Worlds",
+      "kind": "Pipeline",
+      "status": "capability-gated",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nRecreate [SOURCE_MAP_IMAGE] as a small editable Unreal dungeon with [COLUMNS] columns, [ROWS] rows and [CELL_SIZE_CM] cm cells. Derive walkable cells, blocked cells, internal wall edges and doors from actual pixel review; state uncertainties and validate bounds/connectivity. Discover whether fixed_layout is supported by the installed pipeline. Never submit a seeded world as an exact replica. If no supported fixed-layout/project assembly route exists, report the exact capability gap once. Use a fresh output for a changed plan; never delete identity guards. Deliver the editable project plus real overhead/perspective Unreal captures. No gameplay or additional systems.",
+      "inputs": [
+        "CELL_SIZE_CM",
+        "COLUMNS",
+        "PROJECT_PATH",
+        "ROWS",
+        "SOURCE_MAP_IMAGE"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#fixed-map"
+    },
+    {
+      "id": "pipeline-hyper",
+      "name": "Start an offline Hyper project",
+      "category": "Worlds",
+      "kind": "Pipeline",
+      "status": "host workflow",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nStage a NEW offline Hyper Combat project from the verified complete source, preserving its /Game/Hyper namespace, Config and input. Use the maintained unreal-project IaC path; do not overwrite an existing project or treat mesh world.compose as complete-framework staging. The accepted test uses offline Engine.GameInstance. Do not assume BP_GameInstance_Base or online multiplayer support; HOI/provider setup is a separate project-specific task. Validate project load and applicable Blueprint/gameplay checks before claiming the new project works. If this session lacks host staging access, report that boundary once.",
+      "inputs": [
+        "PROJECT_PATH",
+        "TASK_REQUIREMENTS"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#hyper"
+    },
+    {
+      "id": "pipeline-unreal-godot",
+      "name": "Unreal static assets to Godot",
+      "category": "Conversion",
+      "kind": "Pipeline",
+      "status": "available",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nConvert selected Unreal asset/map [ASSET_OR_MAP] into static geometry for Godot. Preserve the authored /Game dependency namespaces, use the accepted native Unreal route to bake/finalise geometry, export via GLTFExporter to GLB, then import into Godot. Check finite geometry, scale, textures/materials, colliders and actual captures. Unreal Blueprints, plugin logic and GeometryCache effects do not automatically transfer through GLB.",
+      "inputs": [
+        "ASSET_OR_MAP",
+        "PROJECT_PATH"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#unreal-godot"
+    },
+    {
+      "id": "pipeline-plugin-qualification",
+      "name": "Assess an Unreal plugin or integration kit",
+      "category": "Validation",
+      "kind": "Pipeline",
+      "status": "inspection first",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nAssess [PLUGIN_OR_ARCHIVE] for [PROJECT_AND_ENGINE_VERSION]. Inspect its descriptor, source documentation, licence, platform allowlist, dependencies and binary/build IDs without executing downloaded code or auto-connecting MCP. Nwiro/POT Linux support and arbitrary engine-version compatibility must not be assumed. Identify a supported isolated qualification/build route; preserve the accepted engine and existing project. Only enable the integration after actual load, relevant behaviour and rollback validation. If no supported route exists, report the exact boundary and keep the integration disabled.",
+      "inputs": [
+        "PLUGIN_OR_ARCHIVE",
+        "PROJECT_AND_ENGINE_VERSION",
+        "PROJECT_PATH"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#plugin-qualification"
+    },
+    {
+      "id": "pipeline-blender-godot",
+      "name": "Blender assets or animation to Godot",
+      "category": "Conversion",
+      "kind": "Pipeline",
+      "status": "available",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nPrepare [BLEND_OR_MESH_FILE] for Godot using the installed Blender route. Export only required runtime meshes/armatures, preserve materials and bake evaluated animation where appropriate. Validate GLB structure and finite values, import into Godot and check collisions/scale. For animation, verify source motion and imported motion at two distinct times, then inspect real captures.",
+      "inputs": [
+        "BLEND_OR_MESH_FILE",
+        "PROJECT_PATH"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#blender-godot"
+    },
+    {
+      "id": "pipeline-godot",
+      "name": "Small native Godot prototype",
+      "category": "Games",
+      "kind": "Pipeline",
+      "status": "available",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nBuild a small Godot proof of concept for [IDEA] in this project. Inspect existing code and installed Godot version first; reuse suitable indexed portable assets. Implement only [MINIMUM_SCOPE]. Run meaningful headless import/tests and actual visual checks. Keep generated output project-local and preserve unrelated gameplay. Deliver opening/running instructions, captures and honest remaining limitations.",
+      "inputs": [
+        "IDEA",
+        "MINIMUM_SCOPE",
+        "PROJECT_PATH"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#godot"
+    },
+    {
+      "id": "pipeline-captures",
+      "name": "Capture an existing Unreal or Godot project",
+      "category": "Validation",
+      "kind": "Pipeline",
+      "status": "available",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nCapture the existing [ENGINE] project/map [PROJECT_OR_MAP] without rebuilding its content. Discover the supported capture route and use legitimate GPU ownership/admission. Container /dev/dri absence does not establish that the host lacks NVIDIA hardware. Produce a useful overhead and perspective capture after shader/texture loading and UI repaint. Review actual pixels for framing, lighting, missing assets and dialogs. Nonblack PNG statistics are not visual acceptance.",
+      "inputs": [
+        "ENGINE",
+        "PROJECT_OR_MAP",
+        "PROJECT_PATH"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#captures"
+    },
+    {
+      "id": "pipeline-effects",
+      "name": "Validate an Unreal effect such as BloodFX",
+      "category": "Validation",
+      "kind": "Pipeline",
+      "status": "validation required",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nValidate selected effect [EFFECT_ASSET] in an isolated project using the accepted Unreal runtime and supported fenced rendering. Preserve the source. Prove actual animation at multiple times, visible motion and material/render fidelity with captures. Static load, timeline metadata and successful export are not playback evidence. If portable Godot output is requested, inspect an explicitly supported bake/conversion route and prove imported motion separately; GLTF static export does not convert GeometryCache or Niagara logic.",
+      "inputs": [
+        "EFFECT_ASSET",
+        "PROJECT_PATH"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#effects"
+    },
+    {
+      "id": "pipeline-image",
+      "name": "Generate an image with an installed model",
+      "category": "Images",
+      "kind": "Pipeline",
+      "status": "available",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nGenerate [IMAGE_DESCRIPTION] using installed managed image model [MODEL_OR_INSTALLATION_ID]. Discover the current generation interface and published sampling recommendations. For a LoRA, select an explicit compatible installed base. Use the existing GPU controller; preserve active jobs and verify primary restoration. Save the output and generation settings under this project, inspect the actual image and report limitations honestly.",
+      "inputs": [
+        "IMAGE_DESCRIPTION",
+        "MODEL_OR_INSTALLATION_ID",
+        "PROJECT_PATH"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#image"
+    },
+    {
+      "id": "pipeline-models",
+      "name": "Download and register a model",
+      "category": "Models",
+      "kind": "Pipeline",
+      "status": "available",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nSet up [HUGGING_FACE_REPOSITORY_URL] through the existing Model Manager at https://glance.internal.homelab.example/model-manager/. Inspect revisions, exact variant sizes, model type and dependency requirements. Distinguish GGUF, diffusion checkpoint/pipeline and LoRA. Use safe applicable settings (100000 context,4096 output,q4_0 K/V for compatible language models; lower model limits take precedence), preserving explicit saved overrides. Report downloaded/configured/registered/tested separately. No arbitrary remote-code execution, direct scaling or deletion of existing data.",
+      "inputs": [
+        "HUGGING_FACE_REPOSITORY_URL",
+        "PROJECT_PATH"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#models"
+    },
+    {
+      "id": "pipeline-research",
+      "name": "Research with SearXNG",
+      "category": "Research",
+      "kind": "Pipeline",
+      "status": "available",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nResearch [QUESTION] using the configured web-search/SearXNG tools. Inspect available tools rather than guessing endpoints. Prefer primary sources, cite links next to findings, distinguish verified facts from inference and save a short sourced report. Keep searches bounded and avoid fetching unrelated pages.",
+      "inputs": [
+        "PROJECT_PATH",
+        "QUESTION"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#research"
+    },
+    {
+      "id": "pipeline-writing",
+      "name": "Creative writing",
+      "category": "Writing",
+      "kind": "Pipeline",
+      "status": "available",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nWrite [FORMAT] about [PREMISE], approximately [LENGTH], in [TONE] for [AUDIENCE]. Use the selectable creativewriter agent and relevant installed English writing/world-building skills. Preserve supplied canon, state only critical assumptions and produce the requested writing rather than a long plan. Save the draft and any continuity notes in this project.",
+      "inputs": [
+        "AUDIENCE",
+        "FORMAT",
+        "LENGTH",
+        "PREMISE",
+        "PROJECT_PATH",
+        "TONE"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#writing"
+    },
+    {
+      "id": "pipeline-kali",
+      "name": "Authorised native Kali tools",
+      "category": "Security",
+      "kind": "Pipeline",
+      "status": "available",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nPerform an authorised security check of [EXPLICIT_OWNED_TARGET] limited to [SCOPE_AND_ALLOWED_TESTS]. Discover the installed native Kali tool interface and execute through the configured route from WatooM Code. Do not invent shell flags or endpoints, broaden scope, change networking or expose credentials. Keep a concise command/result record and evidence-backed findings. Ask before any destructive action or action outside the stated scope.",
+      "inputs": [
+        "EXPLICIT_OWNED_TARGET",
+        "PROJECT_PATH",
+        "SCOPE_AND_ALLOWED_TESTS"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#kali"
+    },
+    {
+      "id": "pipeline-development",
+      "name": "Implement and test a change",
+      "category": "Development",
+      "kind": "Pipeline",
+      "status": "available",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nImplement [CHANGE] in this project. Inspect existing source/tests and choose the smallest correct change. Follow installed role/handoff rules with exact agent/session pairs and no duplicate modifying children. Run meaningful affected tests, check actual behaviour and preserve unrelated changes. Keep durable infrastructure changes in authoritative IaC; report the commit, validation and remaining blockers.",
+      "inputs": [
+        "CHANGE",
+        "PROJECT_PATH"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#development"
+    },
+    {
+      "id": "pipeline-iac",
+      "name": "Maintain and activate an IaC fix",
+      "category": "Development",
+      "kind": "Pipeline",
+      "status": "available",
+      "description": "Maintained end-to-end request template. Verify the live tool and worker for the selected asset.",
+      "prompt": "Work in [PROJECT_PATH].\n\nFix [OBSERVED_ISSUE] through the authoritative homelab IaC repository. Collect narrow read-only evidence first, preserve unrelated changes and prepare the exact change/snapshot/rollback. Validate affected source and activate within existing approval and ownership rules. Wait for active work to settle rather than forcing scaling or killing jobs. Verify live behaviour and persist the fix in the normal build path. No network/firewall/DNS/driver changes unless explicitly requested.",
+      "inputs": [
+        "OBSERVED_ISSUE",
+        "PROJECT_PATH"
+      ],
+      "limits": "A maintained template is not proof that every input, codec, engine or output is supported.",
+      "source": "config/glance/pipeline-prompts.json#iac"
+    },
+    {
+      "id": "skill-opencode",
+      "name": "OpenCode",
+      "category": "Development & research",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Use this skill for any question about OpenCode itself, including how OpenCode works, using or configuring it, migrating from V1 to V2, troubleshooting it, developing plugins or integrations, using the OpenCode SDK, clients, server, or API, and contributing to the OpenCode codebase. Also use it for OpenCode agents, commands, skills, tools, permissions, MCP servers, providers, models, themes, keybinds, formatters, the CLI, TUI, desktop app, and web app.",
+      "prompt": "Work in [PROJECT_PATH]. Use the OpenCode skill.\n\nExplain or diagnose [OPENCODE_QUESTION_OR_ISSUE] using the installed implementation and current configuration.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "OPENCODE_QUESTION_OR_ISSUE",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill opencode"
+    },
+    {
+      "id": "skill-report",
+      "name": "Report",
+      "category": "Development & research",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Use when the user wants to report an opencode issue or bug. Collect standard diagnostics, add user-specific reproduction context, and publish the issue with GitHub CLI.",
+      "prompt": "Work in [PROJECT_PATH]. Use the Report skill.\n\nCollect diagnostics and a minimal reproduction for [OPENCODE_BUG]. Draft an issue report for review; do not publish it yet.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "OPENCODE_BUG",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill report"
+    },
+    {
+      "id": "skill-adaptation",
+      "name": "adaptation",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Adapt owned or authorized source into target format, preserving core elements within length.",
+      "prompt": "Work in [PROJECT_PATH]. Use the adaptation skill.\n\nAdapt [OWNED_OR_AUTHORIZED_SOURCE] into [TARGET_FORMAT], preserving [CORE_ELEMENTS] within [LENGTH].\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "CORE_ELEMENTS",
+        "LENGTH",
+        "OWNED_OR_AUTHORIZED_SOURCE",
+        "PROJECT_PATH",
+        "TARGET_FORMAT"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill adaptation"
+    },
+    {
+      "id": "skill-asset-image-clip-capture",
+      "name": "asset-image-clip-capture",
+      "category": "Assets & capture",
+      "kind": "Skill",
+      "status": "Verified bounded route",
+      "description": "Render stills, pose previews, turntables and authored animation clips from existing 3D assets. Resolve actual rig controls and run the verified bounded capture worker; preserve the source. Use for asset render/capture requests, not diffusion generation or new asset building.",
+      "prompt": "Work in [PROJECT_PATH]. Use the asset-image-clip-capture skill.\n\nCapture a full-body studio PNG of [ASSET_PATH], naturally posed and fully clothed. Use the native 4 GiB capture worker and inspect the output.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "ASSET_PATH",
+        "PROJECT_PATH"
+      ],
+      "limits": "Native watoom_asset_capture in the images project; separate 4 GiB CPU Blender worker. Real pose, quality and video acceptance are separate checks.",
+      "source": "Installed skill asset-image-clip-capture"
+    },
+    {
+      "id": "skill-blackhat-go",
+      "name": "blackhat-go",
+      "category": "Security & analysis",
+      "kind": "Skill",
+      "status": "Authorized scope required",
+      "description": "Go-based security techniques from \"Black Hat Go\" extended with macOS, Cloud, Mobile, IoT, Supply Chain, API, Web3, AI/ML, Red Team, ATT&CK, and LLM chapters. 186 techniques, 36 tools, 33 defenses across 37 chapters. Includes adversarial bisimulation games with Ungar (order-dependent) and join-semilattice structures. AAIF-compatible multiplayer agent games for human-agent security exercises.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blackhat-go skill.\n\nReview [OWN_GO_NETWORK_TOOL_CODE] for correctness and defensive hardening in an isolated lab; do not deploy it.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "OWN_GO_NETWORK_TOOL_CODE",
+        "PROJECT_PATH"
+      ],
+      "limits": "Use only authorized systems or offline artifacts. Check actual tool availability before execution.",
+      "source": "Installed skill blackhat-go"
+    },
+    {
+      "id": "skill-blender-addon-development",
+      "name": "blender-addon-development",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Write Blender add-ons as extensions - blender_manifest.toml, operators/panels/menus/property groups/preferences, bpy.props rules after 5.0, undo/redo, modal and timer patterns, gpu drawing (no bgl), bundling Python wheels, CLI validate/build/install, testing headless, extensions platform publishing. Use when creating or fixing a Blender add-on, tool, or UI.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blender-addon-development skill.\n\nCreate or assess a Blender addon for [FEATURE] against the installed runtime. Test registration and cleanup in isolation.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "FEATURE",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill blender-addon-development"
+    },
+    {
+      "id": "skill-blender-animation",
+      "name": "blender-animation",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Animation in Blender - version-specific legacy F-Curves or layered Action/channelbag API, Python keyframing, F-curves, game loops, NLA clips, pose library, mocap/BVH retargeting via constraints, baking control rigs to export skeletons, root motion, per-clip export. Use for any keyframe, action, NLA, mocap, or animation-export task.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blender-animation skill.\n\nPrepare [ACTION_OR_MOTION] on [RIG_PATH] for [FRAME_RANGE_AND_FPS], using the correct Action API and preserving the source rig.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "ACTION_OR_MOTION",
+        "FRAME_RANGE_AND_FPS",
+        "PROJECT_PATH",
+        "RIG_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill blender-animation"
+    },
+    {
+      "id": "skill-blender-asset-qa",
+      "name": "blender-asset-qa",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Mandatory review gate for any mesh or asset created or edited in Blender. Detects z-fighting (coplanar overlaps), floating/detached parts, inverted or inconsistent normals, non-manifold/open geometry, degenerate faces, duplicate verts, n-gons, unapplied scale, UV problems, bad skin weights, and renders multi-angle review sheets. Use before calling any modeling, export or delivery task done.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blender-asset-qa skill.\n\nCheck [ASSET_PATH] for topology, UV, material, scale and export defects against [TARGET_BUDGET]. Separate numeric QA from visual acceptance.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "ASSET_PATH",
+        "PROJECT_PATH",
+        "TARGET_BUDGET"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill blender-asset-qa"
+    },
+    {
+      "id": "skill-blender-character-rigging",
+      "name": "blender-character-rigging",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Character rigging in Blender - Rigify metarig fit/generate, bone naming/roll/collections, DEF/MCH/control layers, IK/FK, robust skinning (heat + proxy fallback), weight-painting rules, correctives, engine game skeletons (Unity, Unreal, Roblox R15), rig validation and deformation stress tests. Use for armature, skinning or weights tasks.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blender-character-rigging skill.\n\nAssess or prepare a rig for [CHARACTER_ASSET] targeting [DEFORMATION_REQUIREMENTS]. Validate bone mapping, weights and actual deformation.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "CHARACTER_ASSET",
+        "DEFORMATION_REQUIREMENTS",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill blender-character-rigging"
+    },
+    {
+      "id": "skill-blender-core",
+      "name": "blender-core",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Foundation for any Blender 5.2.1 task an agent drives - running bpy via MCP (live) or headless CLI, context overrides, locale-safe node lookup, enum discovery, 5.x API changes, verification. Use first for any Blender, bpy, .blend or 3D-asset request; routes to the specialized blender-* skills.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blender-core skill.\n\nInspect [BLEND_PATH] and select the smallest supported Blender operation for [GOAL]. Report the actual runtime and API compatibility.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "BLEND_PATH",
+        "GOAL",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill blender-core"
+    },
+    {
+      "id": "skill-blender-export-pipelines",
+      "name": "blender-export-pipelines",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Export from Blender with verified presets - Roblox (FBX/glTF, cages, R15, SurfaceAppearance), Unity (FBX, Humanoid), Unreal (FBX skeletal, Nanite, UCX), Godot/web (GLB, meshopt/Draco, WebP), USD. Scale/axes, smoothing, tangents, leaf bones, clips, batch export, post-export verification. Use whenever an asset leaves Blender.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blender-export-pipelines skill.\n\nExport [ASSET_AND_ACTIONS] to [FORMAT_AND_ENGINE] with explicit units, axes and animation selection. Verify the exported content.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "ASSET_AND_ACTIONS",
+        "FORMAT_AND_ENGINE",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill blender-export-pipelines"
+    },
+    {
+      "id": "skill-blender-facial-shapekeys",
+      "name": "blender-facial-shapekeys",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Facial rigs and shape keys in Blender - ARKit 52 blendshapes, visemes for lip-sync, sculpting expressions, splitting symmetric shapes into Left/Right, mirroring, corrective and combination shapes, drivers and control rigs, bone+blendshape hybrids, export to engines (Unity, Unreal, Roblox dynamic heads, VRM/web). Use for faces, expressions, lip-sync, or any shape-key work.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blender-facial-shapekeys skill.\n\nPrepare [FACIAL_EXPRESSION] on [CHARACTER_ASSET] using its actual supported shape keys or drivers and verify the deformed result.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "CHARACTER_ASSET",
+        "FACIAL_EXPRESSION",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill blender-facial-shapekeys"
+    },
+    {
+      "id": "skill-blender-game-optimization",
+      "name": "blender-game-optimization",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Optimize Blender assets for real-time engines - triangle/material/texture/bone budgets per platform (mobile, Roblox, web, VR, console, PC), LOD chains, decimation modes, mesh cleanup, draw-call reduction (material merging, atlases, trim sheets), instancing, vertex-split costs, collision proxies, texture memory. Use when an asset is too heavy, before export, or when targeting a platform budget.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blender-game-optimization skill.\n\nOptimize [ASSET_PATH] to [TRIANGLE_TEXTURE_AND_LOD_BUDGET] and verify normals, UVs, materials and silhouette.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "ASSET_PATH",
+        "PROJECT_PATH",
+        "TRIANGLE_TEXTURE_AND_LOD_BUDGET"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill blender-game-optimization"
+    },
+    {
+      "id": "skill-blender-geometry-nodes",
+      "name": "blender-geometry-nodes",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Geometry Nodes in Blender - fields, domains, attributes, instancing, zones (simulation/repeat/for-each), closures/bundles, lists, SDF grids, node tools, baking, plus a JSON-to-node-tree builder and socket inspector. Use for scattering, procedural assets/environments, parametric tools and modifier inputs.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blender-geometry-nodes skill.\n\nCreate a procedural [ASSET_OR_EFFECT] using Geometry Nodes with [PARAMETERS_AND_OUTPUT_BUDGET] on the qualified runtime.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "ASSET_OR_EFFECT",
+        "PARAMETERS_AND_OUTPUT_BUDGET",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill blender-geometry-nodes"
+    },
+    {
+      "id": "skill-blender-hardsurface-modeling",
+      "name": "blender-hardsurface-modeling",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Hard-surface and prop modeling in Blender - blockout-to-detail flow, non-destructive modifier stacks (Mirror, Boolean Exact/Manifold, Bevel, Weighted Normal, Smooth by Angle), mid-poly vs subdivision vs high-to-low workflows, shading/custom normals, cylinder segment budgets, edge attributes from Python. Use for weapons, vehicles, props, architecture, mechanical parts.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blender-hardsurface-modeling skill.\n\nModel [HARD_SURFACE_PROP] at [DIMENSIONS] with [TRIANGLE_BUDGET], named parts, useful topology and source preservation.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "DIMENSIONS",
+        "HARD_SURFACE_PROP",
+        "PROJECT_PATH",
+        "TRIANGLE_BUDGET"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill blender-hardsurface-modeling"
+    },
+    {
+      "id": "skill-blender-lighting-lookdev",
+      "name": "blender-lighting-lookdev",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Lighting, cameras and look-dev in Blender - studio 3-point and product lighting, HDRI environments, sun/sky exteriors, interiors, light linking, physically based light units, camera focal lengths/composition/DOF, cyclorama backdrops, looping turntables for asset presentation. Use when presenting assets, setting up scenes for rendering, or judging materials under consistent light.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blender-lighting-lookdev skill.\n\nPrepare [LIGHTING_LOOK] and [CAMERA_VIEW] for [ASSET_PATH], then verify the result through the capture workflow.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "ASSET_PATH",
+        "CAMERA_VIEW",
+        "LIGHTING_LOOK",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill blender-lighting-lookdev"
+    },
+    {
+      "id": "skill-blender-pbr-materials",
+      "name": "blender-pbr-materials",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Physically based materials in Blender - metal/roughness rules, Principled BSDF inputs, color spaces (sRGB vs Non-Color), measured albedo/F0 values, texture-set auto-wiring, ORM channel packing, DirectX vs OpenGL normals, alpha modes, displacement, view transforms (AgX, Khronos PBR Neutral), engine-ready material rules. Use when creating, fixing, or exporting materials and textures.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blender-pbr-materials skill.\n\nCreate or adjust [MATERIAL_LOOK] on [ASSET_PATH] using [TEXTURE_SET], with correct color spaces and a preview.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "ASSET_PATH",
+        "MATERIAL_LOOK",
+        "PROJECT_PATH",
+        "TEXTURE_SET"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill blender-pbr-materials"
+    },
+    {
+      "id": "skill-blender-pipeline-automation",
+      "name": "blender-pipeline-automation",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Automate Blender 5.2.1 at scale - headless CLI flags, batch convert/inventory/run-any-skill-script over folders of .blend/.fbx/.glb/.obj/.usd, sharding, bpy pip module, library linking, path management, render-farm and CI patterns. Use for batch jobs, format conversion, library maintenance and pipeline tooling.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blender-pipeline-automation skill.\n\nBatch [CONVERSION_OR_INSPECTION] over [SELECTED_FILES] using bounded serial runs, separate outputs and recoverable checkpoints.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "CONVERSION_OR_INSPECTION",
+        "PROJECT_PATH",
+        "SELECTED_FILES"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill blender-pipeline-automation"
+    },
+    {
+      "id": "skill-blender-rendering",
+      "name": "blender-rendering",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Render with Blender 5.2.1 Cycles/EEVEE/Workbench - quality presets, CPU execution, adaptive sampling, denoising, light paths, color management (AgX, Khronos PBR Neutral, ACES), PNG/EXR/MP4 output, passes, the 5.0 compositor API, CLI and multi-camera batch rendering. Use for any still, animation or turntable render.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blender-rendering skill.\n\nPrepare lighting, camera and render settings for [BLEND_PATH] at [RESOLUTION]. Route capture through the bounded native worker.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "BLEND_PATH",
+        "PROJECT_PATH",
+        "RESOLUTION"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill blender-rendering"
+    },
+    {
+      "id": "skill-blender-retopology-uv",
+      "name": "blender-retopology-uv",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Retopology and UVs in Blender - auto retopo (Quadriflow, Decimate, planar), deformation edge flow, seams, unwrap (Angle Based, Minimum Stretch, Smart), pixel-margin packing, texel density measure/set, lightmap UV2, UDIMs, mirrored UVs. Use to turn sculpts/scans/AI meshes into game meshes or prep UVs for texturing/baking.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blender-retopology-uv skill.\n\nRetopologize and unwrap [MESH_PATH] for [ENGINE_AND_TEXTURE_BUDGET], checking silhouette and UV coverage.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "ENGINE_AND_TEXTURE_BUDGET",
+        "MESH_PATH",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill blender-retopology-uv"
+    },
+    {
+      "id": "skill-blender-scene-setup",
+      "name": "blender-scene-setup",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Set up and audit Blender scenes the way studios do - units and real-world scale, collection layout, naming conventions (SM_/SK_/T_/M_), origins, linking vs appending, library overrides, asset libraries and catalogs, collection exporters, orphan/path cleanup. Use when starting a project, organizing a .blend, or before handoff/export.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blender-scene-setup skill.\n\nOrganize [SCENE_PATH] with [UNITS_COLLECTIONS_AND_NAMING], preserving authored objects and source files.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "PROJECT_PATH",
+        "SCENE_PATH",
+        "UNITS_COLLECTIONS_AND_NAMING"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill blender-scene-setup"
+    },
+    {
+      "id": "skill-blender-sculpting",
+      "name": "blender-sculpting",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Sculpting in Blender - base-to-detail workflow, voxel remesh, dyntopo, multires, 5.x brush types, masks/face sets, symmetry, plus headless-safe procedural ops for agents (remesh, symmetrize, multires, inflate, noise detail, smooth) and the sculpt-to-game handoff. Use for organic models, characters, creatures, rocks and bake sources.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blender-sculpting skill.\n\nSculpt [DETAIL_OR_FORM_CHANGE] on a new copy of [MESH_PATH], keeping the requested silhouette and output budget.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "DETAIL_OR_FORM_CHANGE",
+        "MESH_PATH",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill blender-sculpting"
+    },
+    {
+      "id": "skill-blender-simulation",
+      "name": "blender-simulation",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Physics in Blender - rigid bodies (density mass, shapes, bake to keys), classic cloth presets and pinning, new node-based Cloth/Hair Dynamics (XPBD, Collider, effectors), Mantaflow fluids, hair curves, GN simulation zones, headless baking. Use for destruction, drapes, flags, falling objects, liquids, smoke, hair motion.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blender-simulation skill.\n\nPrepare a bounded [CLOTH_OR_RIGID_BODY] simulation for [SCENE_PATH] over [FRAME_RANGE]. Verify supported APIs and bake outputs separately.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "CLOTH_OR_RIGID_BODY",
+        "FRAME_RANGE",
+        "PROJECT_PATH",
+        "SCENE_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill blender-simulation"
+    },
+    {
+      "id": "skill-blender-texture-baking",
+      "name": "blender-texture-baking",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Bake texture maps in Blender Cycles - high-to-low normal maps with cage/extrusion, AO, curvature, ID, thickness, base color/roughness/metallic from procedurals, ORM packing, OpenGL vs DirectX, margins, GPU baking, fixing skewing/waviness/seams. Use when transferring sculpt or high-poly detail to game meshes or converting procedural materials to textures.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blender-texture-baking skill.\n\nBake [MAP_TYPES] from [HIGH_AND_LOW_ASSETS] at [RESOLUTION], verifying cage, UVs and color space.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "HIGH_AND_LOW_ASSETS",
+        "MAP_TYPES",
+        "PROJECT_PATH",
+        "RESOLUTION"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill blender-texture-baking"
+    },
+    {
+      "id": "skill-blender-time-of-day",
+      "name": "blender-time-of-day",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Time of day and atmosphere in Blender - measured sky + sun for dawn, morning, noon, golden hour, sunset, blue hour, overcast, night/moonlight with stars and city glow, exposure balance, height fog from visibility, god rays, Cycles vs EEVEE volumes, compositor grade, stylized moods (cyberpunk neon, horror, underwater, desert). Use for any day/night, sunset, foggy or mood lighting scene.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blender-time-of-day skill.\n\nPrepare [TIME_OF_DAY] lighting for [SCENE_PATH] and verify the actual image through the capture route.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "PROJECT_PATH",
+        "SCENE_PATH",
+        "TIME_OF_DAY"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill blender-time-of-day"
+    },
+    {
+      "id": "skill-blender-weather-fx",
+      "name": "blender-weather-fx",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Weather effects in Blender - looping Geometry Nodes rain, snow, dust, ash and embers with ground hits and splashes, wet surfaces, puddles with animated ripples, wall streaks, snow cover (shader + real snow geometry), storm lightning with multi-stroke flashes and bolts, engine-ready weather masks. Use for rain, storm, snow, wet street, puddle, dust or ember scenes.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blender-weather-fx skill.\n\nPrepare [WEATHER_LOOK] for [SCENE_PATH] over [FRAME_RANGE] using supported CPU-safe features, then inspect the result.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "FRAME_RANGE",
+        "PROJECT_PATH",
+        "SCENE_PATH",
+        "WEATHER_LOOK"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill blender-weather-fx"
+    },
+    {
+      "id": "skill-blender-workflow-recipes",
+      "name": "blender-workflow-recipes",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "End-to-end Blender playbooks chaining the blender-* skills with QA gates - game props (mid-poly, high-to-low), game characters (sculpt/AI mesh to rigged, animated export), Roblox props/accessories/avatars, AI or downloaded asset cleanup, procedural environments, web/AR assets, product turntables, mood/weather shots (night, rain, snow, fog). Use for complete multi-stage asset requests.",
+      "prompt": "Work in [PROJECT_PATH]. Use the blender-workflow-recipes skill.\n\nFind and adapt a verified Blender recipe for [ASSET_TASK], retaining source hashes, relevant runtime assumptions and review gates.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "ASSET_TASK",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill blender-workflow-recipes"
+    },
+    {
+      "id": "skill-botnet-disruption",
+      "name": "botnet-disruption",
+      "category": "Security & analysis",
+      "kind": "Skill",
+      "status": "Authorized scope required",
+      "description": "Coordinated botnet takedown methodologies — sinkholing, infrastructure mapping, legal frameworks, BGP intervention, and post-disruption analysis. Studies Operation Endgame, Badbox 2.0, and emerging blockchain C2 countermeasures. Defensive disruption for authorized law enforcement, CERT, and academic research contexts.",
+      "prompt": "Work in [PROJECT_PATH]. Use the botnet-disruption skill.\n\nReview [AUTHORIZED_DEFENSIVE_CASE_STUDY] and produce a high-level legal, operational and evidence checklist; do not contact or alter infrastructure.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "AUTHORIZED_DEFENSIVE_CASE_STUDY",
+        "PROJECT_PATH"
+      ],
+      "limits": "Use only authorized systems or offline artifacts. Check actual tool availability before execution.",
+      "source": "Installed skill botnet-disruption"
+    },
+    {
+      "id": "skill-botnet-studies",
+      "name": "botnet-studies",
+      "category": "Security & analysis",
+      "kind": "Skill",
+      "status": "Authorized scope required",
+      "description": "Botnet architecture taxonomy, detection techniques, and defensive analysis. Covers C2 topologies, DGA analysis, fast-flux detection, P2P overlay mapping, blockchain C2, and ML-based traffic fingerprinting. Defensive research for understanding and countering distributed malicious infrastructure.",
+      "prompt": "Work in [PROJECT_PATH]. Use the botnet-studies skill.\n\nAnalyze [PUBLIC_BOTNET_REPORT_OR_OFFLINE_SAMPLE] for defensive understanding and summarize indicators without contacting infrastructure.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "PROJECT_PATH",
+        "PUBLIC_BOTNET_REPORT_OR_OFFLINE_SAMPLE"
+      ],
+      "limits": "Use only authorized systems or offline artifacts. Check actual tool availability before execution.",
+      "source": "Installed skill botnet-studies"
+    },
+    {
+      "id": "skill-cat",
+      "name": "cat",
+      "category": "Systems & theory",
+      "kind": "Skill",
+      "status": "Dependency-gated",
+      "description": "cat Skill: Derivational Pipe Chaining.",
+      "prompt": "Work in [PROJECT_PATH]. Use the cat skill.\n\nDemonstrate derivational pipe chaining for [SMALL_TRANSFORMATION_TASK] with a small local example.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "PROJECT_PATH",
+        "SMALL_TRANSFORMATION_TASK"
+      ],
+      "limits": "Installed instructions are not evidence that every upstream service or dependency is configured.",
+      "source": "Installed skill cat"
+    },
+    {
+      "id": "skill-chapter-writing",
+      "name": "chapter-writing",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Draft chapter chapter brief using outline and character context in story project.",
+      "prompt": "Work in [PROJECT_PATH]. Use the chapter-writing skill.\n\nDraft chapter [CHAPTER_BRIEF] using [OUTLINE_AND_CHARACTER_CONTEXT] in [STORY_PROJECT].\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "CHAPTER_BRIEF",
+        "OUTLINE_AND_CHARACTER_CONTEXT",
+        "PROJECT_PATH",
+        "STORY_PROJECT"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill chapter-writing"
+    },
+    {
+      "id": "skill-character-management",
+      "name": "character-management",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Develop or update character in story project with motivations, relationships and continuity notes.",
+      "prompt": "Work in [PROJECT_PATH]. Use the character-management skill.\n\nDevelop or update [CHARACTER] in [STORY_PROJECT] with motivations, relationships and continuity notes.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "CHARACTER",
+        "PROJECT_PATH",
+        "STORY_PROJECT"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill character-management"
+    },
+    {
+      "id": "skill-consensus",
+      "name": "consensus",
+      "category": "Systems & theory",
+      "kind": "Skill",
+      "status": "Dependency-gated",
+      "description": "Agreement protocol in multi-agent systems.",
+      "prompt": "Work in [PROJECT_PATH]. Use the consensus skill.\n\nCompare consensus approaches for [DISTRIBUTED_SYSTEM_REQUIREMENTS] with explicit failure assumptions.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "DISTRIBUTED_SYSTEM_REQUIREMENTS",
+        "PROJECT_PATH"
+      ],
+      "limits": "Installed instructions are not evidence that every upstream service or dependency is configured.",
+      "source": "Installed skill consensus"
+    },
+    {
+      "id": "skill-crdt",
+      "name": "crdt",
+      "category": "Systems & theory",
+      "kind": "Skill",
+      "status": "Dependency-gated",
+      "description": "crdt skill.",
+      "prompt": "Work in [PROJECT_PATH]. Use the crdt skill.\n\nDesign and test a CRDT merge model for [OFFLINE_SYNC_REQUIREMENTS] with explicit convergence invariants.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "OFFLINE_SYNC_REQUIREMENTS",
+        "PROJECT_PATH"
+      ],
+      "limits": "Installed instructions are not evidence that every upstream service or dependency is configured.",
+      "source": "Installed skill crdt"
+    },
+    {
+      "id": "skill-cybernetic-open-game",
+      "name": "cybernetic-open-game",
+      "category": "Systems & theory",
+      "kind": "Skill",
+      "status": "Dependency-gated",
+      "description": "Cybernetic Open Game Skill.",
+      "prompt": "Work in [PROJECT_PATH]. Use the cybernetic-open-game skill.\n\nAnalyze [TOY_FEEDBACK_SYSTEM] using compositional game concepts; separate mathematical assumptions from implemented behavior.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "PROJECT_PATH",
+        "TOY_FEEDBACK_SYSTEM"
+      ],
+      "limits": "Installed instructions are not evidence that every upstream service or dependency is configured.",
+      "source": "Installed skill cybernetic-open-game"
+    },
+    {
+      "id": "skill-derangement-crdt",
+      "name": "derangement-crdt",
+      "category": "Systems & theory",
+      "kind": "Skill",
+      "status": "Dependency-gated",
+      "description": "Derangement-CRDT Skill.",
+      "prompt": "Work in [PROJECT_PATH]. Use the derangement-crdt skill.\n\nExplain or prototype the derangement-CRDT model for [TOY_DATASET], testing claimed invariants without deploying services.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "PROJECT_PATH",
+        "TOY_DATASET"
+      ],
+      "limits": "Installed instructions are not evidence that every upstream service or dependency is configured.",
+      "source": "Installed skill derangement-crdt"
+    },
+    {
+      "id": "skill-discovery-drafting",
+      "name": "discovery-drafting",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Explore story start or scene through a bounded draft of length, preserving useful discoveries separately.",
+      "prompt": "Work in [PROJECT_PATH]. Use the discovery-drafting skill.\n\nExplore [STORY_START_OR_SCENE] through a bounded draft of [LENGTH], preserving useful discoveries separately.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "LENGTH",
+        "PROJECT_PATH",
+        "STORY_START_OR_SCENE"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill discovery-drafting"
+    },
+    {
+      "id": "skill-doc",
+      "name": "doc",
+      "category": "Development & research",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Use when the task involves reading, creating, or editing `.docx` documents, especially when formatting or layout fidelity matters; prefer `python-docx` plus the bundled `scripts/render_docx.py` for visual checks.",
+      "prompt": "Work in [PROJECT_PATH]. Use the doc skill.\n\nCreate or revise [DOCUMENT_PATH] for [AUDIENCE_AND_PURPOSE], preserving source structure and reviewing the final document.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "AUDIENCE_AND_PURPOSE",
+        "DOCUMENT_PATH",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill doc"
+    },
+    {
+      "id": "skill-editorial-review",
+      "name": "editorial-review",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Review draft path for editorial focus, citing concrete passages and prioritizing changes.",
+      "prompt": "Work in [PROJECT_PATH]. Use the editorial-review skill.\n\nReview [DRAFT_PATH] for [EDITORIAL_FOCUS], citing concrete passages and prioritizing changes.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "DRAFT_PATH",
+        "EDITORIAL_FOCUS",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill editorial-review"
+    },
+    {
+      "id": "skill-embedded-medical-device",
+      "name": "embedded-medical-device",
+      "category": "Security & analysis",
+      "kind": "Skill",
+      "status": "Authorized scope required",
+      "description": "Firmware development for STM32, nRF52840, and RP2040 medical devices with BLE/USB communication, IEEE 11073 protocols, and secure data handling. When building point-of-care devices (pulse oximeters, BP monitors, glucose meters), embedded gateways, or medical IoT endpoints with TinyGo.",
+      "prompt": "Work in [PROJECT_PATH]. Use the embedded-medical-device skill.\n\nReview [AUTHORIZED_DEVICE_DESIGN_OR_FIRMWARE] offline for [ENGINEERING_QUESTION]; separate lab findings from clinical claims.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "AUTHORIZED_DEVICE_DESIGN_OR_FIRMWARE",
+        "ENGINEERING_QUESTION",
+        "PROJECT_PATH"
+      ],
+      "limits": "Use only authorized systems or offline artifacts. Check actual tool availability before execution.",
+      "source": "Installed skill embedded-medical-device"
+    },
+    {
+      "id": "skill-fantasy-world-building",
+      "name": "fantasy-world-building",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Use when user mentions fantasy, magic system, or world-building for fantastical settings - provides fantasy genre conventions, magic system design patterns, and world-building frameworks.",
+      "prompt": "Work in [PROJECT_PATH]. Use the fantasy-world-building skill.\n\nDesign [FANTASY_SETTING_ELEMENT] with coherent [MAGIC_CULTURE_OR_GEOGRAPHY_RULES].\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "FANTASY_SETTING_ELEMENT",
+        "MAGIC_CULTURE_OR_GEOGRAPHY_RULES",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill fantasy-world-building"
+    },
+    {
+      "id": "skill-feedback-triage",
+      "name": "feedback-triage",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Prioritize feedback set for draft, grouping actionable issues, conflicts and optional preferences.",
+      "prompt": "Work in [PROJECT_PATH]. Use the feedback-triage skill.\n\nPrioritize [FEEDBACK_SET] for [DRAFT], grouping actionable issues, conflicts and optional preferences.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "DRAFT",
+        "FEEDBACK_SET",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill feedback-triage"
+    },
+    {
+      "id": "skill-genre-craft",
+      "name": "genre-craft",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Assess draft or outline against the expectations of genre, with concrete revision suggestions.",
+      "prompt": "Work in [PROJECT_PATH]. Use the genre-craft skill.\n\nAssess [DRAFT_OR_OUTLINE] against the expectations of [GENRE], with concrete revision suggestions.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "DRAFT_OR_OUTLINE",
+        "GENRE",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill genre-craft"
+    },
+    {
+      "id": "skill-ghidra-mcp",
+      "name": "ghidra-mcp",
+      "category": "Security & analysis",
+      "kind": "Skill",
+      "status": "Authorized scope required",
+      "description": "Ghidra reverse engineering via GhidraMCP + radare2 MCP with port resurrection.",
+      "prompt": "Work in [PROJECT_PATH]. Use the ghidra-mcp skill.\n\nAnalyze [AUTHORIZED_BINARY] for [FUNCTION_OR_BEHAVIOUR] using the available Ghidra integration and report evidence.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "AUTHORIZED_BINARY",
+        "FUNCTION_OR_BEHAVIOUR",
+        "PROJECT_PATH"
+      ],
+      "limits": "Use only authorized systems or offline artifacts. Check actual tool availability before execution.",
+      "source": "Installed skill ghidra-mcp"
+    },
+    {
+      "id": "skill-human-pose-agent",
+      "name": "human-pose-agent",
+      "category": "Assets & capture",
+      "kind": "Skill",
+      "status": "Native 4GiB + Shadowheart MHX adapter",
+      "description": "Inspect humanoid Blender rigs and prepare new pose assets using calibrated local channels or bounded FK-chain IK. Use for rig-aware pose preparation before asset capture; constrained control rigs need a qualified adapter.",
+      "prompt": "Work in [PROJECT_PATH]. Use human-pose-agent and native pose-inspect for [ASSET_PATH]. For [REQUESTED_POSE], select the fingerprinted rig-adapter only if adapter-inventory.json reports compatible; otherwise use a qualified generic route or report unsupported controls. Prepare through native pose-prepare on the 4GiB worker, preserve source/constraints/drivers, read the trusted receipt, then capture and review the actual clothed result. Do not accept numerical endpoint success as clothing-fit success.",
+      "inputs": [
+        "ASSET_PATH",
+        "PROJECT_PATH",
+        "REQUESTED_POSE"
+      ],
+      "limits": "Generic measured FK or genuinely calibrated recipes; fingerprinted shadowheart-mhx-v1 adds IK/FK switches, hand/foot targets, poles and hip control. Deep seated camp-pants sample failed garment review. All preparation remains a review candidate; no universal collision/seat-contact guarantee.",
+      "source": "Installed skill human-pose-agent"
+    },
+    {
+      "id": "skill-ies",
+      "name": "ies",
+      "category": "Systems & theory",
+      "kind": "Skill",
+      "status": "Dependency-gated",
+      "description": "ies.",
+      "prompt": "Work in [PROJECT_PATH]. Use the ies skill.\n\nAssess the ies polyglot-environment approach for [TASK]. Verify actual installed dependencies; do not assume the upstream environment is installed.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "PROJECT_PATH",
+        "TASK"
+      ],
+      "limits": "Installed instructions are not evidence that every upstream service or dependency is configured.",
+      "source": "Installed skill ies"
+    },
+    {
+      "id": "skill-interactive-fiction",
+      "name": "interactive-fiction",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Design interactive story with choices and state rules, testing branching consistency.",
+      "prompt": "Work in [PROJECT_PATH]. Use the interactive-fiction skill.\n\nDesign [INTERACTIVE_STORY] with [CHOICES_AND_STATE_RULES], testing branching consistency.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "CHOICES_AND_STATE_RULES",
+        "INTERACTIVE_STORY",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill interactive-fiction"
+    },
+    {
+      "id": "skill-join-semilattice",
+      "name": "join-semilattice",
+      "category": "Systems & theory",
+      "kind": "Skill",
+      "status": "Dependency-gated",
+      "description": "Join semilattices and sup-preservation.",
+      "prompt": "Work in [PROJECT_PATH]. Use the join-semilattice skill.\n\nModel [MERGE_OR_STATE_PROBLEM] as a join-semilattice and check its merge properties with small examples.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "MERGE_OR_STATE_PROBLEM",
+        "PROJECT_PATH"
+      ],
+      "limits": "Installed instructions are not evidence that every upstream service or dependency is configured.",
+      "source": "Installed skill join-semilattice"
+    },
+    {
+      "id": "skill-kubernetes",
+      "name": "kubernetes",
+      "category": "Operations",
+      "kind": "Skill",
+      "status": "Local KIND guidance",
+      "description": "Set up and manage local Kubernetes clusters using KIND (Kubernetes IN Docker). Use when testing Kubernetes applications locally or developing cloud-native workloads.",
+      "prompt": "Use the kubernetes skill to plan local KIND testing for [CLOUD_NATIVE_APPLICATION] with [TEST_SCOPE]. Verify existing development tooling first; do not replace or reinstall the production k3s cluster.",
+      "inputs": [
+        "CLOUD_NATIVE_APPLICATION",
+        "TEST_SCOPE"
+      ],
+      "limits": "This installed skill targets local KIND workflows. Use the maintained IaC pipeline for production k3s changes.",
+      "source": "Installed skill kubernetes"
+    },
+    {
+      "id": "skill-line-editing",
+      "name": "line-editing",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Line edit draft path for clarity, rhythm and voice, preserving plot and intentional style.",
+      "prompt": "Work in [PROJECT_PATH]. Use the line-editing skill.\n\nLine edit [DRAFT_PATH] for clarity, rhythm and voice, preserving plot and intentional style.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "DRAFT_PATH",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill line-editing"
+    },
+    {
+      "id": "skill-miasm-symbolic",
+      "name": "miasm-symbolic",
+      "category": "Security & analysis",
+      "kind": "Skill",
+      "status": "Authorized scope required",
+      "description": "Miasm reverse engineering framework for symbolic execution, IR lifting, and binary analysis. Interoperates with blackhat-go via adversarial bisimulation games and GF(3) conservation.",
+      "prompt": "Work in [PROJECT_PATH]. Use the miasm-symbolic skill.\n\nAnalyze a small function in [AUTHORIZED_LAB_BINARY] with symbolic reasoning and report assumptions and limitations.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "AUTHORIZED_LAB_BINARY",
+        "PROJECT_PATH"
+      ],
+      "limits": "Use only authorized systems or offline artifacts. Check actual tool availability before execution.",
+      "source": "Installed skill miasm-symbolic"
+    },
+    {
+      "id": "skill-modal",
+      "name": "modal",
+      "category": "Development & research",
+      "kind": "Skill",
+      "status": "External service required",
+      "description": "Run Python code in the cloud with serverless containers, GPUs, and autoscaling. Use when deploying ML models, running batch processing jobs, scheduling compute-intensive tasks, or serving APIs that require GPU acceleration or dynamic scaling.",
+      "prompt": "Work in [PROJECT_PATH]. Use the modal skill.\n\nAssess a cloud-compute plan for [WORKLOAD] with [RESOURCE_AND_COST_LIMITS]. Check credentials and supported interfaces before proposing execution.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "PROJECT_PATH",
+        "RESOURCE_AND_COST_LIMITS",
+        "WORKLOAD"
+      ],
+      "limits": "Requires an actual configured account, interface and budget. No cloud worker is assumed.",
+      "source": "Installed skill modal"
+    },
+    {
+      "id": "skill-plot-structure",
+      "name": "plot-structure",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Outline story premise using desired structure or length, with causal progression and character turns.",
+      "prompt": "Work in [PROJECT_PATH]. Use the plot-structure skill.\n\nOutline [STORY_PREMISE] using [DESIRED_STRUCTURE_OR_LENGTH], with causal progression and character turns.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "DESIRED_STRUCTURE_OR_LENGTH",
+        "PROJECT_PATH",
+        "STORY_PREMISE"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill plot-structure"
+    },
+    {
+      "id": "skill-premise-workshop",
+      "name": "premise-workshop",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Develop premise into a clear conflict, protagonist goal and stakes for genre and audience.",
+      "prompt": "Work in [PROJECT_PATH]. Use the premise-workshop skill.\n\nDevelop [PREMISE] into a clear conflict, protagonist goal and stakes for [GENRE_AND_AUDIENCE].\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "GENRE_AND_AUDIENCE",
+        "PREMISE",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill premise-workshop"
+    },
+    {
+      "id": "skill-publishing",
+      "name": "publishing",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Prepare a publishing plan for manuscript targeting audience and channel.",
+      "prompt": "Work in [PROJECT_PATH]. Use the publishing skill.\n\nPrepare a publishing plan for [MANUSCRIPT] targeting [AUDIENCE_AND_CHANNEL]. Draft materials for review before external submission.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "AUDIENCE_AND_CHANNEL",
+        "MANUSCRIPT",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill publishing"
+    },
+    {
+      "id": "skill-r2frida",
+      "name": "r2frida",
+      "category": "Security & analysis",
+      "kind": "Skill",
+      "status": "Authorized scope required",
+      "description": "Dynamic instrumentation bridge — radare2 static analysis meets Frida runtime hooking via r2frida:// URI.",
+      "prompt": "Work in [PROJECT_PATH]. Use the r2frida skill.\n\nPlan an authorized local instrumentation check of [OWN_LAB_APPLICATION] for [OBSERVATION], verifying attachment support first.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "OBSERVATION",
+        "OWN_LAB_APPLICATION",
+        "PROJECT_PATH"
+      ],
+      "limits": "Use only authorized systems or offline artifacts. Check actual tool availability before execution.",
+      "source": "Installed skill r2frida"
+    },
+    {
+      "id": "skill-radare2-hatchery",
+      "name": "radare2-hatchery",
+      "category": "Security & analysis",
+      "kind": "Skill",
+      "status": "Authorized scope required",
+      "description": "Radare2 Hatchery.",
+      "prompt": "Work in [PROJECT_PATH]. Use the radare2-hatchery skill.\n\nInspect [AUTHORIZED_BINARY] offline for [FUNCTION_OR_FORMAT] using supported local tools.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "AUTHORIZED_BINARY",
+        "FUNCTION_OR_FORMAT",
+        "PROJECT_PATH"
+      ],
+      "limits": "Use only authorized systems or offline artifacts. Check actual tool availability before execution.",
+      "source": "Installed skill radare2-hatchery"
+    },
+    {
+      "id": "skill-reader-panel",
+      "name": "reader-panel",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Assess draft path from target reader perspectives, distinguishing observations from suggested revisions.",
+      "prompt": "Work in [PROJECT_PATH]. Use the reader-panel skill.\n\nAssess [DRAFT_PATH] from [TARGET_READER_PERSPECTIVES], distinguishing observations from suggested revisions.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "DRAFT_PATH",
+        "PROJECT_PATH",
+        "TARGET_READER_PERSPECTIVES"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill reader-panel"
+    },
+    {
+      "id": "skill-red-hat-cve-explainer",
+      "name": "red-hat-cve-explainer",
+      "category": "Operations",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Explain a CVE using Red Hat's severity rating system. Looks up the CVE, explains the rating, and suggests a course of action.",
+      "prompt": "Work in [PROJECT_PATH]. Use the red-hat-cve-explainer skill.\n\nExplain [CVE] for [PRODUCT_AND_VERSION], checking current authoritative applicability and mitigations.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "CVE",
+        "PRODUCT_AND_VERSION",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill red-hat-cve-explainer"
+    },
+    {
+      "id": "skill-red-hat-diagnostics",
+      "name": "red-hat-diagnostics",
+      "category": "Operations",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Explain how to gather diagnostic information for Red Hat products (RHEL, OpenShift, Ansible Automation Platform, Satellite) to share with Red Hat Technical Support.",
+      "prompt": "Use the red-hat-diagnostics skill to plan diagnostic collection for [RED_HAT_PRODUCT_AND_ISSUE]. Identify supported tools and useful evidence; draft the support bundle without sending it.",
+      "inputs": [
+        "RED_HAT_PRODUCT_AND_ISSUE"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill red-hat-diagnostics"
+    },
+    {
+      "id": "skill-red-hat-product-lifecycle",
+      "name": "red-hat-product-lifecycle",
+      "category": "Operations",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Explain a Red Hat product's lifecycle status, support phases, and recommended action. Answers questions like \"Is RHEL 8.6 still supported?\" or \"When does OpenShift 4.14 reach end of maintenance?\".",
+      "prompt": "Work in [PROJECT_PATH]. Use the red-hat-product-lifecycle skill.\n\nCheck support lifecycle for [RED_HAT_PRODUCT_AND_VERSION] against current official information.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "PROJECT_PATH",
+        "RED_HAT_PRODUCT_AND_VERSION"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill red-hat-product-lifecycle"
+    },
+    {
+      "id": "skill-red-hat-security-mcp-setup",
+      "name": "red-hat-security-mcp-setup",
+      "category": "Operations",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Add the Red Hat Security MCP server to this project. Configures the HTTP transport endpoint and explains the Red Hat Customer Portal SSO browser login flow.",
+      "prompt": "Work in [PROJECT_PATH]. Use the red-hat-security-mcp-setup skill.\n\nReview the prerequisites for [RED_HAT_SECURITY_MCP_INTEGRATION]. Prepare configuration changes for approval without exposing credentials.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "PROJECT_PATH",
+        "RED_HAT_SECURITY_MCP_INTEGRATION"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill red-hat-security-mcp-setup"
+    },
+    {
+      "id": "skill-red-hat-support-severity",
+      "name": "red-hat-support-severity",
+      "category": "Operations",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Help determine the correct severity level for a Red Hat support ticket, explain SLAs, and guide what information to include.",
+      "prompt": "Work in [PROJECT_PATH]. Use the red-hat-support-severity skill.\n\nAssess the support severity of [INCIDENT] from its actual production impact and available workaround.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "INCIDENT",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill red-hat-support-severity"
+    },
+    {
+      "id": "skill-redteam",
+      "name": "RedTeam",
+      "category": "Development & research",
+      "kind": "Skill",
+      "status": "Argument critique",
+      "description": "32 adversarial agents to destroy weak arguments and find fatal flaws — parallel analysis and adversarial validation. USE WHEN red team, attack idea, counterarguments, critique, stress test, poke holes, devil's advocate, find weaknesses, break this, parallel analysis, adversarial validation.",
+      "prompt": "Work in [PROJECT_PATH]. Use the RedTeam skill to critique [ARGUMENT_OR_DESIGN], identify weak assumptions and propose evidence that would test them. Respect the current session’s delegation limits.",
+      "inputs": [
+        "PROJECT_PATH",
+        "ARGUMENT_OR_DESIGN"
+      ],
+      "limits": "Critiques arguments and design assumptions; it is not the Kali execution profile. Use the session’s authorized delegation limits.",
+      "source": "Installed skill redteam"
+    },
+    {
+      "id": "skill-research",
+      "name": "research",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Fact-check a story’s real-world details and record sources, uncertainty and affected scenes.",
+      "prompt": "Work in [STORY_PROJECT]. Use the research skill to fact-check [STORY_QUESTION] and record sources, uncertainties and affected scenes. Use configured research tools only.",
+      "inputs": [
+        "STORY_PROJECT",
+        "STORY_QUESTION"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill research"
+    },
+    {
+      "id": "skill-reverse-engineer-feature",
+      "name": "Reverse Engineering & Feature Reconstruction",
+      "category": "Security & analysis",
+      "kind": "Skill",
+      "status": "Authorized scope required",
+      "description": "Trace how an authorized application's feature works using static analysis and runtime evidence, then implement and test an original equivalent. Use for native binaries, Electron/JavaScript, .NET, Android APKs or websites when behavior must be understood beyond the UI.",
+      "prompt": "Work in [PROJECT_PATH]. Use the Reverse Engineering & Feature Reconstruction skill.\n\nTrace [FEATURE] in [AUTHORIZED_APPLICATION] using static/runtime evidence and design an original equivalent with focused tests.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "AUTHORIZED_APPLICATION",
+        "FEATURE",
+        "PROJECT_PATH"
+      ],
+      "limits": "Use only authorized systems or offline artifacts. Check actual tool availability before execution.",
+      "source": "Installed skill reverse-engineer-feature"
+    },
+    {
+      "id": "skill-revision-continuity",
+      "name": "revision-continuity",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Revise draft path for change request, checking continuity with canon and prior chapters.",
+      "prompt": "Work in [PROJECT_PATH]. Use the revision-continuity skill.\n\nRevise [DRAFT_PATH] for [CHANGE_REQUEST], checking continuity with [CANON_AND_PRIOR_CHAPTERS].\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "CANON_AND_PRIOR_CHAPTERS",
+        "CHANGE_REQUEST",
+        "DRAFT_PATH",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill revision-continuity"
+    },
+    {
+      "id": "skill-rhel-sysadmin",
+      "name": "RHEL SysAdmin",
+      "category": "Operations",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Diagnose and administer RHEL 8 and RHEL 9 production systems using evidence, exact commands, rollback and verification. Use RHEL 7 guidance only when explicitly requested.",
+      "prompt": "Use the RHEL SysAdmin skill to diagnose [RHEL_8_OR_9_ISSUE] using current system evidence and propose a reversible correction. Check release-specific support before changing anything.",
+      "inputs": [
+        "RHEL_8_OR_9_ISSUE"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill rhel-sysadmin"
+    },
+    {
+      "id": "skill-rust",
+      "name": "rust",
+      "category": "Development & research",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Rust ecosystem = cargo + rustc + clippy + rustfmt.",
+      "prompt": "Work in [PROJECT_PATH]. Use the rust skill.\n\nImplement or review [SMALL_RUST_CHANGE] in [PROJECT_PATH], using its existing build and test configuration.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "PROJECT_PATH",
+        "SMALL_RUST_CHANGE"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill rust"
+    },
+    {
+      "id": "skill-scene-craft",
+      "name": "scene-craft",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Develop scene goal with a clear viewpoint, conflict, setting and change of state.",
+      "prompt": "Work in [PROJECT_PATH]. Use the scene-craft skill.\n\nDevelop [SCENE_GOAL] with a clear viewpoint, conflict, setting and change of state.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "PROJECT_PATH",
+        "SCENE_GOAL"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill scene-craft"
+    },
+    {
+      "id": "skill-sdf",
+      "name": "sdf",
+      "category": "Systems & theory",
+      "kind": "Skill",
+      "status": "Dependency-gated",
+      "description": "Software Design for Flexibility: Sussman & Hanson's additive programming, combinators, propagators, and generic dispatch for evolvable systems.",
+      "prompt": "Work in [PROJECT_PATH]. Use the sdf skill.\n\nDesign a flexible software interface for [CHANGE_SCENARIO] using additive composition and explicit tradeoffs.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "CHANGE_SCENARIO",
+        "PROJECT_PATH"
+      ],
+      "limits": "Installed instructions are not evidence that every upstream service or dependency is configured.",
+      "source": "Installed skill sdf"
+    },
+    {
+      "id": "skill-security",
+      "name": "security",
+      "category": "Security & analysis",
+      "kind": "Skill",
+      "status": "Authorized scope required",
+      "description": "Security best practices for secure coding, authentication, authorization, and data protection. Use when developing features that handle sensitive data, user authentication, or require security review.",
+      "prompt": "Work in [PROJECT_PATH]. Use the security skill.\n\nReview [OWN_PROJECT] for [SECURITY_CONCERN] using read-only evidence and prioritized remediation guidance.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "OWN_PROJECT",
+        "PROJECT_PATH",
+        "SECURITY_CONCERN"
+      ],
+      "limits": "Use only authorized systems or offline artifacts. Check actual tool availability before execution.",
+      "source": "Installed skill security"
+    },
+    {
+      "id": "skill-series-continuity",
+      "name": "series-continuity",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Check series material for character, timeline and world-rule consistency across installments.",
+      "prompt": "Work in [PROJECT_PATH]. Use the series-continuity skill.\n\nCheck [SERIES_MATERIAL] for character, timeline and world-rule consistency across installments.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "PROJECT_PATH",
+        "SERIES_MATERIAL"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill series-continuity"
+    },
+    {
+      "id": "skill-signal-isolated-auth",
+      "name": "signal-isolated-auth",
+      "category": "Security & analysis",
+      "kind": "Skill",
+      "status": "Authorized scope required",
+      "description": "Maximally isolated Signal authentication via colored operad security boundaries. VM→Container→Process enclosure with GF(3) conservation for Agent-O-Rama pathways.",
+      "prompt": "Work in [PROJECT_PATH]. Use the signal-isolated-auth skill.\n\nReview an isolated authentication design for [LAB_REQUIREMENTS], checking actual available interfaces before setup.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "LAB_REQUIREMENTS",
+        "PROJECT_PATH"
+      ],
+      "limits": "Use only authorized systems or offline artifacts. Check actual tool availability before execution.",
+      "source": "Installed skill signal-isolated-auth"
+    },
+    {
+      "id": "skill-sims",
+      "name": "sims",
+      "category": "Sims 4",
+      "kind": "Skill",
+      "status": "Capability-gated",
+      "description": "Guide a Sims 4 modding job from a plain-language request, ask relevant follow-up questions, and route it to the matching Sims 4 pipeline skill. Use when someone wants to run a Sims job or create, inspect, edit, render, animate or package Sims 4 mod assets.",
+      "prompt": "Work in [PROJECT_PATH]. Use the sims skill.\n\nI want to run a Sims 4 job: [GOAL]. Ask me the relevant follow-up questions and select the correct module.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "GOAL",
+        "PROJECT_PATH"
+      ],
+      "limits": "Routing is installed. Package codecs, CAS round trips, script ABI and game compatibility require actual adapter and test evidence.",
+      "source": "Installed skill sims"
+    },
+    {
+      "id": "skill-sims4-animation",
+      "name": "sims4-animation",
+      "category": "Sims 4",
+      "kind": "Skill",
+      "status": "Verified Shadowheart body adapter; other rigs require validation",
+      "description": "Apply a selected TS4 animation to an asset using the installed binary codec and verified rig adapter. Save a new Blender Action and working file; preserve the source.",
+      "prompt": "Work in /data/ai/projects/images. Use sims4-animation.\n\nApply [CLIP_NAME_OR_RESOURCE_KEY] from [ANIMATION_PACKAGE_OR_CLIP_PATH] to [ASSET_PATH]. Preserve the asset's appearance, clothing and original files. Save the imported source Action and retargeted Action in a new versioned .blend.\n\nUse the installed TS4 codec and fixed retargeting adapter on the separate 4 GiB worker. For Shadowheart, use the verified adult-female TS4 to MHX body adapter. For another rig, verify or build its mapping before applying motion; do not silently use Shadowheart's profile. Check source/rest-pose compatibility, root motion, saved/reopened animation and visible motion. Report unmapped tracks and contact/clothing limitations. Ask in ordinary chat if the clip selection is missing.",
+      "inputs": [
+        "ANIMATION_PACKAGE_OR_CLIP_PATH",
+        "CLIP_NAME_OR_RESOURCE_KEY",
+        "ASSET_PATH"
+      ],
+      "limits": "Verified neutral head-turn application to Shadowheart MHX. Body rotations and optional scaled root motion only; individual package clips need review. Finger/face/contact/prop/garment corrections and other rigs are not qualified.",
+      "source": "Installed sims4-animation; references/ts4-retarget.md; ts4-shadowheart-retarget-20261025/acceptance.json"
+    },
+    {
+      "id": "example-apply-animation-capture-clip",
+      "name": "Apply an animation and capture a short clip",
+      "category": "Assets & capture",
+      "kind": "Skill",
+      "status": "Supported routes with per-asset video validation",
+      "description": "Apply a selected animation to an existing asset, then render a short MP4 from the resulting Action. Includes TS4 retargeting when needed.",
+      "prompt": "Work in /data/ai/projects/images. Use sims4-animation for TS4 input and asset-image-clip-capture for rendering.\n\nApply [ANIMATION_NAME_OR_RESOURCE_KEY] from [ANIMATION_SOURCE_PATH] to [ASSET_PATH], then capture a short MP4 of the resulting animation. Aim for 1–2 seconds with [CAMERA_VIEW] framing. Preserve the asset's appearance, clothing and source files.\n\nIf the asset already has the requested compatible Blender Action, reuse it. Otherwise decode/import the selected motion and verify the target rig mapping. Use the verified Shadowheart adapter only for a matching MHX rig; establish a separate adapter for other rigs. Save a new working .blend and validate the Action after reopening.\n\nPrepare and capture through the native dispatcher and separate 4 GiB worker. Use the Action's actual FPS and a bounded frame range, maintaining timing. Start with small preview settings and fit resolution, samples and frame count within the worker's frame/pixel/time budgets; do not assume character video is already qualified. Render only after preparation passes. Verify the actual MP4 duration, frame count, visible motion, framing and clothing; return the clip, working file and any limitations. Reconcile uncertain jobs instead of resubmitting. If the animation selection is ambiguous, ask in ordinary chat before choosing.",
+      "inputs": [
+        "ANIMATION_SOURCE_PATH",
+        "ANIMATION_NAME_OR_RESOURCE_KEY",
+        "ASSET_PATH",
+        "CAMERA_VIEW"
+      ],
+      "limits": "A prompt does not launch a job. TS4 adapter currently targets Shadowheart body controls; other rigs and each clip need validation. Short character-video quality/runtime require actual checks. No automatic contact, finger/face or clothing-fit correction.",
+      "source": "Installed sims4-animation + asset-image-clip-capture; TS4 retarget and video-capture references"
+    },
+    {
+      "id": "skill-sims4-asset-editor",
+      "name": "sims4-asset-editor",
+      "category": "Sims 4",
+      "kind": "Skill",
+      "status": "Capability-gated",
+      "description": "Route a specified Sims 4 asset creator / editor job to verified available skills and workers; normally selected by sims.",
+      "prompt": "Work in [PROJECT_PATH]. Use the sims4-asset-editor skill.\n\nModify [OBJECT_ASSET] to [DESIRED_CHANGE], preserving the original and verifying the available Sims resource adapter.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "DESIRED_CHANGE",
+        "OBJECT_ASSET",
+        "PROJECT_PATH"
+      ],
+      "limits": "Routing is installed. Package codecs, CAS round trips, script ABI and game compatibility require actual adapter and test evidence.",
+      "source": "Installed skill sims4-asset-editor"
+    },
+    {
+      "id": "skill-sims4-cas",
+      "name": "sims4-cas",
+      "category": "Sims 4",
+      "kind": "Skill",
+      "status": "Capability-gated",
+      "description": "Route a specified Sims 4 cas / clothing / hair job to verified available skills and workers; normally selected by sims.",
+      "prompt": "Work in [PROJECT_PATH]. Use the sims4-cas skill.\n\nEdit [CAS_ASSET] into [DESIGN] for [AGE_FRAME_AND_SLOT]. Identify required fit, morphs and game-format support first.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "AGE_FRAME_AND_SLOT",
+        "CAS_ASSET",
+        "DESIGN",
+        "PROJECT_PATH"
+      ],
+      "limits": "Routing is installed. Package codecs, CAS round trips, script ABI and game compatibility require actual adapter and test evidence.",
+      "source": "Installed skill sims4-cas"
+    },
+    {
+      "id": "skill-sims4-gameplay",
+      "name": "sims4-gameplay",
+      "category": "Sims 4",
+      "kind": "Skill",
+      "status": "Capability-gated",
+      "description": "Route a specified Sims 4 gameplay / tuning job to verified available skills and workers; normally selected by sims.",
+      "prompt": "Work in [PROJECT_PATH]. Use the sims4-gameplay skill.\n\nChange [EXISTING_MOD] so [IN_GAME_BEHAVIOUR] on [GAME_PATCH_AND_PACKS]. Verify tuning schema or script ABI before editing.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "EXISTING_MOD",
+        "GAME_PATCH_AND_PACKS",
+        "IN_GAME_BEHAVIOUR",
+        "PROJECT_PATH"
+      ],
+      "limits": "Routing is installed. Package codecs, CAS round trips, script ABI and game compatibility require actual adapter and test evidence.",
+      "source": "Installed skill sims4-gameplay"
+    },
+    {
+      "id": "skill-sims4-package-builder",
+      "name": "sims4-package-builder",
+      "category": "Sims 4",
+      "kind": "Skill",
+      "status": "Capability-gated",
+      "description": "Route a specified Sims 4 package builder job to verified available skills and workers; normally selected by sims.",
+      "prompt": "Work in [PROJECT_PATH]. Use the sims4-package-builder skill.\n\nBuild a new candidate package from [PREPARED_RESOURCES] using [SOURCE_OR_TEMPLATE_PACKAGE]. Verify writer support and preserve the originals.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "PREPARED_RESOURCES",
+        "PROJECT_PATH",
+        "SOURCE_OR_TEMPLATE_PACKAGE"
+      ],
+      "limits": "Routing is installed. Package codecs, CAS round trips, script ABI and game compatibility require actual adapter and test evidence.",
+      "source": "Installed skill sims4-package-builder"
+    },
+    {
+      "id": "skill-sims4-package-inspector",
+      "name": "sims4-package-inspector",
+      "category": "Sims 4",
+      "kind": "Skill",
+      "status": "Capability-gated",
+      "description": "Route a specified Sims 4 package inspector / extractor job to verified available skills and workers; normally selected by sims.",
+      "prompt": "Work in [PROJECT_PATH]. Use the sims4-package-inspector skill.\n\nInventory [PACKAGE_PATH] and extract [RESOURCE_SELECTION] if a verified parser supports it. Keep unsupported resources raw.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "PACKAGE_PATH",
+        "PROJECT_PATH",
+        "RESOURCE_SELECTION"
+      ],
+      "limits": "Routing is installed. Package codecs, CAS round trips, script ABI and game compatibility require actual adapter and test evidence.",
+      "source": "Installed skill sims4-package-inspector"
+    },
+    {
+      "id": "skill-sims4-release",
+      "name": "sims4-release",
+      "category": "Sims 4",
+      "kind": "Skill",
+      "status": "Capability-gated",
+      "description": "Route a specified Sims 4 validator / release job to verified available skills and workers; normally selected by sims.",
+      "prompt": "Work in [PROJECT_PATH]. Use the sims4-release skill.\n\nValidate [MOD_FILES] and prepare release [VERSION] with hashes, manifest and compatibility notes. Distinguish structural validation from actual in-game testing.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "MOD_FILES",
+        "PROJECT_PATH",
+        "VERSION"
+      ],
+      "limits": "Routing is installed. Package codecs, CAS round trips, script ABI and game compatibility require actual adapter and test evidence.",
+      "source": "Installed skill sims4-release"
+    },
+    {
+      "id": "skill-sims4-render",
+      "name": "sims4-render",
+      "category": "Sims 4",
+      "kind": "Skill",
+      "status": "Capture route",
+      "description": "Route a specified Sims 4 blender render / turntable job to verified available skills and workers; normally selected by sims.",
+      "prompt": "Work in [PROJECT_PATH]. Use the sims4-render skill.\n\nRender [ASSET_PATH] as [STILL_TURNTABLE_OR_EXISTING_CLIP] with [VIEW_AND_TIMING]. Use asset-image-clip-capture and review actual media.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "ASSET_PATH",
+        "PROJECT_PATH",
+        "STILL_TURNTABLE_OR_EXISTING_CLIP",
+        "VIEW_AND_TIMING"
+      ],
+      "limits": "Uses asset-image-clip-capture. Rendering an asset does not prove Sims package editing or game compatibility.",
+      "source": "Installed skill sims4-render"
+    },
+    {
+      "id": "skill-sims4-textures",
+      "name": "sims4-textures",
+      "category": "Sims 4",
+      "kind": "Skill",
+      "status": "Capability-gated",
+      "description": "Route a specified Sims 4 textures / materials job to verified available skills and workers; normally selected by sims.",
+      "prompt": "Work in [PROJECT_PATH]. Use the sims4-textures skill.\n\nChange the materials or textures of [SIMS_ASSET] to [LOOK]. Deliver [IMAGE_ONLY_OR_PACKAGE_REPLACEMENT] using verified resource support.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "IMAGE_ONLY_OR_PACKAGE_REPLACEMENT",
+        "LOOK",
+        "PROJECT_PATH",
+        "SIMS_ASSET"
+      ],
+      "limits": "Routing is installed. Package codecs, CAS round trips, script ABI and game compatibility require actual adapter and test evidence.",
+      "source": "Installed skill sims4-textures"
+    },
+    {
+      "id": "skill-sims4-unreal",
+      "name": "sims4-unreal",
+      "category": "Sims 4",
+      "kind": "Skill",
+      "status": "Capability-gated",
+      "description": "Route a specified Sims 4 optional unreal export job to verified available skills and workers; normally selected by sims.",
+      "prompt": "Work in [PROJECT_PATH]. Use the sims4-unreal skill.\n\nExport [ASSET_OR_ACTIONS] for Unreal 5.8.3. Verify the actual export/import route, scale, skeleton and materials.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "ASSET_OR_ACTIONS",
+        "PROJECT_PATH"
+      ],
+      "limits": "Routing is installed. Package codecs, CAS round trips, script ABI and game compatibility require actual adapter and test evidence.",
+      "source": "Installed skill sims4-unreal"
+    },
+    {
+      "id": "skill-skill-embedding-vss",
+      "name": "skill-embedding-vss",
+      "category": "Systems & theory",
+      "kind": "Skill",
+      "status": "Dependency-gated",
+      "description": "P-adic ultrametric skill embeddings with MLX Snowflake Arctic, DuckDB VSS, and full SPI tracing.",
+      "prompt": "Work in [PROJECT_PATH]. Use the skill-embedding-vss skill.\n\nAssess skill-retrieval quality for [EXAMPLE_REQUESTS] and check whether the described embedding dependencies are actually available.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "EXAMPLE_REQUESTS",
+        "PROJECT_PATH"
+      ],
+      "limits": "Installed instructions are not evidence that every upstream service or dependency is configured.",
+      "source": "Installed skill skill-embedding-vss"
+    },
+    {
+      "id": "skill-story-init",
+      "name": "story-init",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Start a story project about premise, collecting genre, audience, tone and scope before establishing project notes.",
+      "prompt": "Work in [PROJECT_PATH]. Use the story-init skill.\n\nStart a story project about [PREMISE], collecting genre, audience, tone and scope before establishing project notes.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "PREMISE",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill story-init"
+    },
+    {
+      "id": "skill-story-maintenance",
+      "name": "story-maintenance",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Update the story bible and progress notes in story project after accepted change, preserving established canon.",
+      "prompt": "Work in [PROJECT_PATH]. Use the story-maintenance skill.\n\nUpdate the story bible and progress notes in [STORY_PROJECT] after [ACCEPTED_CHANGE], preserving established canon.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "ACCEPTED_CHANGE",
+        "PROJECT_PATH",
+        "STORY_PROJECT"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill story-maintenance"
+    },
+    {
+      "id": "skill-submission",
+      "name": "submission",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Prepare a submission package for manuscript and destination.",
+      "prompt": "Work in [PROJECT_PATH]. Use the submission skill.\n\nPrepare a submission package for [MANUSCRIPT_AND_DESTINATION]. Review requirements and produce a draft without sending it.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "MANUSCRIPT_AND_DESTINATION",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill submission"
+    },
+    {
+      "id": "skill-synchronization",
+      "name": "synchronization",
+      "category": "Systems & theory",
+      "kind": "Skill",
+      "status": "Dependency-gated",
+      "description": "Convergence to common trajectory in coupled systems.",
+      "prompt": "Work in [PROJECT_PATH]. Use the synchronization skill.\n\nDesign synchronization for [APPLICATION_STATE] under [OFFLINE_AND_CONCURRENCY_REQUIREMENTS].\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "APPLICATION_STATE",
+        "OFFLINE_AND_CONCURRENCY_REQUIREMENTS",
+        "PROJECT_PATH"
+      ],
+      "limits": "Installed instructions are not evidence that every upstream service or dependency is configured.",
+      "source": "Installed skill synchronization"
+    },
+    {
+      "id": "skill-theme-craft",
+      "name": "theme-craft",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Develop story theme through character choices and plot consequences in story project.",
+      "prompt": "Work in [PROJECT_PATH]. Use the theme-craft skill.\n\nDevelop [STORY_THEME] through character choices and plot consequences in [STORY_PROJECT].\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "PROJECT_PATH",
+        "STORY_PROJECT",
+        "STORY_THEME"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill theme-craft"
+    },
+    {
+      "id": "skill-verse-craft",
+      "name": "verse-craft",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Draft or revise poem or lyrical text using form tone and theme.",
+      "prompt": "Work in [PROJECT_PATH]. Use the verse-craft skill.\n\nDraft or revise [POEM_OR_LYRICAL_TEXT] using [FORM_TONE_AND_THEME].\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "FORM_TONE_AND_THEME",
+        "POEM_OR_LYRICAL_TEXT",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill verse-craft"
+    },
+    {
+      "id": "skill-voice-style",
+      "name": "voice-style",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Refine draft toward voice and style goal while preserving its meaning and point of view.",
+      "prompt": "Work in [PROJECT_PATH]. Use the voice-style skill.\n\nRefine [DRAFT] toward [VOICE_AND_STYLE_GOAL] while preserving its meaning and point of view.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "DRAFT",
+        "PROJECT_PATH",
+        "VOICE_AND_STYLE_GOAL"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill voice-style"
+    },
+    {
+      "id": "skill-watoom-blender-asset-builder",
+      "name": "watoom-blender-asset-builder",
+      "category": "Blender",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Coordinate reference-driven Blender game assets, EL4CTEO CPU skills, versioned source, recovery, visual review, and real Godot/Unreal validation through existing native tools.",
+      "prompt": "Work in [PROJECT_PATH]. Use the watoom-blender-asset-builder skill.\n\nBuild [ASSET_DESCRIPTION] at [DIMENSIONS] for [TARGET_ENGINE] with [TRIANGLE_AND_TEXTURE_BUDGET]. Use versioned builder checkpoints, final-source QA and separate visual/engine gates.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "ASSET_DESCRIPTION",
+        "DIMENSIONS",
+        "PROJECT_PATH",
+        "TARGET_ENGINE",
+        "TRIANGLE_AND_TEXTURE_BUDGET"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session. Current maintained runtime is pinned Blender 5.2.1 CPU; per-feature and output gates still apply.",
+      "source": "Installed skill watoom-blender-asset-builder"
+    },
+    {
+      "id": "skill-watoom-engine-visual-diagnosis",
+      "name": "watoom-engine-visual-diagnosis",
+      "category": "Assets & capture",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Diagnose missing geometry, foliage, materials, bad terrain or mismatched engine captures using source identity, installed-runtime checks and bounded renders. Use when a visual review contradicts the intended scene; not for routine image generation.",
+      "prompt": "Work in [PROJECT_PATH]. Use the watoom-engine-visual-diagnosis skill.\n\nDiagnose [SCREENSHOT_OR_ENGINE_ARTIFACT] against [EXPECTED_RESULT]. Inspect the actual image and identify a small evidence-backed fix.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "EXPECTED_RESULT",
+        "PROJECT_PATH",
+        "SCREENSHOT_OR_ENGINE_ARTIFACT"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill watoom-engine-visual-diagnosis"
+    },
+    {
+      "id": "skill-watoom-explicit-image-creator",
+      "name": "watoom-explicit-image-creator",
+      "category": "Development & research",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Installed image-creation guidance. This reference provides a non-explicit request example.",
+      "prompt": "Work in [PROJECT_PATH]. Use the watoom-explicit-image-creator skill.\n\nAssess whether [NON_EXPLICIT_ILLUSTRATION_REQUEST] belongs in the supported image workflow. Use an appropriate available route and verify the actual output.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "NON_EXPLICIT_ILLUSTRATION_REQUEST",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill watoom-explicit-image-creator"
+    },
+    {
+      "id": "skill-watoom-fab-owned-assets",
+      "name": "watoom-fab-owned-assets",
+      "category": "Assets & capture",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Find project-relevant assets in the owner Fab library, request explicit per-asset download approval, and prepare approved sources with dependency and engine validation.",
+      "prompt": "Work in [PROJECT_PATH]. Use the watoom-fab-owned-assets skill.\n\nFind [ASSET_NAME] in my existing owned FAB library, reconcile download receipts and index only verified complete files. Do not purchase assets.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "ASSET_NAME",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill watoom-fab-owned-assets"
+    },
+    {
+      "id": "skill-watoom-landscape-mesh-builder",
+      "name": "watoom-landscape-mesh-builder",
+      "category": "Assets & capture",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Assess and use the owned Landscape Mesh Builder UE Blueprint for heightmap-to-static-mesh terrain baking; not a Godot plugin or foliage/material repair tool.",
+      "prompt": "Work in [PROJECT_PATH]. Use the owned Landscape Mesh Builder Unreal Blueprint to bake [HEIGHTMAP_OR_TERRAIN] into [STATIC_MESH_BUDGET]. Verify the installed engine and Blueprint interface, then review geometry and export compatibility.",
+      "inputs": [
+        "PROJECT_PATH",
+        "HEIGHTMAP_OR_TERRAIN",
+        "STATIC_MESH_BUDGET"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill watoom-landscape-mesh-builder"
+    },
+    {
+      "id": "skill-watoom-poo-vfx",
+      "name": "watoom-poo-vfx",
+      "category": "Assets & capture",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Use the owned Poo VFX source pack for stylised splats, drips, splashes and projectiles; inspect native Niagara/material dependencies and qualify any Godot adaptation.",
+      "prompt": "Work in [PROJECT_PATH]. Use the watoom-poo-vfx skill.\n\nPrepare a stylized non-graphic cartoon effect for [PROJECT_AND_SCENE] with [TIMING_AND_PERFORMANCE_BUDGET], then review the result.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "PROJECT_AND_SCENE",
+        "PROJECT_PATH",
+        "TIMING_AND_PERFORMANCE_BUDGET"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill watoom-poo-vfx"
+    },
+    {
+      "id": "skill-watoom-prompt-asset-index",
+      "name": "watoom-prompt-asset-index",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for index selected downloaded assets, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-asset-index. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-asset-index"
+    },
+    {
+      "id": "skill-watoom-prompt-asset-search",
+      "name": "watoom-prompt-asset-search",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for find assets for a project, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-asset-search. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-asset-search"
+    },
+    {
+      "id": "skill-watoom-prompt-blender-builder",
+      "name": "watoom-prompt-blender-builder",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for build a blender game asset, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-blender-builder. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-blender-builder"
+    },
+    {
+      "id": "skill-watoom-prompt-blender-godot",
+      "name": "watoom-prompt-blender-godot",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for blender assets or animation to godot, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-blender-godot. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-blender-godot"
+    },
+    {
+      "id": "skill-watoom-prompt-captures",
+      "name": "watoom-prompt-captures",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for capture an existing unreal or godot project, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-captures. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-captures"
+    },
+    {
+      "id": "skill-watoom-prompt-character",
+      "name": "watoom-prompt-character",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for prepare a character, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-character. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-character"
+    },
+    {
+      "id": "skill-watoom-prompt-creator",
+      "name": "watoom-prompt-creator",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Build concise pipeline task prompts from a free request and essential follow-up answers; used by the Prompt Builder page and direct prompt-writing requests.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-creator. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-creator"
+    },
+    {
+      "id": "skill-watoom-prompt-development",
+      "name": "watoom-prompt-development",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for implement and test a change, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-development. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-development"
+    },
+    {
+      "id": "skill-watoom-prompt-dungeon",
+      "name": "watoom-prompt-dungeon",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for create a procedural dungeon, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-dungeon. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-dungeon"
+    },
+    {
+      "id": "skill-watoom-prompt-effects",
+      "name": "watoom-prompt-effects",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for validate an unreal effect such as bloodfx, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-effects. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-effects"
+    },
+    {
+      "id": "skill-watoom-prompt-fab-acquire",
+      "name": "watoom-prompt-fab-acquire",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for acquire owned fab assets, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-fab-acquire. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-fab-acquire"
+    },
+    {
+      "id": "skill-watoom-prompt-fixed-map",
+      "name": "watoom-prompt-fixed-map",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for recreate a supplied map, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-fixed-map. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-fixed-map"
+    },
+    {
+      "id": "skill-watoom-prompt-godot",
+      "name": "watoom-prompt-godot",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for small native godot prototype, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-godot. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-godot"
+    },
+    {
+      "id": "skill-watoom-prompt-hyper",
+      "name": "watoom-prompt-hyper",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for start an offline hyper project, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-hyper. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-hyper"
+    },
+    {
+      "id": "skill-watoom-prompt-iac",
+      "name": "watoom-prompt-iac",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for maintain and activate an iac fix, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-iac. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-iac"
+    },
+    {
+      "id": "skill-watoom-prompt-image",
+      "name": "watoom-prompt-image",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for generate an image with an installed model, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-image. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-image"
+    },
+    {
+      "id": "skill-watoom-prompt-inspect",
+      "name": "watoom-prompt-inspect",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for inspect a mesh, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-inspect. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-inspect"
+    },
+    {
+      "id": "skill-watoom-prompt-kali",
+      "name": "watoom-prompt-kali",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for authorised native kali tools, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-kali. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-kali"
+    },
+    {
+      "id": "skill-watoom-prompt-material",
+      "name": "watoom-prompt-material",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for derive a material, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-material. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-material"
+    },
+    {
+      "id": "skill-watoom-prompt-mesh-generate",
+      "name": "watoom-prompt-mesh-generate",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for generate a prototype with llama-mesh, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-mesh-generate. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-mesh-generate"
+    },
+    {
+      "id": "skill-watoom-prompt-models",
+      "name": "watoom-prompt-models",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for download and register a model, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-models. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-models"
+    },
+    {
+      "id": "skill-watoom-prompt-optimize",
+      "name": "watoom-prompt-optimize",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for optimise an asset, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-optimize. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-optimize"
+    },
+    {
+      "id": "skill-watoom-prompt-plugin-qualification",
+      "name": "watoom-prompt-plugin-qualification",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for assess an unreal plugin or integration kit, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-plugin-qualification. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-plugin-qualification"
+    },
+    {
+      "id": "skill-watoom-prompt-procedural-mesh",
+      "name": "watoom-prompt-procedural-mesh",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for generate a procedural asset on cpu, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-procedural-mesh. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-procedural-mesh"
+    },
+    {
+      "id": "skill-watoom-prompt-repair",
+      "name": "watoom-prompt-repair",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for repair and export a mesh, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-repair. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-repair"
+    },
+    {
+      "id": "skill-watoom-prompt-research",
+      "name": "watoom-prompt-research",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for research with searxng, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-research. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-research"
+    },
+    {
+      "id": "skill-watoom-prompt-unreal-godot",
+      "name": "watoom-prompt-unreal-godot",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for unreal static assets to godot, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-unreal-godot. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-unreal-godot"
+    },
+    {
+      "id": "skill-watoom-prompt-writing",
+      "name": "watoom-prompt-writing",
+      "category": "Prompt preparation",
+      "kind": "Prompt builder",
+      "status": "Prompt only",
+      "description": "Create an efficient task prompt for creative writing, collecting pipeline-specific inputs before execution.",
+      "prompt": "Prepare an editable prompt for [TASK] using watoom-prompt-writing. Ask relevant follow-up questions and propose clear defaults. Do not start the job.",
+      "inputs": [
+        "TASK"
+      ],
+      "limits": "Produces a prompt. Copy it into a session to request execution.",
+      "source": "Installed skill watoom-prompt-writing"
+    },
+    {
+      "id": "skill-worldbuilding",
+      "name": "worldbuilding",
+      "category": "Writing",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "Develop world element for story project, consistent with established rules.",
+      "prompt": "Work in [PROJECT_PATH]. Use the worldbuilding skill.\n\nDevelop [WORLD_ELEMENT] for [STORY_PROJECT], consistent with [ESTABLISHED_RULES].\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "ESTABLISHED_RULES",
+        "PROJECT_PATH",
+        "STORY_PROJECT",
+        "WORLD_ELEMENT"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill worldbuilding"
+    },
+    {
+      "id": "skill-watoom-core",
+      "name": "watoom-core",
+      "category": "Development & research",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "watoom core profile guidance, loaded on demand.",
+      "prompt": "Work in [PROJECT_PATH]. Use the watoom-core skill.\n\nReview the current WatooM operating guidance for [TASK] and select the appropriate installed execution route.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "PROJECT_PATH",
+        "TASK"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill watoom-core"
+    },
+    {
+      "id": "skill-watoom-developer",
+      "name": "watoom-developer",
+      "category": "Development & research",
+      "kind": "Skill",
+      "status": "Installed guidance",
+      "description": "watoom developer profile guidance, loaded on demand.",
+      "prompt": "Work in [PROJECT_PATH]. Use the watoom-developer skill.\n\nImplement [BOUNDED_CHANGE] in [PROJECT_PATH], preserve unrelated edits and run the relevant checks.\n\nAsk only for essential missing information. Preserve original inputs and report actual outputs, checks and blockers.",
+      "inputs": [
+        "BOUNDED_CHANGE",
+        "PROJECT_PATH"
+      ],
+      "limits": "Verify assignment, tool schema and task-specific output acceptance in the selected session.",
+      "source": "Installed skill watoom-developer"
+    },
+    {
+      "id": "skill-esp32-development",
+      "name": "esp32-development",
+      "category": "Embedded devices",
+      "kind": "Skill",
+      "status": "Real board build, flash, serial ping/pong and restore verified",
+      "description": "Develop applications for the server-connected ESP32-DIV v2, compile firmware, flash approved builds and inspect serial responses through the native hardware worker.",
+      "prompt": "Work in /data/ai/projects/llm/esp32. Use esp32-development.\n\nDevelop [APPLICATION_OR_TOOL] for my enrolled ESP32-DIV v2 using [PERIPHERALS_OR_INTERFACES]. Ask for any essential behavior, display or wiring details. Preserve existing source and firmware. Use the verified S3 profile with a4MB firmware layout on16MB physical flash; leave PSRAM disabled until separately qualified and confirm hardware pins from the manufacturer sources.\n\nBuild with the isolated native worker and review compiler results. Show me what the firmware changes and ask before flashing unless I have explicitly authorized this build. When approved, back up the complete existing firmware, flash only the pinned build to esp32-div-v2, and verify it. Test [EXPECTED_SERIAL_BEHAVIOR] through bounded serial commands/monitoring; return source, firmware, logs, backup ID and any missing hardware checks. Keep unrelated server services unchanged.",
+      "inputs": [
+        "APPLICATION_OR_TOOL",
+        "PERIPHERALS_OR_INTERFACES",
+        "EXPECTED_SERIAL_BEHAVIOR"
+      ],
+      "limits": "Native watoom_esp32 is scoped to the ESP32 project and explicitly enrolled USB identity. Generic Arduino SDK applications are supported; stock DIV firmware patches/libraries are separate. Build success does not prove hardware behavior. Flashing resets the device and changes its running firmware. The initial profile addresses4MB and disables the detected8MB PSRAM; enabling OPI PSRAM caused startup watchdog resets with this SDK.",
+      "source": "Installed esp32-development skill; tools/esp32; config/esp32/devices.json"
+    }
+  ]
+}

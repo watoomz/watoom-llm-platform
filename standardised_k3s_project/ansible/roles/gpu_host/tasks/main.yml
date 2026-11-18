@@ -1,0 +1,99 @@
+---
+- name: "GPU Host | Assert Fedora host"
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.distribution == "Fedora"
+    fail_msg: "The gpu_host role currently targets the Fedora homelab host."
+
+- name: "GPU Host | Check nvidia-smi exists"
+  ansible.builtin.stat:
+    path: "{{ gpu_host_nvidia_smi_bin }}"
+  register: gpu_host_nvidia_smi
+
+- name: "GPU Host | Assert nvidia-smi exists"
+  ansible.builtin.assert:
+    that:
+      - gpu_host_nvidia_smi.stat.exists
+    fail_msg: "{{ gpu_host_nvidia_smi_bin }} is required to manage the GPU power cap."
+
+- name: "GPU Host | Read GPU identity"
+  ansible.builtin.command:
+    argv:
+      - "{{ gpu_host_nvidia_smi_bin }}"
+      - --query-gpu=name
+      - --format=csv,noheader
+  register: gpu_host_identity
+  changed_when: false
+  check_mode: false
+  failed_when: gpu_host_identity.rc != 0
+
+- name: "GPU Host | Assert expected GPU is present"
+  ansible.builtin.assert:
+    that:
+      - gpu_host_expected_name in gpu_host_identity.stdout
+    fail_msg: >-
+      Expected {{ gpu_host_expected_name }} but nvidia-smi returned:
+      {{ gpu_host_identity.stdout }}
+
+- name: "GPU Host | Ensure NVIDIA persistence daemon is enabled and started"
+  ansible.builtin.systemd:
+    name: "{{ gpu_host_persistence_service_name }}"
+    enabled: true
+    state: started
+
+- name: "GPU Host | Install durable GPU power limit unit"
+  ansible.builtin.template:
+    src: watoom-gpu-power-limit.service.j2
+    dest: "/etc/systemd/system/{{ gpu_host_power_limit_service_name }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+  register: gpu_host_power_unit_file
+
+# An unmanaged 2026-10-08 drop-in replaced ExecStart with a hard-coded 250 W and dropped -pm 1,
+# so this role's limit never took effect. The unit above is the only source of the cap.
+- name: "GPU Host | Remove legacy power limit override drop-in"
+  ansible.builtin.file:
+    path: "/etc/systemd/system/{{ gpu_host_power_limit_service_name }}.service.d/override.conf"
+    state: absent
+  register: gpu_host_power_override
+
+- name: "GPU Host | Record GPU power unit change"
+  ansible.builtin.set_fact:
+    gpu_host_power_unit:
+      changed: "{{ gpu_host_power_unit_file.changed or gpu_host_power_override.changed }}"
+
+- name: "GPU Host | Reload systemd when GPU unit changes"
+  ansible.builtin.systemd:
+    daemon_reload: true
+  when: gpu_host_power_unit.changed
+
+- name: "GPU Host | Enable and apply GPU power limit"
+  ansible.builtin.systemd:
+    name: "{{ gpu_host_power_limit_service_name }}"
+    enabled: true
+    # Oneshot with RemainAfterExit stays active, so a changed limit needs a restart to take effect.
+    state: "{{ 'restarted' if gpu_host_power_unit.changed else 'started' }}"
+  when: not ansible_check_mode
+
+- name: "GPU Host | Verify GPU power policy"
+  ansible.builtin.command:
+    argv:
+      - "{{ gpu_host_nvidia_smi_bin }}"
+      - --query-gpu=name,persistence_mode,power.limit
+      - --format=csv,noheader,nounits
+  register: gpu_host_power_policy
+  changed_when: false
+  check_mode: false
+  failed_when: gpu_host_power_policy.rc != 0
+
+- name: "GPU Host | Assert GPU power limit is applied"
+  ansible.builtin.assert:
+    that:
+      - gpu_host_expected_name in gpu_host_power_policy.stdout
+      - "'Enabled' in gpu_host_power_policy.stdout"
+      - (gpu_host_power_policy.stdout.split(',')[-1] | trim | float) == (gpu_host_power_limit_watts | float)
+    fail_msg: >-
+      Expected {{ gpu_host_expected_name }} with persistence enabled and
+      {{ gpu_host_power_limit_watts }}W cap, got:
+      {{ gpu_host_power_policy.stdout }}

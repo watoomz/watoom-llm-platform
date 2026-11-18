@@ -1,0 +1,60 @@
+---
+# Host worker for the watoom-asset-archive skill. The skill itself (SKILL.md + scripts/asset_archive.py) is installed by
+# watoom-native-skills.yml. zip/tar work inside the watoom-code pod; 7z and rar need the host's 7z/unrar, so the tool leaves a
+# request file in <project>/.opencode/archive-requests/ (or the shared queue below) and this worker answers it.
+# The worker runs as the unprivileged opencode user, may write only under /data/ai/projects, and re-validates every request.
+- name: Install the asset archive host worker
+  hosts: homelab
+  become: true
+  gather_facts: false
+  vars:
+    aa_src: "{{ playbook_dir }}/../roles/watoom-code/files/skills/watoom-asset-archive/scripts/asset_archive.py"
+    aa_dest: /usr/local/libexec/watoom/asset_archive.py
+    aa_queue: /data/ai/projects/work/.archive-requests
+  tasks:
+    - name: Worker script
+      ansible.builtin.copy: {src: "{{ aa_src }}", dest: "{{ aa_dest }}", owner: root, group: root, mode: "0755"}
+      notify: Restart asset archive worker
+
+    - name: Shared request queue (the pod can only write under projects/*)
+      ansible.builtin.file: {path: "{{ aa_queue }}", state: directory, owner: opencode, group: opencode, mode: "2770"}
+
+    - name: Worker service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/watoom-asset-archive.service
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Answer asset archive requests (7z/rar list, read, extract)
+          After=local-fs.target
+          [Service]
+          ExecStart=/usr/bin/python3 -I {{ aa_dest }} serve --interval 4
+          User=opencode
+          Group=opencode
+          UMask=0007
+          Restart=always
+          RestartSec=5
+          Nice=15
+          IOSchedulingClass=idle
+          MemoryMax=2G
+          CPUQuota=200%
+          TimeoutStopSec=30
+          NoNewPrivileges=true
+          ProtectSystem=strict
+          ReadWritePaths=/data/ai/projects
+          ProtectHome=true
+          PrivateTmp=true
+          PrivateDevices=true
+          RestrictAddressFamilies=AF_UNIX
+          [Install]
+          WantedBy=multi-user.target
+      notify: Restart asset archive worker
+
+    - name: Enable and start the worker
+      ansible.builtin.systemd: {name: watoom-asset-archive.service, enabled: true, state: started, daemon_reload: true}
+
+  handlers:
+    - name: Restart asset archive worker
+      ansible.builtin.systemd: {name: watoom-asset-archive.service, state: restarted, daemon_reload: true}

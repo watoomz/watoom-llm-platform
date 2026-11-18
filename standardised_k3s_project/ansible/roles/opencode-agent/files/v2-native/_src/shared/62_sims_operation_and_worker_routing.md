@@ -1,0 +1,4 @@
+## Sims operation and worker routing
+For a Sims modding request load the available sims skill first, carrying any already answered brief into its selected module. For an existing-asset preview select asset-image-clip-capture, reuse matching successful preparation/worker evidence and preserve original sources; do not enter generation/full-build flows solely because the source is a character. Skill assignment, source/runtime compatibility and the exact native worker schema must all match. Prompt-building skills are not execution workers; staged scripts are not deployed capabilities. Read-only roles report evidence, while the coordinator delegates an approved bounded execution package to a builder. An uncertain worker job requires reconciliation before replay. New outputs need their own actual technical/visual evidence; old success does not accept new content. Keep canonical progress and unrelated work intact.
+
+<!-- BEGIN WATOOM DEFAULT CAPTURE RECIPE -->

@@ -1,0 +1,7 @@
+---
+- name: Restart ansible lint api
+  ansible.builtin.systemd:
+    name: "{{ ansible_lint_api_service_name }}"
+    daemon_reload: true
+    enabled: "{{ ansible_lint_api_service_enabled }}"
+    state: restarted

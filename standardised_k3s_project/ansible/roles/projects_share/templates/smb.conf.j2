@@ -1,0 +1,39 @@
+# Managed by Ansible (roles/projects_share). Standalone, SMB3-only, encrypted, bound to one address, one allowed client.
+[global]
+    server role = standalone server
+    security = user
+    map to guest = Never
+    passdb backend = tdbsam
+    workgroup = WORKGROUP
+    server string = WatooM projects (read-only)
+    interfaces = {{ projects_share_bind }}
+    bind interfaces only = yes
+    hosts allow = {{ projects_share_allowed_hosts | join(' ') }}
+    hosts deny = ALL
+    server min protocol = SMB3
+    smb encrypt = required
+    server signing = mandatory
+    smb ports = 445
+    disable netbios = yes
+    load printers = no
+    printing = bsd
+    printcap name = /dev/null
+    disable spoolss = yes
+    log level = 1
+    max log size = 1000
+
+[{{ projects_share_name }}]
+    path = {{ projects_share_path }}
+    comment = WatooM projects{{ ' (read-only)' if projects_share_read_only else '' }}
+    valid users = {{ projects_share_user }}
+    force user = {{ projects_share_run_as }}
+    read only = {{ 'yes' if projects_share_read_only else 'no' }}
+    guest ok = no
+    browseable = yes
+    access based share enum = yes
+    hide unreadable = yes
+    follow symlinks = no
+    wide links = no
+    unix extensions = no
+    delete veto files = no
+    veto files = /{{ projects_share_veto | join('/') }}/

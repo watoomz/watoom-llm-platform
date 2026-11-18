@@ -1,0 +1,8 @@
+from pathlib import Path
+import os,subprocess,json,time
+root=Path('/var/render_worker/output/bazzite-5.2.1-qualification');root.mkdir(exist_ok=True);os.chown(root,1001,1001)
+base=Path('/var/render_worker/output/codex-qualification-20261026/blender-test.py').read_text();base=base.replace('/var/render_worker/output/codex-qualification-20261026/blender-cpu.png',str(root/'cpu.png'))
+base+="\nfrom pathlib import Path\nimport json\nrelative=Path('/proc/self/cgroup').read_text().strip().split(':')[-1]\ngroup=Path('/sys/fs/cgroup'+relative)\nlimits={n:(group/n).read_text().strip() for n in ['memory.max','memory.high','cpu.max']}\nprint('VERIFIED_CGROUP',json.dumps(limits))\nassert int(limits['memory.max'])==10*1024**3\nassert int(limits['memory.high'])==8*1024**3\nq,p=map(int,limits['cpu.max'].split());assert q/p==6\n"
+(root/'render.py').write_text(base);os.chown(root/'render.py',1001,1001)
+unit='watoom-bazzite-qualification-'+str(time.time_ns());cmd=['systemd-run','--quiet','--wait','--pipe','--collect','--unit='+unit,'-p','MemoryMax=10G','-p','MemoryHigh=8G','-p','MemorySwapMax=0','-p','CPUQuota=600%','-p','TasksMax=256','-p','RuntimeMaxSec=900','-p','KillMode=control-group','--','/usr/bin/systemd-inhibit','--what=idle:sleep','--mode=block','--why=Bounded-render-worker-job','/usr/sbin/runuser','-u','watoom','--','/var/render_worker/runtime/blender-5.2.1-linux-x64/blender','-b','--factory-startup','-t','6','--python-exit-code','1','--python',str(root/'render.py')]
+r=subprocess.run(cmd,capture_output=True,text=True,timeout=940);(root/'qualification.log').write_text(r.stdout+r.stderr);print(r.stdout,r.stderr);assert r.returncode==0;print('RESOURCE_AND_SLEEP_INHIBITOR_QUALIFIED')

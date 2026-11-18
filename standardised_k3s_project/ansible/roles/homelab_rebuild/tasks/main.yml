@@ -1,0 +1,93 @@
+---
+- name: "Homelab Rebuild | Assert Fedora host"
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.distribution == "Fedora"
+    fail_msg: "The homelab_rebuild role currently targets Fedora."
+  tags: [always]
+
+- name: "Homelab Rebuild | Assert /app and /data exist"
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop:
+    - "{{ homelab_app_path }}"
+    - "{{ homelab_data_path }}"
+  register: homelab_required_paths
+  tags: [always]
+
+- name: "Homelab Rebuild | Stop if /app or /data is missing"
+  ansible.builtin.assert:
+    that:
+      - item.stat.exists
+      - item.stat.isdir
+    fail_msg: "{{ item.item }} must exist before running this role."
+  loop: "{{ homelab_required_paths.results }}"
+  tags: [always]
+
+- name: "Homelab Rebuild | OS identity and services"
+  ansible.builtin.import_tasks: os.yml
+  tags: [os]
+
+- name: "Homelab Rebuild | Read-only tuning audit"
+  ansible.builtin.import_tasks: audit.yml
+  tags: [never, audit]
+
+- name: "Homelab Rebuild | Users and sudo"
+  ansible.builtin.import_tasks: users.yml
+  tags: [users]
+
+- name: "Homelab Rebuild | Packages"
+  ansible.builtin.import_tasks: packages.yml
+  when: homelab_manage_packages | bool
+  tags: [packages]
+
+- name: "Homelab Rebuild | Tuning defaults"
+  ansible.builtin.import_tasks: tuning.yml
+  tags: [tuning]
+
+- name: "Homelab Rebuild | NetworkManager profiles"
+  ansible.builtin.import_tasks: network.yml
+  when: homelab_manage_network | bool
+  tags: [network]
+
+- name: "Homelab Rebuild | Firewalld"
+  ansible.builtin.import_tasks: firewall.yml
+  when: homelab_manage_firewall | bool
+  tags: [firewall]
+
+- name: "Homelab Rebuild | Host Ollama runtime"
+  ansible.builtin.include_role:
+    name: host_ollama
+  when: homelab_manage_host_ollama | bool
+  tags: [llm, ollama]
+
+- name: "Homelab Rebuild | DNS stub listener"
+  ansible.builtin.import_tasks: dns.yml
+  when: homelab_manage_dns_stub | bool
+  tags: [dns]
+
+- name: "Homelab Rebuild | Host paths"
+  ansible.builtin.import_tasks: hostpaths.yml
+  tags: [hostpaths]
+
+- name: "Homelab Rebuild | K3s"
+  ansible.builtin.import_tasks: k3s.yml
+  when: homelab_manage_k3s | bool
+  tags: [k3s]
+
+- name: "Homelab Rebuild | Kubernetes manifests and service bootstrap"
+  ansible.builtin.import_tasks: kubernetes.yml
+  tags: [kubernetes, bootstrap]
+
+- name: "Homelab Rebuild | Local wildcard TLS"
+  ansible.builtin.import_tasks: local_tls.yml
+  when: homelab_manage_local_tls | bool
+  tags: [kubernetes, tls]
+
+- name: "Homelab Rebuild | Docker stack bootstrap"
+  ansible.builtin.import_tasks: docker.yml
+  tags: [docker, bootstrap]
+
+- name: "Homelab Rebuild | Health summary"
+  ansible.builtin.import_tasks: health.yml
+  tags: [health]

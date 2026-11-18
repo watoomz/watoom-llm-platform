@@ -1,0 +1,38 @@
+{
+  "version": "5.2.3",
+  "operators": [
+    {
+      "module": "mesh", "name": "primitive_cube_add", "bl_label": "Add Cube",
+      "description": "Construct a cube mesh",
+      "properties": [
+        {"name": "size", "type": "FLOAT", "default": 2.0, "description": "Size"},
+        {"name": "calc_uvs", "type": "BOOLEAN", "default": true, "description": "Generate UVs"},
+        {"name": "enter_editmode", "type": "BOOLEAN", "default": false, "description": "Enter edit mode"},
+        {"name": "location", "type": "FLOAT", "array_length": 3, "array_dimensions": [3, 0, 0], "default": [0.0, 0.0, 0.0], "description": "Location"},
+        {"name": "align", "type": "ENUM", "default": "WORLD", "description": "Alignment", "enum_items": [{"identifier": "WORLD", "name": "World", "description": "Align to world", "value": 0}]}
+      ]
+    },
+    {"module": "wm", "name": "read_factory_settings", "bl_label": "Load Factory Settings", "description": "Load defaults", "properties": []}
+  ],
+  "structs": [
+    {
+      "name": "Fixture", "description": "Fixture RNA struct",
+      "properties": [
+        {"name": "name", "type": "STRING", "default": "", "description": "Name", "is_readonly": true},
+        {"name": "options", "type": "ENUM", "is_enum_flag": true, "default": ["B", "A"], "description": "Flags", "is_readonly": false, "enum_items": [{"identifier": "A", "name": "Alpha", "description": "First flag", "value": 1}]},
+        {"name": "matrix", "type": "FLOAT", "array_length": 4, "array_dimensions": [2, 2, 0], "default": [1.0, 0.0, 0.0, 1.0], "description": "Matrix", "is_readonly": false}
+      ],
+      "functions": [
+        {
+          "name": "lookup", "description": "Find an object", "use_self": true,
+          "parameters": [
+            {"name": "name", "type": "STRING", "default": "", "description": "Object name", "is_required": true, "is_output": false},
+            {"name": "index", "type": "INT", "default": 0, "description": "Index", "is_required": false, "is_output": false},
+            {"name": "object", "type": "POINTER", "fixed_type": "Object", "description": "Found object", "is_output": true},
+            {"name": "found", "type": "BOOLEAN", "description": "Was found", "is_output": true}
+          ]
+        }
+      ]
+    }
+  ]
+}

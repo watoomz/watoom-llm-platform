@@ -1,0 +1,9 @@
+{
+ "_comment": "Three height bands on a ramp terrain (4..~50 m): used by gg_terrain.py to prove image->world orientation. Colours are far apart in hue on purpose.",
+ "seed": 1, "sharpness": 8,
+ "layers": [
+  {"name": "low",  "fallback": true, "color": [0.1, 0.6, 0.15]},
+  {"name": "mid",  "height_m": [18, 34, 2], "color": [0.9, 0.8, 0.1]},
+  {"name": "high", "height_m": [36, 80, 2], "color": [0.7, 0.15, 0.8]}
+ ]
+}

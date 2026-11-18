@@ -1,0 +1,127 @@
+---
+- name: Require the canonical repository and its skill tree
+  ansible.builtin.stat:
+    path: "{{ skill_editor_repo }}/{{ skill_editor_skills_path }}"
+  register: skill_editor_tree
+- name: Refuse to install without the skill source tree
+  ansible.builtin.assert:
+    that: skill_editor_tree.stat.isdir | default(false)
+    fail_msg: "Skill source tree missing: {{ skill_editor_repo }}/{{ skill_editor_skills_path }}"
+
+- name: Refuse a foreign same-name application
+  ansible.builtin.command:
+    argv: [kubectl, -n, "{{ skill_editor_namespace }}", get, deployment, skill-editor, --ignore-not-found, -o, json]
+  register: skill_editor_existing
+  changed_when: false
+- name: Protect resources not owned by the skill editor
+  ansible.builtin.assert:
+    that: >-
+      skill_editor_existing.stdout == '' or
+      (skill_editor_existing.stdout | from_json).metadata.labels['watoom.io/owner'] | default('') == 'skill-editor'
+
+- name: Create application source directory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop: ["{{ skill_editor_app_root }}", "{{ skill_editor_app_root }}/web"]
+- name: Install skill editor source
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../tools/skill-editor/{{ item }}"
+    dest: "{{ skill_editor_app_root }}/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: [server.py, broker.py, web/index.html, web/login.html, web/app.js, web/style.css]
+  notify: Restart skill editor broker
+
+- name: Create private broker state
+  ansible.builtin.file:
+    path: "{{ skill_editor_state }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+- name: Create broker socket directory shared only with the UI group
+  ansible.builtin.file:
+    path: "{{ skill_editor_socket_dir }}"
+    state: directory
+    owner: root
+    group: "{{ skill_editor_gid }}"
+    mode: "0750"
+
+- name: Create private credential directory
+  ansible.builtin.file:
+    path: "{{ skill_editor_password_file | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+- name: Check for an existing editor password
+  ansible.builtin.stat:
+    path: "{{ skill_editor_password_file }}"
+  register: skill_editor_password
+- name: Generate the editor password once (never overwritten)
+  ansible.builtin.shell: |
+    umask 077
+    python3 -c 'import secrets;print(secrets.token_urlsafe(36))' > {{ skill_editor_password_file | quote }}
+  args:
+    creates: "{{ skill_editor_password_file }}"
+  no_log: true
+- name: Let only the UI group read the password
+  ansible.builtin.file:
+    path: "{{ skill_editor_password_file }}"
+    owner: root
+    group: "{{ skill_editor_gid }}"
+    mode: "0640"
+  when: not ansible_check_mode or skill_editor_password.stat.exists
+- name: Install broker configuration
+  ansible.builtin.template:
+    src: config.json.j2
+    dest: "{{ skill_editor_state }}/config.json"
+    owner: root
+    group: root
+    mode: "0600"
+  notify: Restart skill editor broker
+- name: Install broker service
+  ansible.builtin.template:
+    src: broker.service.j2
+    dest: "/etc/systemd/system/{{ skill_editor_service_name }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart skill editor broker
+- name: Start broker
+  ansible.builtin.systemd:
+    name: "{{ skill_editor_service_name }}"
+    state: started
+    enabled: true
+    daemon_reload: true
+  when: not ansible_check_mode
+- name: Apply pending broker restarts before the UI starts
+  ansible.builtin.meta: flush_handlers
+
+- name: Fingerprint source so the pod restarts when it changes
+  ansible.builtin.set_fact:
+    skill_editor_source_digest: >-
+      {{ (skill_editor_source_digest | default('')) ~ item ~ ':' ~
+         (lookup('ansible.builtin.file', role_path + '/../../../tools/skill-editor/' + item) | hash('sha256')) ~ ';' }}
+  loop: [server.py, broker.py, web/index.html, web/login.html, web/app.js, web/style.css]
+- name: Render skill editor application, Service and route
+  ansible.builtin.template:
+    src: resources.yml.j2
+    dest: "{{ skill_editor_state }}/resources.yml"
+    owner: root
+    group: root
+    mode: "0644"
+- name: Apply skill editor resources
+  ansible.builtin.command:
+    argv: [kubectl, apply, -f, "{{ skill_editor_state }}/resources.yml"]
+  register: skill_editor_apply
+  changed_when: "'configured' in skill_editor_apply.stdout or 'created' in skill_editor_apply.stdout"
+- name: Wait for the editor to become ready
+  ansible.builtin.command:
+    argv: [kubectl, -n, "{{ skill_editor_namespace }}", rollout, status, deployment/skill-editor, --timeout=120s]
+  changed_when: false

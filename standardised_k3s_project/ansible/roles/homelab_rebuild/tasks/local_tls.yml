@@ -1,0 +1,246 @@
+---
+- name: "Local TLS | Ensure certificate directory exists"
+  ansible.builtin.file:
+    path: "{{ homelab_local_tls_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: "Local TLS | Inspect canonical certificate"
+  ansible.builtin.stat:
+    path: "{{ homelab_local_tls_cert }}"
+  register: homelab_local_tls_cert_stat
+
+- name: "Local TLS | Inspect canonical private key"
+  ansible.builtin.stat:
+    path: "{{ homelab_local_tls_key }}"
+  register: homelab_local_tls_key_stat
+
+- name: "Local TLS | Determine whether canonical material needs bootstrap"
+  ansible.builtin.set_fact:
+    homelab_local_tls_bootstrap_required: >-
+      {{
+        not homelab_local_tls_cert_stat.stat.exists
+        or
+        not homelab_local_tls_key_stat.stat.exists
+      }}
+    homelab_local_tls_seed_secrets: []
+
+- name: "Local TLS | Discover existing live TLS Secrets for bootstrap"
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ k3s_kubeconfig }}"
+    api_version: v1
+    kind: Secret
+  register: homelab_local_tls_all_secrets
+  when: homelab_local_tls_bootstrap_required | bool
+  no_log: true
+
+- name: "Local TLS | Select existing wildcard TLS Secret copies"
+  ansible.builtin.set_fact:
+    homelab_local_tls_seed_secrets: >-
+      {{
+        homelab_local_tls_all_secrets.resources
+        | selectattr('metadata.name', 'equalto', homelab_local_tls_secret)
+        | selectattr('type', 'defined')
+        | selectattr('type', 'equalto', 'kubernetes.io/tls')
+        | list
+      }}
+  when: homelab_local_tls_bootstrap_required | bool
+  no_log: true
+
+- name: "Local TLS | Validate candidate seed Secrets contain a certificate and key"
+  ansible.builtin.assert:
+    that:
+      - item.data is defined
+      - "'tls.crt' in item.data"
+      - "'tls.key' in item.data"
+    fail_msg: >-
+      Existing {{ homelab_local_tls_secret }} Secret in namespace
+      {{ item.metadata.namespace }} is not a complete kubernetes.io/tls Secret.
+  loop: "{{ homelab_local_tls_seed_secrets }}"
+  loop_control:
+    label: "{{ item.metadata.namespace }}/{{ homelab_local_tls_secret }}"
+  when:
+    - homelab_local_tls_bootstrap_required | bool
+    - homelab_local_tls_seed_secrets | length > 0
+  no_log: true
+
+- name: "Local TLS | Initialise seed consistency lists"
+  ansible.builtin.set_fact:
+    homelab_local_tls_seed_cert_values: []
+    homelab_local_tls_seed_key_values: []
+  when:
+    - homelab_local_tls_bootstrap_required | bool
+    - homelab_local_tls_seed_secrets | length > 0
+  no_log: true
+
+- name: "Local TLS | Collect live TLS material for consistency validation"
+  ansible.builtin.set_fact:
+    homelab_local_tls_seed_cert_values: >-
+      {{
+        homelab_local_tls_seed_cert_values
+        + [item.data['tls.crt']]
+      }}
+    homelab_local_tls_seed_key_values: >-
+      {{
+        homelab_local_tls_seed_key_values
+        + [item.data['tls.key']]
+      }}
+  loop: "{{ homelab_local_tls_seed_secrets }}"
+  loop_control:
+    label: "{{ item.metadata.namespace }}/{{ homelab_local_tls_secret }}"
+  when:
+    - homelab_local_tls_bootstrap_required | bool
+    - homelab_local_tls_seed_secrets | length > 0
+  no_log: true
+
+- name: "Local TLS | Refuse bootstrap from divergent TLS Secret copies"
+  ansible.builtin.assert:
+    that:
+      - homelab_local_tls_seed_cert_values | unique | length == 1
+      - homelab_local_tls_seed_key_values | unique | length == 1
+    fail_msg: >-
+      Existing {{ homelab_local_tls_secret }} copies do not all contain the
+      same certificate/key pair. Refusing to choose one automatically.
+  when:
+    - homelab_local_tls_bootstrap_required | bool
+    - homelab_local_tls_seed_secrets | length > 0
+  no_log: true
+
+- name: "Local TLS | Seed canonical certificate from live cluster"
+  ansible.builtin.copy:
+    dest: "{{ homelab_local_tls_cert }}"
+    content: "{{ homelab_local_tls_seed_secrets[0].data['tls.crt'] | b64decode }}"
+    owner: root
+    group: root
+    mode: "0644"
+  when:
+    - homelab_local_tls_bootstrap_required | bool
+    - homelab_local_tls_seed_secrets | length > 0
+  no_log: true
+
+- name: "Local TLS | Seed canonical private key from live cluster"
+  ansible.builtin.copy:
+    dest: "{{ homelab_local_tls_key }}"
+    content: "{{ homelab_local_tls_seed_secrets[0].data['tls.key'] | b64decode }}"
+    owner: root
+    group: root
+    mode: "0600"
+  when:
+    - homelab_local_tls_bootstrap_required | bool
+    - homelab_local_tls_seed_secrets | length > 0
+  no_log: true
+
+- name: "Local TLS | Generate private key when no live seed exists"
+  community.crypto.openssl_privatekey:
+    path: "{{ homelab_local_tls_key }}"
+    size: 4096
+    type: RSA
+    owner: root
+    group: root
+    mode: "0600"
+  when:
+    - homelab_local_tls_bootstrap_required | bool
+    - homelab_local_tls_seed_secrets | length == 0
+
+- name: "Local TLS | Generate CSR when no live seed exists"
+  community.crypto.openssl_csr_pipe:
+    privatekey_path: "{{ homelab_local_tls_key }}"
+    common_name: "*.{{ homelab_local_tls_domain }}"
+    subject_alt_name: "{{ homelab_local_tls_sans }}"
+  register: homelab_local_tls_csr
+  when:
+    - homelab_local_tls_bootstrap_required | bool
+    - homelab_local_tls_seed_secrets | length == 0
+
+- name: "Local TLS | Generate self-signed certificate when no live seed exists"
+  community.crypto.x509_certificate:
+    path: "{{ homelab_local_tls_cert }}"
+    privatekey_path: "{{ homelab_local_tls_key }}"
+    csr_content: "{{ homelab_local_tls_csr.csr }}"
+    provider: selfsigned
+    selfsigned_not_after: "+825d"
+    owner: root
+    group: root
+    mode: "0644"
+  when:
+    - homelab_local_tls_bootstrap_required | bool
+    - homelab_local_tls_seed_secrets | length == 0
+
+- name: "Local TLS | Read canonical certificate"
+  ansible.builtin.slurp:
+    src: "{{ homelab_local_tls_cert }}"
+  register: homelab_local_tls_cert_data
+  no_log: true
+
+- name: "Local TLS | Read canonical private key"
+  ansible.builtin.slurp:
+    src: "{{ homelab_local_tls_key }}"
+  register: homelab_local_tls_key_data
+  no_log: true
+
+- name: "Local TLS | Discover Traefik routes that use the wildcard certificate"
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ k3s_kubeconfig }}"
+    api_version: traefik.io/v1alpha1
+    kind: IngressRoute
+  register: homelab_local_tls_ingressroutes
+
+- name: "Local TLS | Discover currently existing namespaces"
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ k3s_kubeconfig }}"
+    api_version: v1
+    kind: Namespace
+  register: homelab_local_tls_namespace_resources
+
+- name: "Local TLS | Build existing namespace name list"
+  ansible.builtin.set_fact:
+    homelab_local_tls_existing_namespaces: >-
+      {{
+        homelab_local_tls_namespace_resources.resources
+        | map(attribute='metadata.name')
+        | list
+      }}
+
+- name: "Local TLS | Build namespace list for wildcard TLS secret"
+  ansible.builtin.set_fact:
+    homelab_local_tls_namespaces: >-
+      {{
+        (
+          homelab_local_tls_ingressroutes.resources
+          | selectattr('spec.tls.secretName', 'defined')
+          | selectattr('spec.tls.secretName', 'equalto', homelab_local_tls_secret)
+          | map(attribute='metadata.namespace')
+          | list
+          + homelab_local_tls_extra_namespaces
+        ) | unique | sort
+      }}
+
+- name: "Local TLS | Report extra namespaces not created yet"
+  ansible.builtin.debug:
+    msg: >-
+      Skipping TLS bootstrap namespace {{ item }} because the namespace does
+      not currently exist.
+  loop: "{{ homelab_local_tls_extra_namespaces }}"
+  when: item not in homelab_local_tls_existing_namespaces
+
+- name: "Local TLS | Reconcile Kubernetes TLS secrets"
+  kubernetes.core.k8s:
+    kubeconfig: "{{ k3s_kubeconfig }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ homelab_local_tls_secret }}"
+        namespace: "{{ item }}"
+      type: kubernetes.io/tls
+      data:
+        tls.crt: "{{ homelab_local_tls_cert_data.content }}"
+        tls.key: "{{ homelab_local_tls_key_data.content }}"
+  loop: "{{ homelab_local_tls_namespaces }}"
+  loop_control:
+    label: "{{ item }}/{{ homelab_local_tls_secret }}"
+  when: item in homelab_local_tls_existing_namespaces
+  no_log: true

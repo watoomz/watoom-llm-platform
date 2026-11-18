@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-cpp-native-router-candidate
+  namespace: llama-cpp
+  labels:
+    app: llama-cpp-native-router-candidate
+    app.kubernetes.io/name: llama-cpp-native-router-candidate
+    app.kubernetes.io/part-of: llama-cpp
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: llama-cpp-native-router-candidate
+  template:
+    metadata:
+      labels:
+        app: llama-cpp-native-router-candidate
+        app.kubernetes.io/name: llama-cpp-native-router-candidate
+        app.kubernetes.io/part-of: llama-cpp
+    spec:
+      runtimeClassName: nvidia
+      restartPolicy: Always
+      containers:
+      - args:
+        - --models-preset
+        - /config/router/models.ini
+        - --models-max
+        - '1'
+        - --no-models-autoload
+        - --metrics
+        - --host
+        - 0.0.0.0
+        - --port
+        - '8080'
+        env:
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: all
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          value: compute,utility
+        image: ghcr.io/ggml-org/llama.cpp:server-cuda12-b10380@sha256:11786fb97f93edf676e801b389a0c75417ce4cef1e6b9a03e83ad69096218e92
+        imagePullPolicy: IfNotPresent
+        name: llama-server
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        resources:
+          limits:
+            cpu: '8'
+            memory: 18Gi
+            nvidia.com/gpu: '1'
+          requests:
+            cpu: '1'
+            memory: 4Gi
+            nvidia.com/gpu: '1'
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /data/llama-cpp
+          name: models
+          readOnly: true
+        - mountPath: /config
+          name: config
+          readOnly: true
+      volumes:
+      - hostPath:
+          path: /data/llama-cpp
+          type: Directory
+        name: models
+      - hostPath:
+          path: /data/github/watoom-standardised-homelab/standardised_k3s_project/config/llm
+          type: Directory
+        name: config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llama-cpp-native-router-candidate
+  namespace: llama-cpp
+  labels:
+    app: llama-cpp-native-router-candidate
+spec:
+  type: ClusterIP
+  selector:
+    app: llama-cpp-native-router-candidate
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
+    protocol: TCP

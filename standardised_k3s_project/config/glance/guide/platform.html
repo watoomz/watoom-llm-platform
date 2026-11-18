@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Platform — k3s, Docker and host · Agent Export</title><meta name="description" content="The single-node Kubernetes runtime, the Compose stacks that sit beside it, persistent storage conventions and host tuning."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link active" aria-current="page" href="/guide/platform.html">Platform</a><div class="toc"><a class="toc-link" href="#k3s">k3s</a><a class="toc-link" href="#docker-compose">Docker Compose</a><a class="toc-link" href="#persistent-storage">Persistent storage</a><a class="toc-link" href="#host-tuning">Host tuning</a></div><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">Platform</p><h1>Platform — k3s, Docker and host</h1><p class="lede">The single-node Kubernetes runtime, the Compose stacks that sit beside it, persistent storage conventions and host tuning.</p></header>
+<div class="content">
+<h2 id="k3s">k3s</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Node</td>
+<td><code>watoom-homelab</code> (control plane, sole worker)</td>
+</tr>
+<tr>
+<td>Version</td>
+<td><code>v1.36.3+k3s1</code>, containerd <code>2.3.2-k3s2</code></td>
+</tr>
+<tr>
+<td>Kernel</td>
+<td><code>7.2.7-200.fc44.x86_64</code></td>
+</tr>
+<tr>
+<td>System components</td>
+<td>CoreDNS, Traefik, local-path-provisioner, metrics-server</td>
+</tr>
+<tr>
+<td>GPU</td>
+<td><code>nvidia-device-plugin-daemonset</code> advertises the GPU as <code>nvidia.com/gpu</code></td>
+</tr>
+<tr>
+<td>Kubeconfig</td>
+<td><code>/etc/rancher/k3s/k3s.yaml</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="manifest-registry">Manifest registry</h3>
+<p><code>ansible/inventories/homelab/group_vars/all.yml</code> defines <code>k3s_manifest_groups</code>, applied in this order by <code>playbooks/kubernetes.yml</code>:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Order</th>
+<th>Group</th>
+<th>Path</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>namespaces</td>
+<td><code>manifests/00-namespaces</code></td>
+<td>All application namespaces</td>
+</tr>
+<tr>
+<td>2</td>
+<td>infrastructure</td>
+<td><code>manifests/10-infrastructure</code></td>
+<td>Glance, monitoring, Pi-hole, Traefik extras, platform-workers, Vaultwarden, WireGuard route</td>
+</tr>
+<tr>
+<td>3</td>
+<td>media</td>
+<td><code>manifests/20-media</code></td>
+<td>Arr stack, downloaders, Jellyfin, Plex, Seerr, Immich, Audiobookshelf</td>
+</tr>
+<tr>
+<td>4</td>
+<td>games</td>
+<td><code>manifests/30-games</code></td>
+<td>Game servers (registered in <code>game_servers</code>)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>rbac</td>
+<td><code>manifests/40-rbac</code></td>
+<td>Cluster roles and bindings</td>
+</tr>
+</tbody>
+</table></div>
+<p>Secrets are rendered separately from the vault into <code>manifests/05-secrets/*-generated.yml</code> (ignored by Git). The AI stack (llama-cpp, router, SearXNG) and WatooM Code are owned by dedicated roles and playbooks, not by this registry; see <a href="/guide/ai.html">AI platform</a> and <a href="/guide/watoom-code.html">WatooM Code</a>.</p>
+<p><code>kubernetes_app_manifests</code> lists the exact manifests for each individually reconcilable application. Dispatcharr is deliberately absent: <code>dispatcharr_control</code> owns its VPN and no-VPN variants.</p>
+<h3 id="namespaces-by-function">Namespaces by function</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Namespaces</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Core</td>
+<td><code>kube-system</code>, <code>pihole</code>, <code>glance</code>, <code>cloudflare</code>, <code>platform-workers</code></td>
+</tr>
+<tr>
+<td>Monitoring</td>
+<td><code>monitoring</code></td>
+</tr>
+<tr>
+<td>Media</td>
+<td><code>jellyfin</code>, <code>plex</code>, <code>seerr</code>, <code>radarr</code>, <code>sonarr</code>, <code>lidarr</code>, <code>prowlarr</code>, <code>sabnzbd</code>, <code>qbittorrent</code>, <code>bazarr</code>, <code>flaresolverr</code>, <code>dispatcharr</code>, <code>audiobookshelf</code>, <code>immich</code></td>
+</tr>
+<tr>
+<td>Games</td>
+<td><code>cs2</code>, <code>dayz</code>, <code>enshrouded</code>, <code>valheim</code>, <code>arma-reforger</code>, <code>minecraft-pixel</code>, <code>minecraft-zom</code></td>
+</tr>
+<tr>
+<td>AI inference</td>
+<td><code>llama-cpp</code>, <code>searxng</code></td>
+</tr>
+<tr>
+<td>WatooM Code</td>
+<td><code>watoom-code</code> (production), <code>watoom-code-rig-jobs</code> (RIG async stage)</td>
+</tr>
+<tr>
+<td>Security tooling</td>
+<td><code>kali-agent</code></td>
+</tr>
+<tr>
+<td>Utility</td>
+<td><code>iac-web-console</code>, <code>vaultwarden</code>, <code>wireguard</code>, <code>pi-agent</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><code>watoom-code</code> is the production WatooM Code namespace; the name does not indicate a pre-production environment.</p>
+<h3 id="zero-replicas-are-often-intentional">Zero replicas are often intentional</h3>
+<p>Game servers, on-demand utilities and every non-primary model are normally <code>0/0</code>. Check the owning registry or controller before treating a scaled-down Deployment as a fault. Model Deployments in <code>llama-cpp</code> are only ever scaled by the GPU controller.</p>
+<h2 id="docker-compose">Docker Compose</h2>
+<p>Compose runs edge workloads that need host networking, UDP listeners or tunnel connectors. Registered stacks live under <code>docker/&lt;stack&gt;</code> and are listed in <code>docker_stacks</code>.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Stack</th>
+<th>Containers</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>wireguard</code></td>
+<td><code>wg-easy</code></td>
+<td>Remote-access VPN (<code>51820/udp</code>, admin <code>10.99.20.225:51821</code>)</td>
+</tr>
+<tr>
+<td><code>azuracast</code></td>
+<td><code>azuracast</code>, <code>azuracast_updater</code>, <code>cloudflared-psytrance</code></td>
+<td>Psytrance radio station and its tunnel</td>
+</tr>
+<tr>
+<td><code>dispatcharr-cloudflare</code></td>
+<td><code>stream-app</code>, <code>stream-nginx</code>, <code>cloudflared-stream</code></td>
+<td>Browser HLS stream publication</td>
+</tr>
+</tbody>
+</table></div>
+<p>Unregistered containers with a defined role:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Container</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>watoom-local-registry</code></td>
+<td>Image registry on <code>127.0.0.1:5000</code>; all WatooM images are pinned by digest from here</td>
+</tr>
+<tr>
+<td><code>kali-workbench</code>, <code>kali-pentest</code></td>
+<td>Isolated security tooling used only by the <code>watoom-kali</code> agent</td>
+</tr>
+</tbody>
+</table></div>
+<p>Local Docker build cache is bounded by <code>watoom-docker-storage-retention.timer</code> (hourly, verified retention policy).</p>
+<h2 id="persistent-storage">Persistent storage</h2>
+<p>Workloads use explicit <code>hostPath</code> volumes; there is no dynamic storage class in use for application data.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Convention</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>App configuration and state</td>
+<td><code>/app/&lt;service&gt;/config</code>, <code>/app/&lt;service&gt;/data</code></td>
+</tr>
+<tr>
+<td>Media libraries</td>
+<td><code>/data/Movies</code>, <code>/data/TV</code>, <code>/data/music</code>, <code>/data/audiobooks</code>, <code>/data/podcasts</code></td>
+</tr>
+<tr>
+<td>Downloads</td>
+<td><code>/data/downloads</code>, <code>/data/downloads/incomplete</code></td>
+</tr>
+<tr>
+<td>AI service state</td>
+<td><code>/app/ai/services/&lt;service&gt;</code></td>
+</tr>
+<tr>
+<td>AI builds</td>
+<td><code>/app/ai/builds/&lt;component&gt;</code></td>
+</tr>
+<tr>
+<td>Models, projects, toolchains</td>
+<td><code>/data/ai/models</code>, <code>/data/ai/projects</code>, <code>/data/ai/toolchains</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Product names and directory names do not always match: Seerr keeps its data at <code>/app/overseerr</code>. Do not rename a working path to match a product name.</p>
+<h2 id="host-tuning">Host tuning</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tuned profile</td>
+<td><code>throughput-performance</code></td>
+</tr>
+<tr>
+<td>TCP</td>
+<td>BBR congestion control, <code>fq</code> qdisc</td>
+</tr>
+<tr>
+<td>Memory</td>
+<td><code>vm.swappiness=10</code>, <code>vm.dirty_ratio=15</code>, <code>vm.dirty_background_ratio=5</code></td>
+</tr>
+<tr>
+<td>Files</td>
+<td><code>fs.inotify.max_user_watches=1048576</code>, <code>fs.file-max=2097152</code></td>
+</tr>
+<tr>
+<td>journald</td>
+<td><code>SystemMaxUse=512M</code></td>
+</tr>
+<tr>
+<td>GPU</td>
+<td>Driver <code>615.71.09</code>, power limit 300 W (since 2026-11-03), persistence enabled</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="capacity">Capacity</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Filesystem</th>
+<th>Size</th>
+<th>Watch</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/</code></td>
+<td>117 GiB</td>
+<td>containerd images and snapshots are the largest consumer</td>
+</tr>
+<tr>
+<td><code>/app</code></td>
+<td>218 GiB</td>
+<td>application databases and caches</td>
+</tr>
+<tr>
+<td><code>/data</code></td>
+<td>3.5 TiB</td>
+<td>media, models and Toolkit build layers</td>
+</tr>
+</tbody>
+</table></div>
+<p>Prometheus alerts when <code>/</code>, <code>/app</code> or <code>/data</code> stays above 90% for 30 minutes. Reclaim root space by removing unused images explicitly; do not prune k3s or containerd wholesale.</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">df -h / /app /data
+sudo du -xhd1 /var/lib/rancher/k3s | sort -h
+sudo k3s crictl images | sort -k4 -h | tail
+</code></pre></div>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/platform.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

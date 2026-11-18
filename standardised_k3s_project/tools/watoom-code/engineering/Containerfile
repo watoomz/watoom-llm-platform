@@ -1,0 +1,18 @@
+# Shared engineering layer consumed by the WatooM Code application image.
+FROM 127.0.0.1:5000/watoom-opencode-coding-v2@sha256:e195b9f1d3baf86f93dadcb6fccb3f9e861ea6e4b815e6790835a1d5713bfe35
+USER 0
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       poppler-utils tesseract-ocr tesseract-ocr-eng dosbox \
+       python3-pefile python3-capstone python3-pil python3-numpy python3-pypdf2 \
+       imagemagick ffmpeg libimage-exiftool-perl xxd bsdextrautils binutils \
+       fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
+# Publisher release asset and publisher-provided SHA256; no external install script.
+RUN curl --fail --location --retry 3 --output /tmp/radare2.deb \
+       https://github.com/radareorg/radare2/releases/download/6.0.4/radare2_6.0.4_amd64.deb \
+    && echo '5bed66a800933455569a03e607727c2121a4c632a74fe280c0b8c71bd2010b7b  /tmp/radare2.deb' | sha256sum -c - \
+    && dpkg -i /tmp/radare2.deb \
+    && rm /tmp/radare2.deb
+COPY smoke.py /opt/watoom-engineering/smoke.py
+RUN python3 /opt/watoom-engineering/smoke.py

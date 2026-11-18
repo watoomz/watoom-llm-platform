@@ -1,0 +1,353 @@
+{
+  "schema": 1,
+  "root": "/data/ai/game_templates/godot",
+  "templates": [
+    {
+      "id": "godot-3d-base-template",
+      "category": "rpg",
+      "name": "Godot 3D Base Template",
+      "repository": "https://github.com/LeanEntropy/Godot_3D_base_template.git",
+      "ref": "7495fe5527ca93b0be5fc059a3520a9bea17a682",
+      "source_url": "https://github.com/LeanEntropy/Godot_3D_base_template",
+      "godot_declared": "4.4+",
+      "description": "Modular 3D starter with seven controller modes (third-person, first-person, isometric, top-down, tank and others), scene transitions and configurable optional shooting. Suitable as an RPG/adventure foundation; does not supply a complete RPG system.",
+      "tags": [
+        "godot",
+        "3d",
+        "rpg",
+        "adventure",
+        "third-person",
+        "isometric",
+        "top-down",
+        "controller",
+        "starter",
+        "configurable"
+      ]
+    },
+    {
+      "id": "godot-fps-template",
+      "category": "fps",
+      "name": "Godot FPS Template",
+      "repository": "https://github.com/bukkbeek/GodotFPS-Template.git",
+      "ref": "11619794d644e7933f87caa6099f3acc1f085f5d",
+      "source_url": "https://github.com/bukkbeek/GodotFPS-Template",
+      "godot_declared": "4.6",
+      "description": "Modular first-person shooter starter with movement, aim-down-sights, hitscan weapons, ammo, health, enemies, vehicles and a test level. Upstream describes it as work in progress.",
+      "tags": [
+        "godot",
+        "3d",
+        "fps",
+        "first-person",
+        "shooter",
+        "weapons",
+        "ads",
+        "ammo",
+        "health",
+        "vehicles",
+        "starter"
+      ]
+    },
+    {
+      "id": "horror-fps-template",
+      "category": "horror",
+      "name": "Horror FPS Template",
+      "repository": "https://github.com/ThiDiamondDev/horror-fps-template.git",
+      "ref": "3b397cb5b49b278b4876e4139942de935ce25509",
+      "source_url": "https://godotengine.org/asset-library/asset/2990",
+      "asset_library_id": 2990,
+      "version": "1.2",
+      "godot_declared": "4.3",
+      "description": "First-person horror starter with inventory, item use, crafting, draggable/lockable doors and drawers, ladders, elevators and a rechargeable night-vision camcorder.",
+      "tags": [
+        "godot",
+        "3d",
+        "horror",
+        "fps",
+        "survival",
+        "inventory",
+        "crafting",
+        "interaction",
+        "doors",
+        "night-vision",
+        "camcorder",
+        "starter"
+      ]
+    },
+    {
+      "id": "true-first-person-multiplayer",
+      "category": "fps",
+      "name": "True First Person Multiplayer",
+      "repository": "https://github.com/IYanel-DEV/FirstPerson-Multiplayer.git",
+      "ref": "50b0512a242b02419ffb05716d4f58f04ae93375",
+      "source_url": "https://godotengine.org/asset-library/asset/4242",
+      "asset_library_id": 4242,
+      "version": "0.1",
+      "godot_declared": "4.4+",
+      "description": "Multiplayer first-person starter using ENet with synchronized spawning, interpolation, walking/sprinting/jumping, air control, coyote time, jump buffering and menu/settings/pause UI.",
+      "tags": [
+        "godot",
+        "3d",
+        "fps",
+        "first-person",
+        "multiplayer",
+        "networking",
+        "enet",
+        "cooperative",
+        "competitive",
+        "interpolation",
+        "movement",
+        "starter"
+      ]
+    },
+    {
+      "id": "kings-and-pigs",
+      "category": "rpg",
+      "name": "Kings and Pigs",
+      "repository": "https://github.com/GameEmpire/Kings-and-Pigs.git",
+      "ref": "649a9751670ef0284ed6964a162aa6f95ea8cdc4",
+      "source_url": "https://godotengine.org/asset-library/asset/4499",
+      "asset_library_id": 4499,
+      "version": "1.0.0",
+      "godot_declared": "4.5",
+      "description": "2D fantasy action-platformer starter with terrain-aware tileset, hammer attacks, enter/exit doors, breakable boxes and heart/diamond counters. Stored under RPG as the closest requested category; it is not a complete RPG and needs additional enemies, UI and levels.",
+      "tags": [
+        "godot",
+        "2d",
+        "fantasy",
+        "platformer",
+        "side-scroller",
+        "tileset",
+        "hammer",
+        "melee",
+        "breakable",
+        "pickups",
+        "starter"
+      ]
+    },
+    {
+      "id": "cobra-fps-feel-kit",
+      "category": "fps",
+      "name": "COBRA FPS Feel Kit",
+      "repository": "https://github.com/meatycurtains907/COBRA-FPS-Feelkit.git",
+      "ref": "decf7b5f5f90e2559b2bf52d06b2921ae93ca8fc",
+      "source_url": "https://godotengine.org/asset-library/asset/4536",
+      "asset_library_id": 4536,
+      "version": "v0.4.1",
+      "godot_declared": "4.5",
+      "description": "First-person movement and weapon-feel kit with view bob, recoil, hit feedback and switchable Twitchy/WW2/Arcade/Exploration profiles; includes FPS and magic/melee demo scenes.",
+      "tags": [
+        "godot",
+        "3d",
+        "fps",
+        "first-person",
+        "controller",
+        "gunfeel",
+        "movement",
+        "recoil",
+        "view-bob",
+        "magic",
+        "melee",
+        "exploration",
+        "starter"
+      ]
+    },
+    {
+      "id": "third-person-shooter-template",
+      "category": "tps",
+      "name": "Third Person Shooter Template",
+      "source_url": "https://chafmere.itch.io/third-person-shooter-template",
+      "itch_upload_id": 17513593,
+      "archive_name": "tps_template_1_0.zip",
+      "archive_sha256": "c77c680fe195f0d1557b127277e60669800795b408de545a26695fd0814f97e6",
+      "version": "1.0",
+      "godot_declared": "4.6",
+      "description": "Third-person shooter starter by Chafmere: spring-arm camera with tweened shoulder switching and aim zoom, node-based state machine for combat and non-combat modes, AnimationTree-driven rigged character, component-based weapon manager with projectiles, ammo, pickups and dropping, and IK that keeps the player facing the camera. Itch comments report an import problem and broken weapon pickups.",
+      "tags": [
+        "godot",
+        "3d",
+        "tps",
+        "third-person",
+        "shooter",
+        "over-the-shoulder",
+        "camera",
+        "spring-arm",
+        "state-machine",
+        "animation-tree",
+        "ik",
+        "weapons",
+        "projectiles",
+        "ammo",
+        "pickups",
+        "starter"
+      ],
+      "license": "MIT code (Chaff Games, LICENCE.txt); Quaternius character CC0 per itch page; Kenney prototype textures CC0 (bundled License.txt)"
+    },
+    {
+      "id": "kenney-3d-platformer-starter",
+      "category": "platformer",
+      "name": "Kenney 3D Platformer Starter Kit",
+      "repository": "https://github.com/KenneyNL/Starter-Kit-3D-Platformer.git",
+      "ref": "3fa8a04b1c01ab23db43123d4ce814a34c3fc7f0",
+      "source_url": "https://github.com/KenneyNL/Starter-Kit-3D-Platformer",
+      "godot_declared": "4.6",
+      "description": "Small 3D platformer kit by Kenney: player controller, coins, moving platforms, traps and a sample level. MIT licensed.",
+      "tags": [
+        "godot",
+        "3d",
+        "platformer",
+        "coins",
+        "platforms",
+        "starter"
+      ]
+    },
+    {
+      "id": "metroidvania-system",
+      "category": "metroidvania",
+      "name": "Metroidvania System",
+      "repository": "https://github.com/KoBeWi/Metroidvania-System.git",
+      "ref": "0065ae8974291d1c4dfe72f55cfca0f37e3d6ef3",
+      "source_url": "https://github.com/KoBeWi/Metroidvania-System",
+      "godot_declared": "4.6",
+      "description": "General-purpose metroidvania framework: room-based map, map UI, room transitions, collectible/progress tracking and example game. Framework, not a complete game.",
+      "tags": [
+        "godot",
+        "2d",
+        "metroidvania",
+        "map",
+        "rooms",
+        "framework",
+        "platformer"
+      ]
+    },
+    {
+      "id": "slay-the-robot",
+      "category": "deckbuilder",
+      "name": "Slay the Robot",
+      "repository": "https://github.com/DesirePathGames/Slay-The-Robot.git",
+      "ref": "4dac5abe0d19382f8ace2cec5ed3fd77e2a0e11d",
+      "source_url": "https://github.com/DesirePathGames/Slay-The-Robot",
+      "godot_declared": "4.6",
+      "description": "Framework for roguelike deckbuilders in the style of Slay the Spire: cards, actions, enemies, relics, map and data-driven content.",
+      "tags": [
+        "godot",
+        "2d",
+        "deckbuilder",
+        "roguelike",
+        "cards",
+        "turn-based",
+        "framework"
+      ]
+    },
+    {
+      "id": "quiver-tower-defense",
+      "category": "tower-defense",
+      "name": "Quiver Tower Defense",
+      "repository": "https://github.com/quiver-dev/tower-defense-godot4.git",
+      "ref": "1cbd622116dbf5acc0f284f57ece22970338afe8",
+      "source_url": "https://github.com/quiver-dev/tower-defense-godot4",
+      "godot_declared": "4.7",
+      "description": "Tower defense game project: tower placement, enemy waves, pathing and upgrades. MIT licensed.",
+      "tags": [
+        "godot",
+        "2d",
+        "tower-defense",
+        "waves",
+        "pathing",
+        "strategy"
+      ]
+    },
+    {
+      "id": "godot-open-rts",
+      "category": "rts",
+      "name": "Godot Open RTS",
+      "repository": "https://github.com/lampe-games/godot-open-rts.git",
+      "ref": "a628ad3bb6a9a903587a181a7ee3300dbf735e81",
+      "source_url": "https://github.com/lampe-games/godot-open-rts",
+      "godot_declared": "4.3",
+      "description": "Open source 3D RTS: unit selection and commands, resource gathering, building, fog-free combat and a skirmish AI.",
+      "tags": [
+        "godot",
+        "3d",
+        "rts",
+        "strategy",
+        "units",
+        "buildings",
+        "ai"
+      ]
+    },
+    {
+      "id": "nezvers-godot-gametemplate",
+      "category": "top-down-shooter",
+      "name": "Nezvers Godot GameTemplate",
+      "repository": "https://github.com/nezvers/Godot-GameTemplate.git",
+      "ref": "d5d8d15887423b3a8acf0502efb6271c600a80bc",
+      "source_url": "https://github.com/nezvers/Godot-GameTemplate",
+      "godot_declared": "4.7",
+      "description": "Top-down shooter template with weapons, enemies, pickups, menus and solutions for common game problems.",
+      "tags": [
+        "godot",
+        "2d",
+        "top-down",
+        "shooter",
+        "weapons",
+        "enemies",
+        "starter"
+      ]
+    },
+    {
+      "id": "maaack-game-template",
+      "category": "starter",
+      "name": "Maaack Game Template",
+      "repository": "https://github.com/Maaack/Godot-Game-Template.git",
+      "ref": "5cc611f7dfcd1850f0f5877c8315dd59a0388938",
+      "source_url": "https://github.com/Maaack/Godot-Game-Template",
+      "godot_declared": "4.7",
+      "description": "Genre-neutral game scaffolding: main menu, options, pause menu, credits, scene loader, level flow and persisted settings.",
+      "tags": [
+        "godot",
+        "starter",
+        "menus",
+        "options",
+        "pause",
+        "scene-loader",
+        "settings"
+      ]
+    },
+    {
+      "id": "vehicle-sample-racing",
+      "category": "racing",
+      "name": "Vehicle Sample Racing",
+      "repository": "https://github.com/32kda/vehicle_sample.git",
+      "ref": "7ce6dcb953bb006dd94fa98723398d94745779bb",
+      "source_url": "https://github.com/32kda/vehicle_sample",
+      "godot_declared": "4.2",
+      "description": "Small Godot 4 racing sample with a drivable vehicle, track and lap flow. Minimal; expect to extend.",
+      "tags": [
+        "godot",
+        "3d",
+        "racing",
+        "vehicle",
+        "track"
+      ]
+    },
+    {
+      "id": "modular-souls-like-template",
+      "category": "souls-like",
+      "name": "Cat's Modular Souls-like Template",
+      "repository": "https://github.com/catprisbrey/Cats-Godot4-Modular-Souls-like-Template.git",
+      "ref": "d8bceffc5bf4afe585a3a926fd9aa60ebd26e001",
+      "source_url": "https://github.com/catprisbrey/Cats-Godot4-Modular-Souls-like-Template",
+      "godot_declared": "4.2",
+      "description": "Loosely coupled 3D souls-like template: third-person combat, lock-on, stamina, dodge and enemy components. Unlicense.",
+      "tags": [
+        "godot",
+        "3d",
+        "souls-like",
+        "combat",
+        "lock-on",
+        "stamina",
+        "third-person"
+      ]
+    }
+  ]
+}

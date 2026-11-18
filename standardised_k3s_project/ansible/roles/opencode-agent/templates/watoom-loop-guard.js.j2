@@ -1,0 +1,259 @@
+/*
+ * WatooM OpenCode V2 mechanical loop guard.
+ *
+ * Managed by Ansible.
+ *
+ * Containment:
+ *
+ *   A A A
+ *       -> block repeated read
+ *
+ *   A B A B A B
+ *       -> block repeated read cycle
+ *
+ * Any non-read tool resets read-pattern state.
+ */
+
+const IDENTICAL_READ_LIMIT =
+  {{ opencode_v2_loop_guard_identical_read_limit | int }};
+
+const ALTERNATING_READ_CYCLES =
+  {{ opencode_v2_loop_guard_alternating_read_cycles | int }};
+
+const STATE_TTL_MS =
+  {{ opencode_v2_loop_guard_state_ttl_ms | int }};
+
+const states = new Map();
+
+function canonical(value) {
+  if (Array.isArray(value)) {
+    return value.map(canonical);
+  }
+
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.keys(value)
+        .sort()
+        .map((key) => [key, canonical(value[key])]),
+    );
+  }
+
+  return value;
+}
+
+function fingerprint(tool, input) {
+  return JSON.stringify([
+    String(tool ?? ""),
+    canonical(input ?? {}),
+  ]);
+}
+
+function stateFor(sessionID) {
+  let state = states.get(sessionID);
+
+  if (!state) {
+    state = {
+      lastRead: "",
+      consecutiveReads: 0,
+      recentReads: [],
+      updatedAt: Date.now(),
+    };
+
+    states.set(sessionID, state);
+  }
+
+  state.updatedAt = Date.now();
+
+  return state;
+}
+
+function resetReadPattern(state) {
+  state.lastRead = "";
+  state.consecutiveReads = 0;
+  state.recentReads = [];
+}
+
+function alternatingCycleDetected(reads) {
+  const windowSize = ALTERNATING_READ_CYCLES * 2;
+
+  if (reads.length < windowSize) {
+    return false;
+  }
+
+  const window = reads.slice(-windowSize);
+
+  const a = window[0];
+  const b = window[1];
+
+  /*
+   * Identical sequences belong to the consecutive-read detector rather than
+   * the A/B detector.
+   */
+  if (a === b) {
+    return false;
+  }
+
+  for (let i = 0; i < window.length; i += 1) {
+    const expected = i % 2 === 0 ? a : b;
+
+    if (window[i] !== expected) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function log(event, fields = {}) {
+  console.error(
+    JSON.stringify({
+      component: "watoom.loop-guard",
+      event,
+      timestamp: new Date().toISOString(),
+      ...fields,
+    }),
+  );
+}
+
+export default {
+  id: "watoom.loop-guard",
+
+  async setup(ctx) {
+    log("loaded", {
+      directory: ctx.location?.directory ?? null,
+      identicalReadLimit: IDENTICAL_READ_LIMIT,
+      alternatingReadCycles: ALTERNATING_READ_CYCLES,
+    });
+
+    await ctx.tool.hook("execute.before", async (event) => {
+      const sessionID = event.sessionID ?? null;
+      const tool = String(event.tool ?? "");
+
+      if (!sessionID) {
+        log("missing-session-id", {
+          tool,
+          input: event.input ?? null,
+        });
+
+        return;
+      }
+
+      const state = stateFor(sessionID);
+
+      /*
+       * Writes, shell commands, searches, edits, etc. represent a change in
+       * behaviour and therefore reset the read-pattern detector.
+       */
+      if (tool !== "read") {
+        resetReadPattern(state);
+        return;
+      }
+
+      const current = fingerprint(tool, event.input);
+
+      if (current === state.lastRead) {
+        state.consecutiveReads += 1;
+      } else {
+        state.lastRead = current;
+        state.consecutiveReads = 1;
+      }
+
+      const alternatingWindow = ALTERNATING_READ_CYCLES * 2;
+
+      state.recentReads.push(current);
+
+      if (state.recentReads.length > alternatingWindow) {
+        state.recentReads.shift();
+      }
+
+      const identicalTriggered =
+        state.consecutiveReads >= IDENTICAL_READ_LIMIT;
+
+      const alternatingTriggered =
+        alternatingCycleDetected(state.recentReads);
+
+      log("read-observed", {
+        sessionID,
+        input: event.input ?? null,
+        consecutiveReads: state.consecutiveReads,
+        recentReadCount: state.recentReads.length,
+        identicalTriggered,
+        alternatingTriggered,
+      });
+
+      if (!identicalTriggered && !alternatingTriggered) {
+        return;
+      }
+
+      const mode =
+        identicalTriggered
+          ? "identical-read"
+          : "alternating-read-cycle";
+
+      const reason =
+        mode === "identical-read"
+          ? (
+              "WatooM loop guard: identical read repeated " +
+              `${state.consecutiveReads} times: ` +
+              JSON.stringify(event.input ?? {})
+            )
+          : (
+              "WatooM loop guard: alternating read cycle repeated " +
+              `${ALTERNATING_READ_CYCLES} times`
+            );
+
+      log("trigger", {
+        sessionID,
+        mode,
+        input: event.input ?? null,
+        consecutiveReads: state.consecutiveReads,
+        recentReads: state.recentReads,
+        reason,
+      });
+
+      /*
+       * Block only the repeated read tool call.
+       *
+       * Do not interrupt the whole OpenCode session. Throwing from this
+       * execute.before hook rejects the offending tool call and returns the
+       * failure to the agent so it can change strategy.
+       *
+       * Keep detector state intact. If the agent immediately retries the
+       * exact same read, it remains blocked until it changes behaviour.
+       */
+      const recoveryReason =
+        reason +
+        ". The repeated read was blocked, but the session remains active. " +
+        "Use content already obtained, read a different target, or change " +
+        "strategy instead of retrying the same unchanged read.";
+
+      log("read-blocked", {
+        sessionID,
+        mode,
+        input: event.input ?? null,
+        consecutiveReads: state.consecutiveReads,
+        recentReads: state.recentReads,
+        reason: recoveryReason,
+      });
+
+      throw new Error(recoveryReason);
+    });
+
+    const timer = setInterval(() => {
+      const cutoff = Date.now() - STATE_TTL_MS;
+
+      for (const [sessionID, state] of states.entries()) {
+        if (state.updatedAt < cutoff) {
+          states.delete(sessionID);
+        }
+      }
+    }, 30 * 60 * 1000);
+
+    return () => {
+      clearInterval(timer);
+      states.clear();
+
+      log("unloaded");
+    };
+  },
+};

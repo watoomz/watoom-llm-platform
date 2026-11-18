@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Artex user guide · Agent Export</title><meta name="description" content="How to use the Artex autonomous security-testing console deployed in this homelab — tasks, the asset/exploration graph, the intercept approval gate, findings, traffic recording and this deployment&#x27;s own hardening."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link active" aria-current="page" href="/guide/artex.html">Artex</a><div class="toc"><a class="toc-link" href="#what-this-is">What this is</a><a class="toc-link" href="#opening-the-console">Opening the console</a><a class="toc-link" href="#core-concepts">Core concepts</a><a class="toc-link" href="#creating-and-running-a-task">Creating and running a task</a><a class="toc-link" href="#where-the-results-show-up">Where the results show up</a><a class="toc-link" href="#retesting-a-finding">Retesting a finding</a><a class="toc-link" href="#the-intercept-approval-gate-the-actual-safety-control">The intercept approval gate — the actual safety control</a><a class="toc-link" href="#traffic-recording">Traffic recording</a><a class="toc-link" href="#pointing-it-at-a-model">Pointing it at a model</a><a class="toc-link" href="#skills">Skills</a><a class="toc-link" href="#this-deployment-s-specific-hardening">This deployment&#x27;s specific hardening</a><a class="toc-link" href="#operating-it-from-this-repo">Operating it from this repo</a></div><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">Artex</p><h1>Artex user guide</h1><p class="lede">How to use the Artex autonomous security-testing console deployed in this homelab — tasks, the asset/exploration graph, the intercept approval gate, findings, traffic recording and this deployment&#x27;s own hardening.</p></header>
+<div class="content">
+<blockquote class="callout callout-warning" data-kind="Warning">
+<p>Artex is an autonomous agent that executes shell commands, drives a real browser and sends network
+traffic on your behalf. Use it only against systems you own or have explicit written authorization to
+test. This deployment does not change that: it only constrains where Artex can run and who can reach it.</p>
+</blockquote>
+<h2 id="what-this-is">What this is</h2>
+<p><a href="https://github.com/RuoJi6/ARTEX" rel="noopener">Artex</a> is an open-source, LLM multi-agent autonomous penetration-testing
+harness (Go backend, embedded Next.js frontend, PostgreSQL). This homelab runs the <strong>FailSafe</strong> hardened
+fork, built from audited source after the upstream <code>tomicdd/artex</code> Docker image was found to contain an
+unauthenticated command-execution backdoor in November 2026 — see <code>ansible/vars/artex.yml</code> for the pinned
+image digest and the review process for updating it.</p>
+<p>Full downloadable copy of this guide: <a href="/guide/assets/artex-user-guide.pdf">artex-user-guide.pdf</a>.</p>
+<h2 id="opening-the-console">Opening the console</h2>
+<ul>
+<li>URL: <code>https://artex.internal.homelab.example</code> (internal only, via Traefik; there is no path from outside the
+homelab network).</li>
+<li>First visit goes to <code>/setup</code> to create the admin password. After that, sign in at <code>/login</code>.</li>
+<li>If you left the LLM key blank at setup, configure a provider under <strong>System → LLM</strong> before starting a
+task — see <a href="#pointing-it-at-a-model">Pointing it at a model</a> below.</li>
+</ul>
+<h2 id="core-concepts">Core concepts</h2>
+<p>Artex separates <strong>what you're trying to find out</strong> from <strong>what you've already confirmed exists</strong>, as two
+linked graphs:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Graph</th>
+<th>Scope</th>
+<th>Nodes</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Exploration graph</strong></td>
+<td>Per task</td>
+<td><code>goal</code> → <code>intent</code> → <code>fact</code> / <code>finding</code> / <code>hint</code></td>
+<td>The reasoning trail for one run: which direction produced which evidence</td>
+</tr>
+<tr>
+<td><strong>Asset graph</strong></td>
+<td>Shared across all tasks</td>
+<td><code>root_domain</code> → <code>subdomain</code> → <code>service</code> → <code>endpoint</code></td>
+<td>The accumulated ground truth about what exists, reused by later tasks</td>
+</tr>
+</tbody>
+</table></div>
+<p>An <strong>anchor</strong> ties exploration-graph nodes to the asset-graph nodes they touched, which is what powers the
+asset coverage view (which assets have been tested, by which task, with what result).</p>
+<p>Three agent roles do the work:</p>
+<ul>
+<li><strong>planner</strong> — the only agent that creates intents. It reads the exploration graph's current state and, when
+there is an uncovered direction, issues 0 or more intents. It keeps a <strong>shared todolist</strong> across its own
+wake-ups so a multi-step attack chain (find an injection point → get credentials → pivot → escalate) is
+pursued in dependency order across many planning rounds instead of being flattened into one pass.</li>
+<li><strong>worker</strong> — claims one intent, runs real tools against the target, and writes facts / assets / findings
+back to the graphs, then stops. Several workers run concurrently per task (configurable, default 3). A
+worker can search other workers' raw execution traces for this task (<code>search_all_worker_traces</code>) to reuse
+an observation that was never promoted to a formal fact, without crossing into another worker's intent.</li>
+<li><strong>mainagent</strong> — the human-in-the-loop chat agent (the <strong>Chat</strong> page) for direct Q&amp;A, steering a task, or
+pulling it off its default path.</li>
+<li><strong>retester</strong> — a separate, editable agent (prompt, LLM, budget, tools configurable under <strong>System →
+Agents</strong>) that reruns a specific finding to check whether a fix actually worked. Started from a finding's
+row or detail page; its conclusion (<code>still reproducible</code> / <code>fixed</code> / <code>could not confirm</code>) can set the
+finding's status automatically.</li>
+</ul>
+<h2 id="creating-and-running-a-task">Creating and running a task</h2>
+<p><strong>Function → Tasks → New task</strong>. Fields that matter beyond the obvious name/description/goal:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>LLM profile(s)</strong></td>
+<td>Which configured model(s) run this task; omit to use the system's active default. Multiple profiles form an ordered chain — the first is used until you switch it (useful for starting cheap and escalating).</td>
+</tr>
+<tr>
+<td><strong>Timeout</strong> (<code>timeout_seconds</code>)</td>
+<td>A wall-clock budget for the whole task, starting from its <em>first</em> run, not from creation. <code>0</code>/blank = unlimited. When it elapses the task enters wrap-up: in-flight intents get a short drain grace period to finish cleanly, and anything still running past that is hard-cancelled and the task is marked <code>timeout</code>. <strong>If a task times out but the work clearly needed more time, just rerun it with a longer or unlimited budget</strong> — nothing was broken, the budget simply ran out mid-round.</td>
+</tr>
+<tr>
+<td><strong>Plan heartbeat</strong> (<code>plan_heartbeat_seconds</code>)</td>
+<td>How often the planner re-evaluates even with no new facts (default and floor: 600s / 10 min). Lower it for a task you're actively watching; there's no benefit to lowering it below the time your workers actually take.</td>
+</tr>
+<tr>
+<td><strong>Seed first intent</strong></td>
+<td>Skip the first planning round and hand the worker a seed intent immediately (built from the goal/description). Useful for a narrow, already-well-understood target (e.g. a CTF box) where you don't need the planner's first pass.</td>
+</tr>
+<tr>
+<td><strong>Coverage</strong></td>
+<td>Whether asset-coverage tracking/display and automatic scope accumulation are on for this task (default on). Turning it off also hides <code>add_task_scope</code>/<code>list_untested_assets</code> from the agent — only turn it off if you specifically don't want the task touching the shared asset graph's scope.</td>
+</tr>
+<tr>
+<td><strong>Associated companies</strong></td>
+<td>Snapshot-links the task to existing company/asset scope without copying assets or forcing intents — the planner can see and choose to use them.</td>
+</tr>
+<tr>
+<td><strong>Source tasks</strong></td>
+<td>Read-only inheritance from earlier tasks (up to the configured max) — lets a follow-on task see prior findings/facts without rediscovering them.</td>
+</tr>
+<tr>
+<td><strong>Task-level intercept rules</strong></td>
+<td>Extra allow/deny/ask rules that apply only to this task, on top of the global rules below.</td>
+</tr>
+</tbody>
+</table></div>
+<p>A task's lifecycle is event-driven, not polled: a graph change wakes the planner, the planner issues intents
+into a frontier queue, a free worker claims the next one, executes it for real (through the recording proxy,
+see below), writes results back — which wakes the planner again. Most wake-ups issue <strong>zero</strong> new intents;
+that's the planner deciding there's nothing uncovered yet, not a stall.</p>
+<h2 id="where-the-results-show-up">Where the results show up</h2>
+<ul>
+<li><strong>Findings</strong> (<code>Function → Findings</code>) — flat list, grouped-by-task, or asset view. Each has a retest action;
+see <a href="#retesting-a-finding">Retesting a finding</a>.</li>
+<li><strong>Assets</strong> (<code>Function → Assets</code>) — the shared asset graph; the force-directed <strong>coverage graph</strong> highlights
+what's been tested and lets you collapse/expand by node.</li>
+<li><strong>Traffic</strong> (<code>Function → Traffic</code>) — every HTTP(S) request/response a worker made, captured by the
+MITM recording proxy with CA-verified provenance (not just a passive sniff).</li>
+<li><strong>Workspace</strong> (<code>Function → Workspace</code>) — files a task's tools produced.</li>
+<li><strong>Commands</strong> (<code>Function → Commands</code>) — the raw shell/tool calls a task ran.</li>
+<li><strong>LLM records</strong> (<code>Function → LLM records</code>) — token/cost accounting per task, per lane (planner / worker /
+mainagent / the intercept judge, see below).</li>
+</ul>
+<h2 id="retesting-a-finding">Retesting a finding</h2>
+<p>From a finding's row, its detail page, or the task's <strong>Retest</strong> tab: pick the finding, optionally note the
+claimed fix version or test conditions, and start a retest. It runs as its own agent session (the
+<code>retester</code> agent, configurable under <strong>System → Agents</strong>) — it does <strong>not</strong> restart or reuse the original
+scanning task. While it runs you'll see a spinner and &quot;retesting&quot;; the conclusion (<code>still reproducible</code>,
+<code>fixed</code>, <code>could not confirm</code>) is saved on the finding with its evidence and a link back to the retest
+session. A <code>fixed</code> conclusion automatically updates the finding's status; any other conclusion leaves it
+alone (you can still set the status by hand from the dropdown). If a retest is already running for a
+finding, re-triggering it reuses that same run rather than starting a second one.</p>
+<h2 id="the-intercept-approval-gate-the-actual-safety-control">The intercept approval gate — the actual safety control</h2>
+<p><strong>System → Intercept</strong> is the one setting that determines whether Artex can act without you watching. Every
+tool call a worker/planner/mainagent wants to make is checked, in priority order (highest first), against
+your rules before it runs:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Match target</th>
+<th>What it matches</th>
+<th>Match type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tool_name</code></td>
+<td>Which tool is being called (e.g. a shell runner, an HTTP request tool)</td>
+<td>exact string or regex</td>
+</tr>
+<tr>
+<td><code>tool_input</code></td>
+<td>The actual content of the call (a command line, a URL, a payload)</td>
+<td>exact string or regex</td>
+</tr>
+</tbody>
+</table></div>
+<p>Each rule's <strong>action</strong> is one of:</p>
+<ul>
+<li><strong>allow</strong> — let it through immediately, skip lower-priority rules.</li>
+<li><strong>deny</strong> — block it and hand the model a message explaining why (the rule's <code>message</code> field), so it can
+try a different approach instead of just failing silently.</li>
+<li><strong>ask</strong> — block it, create a pending approval, surface it inline in that task's activity stream and in
+the global pending-approvals list, and wait for you to approve or deny. An <code>ask</code> rule can also carry a
+timeout with its own fallback action (allow or deny) if nobody responds in time.</li>
+</ul>
+<blockquote class="callout callout-rule" data-kind="Rule">
+<p>A tool call that matches <strong>no</strong> rule at all is not silently allowed: it falls through to an LLM <strong>judge</strong>
+(a configured model, defaulting to the active profile) that reviews the call and returns a verdict with a
+reason. The judge's own default behaviours are configurable (<code>System → Intercept</code> → judge settings):
+what happens if the judge call itself fails, and what the fallback is if an <code>ask</code>-style judge verdict times
+out. Judge usage is billed and tracked separately under LLM records (the <code>judge</code> lane), apart from the
+planner/worker/mainagent lanes.</p>
+</blockquote>
+<p>Approve or deny a pending call either from the global pending-approvals list or inline in the task's chat/
+activity view where it appeared — both views show the same record.</p>
+<h2 id="traffic-recording">Traffic recording</h2>
+<p>Every Bash and HTTP action a worker takes is recorded, not just logged: the proxy is a MITM man-in-the-middle
+with its own CA, so HTTPS traffic is decrypted for the recording rather than just captured as opaque bytes.
+In this deployment the proxy (<code>:8788</code> upstream) is <strong>not</strong> exposed outside the pod — only the console
+(<code>artex</code>, port 8787 internally, published at <code>artex.internal.homelab.example</code>) has an ingress route at all; see
+<a href="#this-deployment-s-specific-hardening">This deployment's specific hardening</a>.</p>
+<h2 id="pointing-it-at-a-model">Pointing it at a model</h2>
+<p><strong>System → LLM</strong> manages one or more named profiles (provider, model, base URL, key). This deployment's
+default profile points at the homelab's own OpenAI-compatible <strong>llm-router</strong> (<code>llama-cpp</code> namespace, port
+8000) rather than an external provider — no request from Artex reaches a third-party LLM API unless you
+explicitly add and select a profile that does. The intercept judge, the retester agent, and the mainagent
+chat can each be pinned to a different profile than the one driving planner/worker if you want a cheaper or
+more cautious model doing judgement than doing the actual exploration.</p>
+<h2 id="skills">Skills</h2>
+<p><strong>System → Skills</strong> lists what's installed; <code>skills/</code> on disk is one subdirectory per skill, each with a
+<code>SKILL.md</code>. This deployment ships three: <code>api-recon</code> (frontend/API surface discovery — explicitly scoped to
+recon, not exploitation), <code>playwright-cli</code> (browser automation for anything JS-rendered), and <code>scopesentry</code>
+(syncing scope/assets from a ScopeSentry instance via its MCP endpoint, under <strong>Function → Sync</strong>, instead of
+re-collecting what's already known there).</p>
+<blockquote class="callout callout-warning" data-kind="Warning">
+<p>A skill is not sandboxed guidance text — it can instruct the agent to run arbitrary commands. Review any
+skill before adding or mounting it, the same way you'd review a new tool.</p>
+</blockquote>
+<h2 id="this-deployment-s-specific-hardening">This deployment's specific hardening</h2>
+<p>Beyond what upstream Artex and the FailSafe build already do (loopback-bound console, unpublished recording
+proxy, pinned-digest base images, compiled-off self-update — see <code>SECURITY.md</code> in the Artex source), this
+homelab's Ansible role (<code>ansible/roles/artex/</code>) adds:</p>
+<ul>
+<li><strong>Isolated namespace</strong> (<code>artex</code>), applied and verified by the role itself: the image digest is pinned in
+<code>ansible/vars/artex.yml</code> and the role <strong>fails closed</strong> if that pin is missing — there is no path where a
+freshly-built image gets deployed without a human reviewing the diff and updating the pin first.</li>
+<li><strong>Ingress locked to Traefik only</strong>: a deny-all <code>NetworkPolicy</code> on the <code>artex</code> pod, with a single explicit
+exception for the in-cluster Traefik pod on the console port. There is no other way into the console or
+the proxy, even from elsewhere in the cluster.</li>
+<li><strong>Egress to the local LLM router is the only other declared network path</strong>: the <code>llama-cpp</code> namespace
+carries a matching <code>NetworkPolicy</code> that only accepts connections from the <code>artex</code> app pod. General
+outbound egress (to the actual targets you authorize Artex to test) is otherwise unrestricted by cluster
+policy — that's necessary for the tool to do its job, so authorization scope is enforced by what you tell
+the agent to target and by the intercept rules above, not by a firewall.</li>
+<li><strong>The Service stays <code>ClusterIP</code></strong>, and the role actively refuses to apply if anything in the namespace is
+exposed any other way (<code>NodePort</code>/<code>LoadBalancer</code>).</li>
+<li><strong>Private, isolated application storage</strong>: <code>/data/ai/artex/{data,keys,pgdata}</code> on the host, each <code>0700</code>
+and SELinux-labelled <code>container_file_t</code>, owned by root except <code>pgdata</code> which is owned by the Postgres
+container's own uid/gid (70). Back these up together — losing <code>keys</code> invalidates existing sessions, losing
+<code>pgdata</code> loses every task, finding and the asset graph.</li>
+<li><strong>Database credentials are generated once</strong>, in-cluster, and never touch Git or Ansible output.</li>
+</ul>
+<h2 id="operating-it-from-this-repo">Operating it from this repo</h2>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash"># deploy / update (after reviewing and re-pinning ansible/vars/artex.yml if the image changed)
+ansible-playbook -i inventories/homelab playbooks/artex.yml
+
+# health
+kubectl -n artex get pods,svc,networkpolicy
+kubectl -n artex logs deploy/artex --tail=100
+kubectl -n artex logs deploy/artex-postgres --tail=100
+
+# confirm the console path end to end
+curl -sk -o /dev/null -w &quot;%{http_code}\n&quot; https://artex.internal.homelab.example/
+</code></pre></div>
+<p>A failed deployment is a result to read, not a reason to loosen the role's assertions (the fail-closed image
+pin, the <code>ClusterIP</code>-only check, the namespace/path asserts at the top of <code>tasks/main.yml</code>) — fix the actual
+cause (usually: the image pin in <code>ansible/vars/artex.yml</code> is stale or missing) and rerun.</p>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/artex.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

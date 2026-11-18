@@ -1,0 +1,22 @@
+---
+- name: Forward Prometheus platform alerts to Discord through Grafana
+  hosts: homelab
+  become: true
+  gather_facts: false
+  vars:
+    watoom_platform_alerts_webhook_file: "{{ project_root }}/secrets-vault/grafana_security_discord_webhook"
+    watoom_platform_alerts_dry_run: false
+  tasks:
+    - name: Reconcile platform folder, contact point, route and forwarding rule
+      ansible.builtin.command:
+        argv: "{{ ['python3', '-I', playbook_dir ~ '/../../scripts/watoom-platform-alerts.py',
+                   '--spec', playbook_dir ~ '/../../config/grafana/platform-alerts/forward.json',
+                   '--webhook-file', watoom_platform_alerts_webhook_file,
+                   '--evidence', '/data/ai/artifacts/watoom-platform-alerts']
+                  + (['--dry-run'] if watoom_platform_alerts_dry_run | bool else []) }}"
+      register: watoom_platform_alerts
+      changed_when: not (watoom_platform_alerts_dry_run | bool)
+      no_log: false
+    - name: Show reconcile result
+      ansible.builtin.debug:
+        msg: "{{ watoom_platform_alerts.stdout_lines }}"

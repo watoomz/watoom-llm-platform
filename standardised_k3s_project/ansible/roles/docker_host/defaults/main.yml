@@ -1,0 +1,25 @@
+---
+docker_host_packages:
+  - containerd
+  - runc
+  - docker-cli
+  - moby-engine
+  - moby-engine-rootless-extras
+  - docker-compose
+  - docker-compose-switch
+  - docker-buildx
+  - policycoreutils-python-utils
+
+docker_host_users:
+  - watoom
+
+# Persistent system-containerd storage used by Docker.
+#
+# Keep this on the SSD-backed /app filesystem rather than the root filesystem.
+# This is separate from the k3s containerd store under /var/lib/rancher/k3s.
+docker_host_manage_containerd_storage: true
+docker_host_containerd_mount: /app
+docker_host_containerd_root: /app/containerd
+docker_host_containerd_opt_path: "{{ docker_host_containerd_root }}/opt"
+docker_host_containerd_legacy_root: /var/lib/containerd
+docker_host_containerd_config: /etc/containerd/config.toml

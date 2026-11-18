@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "products": [
+    "esp32-div",
+    "esp32-div-v2-engineering",
+    "k8s-k3s",
+    "ansible",
+    "rhel-admin",
+    "watoom-pipelines",
+    "satellite",
+    "c",
+    "cpp",
+    "godot-mcp-toolkit",
+    "watoom-godot-route",
+    "watoom-texture-layering",
+    "ue-mcp",
+    "watoom-ue-route",
+    "watoom-godot-game",
+    "watoom-unreal-combat"
+  ]
+}

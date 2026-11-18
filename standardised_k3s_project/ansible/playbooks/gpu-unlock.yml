@@ -1,0 +1,10 @@
+---
+- name: Install pinned GPU unlock without rebooting the host
+  hosts: homelab
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Reconcile only the GPU unlock component
+      ansible.builtin.include_role:
+        name: gpu_host
+        tasks_from: unlock

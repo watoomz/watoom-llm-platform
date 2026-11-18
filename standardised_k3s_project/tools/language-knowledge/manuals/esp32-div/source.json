@@ -1,0 +1,116 @@
+{
+  "schema": 1,
+  "product": "esp32-div",
+  "version": "v2",
+  "language": "cpp",
+  "license": "unknown-see-repo",
+  "trust_tier": "vendor_doc",
+  "note": "Wiki pages under sources/ are the raw upstream bytes (GitHub wiki commit 5f097aa19b480ff9593b9a0a4bdc6c6dc9c387d4, fetched 2026-11-09); the two fw-*-excerpt.txt files are exact line ranges of the upstream firmware at commit 90f7967c4dc7bcd8c09ebdcf421886737516ddc2. No paraphrase remains. Where the wiki and the firmware disagree (PN532 SS, GPS pins, buzzer/ADC, NRF24/IR/GPS pin reuse) the card says so in `constraints`; verify against the physical board before wiring.",
+  "pages": [
+    {
+      "title": "Hardware",
+      "uri": "https://github.com/cifertech/ESP32-DIV/wiki/Hardware",
+      "file": "hardware.md",
+      "retrieved_utc": "2026-11-09T00:00:00Z",
+      "verbatim": true,
+      "sha256": "6eb82f0bb49d1c513b024f50645dd0543e6d25b9938a5c3d651ca9048d56ce47",
+      "wiki_commit": "5f097aa19b480ff9593b9a0a4bdc6c6dc9c387d4"
+    },
+    {
+      "title": "Schematics",
+      "uri": "https://github.com/cifertech/ESP32-DIV/wiki/Schematics",
+      "file": "schematics.md",
+      "retrieved_utc": "2026-11-09T00:00:00Z",
+      "verbatim": true,
+      "sha256": "d58b71047fd4654c7497df90e869e52e6cbbc065f272404a56b38f6c083c834b",
+      "wiki_commit": "5f097aa19b480ff9593b9a0a4bdc6c6dc9c387d4"
+    },
+    {
+      "title": "Firmware Upload Guide",
+      "uri": "https://github.com/cifertech/ESP32-DIV/wiki/Firmware-Upload",
+      "file": "firmware-upload.md",
+      "retrieved_utc": "2026-11-09T00:00:00Z",
+      "verbatim": true,
+      "sha256": "047e16952d111654748e881490216dfe3a7976570e15623d2cd25d797f239ed2",
+      "wiki_commit": "5f097aa19b480ff9593b9a0a4bdc6c6dc9c387d4"
+    },
+    {
+      "title": "Features",
+      "uri": "https://github.com/cifertech/ESP32-DIV/wiki/Features",
+      "file": "features.md",
+      "retrieved_utc": "2026-11-09T00:00:00Z",
+      "verbatim": true,
+      "sha256": "5d21b125a677c8f38de77e171f8e640ae31d94e5602ef866acff30740a527761",
+      "wiki_commit": "5f097aa19b480ff9593b9a0a4bdc6c6dc9c387d4"
+    },
+    {
+      "title": "Introduction",
+      "uri": "https://github.com/cifertech/ESP32-DIV/wiki/Introduction",
+      "file": "introduction.md",
+      "retrieved_utc": "2026-11-09T00:00:00Z",
+      "verbatim": true,
+      "sha256": "47bb34a99de9620106e8395ff97f8fedab8fd40edcedff0707c91fc6a7c70070",
+      "wiki_commit": "5f097aa19b480ff9593b9a0a4bdc6c6dc9c387d4"
+    },
+    {
+      "title": "Troubleshooting & FAQ",
+      "uri": "https://github.com/cifertech/ESP32-DIV/wiki/Troubleshooting-&-FAQ",
+      "file": "troubleshooting.md",
+      "retrieved_utc": "2026-11-09T00:00:00Z",
+      "verbatim": true,
+      "sha256": "262bcc0c8426a8baaa86e17eed575962d3f59484c54600316033dd7a9060ebff",
+      "wiki_commit": "5f097aa19b480ff9593b9a0a4bdc6c6dc9c387d4"
+    },
+    {
+      "title": "Navigation and controls",
+      "uri": "https://github.com/cifertech/ESP32-DIV/wiki/Navigation-and-controls",
+      "file": "navigation.md",
+      "retrieved_utc": "2026-11-09T00:00:00Z",
+      "verbatim": true,
+      "sha256": "91937e45ceaecc653682c8f06f22ade4a756303f6d344f71df4d68c8a856067e",
+      "wiki_commit": "5f097aa19b480ff9593b9a0a4bdc6c6dc9c387d4"
+    },
+    {
+      "title": "RFID NFC Overview",
+      "uri": "https://github.com/cifertech/ESP32-DIV/wiki/RFID-NFC-Overview",
+      "file": "rfid-nfc-overview.md",
+      "retrieved_utc": "2026-11-09T00:00:00Z",
+      "verbatim": true,
+      "sha256": "656bc4207d878e438cacef7824c29d3847c12ea5eea088c40161f7e8be2f5824",
+      "wiki_commit": "5f097aa19b480ff9593b9a0a4bdc6c6dc9c387d4"
+    },
+    {
+      "title": "Tools: SD File Manager",
+      "uri": "https://github.com/cifertech/ESP32-DIV/wiki/Tools-SD-File-Manager",
+      "file": "tools-sd-file-manager.md",
+      "retrieved_utc": "2026-11-09T00:00:00Z",
+      "verbatim": true,
+      "sha256": "d326de2a3c6ffd4bdbb8506e7f177b72209ffd1aba9f1c80d14f4e2160c23859",
+      "wiki_commit": "5f097aa19b480ff9593b9a0a4bdc6c6dc9c387d4"
+    },
+    {
+      "title": "Firmware shared.h v2 pin definitions (excerpt)",
+      "uri": "https://github.com/cifertech/ESP32-DIV/blob/90f7967c4dc7bcd8c09ebdcf421886737516ddc2/ESP32-DIV/shared.h#L250-L700",
+      "file": "fw-shared-h-excerpt.txt",
+      "retrieved_utc": "2026-11-09T00:00:00Z",
+      "verbatim": true,
+      "sha256": "dde1cca08e7c777d9389bbc2b01de153daba837780cccfd336ee1134b22865e6",
+      "excerpt_of": "shared.h",
+      "excerpt_lines": "250-700",
+      "upstream_file_sha256": "3804458846faeb0a1556cd1e6180259b15e90e008accc4163bd15d68d2db6e3a",
+      "firmware_commit": "90f7967c4dc7bcd8c09ebdcf421886737516ddc2"
+    },
+    {
+      "title": "Firmware utils.cpp SD mount/shared-SPI helpers (excerpt)",
+      "uri": "https://github.com/cifertech/ESP32-DIV/blob/90f7967c4dc7bcd8c09ebdcf421886737516ddc2/ESP32-DIV/utils.cpp#L860-L1135",
+      "file": "fw-utils-sd-excerpt.txt",
+      "retrieved_utc": "2026-11-09T00:00:00Z",
+      "verbatim": true,
+      "sha256": "35ffdbb8516e94548514e2c1b1016b88ebda4858941df557501455bc3977c680",
+      "excerpt_of": "utils.cpp",
+      "excerpt_lines": "860-1135",
+      "upstream_file_sha256": "9cc8136ccdf0ac890999dd851104b5d29504843691f76142a0d57ac7e6a7560f",
+      "firmware_commit": "90f7967c4dc7bcd8c09ebdcf421886737516ddc2"
+    }
+  ]
+}

@@ -1,0 +1,1175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>API, SDK &amp; platform reference · Agent Export</title><meta name="description" content="The reference hub for the local AI platform — native application, inference router, privileged controller, Model Manager and Toolkit contracts, plus downloadable schemas, a source map and runnable clients."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link active" aria-current="page" href="/guide/llm-api.html">LLM API &amp; reference</a><div class="toc"><a class="toc-link" href="#choose-the-right-interface">Choose the right interface</a><a class="toc-link" href="#downloadable-reference-artifacts">Downloadable reference artifacts</a><a class="toc-link" href="#native-authentication-and-errors">Native authentication and errors</a><a class="toc-link" href="#native-session-lifecycle">Native session lifecycle</a><a class="toc-link" href="#python-and-node-reference-use">Python and Node reference use</a><a class="toc-link" href="#native-event-stream">Native event stream</a><a class="toc-link" href="#inference-router">Inference router</a><a class="toc-link" href="#privileged-controller-sdk">Privileged controller SDK</a><a class="toc-link" href="#model-manager-api">Model Manager API</a><a class="toc-link" href="#toolkit-and-mcp-integration">Toolkit and MCP integration</a><a class="toc-link" href="#compatibility-and-validation">Compatibility and validation</a><a class="toc-link" href="#native-endpoint-catalog">Native endpoint catalog</a><a class="toc-link" href="#platform-scope-and-boundaries">Platform scope and boundaries</a><a class="toc-link" href="#source-map">Source map</a><a class="toc-link" href="#version-and-authority">Version and authority</a></div><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">LLM API &amp; reference</p><h1>API, SDK &amp; platform reference</h1><p class="lede">The reference hub for the local AI platform — native application, inference router, privileged controller, Model Manager and Toolkit contracts, plus downloadable schemas, a source map and runnable clients.</p></header>
+<div class="content">
+<h2 id="choose-the-right-interface">Choose the right interface</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Goal</th>
+<th>Interface</th>
+<th>Authentication and boundary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sessions, projects, inboxes, agents and permissions</td>
+<td>WatooM Code <code>/api/*</code>, port 4096</td>
+<td>Native Basic/session authentication and application permissions</td>
+</tr>
+<tr>
+<td>Text/vision inference and model discovery</td>
+<td><code>llm-router</code>, port 8000</td>
+<td>Approved internal access; no independent API-key enforcement in current Python router</td>
+</tr>
+<tr>
+<td>GPU ownership/leases/recovery</td>
+<td>Controller UNIX sockets</td>
+<td>Privileged operator/worker peers; not an app/browser API</td>
+</tr>
+<tr>
+<td>Model metadata/install/generate/remove</td>
+<td>Model Manager <code>/model-manager/api/*</code></td>
+<td>Manager login/Basic plus same-origin CSRF on mutation</td>
+</tr>
+<tr>
+<td>Bounded engine jobs</td>
+<td>Toolkit <code>/api/*</code>, port 8879</td>
+<td>Toolkit bearer token and validated task contract</td>
+</tr>
+<tr>
+<td>MCP capabilities</td>
+<td>Installed native registrations</td>
+<td>Actual discovered tool schema and agent permissions</td>
+</tr>
+</tbody>
+</table></div>
+<p>A session prompt is not a chat-completion request. The router does not create native sessions or authorize project writes. A generic OpenAI-compatible client cannot use the native <code>/api/session</code> contract without a separate adapter.</p>
+<h2 id="downloadable-reference-artifacts">Downloadable reference artifacts</h2>
+<ul>
+<li><a href="/guide/assets/llm-platform/OPENCODE-LICENSE.txt">Upstream native schema MIT notice</a></li>
+<li><a href="/guide/assets/llm-platform/watoom-code.openapi.json">Pinned native OpenAPI JSON</a></li>
+<li><a href="/guide/assets/llm-platform/router.openapi.json">Maintained router OpenAPI JSON</a></li>
+<li><a href="/guide/assets/llm-platform/watoom_client.py">Python native reference client</a></li>
+<li><a href="/guide/assets/llm-platform/watoom_client.mjs">Node fetch reference client</a></li>
+<li><a href="/guide/assets/llm-platform/verification.json">Version and source verification</a></li>
+</ul>
+<p>The native snapshot is copied byte-for-byte from <code>packages/protocol/openapi.json</code> in production application commit <code>786682b1489e92cba4e4b5a277bd49c565c94e4f</code>. It describes the selected experimental HttpApi surface, not every dynamically maintained operator extension. Its empty operation <code>security</code> arrays do not disable deployed authentication middleware. Configure authentication explicitly in generated clients. The router contract covers owned routes and qualified inference entry points, not every llama-server endpoint.</p>
+<p>Reference clients are small examples, not a separately versioned official SDK or a promise of cross-version compatibility. The Python client uses only the standard library; the JavaScript example targets Node with <code>fetch</code>, <code>Buffer</code> and <code>AbortSignal.timeout</code>. They contain no hidden POST retries. Schema/runtime tests and actual native acceptance remain necessary before production automation.</p>
+<h2 id="native-authentication-and-errors">Native authentication and errors</h2>
+<p>Normal operator requests use <code>Authorization: Basic BASE64(opencode:password)</code> over the approved HTTPS endpoint. Browser sign-in uses native session authentication; same-origin cookie policy applies. Never put passwords in URLs, source, browser storage snippets or shell history. Runtime secrets come from approved private configuration. Do not disable TLS verification for examples.</p>
+<p>The source includes ticketed connection exceptions for specific PTY/pairing handlers; those handlers validate their tickets. They are not a general authentication bypass. Browser assets can be public so the sign-in page loads before authentication.</p>
+<p>Native results commonly wrap resources in <code>data</code>; not all endpoints use identical wrappers. Errors can carry <code>_tag</code> and <code>message</code>. Inspect the pinned operation schema instead of hard-coding a universal envelope. Common statuses: 400 invalid input, 401 unauthorized, 404 missing session/resource and 409 conflict. An unavailable transport is not a completed or rejected mutation: reconcile existing IDs/state before retrying.</p>
+<p>Read-only example; <code>curl</code> prompts for the password rather than embedding it:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">export WATOOM_BASE_URL=https://watoom-code.internal.homelab.example
+curl --fail-with-body --user opencode &quot;$WATOOM_BASE_URL/api/info&quot;
+curl --fail-with-body --user opencode &quot;$WATOOM_BASE_URL/api/session?limit=20&amp;order=desc&quot;
+</code></pre></div>
+<h2 id="native-session-lifecycle">Native session lifecycle</h2>
+<p><code>POST /api/session</code> creates a session and returns <code>data</code> containing a <code>Session.Info</code> resource. Location is an object with a <code>directory</code>; model is an object with <code>providerID</code> and <code>id</code>, not a router URL. Required resource fields include identity, project, cost, token usage, timestamps and location. Optional agent/title/model fields depend on the operation.</p>
+<p>Example body for an explicitly authorized project/session creation:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-json">{
+  &quot;title&quot;: &quot;Review a scoped change&quot;,
+  &quot;agent&quot;: &quot;watoom-workflow&quot;,
+  &quot;model&quot;: {&quot;providerID&quot;: &quot;watoom&quot;, &quot;id&quot;: &quot;swift-qwen38-coder&quot;},
+  &quot;location&quot;: {&quot;directory&quot;: &quot;/data/ai/projects/homelab/homelab-llm&quot;}
+}
+</code></pre></div>
+<p><code>POST /api/session/{sessionID}/prompt</code> durably admits input. The required field is <code>text</code>; optional fields include <code>id</code>, attachments, metadata, delivery and <code>resume</code>. The response is <code>data: Session.Inbox.User</code>, not an assistant answer. Use a stable caller-managed message ID where appropriate; after an ambiguous result inspect existing inbox/messages before resubmitting. This is not a claim that arbitrary request IDs make all endpoints idempotent.</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-json">{&quot;id&quot;:&quot;msg_example_stable_identifier&quot;,&quot;text&quot;:&quot;Inspect the requested files and report findings.&quot;,&quot;resume&quot;:true}
+</code></pre></div>
+<p>Use <code>GET /api/session/{sessionID}/message</code>, the active-session endpoint and native events to observe progress. List pagination returns <code>cursor.previous</code>/<code>cursor.next</code>; cursors are opaque, may be null, and must be reused with the endpoint's documented query semantics. Do not synthesize cursor values or delete an inbox item just to clear a blocked state.</p>
+<p>Changing an agent/model/location, interrupting, compacting, reverting or replying to a permission/form is a mutation. A new model selection affects submitted work through native semantics; it does not authorize direct deployment changes.</p>
+<h2 id="python-and-node-reference-use">Python and Node reference use</h2>
+<p>Provision credentials in the process environment through the existing private mechanism, not a committed <code>.env</code> file. Running the Python example as a script calls only <code>/api/info</code> and prints version/reachability. Importing it performs no network call.</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-python">from watoom_client import NativeClient
+import os
+
+client = NativeClient(os.environ[&quot;WATOOM_BASE_URL&quot;], os.environ[&quot;WATOOM_PASSWORD&quot;])
+print(client.info().get(&quot;version&quot;))
+page = client.sessions(limit=20)
+# Use page[&quot;cursor&quot;][&quot;next&quot;] for a later page when present.
+# Only after user authorization:
+# session = client.create_session(directory, title)
+# admitted = client.prompt(session[&quot;data&quot;][&quot;id&quot;], text, message_id=stable_id)
+</code></pre></div>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-javascript">import { NativeClient } from &quot;./watoom_client.mjs&quot;;
+const client = new NativeClient(process.env.WATOOM_BASE_URL, process.env.WATOOM_PASSWORD);
+const info = await client.info();
+console.log(info.version);
+</code></pre></div>
+<p>The examples deliberately expose mutations as explicit method calls. They neither auto-create a session nor continue execution after an uncertain transport outcome. Do not print authorization headers or full private responses in logs. For generated clients, pin the supplied schema hash/version and test your integration against the matching deployed source.</p>
+<h2 id="native-event-stream">Native event stream</h2>
+<p><code>GET /api/event</code> returns <code>text/event-stream</code>. Its contract is volatile: a slow consumer can overflow/fail and events during disconnection can be missed. Frames include event/id/data and can carry <code>effect/httpapi/stream/failure</code>. The stream is not a durable replay log.</p>
+<p>Parse SSE frames rather than assuming one HTTP chunk equals one event. Preserve UTF-8 boundaries and accumulate multiline <code>data:</code> fields. On reconnect, refetch durable session/message/inbox/job state and reconcile. Do not repeat a prompt merely because its completion event was missed. Native event framing differs from inference SSE, which uses OpenAI-style <code>data:</code> deltas and a <code>[DONE]</code> terminator.</p>
+<h2 id="inference-router">Inference router</h2>
+<p>The source is <code>ansible/roles/llm-model-lab/files/gpu-controller-router.py</code>. Normal base includes <code>/v1</code> for completion clients. Health/lifecycle paths are at the service root.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Method/path</th>
+<th>Meaning</th>
+<th>Mutation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /health</code> or <code>/</code></td>
+<td>Process health and active deployment</td>
+<td>No explicit switch</td>
+</tr>
+<tr>
+<td><code>GET /v1/models</code></td>
+<td>OpenAI-compatible model listing</td>
+<td>Discovery only</td>
+</tr>
+<tr>
+<td><code>GET /models</code></td>
+<td>Lifecycle catalog</td>
+<td>Discovery only</td>
+</tr>
+<tr>
+<td><code>GET /models/status</code></td>
+<td>Lifecycle status</td>
+<td>No explicit switch</td>
+</tr>
+<tr>
+<td><code>POST /models/load</code></td>
+<td>Request a controller-mediated model load</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>POST /v1/chat/completions</code></td>
+<td>Chat, tools and image content when backend supports it</td>
+<td>Inference; explicit model can request eligible switch</td>
+</tr>
+<tr>
+<td><code>POST /v1/completions</code></td>
+<td>Completion interface</td>
+<td>Inference</td>
+</tr>
+</tbody>
+</table></div>
+<p>Unknown <code>/models/load</code> model returns 404 with requested/mapped/catalog information. A busy/unavailable/refused load returns 503. <code>active-model</code> asks for the active backend and returns a structured no-active-model 503 when none is available. Explicit aliases resolve to the backend canonical model ID; the router preserves caller tool schemas/tool choice rather than maintaining a second tool allowlist.</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">export ROUTER_BASE=http://llm-router.llama-cpp.svc.cluster.local:8000
+curl --fail-with-body &quot;$ROUTER_BASE/v1/models&quot;
+curl --fail-with-body -H &#x27;Content-Type: application/json&#x27; \
+  &quot;$ROUTER_BASE/v1/chat/completions&quot; \
+  --data &#x27;{&quot;model&quot;:&quot;swift-qwen38-coder&quot;,&quot;messages&quot;:[{&quot;role&quot;:&quot;user&quot;,&quot;content&quot;:&quot;Reply with ready.&quot;}],&quot;max_tokens&quot;:64,&quot;temperature&quot;:0,&quot;stream&quot;:false}&#x27;
+</code></pre></div>
+<p>Run these only from an approved reachable network and authorized workload. Internal HTTP is not an invitation to expose the service publicly. Backend-native <code>/slots</code>, <code>/props</code>, <code>/tokenize</code> and <code>/detokenize</code> are operator/backend interfaces, not portable application SDK methods.</p>
+<h3 id="streaming-tools-and-vision">Streaming, tools and vision</h3>
+<p>For <code>stream:true</code>, role-only chunks may arrive before generated content. TTFT should distinguish first generated content/tool data from a role header. Assemble tool fragments by index, then concatenate ID/name/argument fragments before JSON validation. Wait for valid complete arguments and runtime authorization before executing a tool. Associate each tool result with its exact <code>tool_call_id</code> and send it in the continuation. Never execute model-supplied arbitrary text as a shell command.</p>
+<p>Reasoning fields and chat-template options are backend/version-specific. A continuation may intentionally strip reasoning while preserving assistant/tool history. Reordering tools or changing a stable prefix can invalidate cache reuse. Image requests use supported multimodal message content and the verified model/projector; a listed model is not automatically vision-qualified.</p>
+<p>No universal “safe POST retry” exists for streaming generation or model switching. After a disconnect, reconcile controller/request accounting and native job state. Controller refusal must not trigger direct scaling.</p>
+<h2 id="privileged-controller-sdk">Privileged controller SDK</h2>
+<p>Maintained Python client: <code>tools/llm/watoom-gpu-controller/client.py</code>. <code>GPUClient(socket_path, timeout=10).call(action, **fields)</code> sends one newline-delimited JSON request, validates the bounded response and raises <code>ControllerUnavailable</code> or <code>ControllerRejected</code>. There is no fallback to <code>kubectl</code>.</p>
+<p>Operator-only read example:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-python">from client import GPUClient
+# Use the router_socket read from the reviewed controller config, not a guessed path.
+status = GPUClient(config[&quot;router_socket&quot;]).call(&quot;status&quot;)
+assert status[&quot;uncertain&quot;] is False
+</code></pre></div>
+<p>Router endpoint actions are scoped to status/eligibility/model request and inference lease accounting. Private worker actions include begin, activate, asset-saved, restore, validated recovery and lifecycle enrollment/retirement. Exact action fields and peer/process/generation checks are in <code>g3h_service.py</code>, <code>inference_leases.py</code> and <code>model_lifecycle.py</code>.</p>
+<p><code>MeshWorkerAdapter.begin(job_id)</code> returns a generation; <code>activate(job_id,generation)</code> and <code>restore(job_id,generation)</code> use that exact identity. Uncertain activate/restore transport outcomes must not be retried under a new ID. Root peer access alone is not the complete authorization contract. The offline <code>gateway.py</code> is a simulator, not the production daemon.</p>
+<h2 id="model-manager-api">Model Manager API</h2>
+<p>Base prefix is <code>/model-manager</code>. GETs require manager authentication except login; mutations require authentication, exact configured <code>Origin</code>, and <code>X-CSRF-Token</code> obtained from <code>GET /api/session</code>. Credentials differ from the native application's. Login sets an HTTP-only, SameSite cookie with Secure on HTTPS. Never put credentials in a browser URL or source file.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Endpoint under prefix</th>
+<th>Purpose/result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /api/session</code></td>
+<td>CSRF token for current manager process</td>
+</tr>
+<tr>
+<td><code>GET /api/models</code>, <code>/api/jobs</code>, <code>/api/result?id=...</code></td>
+<td>Catalog, queued/running jobs and result state</td>
+</tr>
+<tr>
+<td><code>POST /api/inspect</code></td>
+<td><code>{url}</code> returns inspected immutable metadata and proposed settings</td>
+</tr>
+<tr>
+<td><code>POST /api/install</code></td>
+<td>Exact URL/revision/variant/settings; compatible base when required; returns 202 job</td>
+</tr>
+<tr>
+<td><code>POST /api/generate</code></td>
+<td>Installed id/revision/prompt; returns 202 job</td>
+</tr>
+<tr>
+<td><code>POST /api/cancel</code>, <code>/api/retry</code></td>
+<td>Existing job identity, explicit lifecycle request</td>
+</tr>
+<tr>
+<td><code>POST /api/remove-plan</code></td>
+<td>Fresh identity-scoped removal confirmation</td>
+</tr>
+<tr>
+<td><code>POST /api/remove</code></td>
+<td>Matching confirmation and delete choice; returns 202 job</td>
+</tr>
+<tr>
+<td><code>POST /api/overrides</code></td>
+<td>Persist validated overrides or safe reset</td>
+</tr>
+<tr>
+<td><code>POST /mcp</code></td>
+<td>Narrow installed-image MCP adapter with separate token/scope</td>
+</tr>
+</tbody>
+</table></div>
+<p>Invalid schema/selection is 400; unauthorized 401; Origin/CSRF rejection 403; absent route 404; maintenance/unavailable operation 503. Exact install payload includes the current metadata selection; do not invent variant IDs or skip inspect. Downloaded/configured/registered/tested are separate statuses. Raw metadata is never executable code. The manager browser/API is not a generic Hugging Face SDK.</p>
+<h2 id="toolkit-and-mcp-integration">Toolkit and MCP integration</h2>
+<p>Toolkit source is <code>tools/watoom-toolkit/agent.py</code>. <code>/healthz</code> is a public health probe. Other API calls require <code>Authorization: Bearer &lt;Toolkit token&gt;</code>; the process refuses to bind without a sufficiently long configured token. POST bodies must be JSON objects of 1–4096 bytes.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Route</th>
+<th>Contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /api/catalog</code></td>
+<td>Profiles, installed packs, generators and declared capabilities</td>
+</tr>
+<tr>
+<td><code>GET /api/jobs</code></td>
+<td>Recent persisted job receipts</td>
+</tr>
+<tr>
+<td><code>POST /api/jobs</code></td>
+<td>Validated task contract, e.g. <code>{ &quot;task&quot;: &quot;probe&quot; }</code> for discovery</td>
+</tr>
+<tr>
+<td><code>POST /api/jobs/cancel</code></td>
+<td>Existing job cancellation contract</td>
+</tr>
+<tr>
+<td><code>GET/POST /api/maintenance</code></td>
+<td>Scoped job-admission status/change; operator workflow</td>
+</tr>
+<tr>
+<td><code>POST /api/profile-requests</code></td>
+<td>Validated profile set; 202 <code>AWAITING_HOST_APPROVAL</code>, not live package installation</td>
+</tr>
+</tbody>
+</table></div>
+<p>Task-specific engine/asset payloads are maintained in the owning schemas, not inferred from this table. Use installed MCP discovery to inspect Mesh, memory, image and tool interfaces. Availability of a native skill does not add tools or permissions. Stable request IDs, validated input hashes and durable receipts are required where the worker contract declares them.</p>
+<h2 id="compatibility-and-validation">Compatibility and validation</h2>
+<p>Pin schema/source/image versions together. Test at least authentication rejection, native response wrappers, admission versus completion, pagination/reconnect, SSE fragmentation, tool argument assembly/result IDs, selected model behavior and controller refusal. Reference-client tests use a fake transport and create no real sessions. Live documentation verification uses read-only HTTP; it does not run a model switch or generation.</p>
+<p>The pinned native schema contains 113 paths and 136 operations. The following catalog lists every operation in the pinned native schema. It does not imply all are permitted for every role, installed integration or project. Experimental routes and administrative mutations require additional review. Operator deployment-guard extensions are implementation-specific and intentionally not presented as ordinary SDK calls.</p>
+<h2 id="native-endpoint-catalog">Native endpoint catalog</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Operation</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/api/info</code></td>
+<td><code>server.info</code></td>
+<td>Get server info</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/location</code></td>
+<td><code>location.get</code></td>
+<td>Get location</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/location/reload</code></td>
+<td><code>location.reload</code></td>
+<td>Reload configuration</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/agent</code></td>
+<td><code>agent.list</code></td>
+<td>List agents</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/agent/{agentID}</code></td>
+<td><code>agent.get</code></td>
+<td>Get agent</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/plugin</code></td>
+<td><code>plugin.list</code></td>
+<td>List plugins</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/plugin/check</code></td>
+<td><code>plugin.check</code></td>
+<td>Check plugin updates</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/plugin/update</code></td>
+<td><code>plugin.update</code></td>
+<td>Update plugins</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/session</code></td>
+<td><code>session.list</code></td>
+<td>List sessions</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/session</code></td>
+<td><code>session.create</code></td>
+<td>Create session</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/experimental/session/stats</code></td>
+<td><code>experimental.session.stats</code></td>
+<td>Get session statistics</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/experimental/session/import</code></td>
+<td><code>experimental.session.import</code></td>
+<td>Import session</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/experimental/session/{sessionID}/export</code></td>
+<td><code>experimental.session.export</code></td>
+<td>Export session</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/session/active</code></td>
+<td><code>session.active</code></td>
+<td>List active sessions</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/session/{sessionID}</code></td>
+<td><code>session.get</code></td>
+<td>Get session</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/session/{sessionID}</code></td>
+<td><code>session.remove</code></td>
+<td>Delete session</td>
+</tr>
+<tr>
+<td>PATCH</td>
+<td><code>/api/session/{sessionID}</code></td>
+<td><code>session.update</code></td>
+<td>Update session</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/session/{sessionID}/fork</code></td>
+<td><code>session.fork</code></td>
+<td>Fork session</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/session/{sessionID}/agent</code></td>
+<td><code>session.switchAgent</code></td>
+<td>Switch session agent</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/session/{sessionID}/model</code></td>
+<td><code>session.switchModel</code></td>
+<td>Switch session model</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/session/{sessionID}/move</code></td>
+<td><code>session.move</code></td>
+<td>Move session</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/session/{sessionID}/prompt</code></td>
+<td><code>session.prompt</code></td>
+<td>Send message</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/session/{sessionID}/command</code></td>
+<td><code>session.command</code></td>
+<td>Run command</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/experimental/session/{sessionID}/skill</code></td>
+<td><code>experimental.session.skill</code></td>
+<td>Activate skill</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/session/{sessionID}/synthetic</code></td>
+<td><code>session.synthetic</code></td>
+<td>Add synthetic message</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/session/{sessionID}/shell</code></td>
+<td><code>session.shell</code></td>
+<td>Run shell command</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/session/{sessionID}/compact</code></td>
+<td><code>session.compact</code></td>
+<td>Compact session</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/experimental/session/{sessionID}/wait</code></td>
+<td><code>experimental.session.wait</code></td>
+<td>Wait for session</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/session/{sessionID}/revert/stage</code></td>
+<td><code>session.revert.stage</code></td>
+<td>Stage session revert</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/session/{sessionID}/revert</code></td>
+<td><code>session.revert.clear</code></td>
+<td>Clear staged revert</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/session/{sessionID}/revert/commit</code></td>
+<td><code>session.revert.commit</code></td>
+<td>Commit staged revert</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/session/{sessionID}/context</code></td>
+<td><code>session.context</code></td>
+<td>Get session context</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/session/{sessionID}/diff</code></td>
+<td><code>session.diff</code></td>
+<td>Diff session turns</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/session/{sessionID}/inbox</code></td>
+<td><code>session.inbox.list</code></td>
+<td>List session inbox</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/session/{sessionID}/inbox/{inboxID}</code></td>
+<td><code>session.inbox.cancel</code></td>
+<td>Cancel inbox input</td>
+</tr>
+<tr>
+<td>PATCH</td>
+<td><code>/api/session/{sessionID}/inbox/{inboxID}</code></td>
+<td><code>session.inbox.update</code></td>
+<td>Update inbox item</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/experimental/session/{sessionID}/instructions/entries</code></td>
+<td><code>experimental.session.instructions.entry.list</code></td>
+<td>List instruction entries</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td><code>/api/experimental/session/{sessionID}/instructions/entries/{key}</code></td>
+<td><code>experimental.session.instructions.entry.put</code></td>
+<td>Put instruction entry</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/experimental/session/{sessionID}/instructions/entries/{key}</code></td>
+<td><code>experimental.session.instructions.entry.remove</code></td>
+<td>Remove instruction entry</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/session/{sessionID}/generate</code></td>
+<td><code>session.generate</code></td>
+<td>Generate text from session context</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/experimental/session/{sessionID}/log</code></td>
+<td><code>session.log</code></td>
+<td>Read the session log</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/session/{sessionID}/interrupt</code></td>
+<td><code>session.interrupt</code></td>
+<td>Interrupt session execution</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/session/{sessionID}/background</code></td>
+<td><code>session.background</code></td>
+<td>Background blocking session tools</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/session/{sessionID}/message/{messageID}</code></td>
+<td><code>session.message.get</code></td>
+<td>Get session message</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/session/{sessionID}/form</code></td>
+<td><code>session.form.list</code></td>
+<td>List session forms</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/session/{sessionID}/form</code></td>
+<td><code>session.form.create</code></td>
+<td>Create session form</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/session/{sessionID}/form/{formID}</code></td>
+<td><code>session.form.get</code></td>
+<td>Get session form</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/session/{sessionID}/form/{formID}</code></td>
+<td><code>session.form.cancel</code></td>
+<td>Cancel form</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/session/{sessionID}/form/{formID}/reply</code></td>
+<td><code>session.form.reply</code></td>
+<td>Reply to form</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td><code>/api/session/{sessionID}/environment</code></td>
+<td><code>session.environment</code></td>
+<td>Set session environment</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/session/{sessionID}/view</code></td>
+<td><code>session.view</code></td>
+<td>View session</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/session/{sessionID}/message</code></td>
+<td><code>session.message.list</code></td>
+<td>Get session messages</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/model</code></td>
+<td><code>model.list</code></td>
+<td>List models</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/model/default</code></td>
+<td><code>model.default</code></td>
+<td>Get default model</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/experimental/generate</code></td>
+<td><code>experimental.generate.text</code></td>
+<td>Generate text</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/provider</code></td>
+<td><code>provider.list</code></td>
+<td>List providers</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/provider/{providerID}</code></td>
+<td><code>provider.get</code></td>
+<td>Get provider</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/integration</code></td>
+<td><code>integration.list</code></td>
+<td>List integrations</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/integration/{integrationID}</code></td>
+<td><code>integration.get</code></td>
+<td>Get integration</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/experimental/integration/wellknown</code></td>
+<td><code>experimental.integration.wellknown.add</code></td>
+<td>Add wellknown integration</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/integration/{integrationID}/connect/key</code></td>
+<td><code>integration.connect.key</code></td>
+<td>Connect with key</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/integration/{integrationID}/connect/oauth</code></td>
+<td><code>integration.oauth.connect</code></td>
+<td>Begin OAuth connection</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/integration/{integrationID}/connect/oauth/{attemptID}</code></td>
+<td><code>integration.oauth.status</code></td>
+<td>Get OAuth attempt status</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/integration/{integrationID}/connect/oauth/{attemptID}</code></td>
+<td><code>integration.oauth.cancel</code></td>
+<td>Cancel OAuth connection</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/integration/{integrationID}/connect/oauth/{attemptID}/complete</code></td>
+<td><code>integration.oauth.complete</code></td>
+<td>Complete OAuth connection</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/integration/{integrationID}/connect/command</code></td>
+<td><code>integration.command.connect</code></td>
+<td>Begin command connection</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/integration/{integrationID}/connect/command/{attemptID}</code></td>
+<td><code>integration.command.status</code></td>
+<td>Get command attempt status</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/integration/{integrationID}/connect/command/{attemptID}</code></td>
+<td><code>integration.command.cancel</code></td>
+<td>Cancel command connection</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/mcp</code></td>
+<td><code>mcp.list</code></td>
+<td>List MCP servers</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td><code>/api/experimental/mcp/{server}</code></td>
+<td><code>experimental.mcp.add</code></td>
+<td>Add MCP server</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/experimental/mcp/{server}</code></td>
+<td><code>experimental.mcp.remove</code></td>
+<td>Remove MCP server</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/experimental/mcp/{server}/connect</code></td>
+<td><code>experimental.mcp.connect</code></td>
+<td>Connect MCP server</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/experimental/mcp/{server}/disconnect</code></td>
+<td><code>experimental.mcp.disconnect</code></td>
+<td>Disconnect MCP server</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/mcp/resource</code></td>
+<td><code>mcp.resource.catalog</code></td>
+<td>List MCP resources</td>
+</tr>
+<tr>
+<td>PATCH</td>
+<td><code>/api/credential/{credentialID}</code></td>
+<td><code>credential.update</code></td>
+<td>Update credential</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/credential/{credentialID}</code></td>
+<td><code>credential.remove</code></td>
+<td>Remove credential</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/credential/{credentialID}/activate</code></td>
+<td><code>credential.activate</code></td>
+<td>Activate credential</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/project</code></td>
+<td><code>project.list</code></td>
+<td>List projects</td>
+</tr>
+<tr>
+<td>PATCH</td>
+<td><code>/api/project/{projectID}</code></td>
+<td><code>project.update</code></td>
+<td>Update project</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/form</code></td>
+<td><code>form.list</code></td>
+<td>List pending forms</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/permission/request</code></td>
+<td><code>permission.request.list</code></td>
+<td>List pending permission requests</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/permission/saved</code></td>
+<td><code>permission.saved.list</code></td>
+<td>List saved permissions</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/permission/saved/{id}</code></td>
+<td><code>permission.saved.remove</code></td>
+<td>Remove saved permission</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/session/{sessionID}/permission</code></td>
+<td><code>session.permission.create</code></td>
+<td>Create permission request</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/session/{sessionID}/permission</code></td>
+<td><code>session.permission.list</code></td>
+<td>List session permission requests</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/session/{sessionID}/permission/{requestID}</code></td>
+<td><code>session.permission.get</code></td>
+<td>Get permission request</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/session/{sessionID}/permission/{requestID}/reply</code></td>
+<td><code>session.permission.reply</code></td>
+<td>Reply to pending permission request</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/fs/read/*</code></td>
+<td><code>fs.read</code></td>
+<td>Read file</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/fs/list</code></td>
+<td><code>fs.list</code></td>
+<td>List directory</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/fs/find</code></td>
+<td><code>fs.find</code></td>
+<td>Find files</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/experimental/fs/write</code></td>
+<td><code>experimental.fs.write</code></td>
+<td>Write file</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/command</code></td>
+<td><code>command.list</code></td>
+<td>List commands</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/skill</code></td>
+<td><code>skill.list</code></td>
+<td>List skills</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/rpc/{rpcID}/{method}</code></td>
+<td><code>rpc.call</code></td>
+<td>Call a plugin RPC</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/event</code></td>
+<td><code>event.subscribe</code></td>
+<td>Subscribe to events</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/pty</code></td>
+<td><code>pty.list</code></td>
+<td>List PTY sessions</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/pty</code></td>
+<td><code>pty.create</code></td>
+<td>Create PTY session</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/pty/{ptyID}</code></td>
+<td><code>pty.get</code></td>
+<td>Get PTY session</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td><code>/api/pty/{ptyID}</code></td>
+<td><code>pty.update</code></td>
+<td>Update PTY session</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/pty/{ptyID}</code></td>
+<td><code>pty.remove</code></td>
+<td>Remove PTY session</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/pty/{ptyID}/connect-token</code></td>
+<td><code>pty.connect.token</code></td>
+<td>Create PTY WebSocket token</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/pty/{ptyID}/connect</code></td>
+<td><code>pty.connect</code></td>
+<td>Connect to PTY session</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/experimental/session/{sessionID}/terminal/read</code></td>
+<td><code>server.experimental.persistentPty.read</code></td>
+<td>Read the session's most recently controlled terminal</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/experimental/session/{sessionID}/terminal</code></td>
+<td><code>server.experimental.persistentPty.list</code></td>
+<td></td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/experimental/session/{sessionID}/terminal</code></td>
+<td><code>server.experimental.persistentPty.create</code></td>
+<td></td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/experimental/persistent-pty/shutdown</code></td>
+<td><code>server.experimental.persistentPty.shutdown</code></td>
+<td></td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/experimental/persistent-pty/handoff</code></td>
+<td><code>server.experimental.persistentPty.handoff</code></td>
+<td></td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/experimental/persistent-pty/{ptyID}</code></td>
+<td><code>server.experimental.persistentPty.get</code></td>
+<td></td>
+</tr>
+<tr>
+<td>PUT</td>
+<td><code>/api/experimental/persistent-pty/{ptyID}</code></td>
+<td><code>server.experimental.persistentPty.update</code></td>
+<td></td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/experimental/persistent-pty/{ptyID}</code></td>
+<td><code>server.experimental.persistentPty.remove</code></td>
+<td></td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/experimental/persistent-pty/{ptyID}/snapshot</code></td>
+<td><code>server.experimental.persistentPty.snapshot</code></td>
+<td></td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/experimental/persistent-pty/{ptyID}/connect-token</code></td>
+<td><code>server.experimental.persistentPty.connectToken</code></td>
+<td></td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/experimental/persistent-pty/{ptyID}/connect</code></td>
+<td><code>persistentPty.connect</code></td>
+<td>Connect to a persistent PTY</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/shell</code></td>
+<td><code>shell.list</code></td>
+<td>List running shell commands</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/shell</code></td>
+<td><code>shell.create</code></td>
+<td>Run shell command</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/shell/{id}</code></td>
+<td><code>shell.get</code></td>
+<td>Get shell command</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/shell/{id}</code></td>
+<td><code>shell.remove</code></td>
+<td>Remove shell command</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/shell/{id}/output</code></td>
+<td><code>shell.output</code></td>
+<td>Read shell output</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/reference</code></td>
+<td><code>reference.list</code></td>
+<td>List references</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/worktree</code></td>
+<td><code>worktree.list</code></td>
+<td>List worktrees</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/worktree</code></td>
+<td><code>worktree.create</code></td>
+<td>Create worktree</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/worktree</code></td>
+<td><code>worktree.remove</code></td>
+<td>Remove worktree</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/worktree/refresh</code></td>
+<td><code>worktree.refresh</code></td>
+<td>Refresh worktrees</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/vcs</code></td>
+<td><code>vcs.get</code></td>
+<td>VCS info</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/vcs/base</code></td>
+<td><code>vcs.base</code></td>
+<td>VCS review base</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/vcs/status</code></td>
+<td><code>vcs.status</code></td>
+<td>VCS status</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/vcs/branch</code></td>
+<td><code>vcs.branch.list</code></td>
+<td>VCS branches</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/vcs/diff</code></td>
+<td><code>vcs.diff</code></td>
+<td>VCS diff</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/debug/location</code></td>
+<td><code>debug.location.list</code></td>
+<td>List loaded locations</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/debug/location</code></td>
+<td><code>debug.location.evict</code></td>
+<td>Evict a loaded location</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/experimental/migration/v1</code></td>
+<td><code>experimental.migration.v1.status</code></td>
+<td>Get V1 migration status</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/websearch/provider</code></td>
+<td><code>websearch.providers</code></td>
+<td>List web search providers</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/websearch</code></td>
+<td><code>websearch.query</code></td>
+<td>Search the web</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/config</code></td>
+<td><code>config.get</code></td>
+<td>Get configuration</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/config/shell</code></td>
+<td><code>config.shells</code></td>
+<td>List available shells</td>
+</tr>
+<tr>
+<td>PATCH</td>
+<td><code>/api/experimental/config</code></td>
+<td><code>experimental.config.update</code></td>
+<td>Update global configuration</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="platform-scope-and-boundaries">Platform scope and boundaries</h2>
+<p>This platform covers interactive coding, research and writing sessions; local text and vision inference; native project access and permissions; coordinator handoff and evidence guards; AgentMemory and embedding integration; model installation, enrollment and removal; CPU, engine, image and Mesh specialist boundaries; API clients; and Git/Glance documentation publication.</p>
+<p>External dependencies — Fedora, the existing k3s and container runtime, the NVIDIA driver, persistent storage, internal DNS/TLS/Traefik, workstation workers, SearXNG and artifact inputs — are consumed through their interfaces; this platform does not prescribe network redesign or host reinstallation. Game engines and purchased asset pipelines keep their own specialist instructions and licenses.</p>
+<p>Excluded from automatic operation: production adoption without owner authorization, networking or firewall changes, purchases, exposing secrets, bypassing GPU ownership, resetting state to clear errors, and arbitrary remote-code execution from downloaded model metadata. Public internet exposure and multi-tenant isolation are not qualified features.</p>
+<h2 id="source-map">Source map</h2>
+<p>Paths are relative to <code>standardised_k3s_project/</code> unless stated otherwise. The authoritative source always wins over documentation; a mismatch is a finding to investigate, not permission to rewrite live state.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Subject</th>
+<th>Authoritative source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Production application/AgentMemory/Toolkit image pins</td>
+<td><code>ansible/vars/watoom-code.yml</code></td>
+</tr>
+<tr>
+<td>Native app deployment, projects, skills and memory</td>
+<td><code>ansible/roles/watoom-code/</code></td>
+</tr>
+<tr>
+<td>Inference primary, weights, KV and placement</td>
+<td><code>manifests/10-infrastructure/llm/llama-cpp-swift-qwen38.yml</code></td>
+</tr>
+<tr>
+<td>Controller runtime and identities</td>
+<td><code>tools/llm/watoom-gpu-controller/</code>; <code>ansible/roles/llm-model-lab/files/gpu-controller.json</code></td>
+</tr>
+<tr>
+<td>Production Python router</td>
+<td><code>ansible/roles/llm-model-lab/files/gpu-controller-router.py</code></td>
+</tr>
+<tr>
+<td>Model Manager</td>
+<td><code>tools/model-manager/</code>; <code>ansible/playbooks/model-manager.yml</code></td>
+</tr>
+<tr>
+<td>Toolkit worker API</td>
+<td><code>tools/watoom-toolkit/agent.py</code> and its contracts</td>
+</tr>
+<tr>
+<td>Guard, native agents and skills</td>
+<td><code>ansible/roles/watoom-code/files/</code></td>
+</tr>
+<tr>
+<td>Operator maintenance, backup and release</td>
+<td><code>tools/watoom-code/</code></td>
+</tr>
+<tr>
+<td>Host GPU cap</td>
+<td><code>ansible/roles/gpu_host/</code></td>
+</tr>
+<tr>
+<td>Documentation source and renderer</td>
+<td><code>docs/guide/llm-*.md</code>; <code>scripts/render-glance-guide.py</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>The full pinned native API schema, route index, verification metadata and runnable client examples are maintained under <code>docs/llm-platform/</code> for Git publication; the download links are above. Source snapshots are references, not replacement services.</p>
+<h2 id="version-and-authority">Version and authority</h2>
+<p>Baseline verified 3 November 2026, Australia/Brisbane: llamAmpere v0.6.2 with the owner-adopted combined turbo profile, 300 W configured cap, fixed MTP depth 5, CUDA graphs and ubatch 1024. Application source is pinned to <code>786682b1489e92cba4e4b5a277bd49c565c94e4f</code>. Runtime image pins live in the owning manifests and <code>ansible/vars/watoom-code.yml</code>, not in this documentation.</p>
+<p>Authority order: live inspected state and acceptance evidence; the exact owning IaC/source and immutable release pins; this documentation; older dated notes. Stable requirements are separated from changeable capacity and tuning values; operators reverify the active profile before maintenance. For related homelab context see the <a href="/guide/ai.html">AI platform</a>, <a href="/guide/watoom-code.html">WatooM Code</a>, <a href="/guide/recovery.html">recovery</a> and <a href="/guide/security.html">security</a> pages.</p>
+<p>For any application, model, routing or controller release: update the owning source first, verify acceptance, refresh the schema from the matching pinned application source, then render, check and verify the served pages. A source commit is not proof of deployment; a pod rollout is not proof of acceptance. Do not publish private runtime configuration, tokens, session contents, image-review grants, databases, weights or raw benchmark prompts.</p>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/llm-api.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

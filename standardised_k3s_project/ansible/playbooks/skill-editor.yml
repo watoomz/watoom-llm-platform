@@ -1,0 +1,7 @@
+---
+- name: Install the Glance skill editor (SKILL.md edits committed to Git)
+  hosts: homelab
+  become: true
+  gather_facts: false
+  roles:
+    - role: skill-editor

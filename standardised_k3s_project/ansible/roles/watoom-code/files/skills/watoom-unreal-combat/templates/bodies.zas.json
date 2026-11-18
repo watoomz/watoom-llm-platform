@@ -1,0 +1,94 @@
+{
+ "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Meshes/SKM_Manny": {
+  "facing": "+Y",
+  "yaw": -90.0,
+  "CapsuleHalfHeight": 90.27,
+  "CapsuleRadius": 32.5,
+  "Mesh.RelativeLocation": "(X=-2.013374,Y=0.014443,Z=-90.251670)",
+  "Mesh.RelativeRotation": "(Pitch=0.000000,Yaw=-90.000000,Roll=0.000000)",
+  "evidence": {
+   "method": "feet",
+   "vector": [
+    -0.0,
+    14.6
+   ],
+   "others": [],
+   "legs": 49,
+   "leg_source": "named leg bones",
+   "leg_side_reach_cm": 15.8,
+   "height_cm": 180.5
+  }
+ },
+ "/Game/BattleWizardPolyart/Meshes/WizardSM": {
+  "facing": "+Y",
+  "yaw": -90.0,
+  "CapsuleHalfHeight": 98.53,
+  "CapsuleRadius": 35.47,
+  "Mesh.RelativeLocation": "(X=-1.855118,Y=-0.000019,Z=-98.529465)",
+  "Mesh.RelativeRotation": "(Pitch=0.000000,Yaw=-90.000000,Roll=0.000000)",
+  "evidence": {
+   "method": "feet",
+   "vector": [
+    -0.0,
+    16.3
+   ],
+   "others": [
+    [
+     "head",
+     -0.0,
+     1.6
+    ]
+   ],
+   "legs": 8,
+   "leg_source": "named leg bones",
+   "leg_side_reach_cm": 20.1,
+   "height_cm": 197.1
+  }
+ },
+ "/Game/RPGHeroSquad/Mesh/Character/SK_RPGHeroPolyart": {
+  "facing": "+Y",
+  "yaw": -90.0,
+  "CapsuleHalfHeight": 94.87,
+  "CapsuleRadius": 34.15,
+  "Mesh.RelativeLocation": "(X=-0.897460,Y=-0.000012,Z=-94.612114)",
+  "Mesh.RelativeRotation": "(Pitch=0.000000,Yaw=-90.000000,Roll=0.000000)",
+  "evidence": {
+   "method": "feet",
+   "vector": [
+    0.0,
+    20.1
+   ],
+   "others": [
+    [
+     "head",
+     0.0,
+     3.9
+    ]
+   ],
+   "legs": 8,
+   "leg_source": "named leg bones",
+   "leg_side_reach_cm": 18.6,
+   "height_cm": 189.7
+  }
+ },
+ "/Game/RogueCharacter/Meshes/SKM_Rogue_Main": {
+  "facing": "+Y",
+  "yaw": -90.0,
+  "CapsuleHalfHeight": 90.16,
+  "CapsuleRadius": 32.46,
+  "Mesh.RelativeLocation": "(X=-2.013374,Y=0.014443,Z=-90.158310)",
+  "Mesh.RelativeRotation": "(Pitch=0.000000,Yaw=-90.000000,Roll=0.000000)",
+  "evidence": {
+   "method": "feet",
+   "vector": [
+    -0.0,
+    14.6
+   ],
+   "others": [],
+   "legs": 49,
+   "leg_source": "named leg bones",
+   "leg_side_reach_cm": 15.8,
+   "height_cm": 180.3
+  }
+ }
+}

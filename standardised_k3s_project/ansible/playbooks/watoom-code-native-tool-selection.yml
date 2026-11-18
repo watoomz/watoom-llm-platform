@@ -1,0 +1,14 @@
+---
+- name: Deploy scoped native tool selection guidance
+  hosts: homelab
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Require native idle release guard
+      ansible.builtin.assert:
+        that:
+          - watoom_coordinator_release_guard_held | default(false) | bool
+    - name: Install managed native agent guidance
+      ansible.builtin.include_role:
+        name: watoom-code
+        tasks_from: native_agents.yml

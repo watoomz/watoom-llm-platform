@@ -1,0 +1,6 @@
+[Unit]
+Description=Create tickets from model request files
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/watoom-ticket ingest

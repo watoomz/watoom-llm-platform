@@ -1,0 +1,13 @@
+---
+# Default OFF: nothing is installed, enabled or started unless moss_image_enabled is set true by the owner.
+moss_image_enabled: false
+moss_image_start: false          # install the unit but only start it when this is also true
+moss_image_project_root: "{{ project_root | default('/data/github/watoom-standardised-homelab/standardised_k3s_project') }}"
+moss_image_host: 10.242.0.1       # k3s cni0 bridge: reachable from pods (Glance route), not from the LAN
+moss_image_port: 8791
+moss_image_quiet_seconds: 0        # 0 = start as soon as one check shows WatooM Code is not running anything (owner choice 2026-11-10)
+moss_image_session_idle: 1800   # idle 30 min -> end the session and restore Qwen
+moss_image_session_max: 7200
+# Router /performance (llm-router ClusterIP): a refused LLM request while MOSS is idle makes MOSS return the GPU to Qwen. Empty = off.
+moss_image_llm_demand_url: http://10.243.133.2:8000/performance
+moss_image_pod_firewall: true      # pod-subnet-only rule for the Glance route; the owner approved it 2026-11-10

@@ -1,0 +1,124 @@
+---
+- name: Require the explicit staging public key
+  ansible.builtin.assert:
+    that:
+      - workstation_stage_public_key is match('^ssh-ed25519 [A-Za-z0-9+/=]+( .*)?$')
+- name: Create unprivileged dedicated stage transport account
+  ansible.builtin.user:
+    name: "{{ workstation_stage_user }}"
+    home: "{{ workstation_stage_account_home }}"
+    shell: /usr/bin/bash
+    create_home: true
+    password_lock: true
+- name: Maintain restricted standard SFTP transport
+  ansible.builtin.import_tasks: sftp.yml
+- name: Maintain root-owned stage program directory
+  ansible.builtin.file:
+    path: "{{ workstation_stage_home }}/source"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+- name: Install maintained staging source without interpreter caches
+  ansible.posix.synchronize:
+    src: "{{ playbook_dir }}/../../tools/rig-async-stage/worker-source/"
+    dest: "{{ workstation_stage_home }}/source/"
+    archive: false
+    recursive: true
+    checksum: true
+    times: false
+    rsync_opts:
+      - --exclude=__pycache__/
+      - --exclude=*.pyc
+      - --chown=root:root
+      - --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r
+- name: Create private worker queue and snapshots
+  ansible.builtin.file:
+    path: "{{ workstation_stage_state }}/{{ item }}"
+    state: directory
+    owner: "{{ workstation_stage_user }}"
+    group: "{{ workstation_stage_user }}"
+    mode: '0700'
+  loop: ['', blobs, outputs]
+- name: Install bounded input reader socket units
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/watoom-workstation-{{ item }}"
+    mode: '0644'
+  loop: [inputs.socket, inputs@.service]
+  register: workstation_input_units
+- name: Enable the local-only input snapshot socket
+  ansible.builtin.systemd_service:
+    name: watoom-workstation-inputs.socket
+    enabled: true
+    state: started
+    daemon_reload: "{{ workstation_input_units.changed }}"
+- name: Create protected staging project root
+  ansible.builtin.file:
+    path: "{{ workstation_stage_project }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+- name: Create model-writable staging inputs only
+  ansible.builtin.file:
+    path: "{{ workstation_stage_project }}/{{ item }}"
+    state: directory
+    owner: '1001'
+    group: '1001'
+    mode: '0755'
+  loop: [incoming, assets]
+- name: Create stage-account-owned public outputs
+  ansible.builtin.file:
+    path: "{{ workstation_stage_project }}/{{ item }}"
+    state: directory
+    owner: "{{ workstation_stage_user }}"
+    group: "{{ workstation_stage_user }}"
+    mode: '0755'
+  loop: [status, results]
+- name: Maintain dedicated SSH directory
+  ansible.builtin.file:
+    path: "{{ workstation_stage_account_home }}/.ssh"
+    state: directory
+    owner: "{{ workstation_stage_user }}"
+    group: "{{ workstation_stage_user }}"
+    mode: '0700'
+- name: Restrict the public key to the fixed staging protocol
+  ansible.builtin.copy:
+    content: |
+      restrict,command="/usr/bin/python3 {{ workstation_stage_home }}/source/broker.py --root {{ workstation_stage_state }} --project {{ workstation_stage_project }} --worker {{ workstation_stage_worker }}" {{ workstation_stage_public_key }}
+    dest: "{{ workstation_stage_account_home }}/.ssh/authorized_keys"
+    owner: "{{ workstation_stage_user }}"
+    group: "{{ workstation_stage_user }}"
+    mode: '0600'
+- name: Set SSH key SELinux file context for the dedicated home
+  community.general.sefcontext:
+    target: '{{ workstation_stage_account_home }}/\.ssh(/.*)?'
+    setype: ssh_home_t
+    state: present
+- name: Restore dedicated key labels
+  ansible.builtin.command:
+    argv: [restorecon, -RF, "{{ workstation_stage_account_home }}"]
+  changed_when: false
+- name: Maintain staging inbox units
+  ansible.builtin.template:
+    src: "scan.{{ item }}.j2"
+    dest: "/etc/systemd/system/watoom-workstation-render-stage-scan.{{ item }}"
+    mode: '0644'
+  loop: [service, timer]
+  register: workstation_stage_units
+- name: Enable staging inbox polling
+  ansible.builtin.systemd_service:
+    name: watoom-workstation-render-stage-scan.timer
+    enabled: true
+    state: started
+    daemon_reload: "{{ workstation_stage_units.changed }}"
+
+- name: Publish the manual-only workstation staging workflow
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../tools/rig-async-stage/worker-source/skill/"
+    dest: "{{ workstation_stage_catalogue_path }}/"
+    owner: '1001'
+    group: '1001'
+    mode: '0644'
+    directory_mode: '0755'

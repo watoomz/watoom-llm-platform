@@ -1,0 +1,12 @@
+---
+- name: "Homelab Rebuild Kubernetes Secrets | Restore encrypted environment"
+  ansible.builtin.include_role:
+    name: vault_secrets
+
+- name: "Homelab Rebuild Kubernetes Secrets | Reconcile Kubernetes Secrets"
+  ansible.builtin.include_role:
+    name: kubernetes_secrets
+
+- name: "Homelab Rebuild Kubernetes | Reconcile declared manifests"
+  ansible.builtin.include_role:
+    name: k3s_apply

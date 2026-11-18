@@ -1,0 +1,11 @@
+module watoom_k3s_nnp 1.0;
+
+require {
+	type container_runtime_t;
+	type iptables_t;
+	class process2 nnp_transition;
+}
+
+# k3s's kubectl (container_runtime_t) execs its bundled iptables under NoNewPrivileges
+# (the watoom-stage-lan-relay unit sets it). Allow only that single transition.
+allow container_runtime_t iptables_t:process2 nnp_transition;

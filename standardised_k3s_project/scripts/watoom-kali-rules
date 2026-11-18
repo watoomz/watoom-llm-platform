@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+import argparse, json
+from pathlib import Path
+BASE='/workspace/.watoom/agent-rules'
+ALWAYS=['universal.md','homelab.md','kali/core.md','kali/evidence.md']
+MAP={
+ 'network-discovery':'kali/network-discovery.md',
+ 'service-fingerprinting':'kali/service-fingerprinting.md',
+ 'dns':'kali/dns.md',
+ 'web-assessment':'kali/web-assessment.md',
+ 'smb-ad':'kali/smb-ad.md',
+ 'snmp':'kali/snmp.md',
+ 'packet-analysis':'kali/packet-analysis.md',
+ 'containers':'kali/containers.md',
+ 'kubernetes':'kali/kubernetes.md',
+ 'package-management':'kali/package-management.md',
+ 'exploitation-lab':'kali/exploitation-lab.md',
+}
+def source_root():
+ p=Path(__file__).resolve(); c=p.parent.parent/'ansible'/'roles'/'opencode-agent'/'files'/'agent-rules'
+ return c if c.is_dir() else p.parent/'agent-rules'
+def main():
+ ap=argparse.ArgumentParser(description='Select Kali rule overlays for already-authorized capabilities')
+ sp=ap.add_subparsers(dest='cmd',required=True); s=sp.add_parser('select'); s.add_argument('--capability',action='append',required=True); s.add_argument('--format',choices=['paths','bundle','json'],default='paths'); a=ap.parse_args()
+ bad=[x for x in a.capability if x not in MAP]
+ if bad: raise SystemExit('unknown capability: '+','.join(bad))
+ rules=list(ALWAYS)
+ for cap in a.capability:
+  rule=MAP[cap]
+  if rule not in rules: rules.append(rule)
+ paths=[f'{BASE}/{r}' for r in rules]
+ if a.format=='json': print(json.dumps({'capabilities':a.capability,'rules':rules,'paths':paths},indent=2)); return
+ if a.format=='paths': print('\n'.join(paths)); return
+ sr=source_root(); print('BEGIN SELECTED WATOOM KALI RULE BUNDLE')
+ for rule,path in zip(rules,paths):
+  print(f'\n--- {path} ---'); f=sr/rule; print(f.read_text().strip() if f.is_file() else f'[rule content unavailable: {rule}]')
+ print('\nEND SELECTED WATOOM KALI RULE BUNDLE')
+ print('This selector does not grant capabilities; target policy/LOTCE remains authoritative.')
+if __name__=='__main__': main()

@@ -1,0 +1,19 @@
+diff --git a/src/manifestParser.ts b/src/manifestParser.ts
+index 2b087ac..080f791 100644
+--- a/src/manifestParser.ts
++++ b/src/manifestParser.ts
+@@ -530,12 +530,12 @@ function parseJsonManifest(bytes: Uint8Array): BinaryManifest {
+       size: blobToNumber(cp.Size ?? ""),
+     }));
+     const fileSize = chunkParts.reduce((acc, cp) => acc + cp.size, 0);
+-    // JSON FileHash is a blob-encoded 160-bit little-endian integer; reverse to canonical hex.
++    // JSON FileHash encodes the canonical SHA1 bytes as decimal byte triples.\n    // blobToBigInt/LE conversion recovers those bytes; do not reverse them.
+     const hashLeBytes = bigintToLeBytes(blobToBigInt(entry.FileHash ?? ""), 20);
+     return {
+       filename: entry.Filename ?? "",
+       fileSize,
+-      fileHash: bytesToHex(reverseBytes(hashLeBytes)),
++      fileHash: bytesToHex(hashLeBytes),
+       chunkParts,
+     };
+   });

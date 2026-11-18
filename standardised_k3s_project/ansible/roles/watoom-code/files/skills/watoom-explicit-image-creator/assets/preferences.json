@@ -1,0 +1,11 @@
+{
+  "default_human_appearance": "caucasian_european",
+  "pony_quality_tags": true,
+  "positive_tags": [],
+  "negative_tags": ["compression artifacts", "unintentional blur"],
+  "style_preset": "custom",
+  "camera": {},
+  "lighting": {},
+  "generation_settings": {},
+  "presets": {}
+}

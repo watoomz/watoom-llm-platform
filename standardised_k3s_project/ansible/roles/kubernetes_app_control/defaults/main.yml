@@ -1,0 +1,9 @@
+---
+kubernetes_app_name: ""
+kubernetes_app_namespace: ""
+kubernetes_app_action: status
+kubernetes_app_replicas: 1
+kubernetes_app_wait_timeout: 300
+
+kubernetes_app_container: ""
+kubernetes_app_image: ""

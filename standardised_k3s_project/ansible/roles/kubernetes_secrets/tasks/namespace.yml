@@ -1,0 +1,10 @@
+---
+- name: "Namespace {{ kubernetes_secret_namespace_target }} | Ensure present"
+  kubernetes.core.k8s:
+    kubeconfig: "{{ k3s_kubeconfig }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ kubernetes_secret_namespace_target }}"

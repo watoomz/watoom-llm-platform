@@ -1,0 +1,14 @@
+[Unit]
+Description=WatooM workstation render staging inbox
+[Service]
+Type=oneshot
+User={{ workstation_stage_user }}
+ExecStart=/usr/bin/python3 {{ workstation_stage_home }}/source/broker.py --root {{ workstation_stage_state }} --project {{ workstation_stage_project }} --scan
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateNetwork=true
+ReadWritePaths={{ workstation_stage_state }} {{ workstation_stage_project }}/status {{ workstation_stage_project }}/results
+UMask=0022
+TimeoutStartSec=120

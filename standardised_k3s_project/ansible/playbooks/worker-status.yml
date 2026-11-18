@@ -1,0 +1,78 @@
+---
+# Worker status snapshot for the command center (Bazzite / RIG activity and job outcomes).
+# A root timer runs tools/watoom-code/worker_status.py every 30 s: it READS job receipts, the RIG transfer jail, the SSH journal and
+# asks Bazzite one status question over the existing worker SSH access, then writes one sanitised JSON file that the Glance helper-api
+# mounts read-only (manifests/10-infrastructure/glance). It never starts, stops or changes a job.
+- name: Install the worker status collector
+  hosts: homelab
+  become: true
+  gather_facts: false
+  vars:
+    wss_libexec: /usr/local/libexec/watoom
+    wss_state: /data/ai/helper-scripts/state/worker-status
+    wss_source: "{{ playbook_dir }}/../../tools/watoom-code/worker_status.py"
+    wss_bazzite: "{{ playbook_dir }}/../roles/watoom-code/files/skills/watoom-fab-owned-assets/scripts/unreal-export/bazzite.py"
+  tasks:
+    - name: Collector directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      loop: ["{{ wss_libexec }}", "{{ wss_state }}"]
+    - name: Ensure the node-exporter textfile destination exists
+      ansible.builtin.file:
+        path: /var/lib/node_exporter/textfile
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+    - name: Install the collector and the Bazzite access helper it reuses (outside any checkout)
+      ansible.builtin.copy:
+        src: "{{ item.src }}"
+        dest: "{{ wss_libexec }}/{{ item.dest }}"
+        owner: root
+        group: root
+        mode: "0755"
+      loop:
+        - { src: "{{ wss_source }}", dest: worker_status.py }
+        - { src: "{{ wss_bazzite }}", dest: bazzite.py }
+    - name: Collector service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/watoom-worker-status.service
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=WatooM worker status snapshot for the command center (read-only)
+          After=network-online.target
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/bin/python3 -I {{ wss_libexec }}/worker_status.py --out {{ wss_state }}/workers.json --prom /var/lib/node_exporter/textfile/watoom-workers.prom
+          Nice=10
+          IOSchedulingClass=idle
+          NoNewPrivileges=yes
+          PrivateTmp=yes
+          TimeoutStartSec=90
+    - name: Collector timer
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/watoom-worker-status.timer
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Refresh the worker status snapshot every 30 seconds
+
+          [Timer]
+          OnBootSec=45s
+          OnUnitInactiveSec=30s
+          AccuracySec=5s
+
+          [Install]
+          WantedBy=timers.target
+    - name: Enable the timer
+      ansible.builtin.systemd:
+        name: watoom-worker-status.timer
+        enabled: true
+        state: started
+        daemon_reload: true

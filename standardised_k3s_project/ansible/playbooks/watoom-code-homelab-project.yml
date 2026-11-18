@@ -1,0 +1,12 @@
+---
+- name: Maintain the Homelab LLM checkout and native policy only
+  hosts: watoom-homelab
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../roles/watoom-code/defaults/main.yml
+  tasks:
+    - name: Apply project-only tasks without restarting application or inference
+      ansible.builtin.include_tasks: ../roles/watoom-code/tasks/homelab_project.yml
+      vars:
+        role_path: "{{ playbook_dir }}/../roles/watoom-code"

@@ -1,0 +1,48 @@
+---
+- name: Install the audited host change-request scanner
+  hosts: all
+  become: true
+  gather_facts: false
+  vars:
+    change_policy: "{{ lookup('ansible.builtin.file', playbook_dir + '/../../tools/change-requests/policy.json') | from_json }}"
+  tasks:
+    - name: Create model-writable change-request queues
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: '1001'
+        group: '1001'
+        mode: '0755'
+      loop: "{{ change_policy.queues }}"
+    - name: Install change-request scan service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/watoom-change-requests.service
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Validate model change requests (no apply; operator approval required)
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/bin/python3 {{ playbook_dir }}/../../tools/change-requests/change_request.py scan
+          TimeoutStartSec=60
+          MemoryMax=128M
+          NoNewPrivileges=yes
+    - name: Install change-request scan timer
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/watoom-change-requests.timer
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Scan model change requests
+          [Timer]
+          OnBootSec=60s
+          OnUnitInactiveSec=30s
+          Unit=watoom-change-requests.service
+          [Install]
+          WantedBy=timers.target
+    - name: Activate change-request timer
+      ansible.builtin.systemd:
+        name: watoom-change-requests.timer
+        daemon_reload: true
+        enabled: true
+        state: started

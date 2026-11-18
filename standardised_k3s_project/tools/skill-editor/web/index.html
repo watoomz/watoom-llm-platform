@@ -1,0 +1,15 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>WatooM Skill Editor</title><link rel="stylesheet" href="/style.css">
+<main>
+<header><h1>Skill Editor</h1><p id="repo" class="hint"></p></header>
+<div class="layout">
+<nav><input id="filter" type="search" placeholder="Filter skills" aria-label="Filter skills"><ul id="skills"></ul></nav>
+<section id="editor" hidden>
+<h2 id="title"></h2><p id="meta" class="hint"></p><p id="warning" class="warn" hidden></p>
+<textarea id="content" spellcheck="false" aria-label="SKILL.md text"></textarea>
+<div class="actions"><input id="note" maxlength="200" placeholder="Commit note (optional), e.g. tighten chapter length guidance"><button id="save">Save &amp; commit</button><button id="discard" class="secondary">Discard changes</button></div>
+<details><summary>Recent commits for this skill</summary><ul id="history"></ul></details>
+</section>
+<section id="empty"><p>Choose a skill on the left. Saving commits the <code>SKILL.md</code> to the repository's main branch and updates the live WatooM-Code copy, so the next skills playbook run keeps your edit.</p></section>
+</div>
+<p id="message" role="status"></p>
+</main><script src="/app.js"></script></html>

@@ -1,0 +1,275 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "artex-postgres",
+        "namespace": "{{ artex_namespace }}",
+        "labels": {"app.kubernetes.io/managed-by": "artex-ansible"}
+      },
+      "spec": {
+        "replicas": 1,
+        "revisionHistoryLimit": 10,
+        "selector": {"matchLabels": {"app": "artex-postgres"}},
+        "strategy": {"type": "Recreate"},
+        "template": {
+          "metadata": {
+            "labels": {"app": "artex-postgres", "app.kubernetes.io/managed-by": "artex-ansible"}
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "containers": [
+              {
+                "name": "postgres",
+                "image": "{{ artex_postgres_image }}",
+                "imagePullPolicy": "IfNotPresent",
+                "env": [
+                  {"name": "POSTGRES_USER", "value": "artex"},
+                  {"name": "POSTGRES_PASSWORD", "valueFrom": {"secretKeyRef": {"name": "artex-postgres", "key": "POSTGRES_PASSWORD"}}},
+                  {"name": "POSTGRES_DB", "value": "artex"}
+                ],
+                "ports": [{"containerPort": 5432, "name": "postgres", "protocol": "TCP"}],
+                "readinessProbe": {
+                  "exec": {"command": ["pg_isready", "-U", "artex", "-d", "artex"]},
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 3,
+                  "failureThreshold": 20
+                },
+                "resources": {
+                  "requests": {"memory": "{{ artex_postgres_memory_request }}", "cpu": "{{ artex_postgres_cpu_request }}"},
+                  "limits": {"memory": "{{ artex_postgres_memory_limit }}", "cpu": "{{ artex_postgres_cpu_limit }}"}
+                },
+                "securityContext": {"allowPrivilegeEscalation": false},
+                "volumeMounts": [{"name": "pgdata", "mountPath": "/var/lib/postgresql/data"}]
+              }
+            ],
+            "restartPolicy": "Always",
+            "terminationGracePeriodSeconds": 30,
+            "volumes": [
+              {"name": "pgdata", "hostPath": {"path": "{{ artex_root }}/pgdata", "type": "Directory"}}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "artex-postgres",
+        "namespace": "{{ artex_namespace }}",
+        "labels": {"app.kubernetes.io/managed-by": "artex-ansible"}
+      },
+      "spec": {
+        "type": "ClusterIP",
+        "selector": {"app": "artex-postgres"},
+        "ports": [{"name": "postgres", "port": 5432, "targetPort": 5432, "protocol": "TCP"}]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "artex",
+        "namespace": "{{ artex_namespace }}",
+        "labels": {"app.kubernetes.io/managed-by": "artex-ansible"}
+      },
+      "spec": {
+        "replicas": 1,
+        "revisionHistoryLimit": 10,
+        "selector": {"matchLabels": {"app": "artex"}},
+        "strategy": {"type": "Recreate"},
+        "template": {
+          "metadata": {
+            "labels": {"app": "artex", "app.kubernetes.io/managed-by": "artex-ansible"}
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "containers": [
+              {
+                "name": "artex",
+                "image": "{{ artex_image }}",
+                "imagePullPolicy": "IfNotPresent",
+                "env": [
+                  {"name": "POSTGRES_PASSWORD", "valueFrom": {"secretKeyRef": {"name": "artex-postgres", "key": "POSTGRES_PASSWORD"}}},
+                  {"name": "ARTEX_PG_DSN", "value": "postgres://artex:$(POSTGRES_PASSWORD)@artex-postgres:5432/artex?sslmode=disable"},
+                  {"name": "NORMA_RIPGREP_NO_INSTALL", "value": "1"}
+                ],
+                "ports": [{"containerPort": 8787, "name": "http", "protocol": "TCP"}],
+                "readinessProbe": {
+                  "httpGet": {"path": "/api/health", "port": 8787},
+                  "initialDelaySeconds": 5,
+                  "periodSeconds": 10,
+                  "timeoutSeconds": 5,
+                  "failureThreshold": 3
+                },
+                "livenessProbe": {
+                  "httpGet": {"path": "/api/health", "port": 8787},
+                  "initialDelaySeconds": 30,
+                  "periodSeconds": 30,
+                  "timeoutSeconds": 5,
+                  "failureThreshold": 3
+                },
+                "resources": {
+                  "requests": {"memory": "{{ artex_memory_request }}", "cpu": "{{ artex_cpu_request }}"},
+                  "limits": {"memory": "{{ artex_memory_limit }}", "cpu": "{{ artex_cpu_limit }}"}
+                },
+                "securityContext": {"runAsUser": 0, "allowPrivilegeEscalation": false},
+                "volumeMounts": [
+                  {"name": "data", "mountPath": "/app/data"},
+                  {"name": "keys", "mountPath": "/app/keys"},
+                  {"name": "dshm", "mountPath": "/dev/shm"},
+                  {"name": "tmp", "mountPath": "/tmp"}
+                ]
+              }
+            ],
+            "restartPolicy": "Always",
+            "terminationGracePeriodSeconds": 30,
+            "volumes": [
+              {"name": "data", "hostPath": {"path": "{{ artex_root }}/data", "type": "Directory"}},
+              {"name": "keys", "hostPath": {"path": "{{ artex_root }}/keys", "type": "Directory"}},
+              {"name": "dshm", "emptyDir": {"medium": "Memory", "sizeLimit": "1Gi"}},
+              {"name": "tmp", "emptyDir": {"medium": "Memory", "sizeLimit": "1Gi"}}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "artex",
+        "namespace": "{{ artex_namespace }}",
+        "labels": {"app.kubernetes.io/managed-by": "artex-ansible"}
+      },
+      "spec": {
+        "type": "ClusterIP",
+        "selector": {"app": "artex"},
+        "ports": [{"name": "http", "port": 8787, "targetPort": 8787, "protocol": "TCP"}]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "artex-deny-ingress",
+        "namespace": "{{ artex_namespace }}",
+        "labels": {"app.kubernetes.io/managed-by": "artex-ansible"}
+      },
+      "spec": {
+        "podSelector": {"matchLabels": {"app": "artex"}},
+        "policyTypes": ["Ingress"],
+        "ingress": []
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "artex-postgres-ingress",
+        "namespace": "{{ artex_namespace }}",
+        "labels": {"app.kubernetes.io/managed-by": "artex-ansible"}
+      },
+      "spec": {
+        "podSelector": {"matchLabels": {"app": "artex-postgres"}},
+        "policyTypes": ["Ingress"],
+        "ingress": [
+          {"from": [{"podSelector": {"matchLabels": {"app": "artex"}}}], "ports": [{"protocol": "TCP", "port": 5432}]}
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "artex-allow-traefik",
+        "namespace": "{{ artex_namespace }}",
+        "labels": {"app.kubernetes.io/managed-by": "artex-ansible"}
+      },
+      "spec": {
+        "podSelector": {"matchLabels": {"app": "artex"}},
+        "policyTypes": ["Ingress"],
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "kube-system"}},
+                "podSelector": {"matchLabels": {"app.kubernetes.io/instance": "traefik-kube-system", "app.kubernetes.io/name": "traefik"}}
+              }
+            ],
+            "ports": [{"protocol": "TCP", "port": 8787}]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "llm-router-artex-client",
+        "namespace": "{{ artex_llm_router_namespace }}",
+        "labels": {
+          "app.kubernetes.io/managed-by": "artex-ansible"
+        }
+      },
+      "spec": {
+        "podSelector": {
+          "matchLabels": {
+            "app": "llm-router"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ],
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "{{ artex_namespace }}"
+                  }
+                },
+                "podSelector": {
+                  "matchLabels": {
+                    "app": "artex"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "protocol": "TCP",
+                "port": 8000
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRoute",
+      "metadata": {
+        "name": "artex",
+        "namespace": "{{ artex_namespace }}",
+        "labels": {"app.kubernetes.io/managed-by": "artex-ansible"}
+      },
+      "spec": {
+        "entryPoints": ["websecure"],
+        "routes": [
+          {
+            "kind": "Rule",
+            "match": "Host(`{{ artex_hostname }}`)",
+            "services": [{"name": "artex", "port": 8787, "nativeLB": true}]
+          }
+        ],
+        "tls": {"secretName": "{{ artex_tls_secret }}"}
+      }
+    }
+  ]
+}

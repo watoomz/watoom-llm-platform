@@ -1,0 +1,18 @@
+---
+- name: Activate bounded native game worker interface
+  hosts: homelab
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Maintain operator request worker
+      ansible.builtin.include_role:
+        name: watoom-code
+        tasks_from: game_worker.yml
+    - name: Install versioned native tools
+      ansible.builtin.include_role:
+        name: watoom-code
+        tasks_from: coordinator_guard.yml
+    - name: Install maintained worker instructions
+      ansible.builtin.include_role:
+        name: watoom-code
+        tasks_from: native_agents.yml

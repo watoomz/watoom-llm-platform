@@ -1,0 +1,303 @@
+{
+  "schema_version": 1,
+  "name": "environment-projects-state-no-media",
+  "storage": [
+    {
+      "path": "/etc",
+      "mode": "capture",
+      "reason": "Host configuration, accounts and private credentials; private backup only"
+    },
+    {
+      "path": "/app",
+      "mode": "capture",
+      "reason": "Service state and local image registry; application-consistent restore still requires service-specific checks"
+    },
+    {
+      "path": "/data/ai",
+      "mode": "capture",
+      "reason": "Authored environment, private runtime configuration, state and projects"
+    },
+    {
+      "path": "/data/ai/models",
+      "mode": "reacquire",
+      "reason": "Download model weights separately; preserve model profiles, filenames and hashes/pins"
+    },
+    {
+      "path": "/data/ai/assets",
+      "mode": "reacquire",
+      "reason": "Purchased/downloaded libraries and engine source excluded by owner; retain acquisition references"
+    },
+    {
+      "path": "/data/ai/toolchains",
+      "mode": "reacquire",
+      "reason": "Reinstall exact pinned toolchains; preserve recipes and version/hash requirements"
+    },
+    {
+      "path": "/app/ai/cache",
+      "mode": "transient",
+      "reason": "Rebuildable model/prompt caches; not required to recover authored work"
+    },
+    {
+      "path": "/data/backups",
+      "mode": "transient",
+      "reason": "Capture destination and other backups; never recurse into a backup"
+    },
+    {
+      "path": "/data/github",
+      "mode": "source",
+      "reason": "Reviewed source distribution on GitHub; uncommitted work needs a private source snapshot"
+    },
+    {
+      "path": "/var/run",
+      "mode": "transient",
+      "reason": "Runtime sockets are recreated"
+    },
+    {
+      "path": "/run",
+      "mode": "transient",
+      "reason": "Runtime sockets are recreated"
+    },
+    {
+      "path": "/dev",
+      "mode": "transient",
+      "reason": "Host devices are provisioned, never archived"
+    },
+    {
+      "path": "/sys",
+      "mode": "transient",
+      "reason": "Kernel virtual filesystem"
+    },
+    {
+      "path": "/proc",
+      "mode": "transient",
+      "reason": "Kernel process filesystem"
+    },
+    {
+      "path": "/var/lib/kubelet",
+      "mode": "transient",
+      "reason": "Recreated Kubernetes runtime mounts; persistent source/PVs classified separately"
+    },
+    {
+      "path": "/var/lib/rancher/k3s/storage",
+      "mode": "capture",
+      "reason": "Local-path PV data; restore with its owning application stopped"
+    },
+    {
+      "path": "/var/lib/node_exporter",
+      "mode": "transient",
+      "reason": "Regenerate metrics, not application state"
+    },
+    {
+      "path": "/",
+      "mode": "boundary",
+      "reason": "Observer root mount; restore OS through bootstrap and classify persistent child roots separately"
+    },
+    {
+      "path": "/data",
+      "mode": "boundary",
+      "reason": "Broad media/console mount; restore only explicitly classified child roots"
+    },
+    {
+      "path": "/data/llama-cpp",
+      "mode": "capture",
+      "reason": "Reference/candidate model runtime files; no automatic activation"
+    },
+    {
+      "path": "/data/llama-cpp/models",
+      "mode": "reacquire",
+      "reason": "Downloaded model weights"
+    },
+    {
+      "path": "/data/secrets",
+      "mode": "capture",
+      "reason": "Private secret source and vault unlock material; private backup only"
+    },
+    {
+      "path": "/var/lib/docker/volumes",
+      "mode": "capture",
+      "reason": "Persistent Docker service volumes, including database state"
+    },
+    {
+      "path": "/var/log",
+      "mode": "transient",
+      "reason": "Historical logs are not required to rebuild service state"
+    },
+    {
+      "path": "/data/ai/archive",
+      "mode": "transient",
+      "reason": "Generated cache, build or duplicate recovery history; recreate from pinned source"
+    },
+    {
+      "path": "/data/ai/backups",
+      "mode": "transient",
+      "reason": "Generated cache, build or duplicate recovery history; recreate from pinned source"
+    },
+    {
+      "path": "/data/ai/builds",
+      "mode": "transient",
+      "reason": "Generated cache, build or duplicate recovery history; recreate from pinned source"
+    },
+    {
+      "path": "/data/ai/benchmarks",
+      "mode": "transient",
+      "reason": "Generated cache, build or duplicate recovery history; recreate from pinned source"
+    },
+    {
+      "path": "/data/ai/cache",
+      "mode": "transient",
+      "reason": "Generated cache, build or duplicate recovery history; recreate from pinned source"
+    },
+    {
+      "path": "/data/ai/caches",
+      "mode": "transient",
+      "reason": "Generated cache, build or duplicate recovery history; recreate from pinned source"
+    },
+    {
+      "path": "/data/ai/change-backups",
+      "mode": "transient",
+      "reason": "Generated cache, build or duplicate recovery history; recreate from pinned source"
+    },
+    {
+      "path": "/data/ai/toolkit-audits",
+      "mode": "transient",
+      "reason": "Generated cache, build or duplicate recovery history; recreate from pinned source"
+    },
+    {
+      "path": "/data/ai/audits",
+      "mode": "transient",
+      "reason": "Generated cache, build or duplicate recovery history; recreate from pinned source"
+    },
+    {
+      "path": "/data/ai/helper-scripts/reports/offhost-restorecheck-20261107",
+      "mode": "transient",
+      "reason": "Isolated restore-test scratch; its public result is retained separately"
+    }
+  ],
+  "capture_roots": [
+    "/etc",
+    "/app",
+    "/data/ai/helper-scripts",
+    "/data/ai/private",
+    "/data/ai/knowledge",
+    "/data/secrets",
+    "/var/lib/rancher/k3s/storage",
+    "/data/llama-cpp",
+    "/var/lib/docker/volumes",
+    "/var/lib/rancher/k3s/server/tls",
+    "/var/lib/rancher/k3s/server/token",
+    "/data/github/watoom-standardised-homelab/standardised_k3s_project"
+  ],
+  "project_roots": [
+    "/data/ai/projects"
+  ],
+  "exclude_directory_names": [
+    "node_modules",
+    "__pycache__",
+    ".git",
+    ".venv",
+    ".cache",
+    ".godot",
+    "shader_cache"
+  ],
+  "required_evidence": [
+    "source-snapshot",
+    "private-environment-bundle",
+    "offhost-projects-state",
+    "local-registry-or-image-archives",
+    "secrets-and-vault-unlock",
+    "model-toolchain-reacquisition",
+    "replacement-host-bootstrap",
+    "application-consistent-data-restore",
+    "controller-reprovision-and-admission"
+  ],
+  "stages": [
+    {
+      "id": "01-bootstrap",
+      "mode": "manual-prerequisite",
+      "owner": "existing host/storage/runtime procedures",
+      "description": "Provision replacement Fedora host, mounts, matching identities, k3s, Docker and GPU support using existing approved procedures; no reinstallation on the running host"
+    },
+    {
+      "id": "02-offline-restore",
+      "mode": "private-data-restore",
+      "owner": "verified private backup",
+      "description": "Verify off-host manifests, restore private configuration, projects, application/PV state and registry before starting workloads; no live overwrite or job replay"
+    },
+    {
+      "id": "03-foundation",
+      "mode": "ansible",
+      "playbooks": [
+        "foundation.yml",
+        "secrets.yml",
+        "kubernetes-secrets.yml"
+      ],
+      "description": "Restore paths and secrets through existing owners; inspect registry/groups before any broad reconcile"
+    },
+    {
+      "id": "04-platform",
+      "mode": "ansible",
+      "playbooks": [
+        "kubernetes.yml",
+        "docker.yml",
+        "gpu-host.yml"
+      ],
+      "description": "Reconcile source-owned platform/services after data restoration; preserve desired zero replicas and do not change networking"
+    },
+    {
+      "id": "05-inference",
+      "mode": "guarded-ansible",
+      "playbooks": [
+        "gpu-controller.yml",
+        "llm-model-lab.yml"
+      ],
+      "description": "Restore images/model files and controller state; independently qualify new cluster UIDs, admission and cutover proofs. Old proof booleans are not reusable evidence"
+    },
+    {
+      "id": "06-workspace",
+      "mode": "ansible",
+      "playbooks": [
+        "watoom-code.yml",
+        "watoom-code-agents.yml",
+        "watoom-code-coordinator-guard.yml",
+        "watoom-code-image-scope.yml",
+        "watoom-native-skills.yml"
+      ],
+      "description": "Restore app, memory and Toolkit via independently pinned images; install plugins/agents/skills; verify native health before resuming sessions"
+    },
+    {
+      "id": "07-integrations",
+      "mode": "ansible",
+      "playbooks": [
+        "watoom-code-game-worker.yml",
+        "watoom-code-image-review.yml",
+        "watoom-code-fab-assets.yml",
+        "watoom-workstation-render-stage.yml",
+        "watoom-code-memory-embeddings.yml",
+        "watoom-code-memory-observability.yml",
+        "watoom-code-backup.yml",
+        "watoom-backup-offhost.yml",
+        "watoom-node-textfile.yml",
+        "watoom-platform-alerts.yml"
+      ],
+      "description": "Reconcile only selected integrations against the inventory; do not rerun historical learning migrations or enable services merely because source exists"
+    },
+    {
+      "id": "08-acceptance",
+      "mode": "validation",
+      "playbooks": [
+        "health.yml",
+        "validate.yml"
+      ],
+      "description": "Verify exact workload/image/mount/secret/unit coverage, native API and controller, independent memory restore, project source, a harmless bounded worker job and a new off-host backup/restore test"
+    }
+  ],
+  "private_capture_warning": "Contains credentials and personal data. Keep outside Git, mode 0700, copy through approved private off-host mechanism. Media/purchased assets excluded; personal photo originals conservatively retained.",
+  "capture_max_source_bytes": 536870912000,
+  "minimum_free_bytes": 10737418240,
+  "source_inventory": "publication/environment-inventory.json",
+  "do_not_reenable_without_review": [
+    "watoom-65k-160w-guard.service",
+    "watoom-llama-2slot-rollback.service",
+    "watoom-learning-runner.service"
+  ]
+}

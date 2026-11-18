@@ -1,0 +1,18 @@
+{
+  "sourceCommit": "d24de0c422542a352625b08710e3e8ae004572e0",
+  "baseCommit": "51a6ec509cc77fd446967234ae237458b9316768",
+  "image": "127.0.0.1:5000/watoom-code@sha256:0c3e62d80e51dfdb7c009eda95e064965180de6c6a6f862bc8e8ea3ce32b5f00",
+  "supersedes": "127.0.0.1:5000/watoom-code@sha256:358dc4669683a656750530a8eb9d63e2a21e53a2dcf30e203fb720beab3deba1",
+  "bundle": "watoom-code-scroll-fix-20261105.bundle",
+  "bundleSha256": "ac339d4be4f6266f16f97d029b944634d0a96043cdaab20b8315a01435824e73",
+  "applicationOnly": true,
+  "change": "WatooM pages (skills, prompt builder, catalogue, memory) render resources from .latest, so a background refetch no longer unmounts the page and resets its scroll to the top.",
+  "checks": {
+    "appTypecheck": "1,921 files, no errors",
+    "appUnitTests": "977/977",
+    "browserAcceptance": "watoom memory/catalogue acceptance with new scroll-on-refresh check: fails without the fix, passes on dev build and on the built image (isolated container)",
+    "liveProbe": "all endpoint statuses and lists identical to the v2.2.5 port release; WatooM plugins identical"
+  },
+  "deployEvidence": "/data/ai/artifacts/watoom-code-production-consolidation/deploy-20261104T202839Z",
+  "preserved": {"sessions": 752, "children": 650, "projects": 86}
+}

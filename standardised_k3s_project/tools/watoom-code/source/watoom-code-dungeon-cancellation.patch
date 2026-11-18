@@ -1,0 +1,100 @@
+From 319c2e2751588103847b5b96d8ccdbb4206d6d57 Mon Sep 17 00:00:00 2001
+From: Agent Export <codex@agent.example>
+Date: Sun, 18 Oct 2026 00:40:59 +1000
+Subject: [PATCH] fix(core): cancel owned Toolkit workers on native job
+ interruption
+
+---
+ .../core/src/tool/plugin/watoom-specialist.ts |  2 +-
+ packages/core/src/watoom/creative-contract.ts |  2 +-
+ .../core/src/watoom/specialist-backends.ts    |  7 +++-
+ .../core/test/watoom-creative-http.test.ts    | 32 +++++++++++++++++++
+ 4 files changed, 40 insertions(+), 3 deletions(-)
+
+diff --git a/packages/core/src/tool/plugin/watoom-specialist.ts b/packages/core/src/tool/plugin/watoom-specialist.ts
+index 4bceb50..dfdadfa 100644
+--- a/packages/core/src/tool/plugin/watoom-specialist.ts
++++ b/packages/core/src/tool/plugin/watoom-specialist.ts
+@@ -29,7 +29,7 @@ export const Plugin = {
+         input: Schema.Struct({}), output: Schema.Struct({ specialists: Schema.Array(Schema.Json) }),
+         execute: (_input, context) => Effect.gen(function* () {
+           yield* permission.assert({ action: "watoom_specialist_list", resources: [location.directory], save: [], sessionID: context.sessionID, agent: context.agent, source: { type: "tool", messageID: context.messageID, id: context.id } })
+-          const statuses = yield* Effect.promise(() => Promise.all(configured.discoveries.map(async (entry) => { try { await entry.discover(); const capabilities = [...configured.registry.list().find((descriptor) => descriptor.id === entry.id)!.capabilities]; return { id: entry.id, capabilities, contracts: Object.fromEntries(capabilities.filter((capability) => Creative.operations[capability]).map((capability) => [capability, { task: Creative.operations[capability].startsWith("asset-") ? Creative.operations[capability] : "3d-creative", operation: Creative.operations[capability].startsWith("asset-") ? null : Creative.operations[capability], asset_id: Creative.operations[capability].startsWith("asset-") ? null : "indexed ast_ reference required", optional: Creative.operations[capability].startsWith("asset-") ? ["limit","query","category","format"] : ["asset_ids","seed","parameters"] }])), status: "READY" } } catch { return { id: entry.id, capabilities: [] as string[], contracts: {}, status: "UNAVAILABLE" } } })))
++          const statuses = yield* Effect.promise(() => Promise.all(configured.discoveries.map(async (entry) => { try { await entry.discover(); const capabilities = [...configured.registry.list().find((descriptor) => descriptor.id === entry.id)!.capabilities]; return { id: entry.id, capabilities, contracts: Object.fromEntries(capabilities.filter((capability) => Creative.operations[capability]).map((capability) => [capability, { task: Creative.operations[capability].startsWith("asset-") ? Creative.operations[capability] : "3d-creative", operation: Creative.operations[capability].startsWith("asset-") ? null : Creative.operations[capability], asset_id: Creative.operations[capability].startsWith("asset-") ? null : "indexed ast_ reference required", optional: Creative.operations[capability].startsWith("asset-") ? ["limit","query","category","format"] : ["asset_ids","seed","parameters",...(capability==="world.compose"?["dungeon"]:[])] }])), status: "READY" } } catch { return { id: entry.id, capabilities: [] as string[], contracts: {}, status: "UNAVAILABLE" } } })))
+           const output = { specialists: statuses }
+           return { output, content: JSON.stringify(output) }
+         }).pipe(Effect.mapError((error) => error instanceof ToolFailure ? error : new ToolFailure({ message: "Local specialist discovery failed", error }))),
+diff --git a/packages/core/src/watoom/creative-contract.ts b/packages/core/src/watoom/creative-contract.ts
+index ab07749..4a01c08 100644
+--- a/packages/core/src/watoom/creative-contract.ts
++++ b/packages/core/src/watoom/creative-contract.ts
+@@ -13,7 +13,7 @@ export function validate(input: Record<string,unknown>, capability: string) {
+  if (input.task !== (catalog ? operation : "3d-creative") || (!catalog && input.operation !== operation)) throw Error("Creative capability/task mismatch")
+  const allowed = ["task","timeout", ...(operation === "asset-index" ? ["limit"] : operation === "asset-search" ? ["query","category","format","limit"] : ["operation","asset_id","asset_ids","seed","parameters","dungeon"])]
+  if (Object.keys(input).some(key=>!allowed.includes(key))) throw Error("Unsupported creative input")
+- if (input.timeout !== undefined && (!Number.isInteger(input.timeout) || Number(input.timeout)<1 || Number(input.timeout)>180)) throw Error("Invalid creative timeout")
++ if (input.timeout !== undefined && (!Number.isInteger(input.timeout) || Number(input.timeout)<1 || Number(input.timeout)>(operation==="world" && input.dungeon!==undefined ? 840 : 180))) throw Error("Invalid creative timeout")
+  if (operation === "asset-index") {
+   if (input.limit !== undefined && (!Number.isInteger(input.limit) || Number(input.limit)<1 || Number(input.limit)>1024)) throw Error("Invalid index batch")
+   return
+diff --git a/packages/core/src/watoom/specialist-backends.ts b/packages/core/src/watoom/specialist-backends.ts
+index 7b375ef..62b9365 100644
+--- a/packages/core/src/watoom/specialist-backends.ts
++++ b/packages/core/src/watoom/specialist-backends.ts
+@@ -48,7 +48,12 @@ export function backend(entry: SpecialistConfig.Entry): Specialist.Backend & { d
+     async execute(operationID, payload, signal) {
+       const input = object(payload)
+       const creative = ["asset-index", "asset-search", "3d-creative"].includes(String(input.task))
+-      const value = await request(entry.backend === "toolkit-3d" ? "/api/jobs" : "/execute", entry.backend === "toolkit-3d" ? (creative ? { ...input, operation_id: operationID } : payload) : { contract: "watoom-specialist/v1", operationID, input: payload }, signal)
++      const value = await request(entry.backend === "toolkit-3d" ? "/api/jobs" : "/execute", entry.backend === "toolkit-3d" ? (creative ? { ...input, operation_id: operationID } : payload) : { contract: "watoom-specialist/v1", operationID, input: payload }, signal).catch(async (error) => {
++        if (entry.backend === "toolkit-3d" && signal.aborted && String(input.task).startsWith("3d-")) {
++          await request("/api/jobs/cancel", { operation_id: operationID }, AbortSignal.timeout(5000)).catch(() => undefined)
++        }
++        throw error
++      })
+       if (entry.backend !== "toolkit-3d") {
+         const result = object(value)
+         if (result.contract !== "watoom-specialist/v1" || result.operationID !== operationID) throw Error("Specialist operation receipt mismatch")
+diff --git a/packages/core/test/watoom-creative-http.test.ts b/packages/core/test/watoom-creative-http.test.ts
+index f9971c7..f1a22a5 100644
+--- a/packages/core/test/watoom-creative-http.test.ts
++++ b/packages/core/test/watoom-creative-http.test.ts
+@@ -37,3 +37,35 @@ test("native creative HTTP route binds operation identity and verifies published
+  await expect(driver.execute("a".repeat(64),{task:"asset-search"},AbortSignal.timeout(5000))).rejects.toThrow("operation receipt mismatch")
+  } finally {server.stop(true);await rm(root,{recursive:true,force:true})}
+ })
++
++test("aborting a native creative job sends its durable operation identity to Toolkit cancellation",async()=>{
++ let started!:()=>void
++ const accepted=new Promise<void>(resolve=>{started=resolve})
++ const cancellations:unknown[]=[]
++ const server=Bun.serve({hostname:"127.0.0.1",port:0,async fetch(request){
++  const body=await request.json()
++  if(new URL(request.url).pathname==="/api/jobs/cancel"){
++   cancellations.push(body)
++   return Response.json({status:"CANCELLATION_REQUESTED"})
++  }
++  started()
++  await Bun.sleep(500)
++  return Response.json({status:"INTENTIONALLY_INVALID_UNABORTED_RESPONSE"})
++ }})
++ const abort=new AbortController()
++ try {
++  const driver=backend({backend:"toolkit-3d",url:server.url.origin,artifactRoot:tmpdir()} as Parameters<typeof backend>[0])
++  const pending=driver.execute("c".repeat(64),{task:"3d-creative",operation:"world",asset_id:"ast_"+"a".repeat(24)},abort.signal)
++  const failed=pending.then(()=>undefined,error=>error)
++  await accepted
++  abort.abort()
++  expect(await failed).toBeTruthy()
++  expect(cancellations).toEqual([{operation_id:"c".repeat(64)}])
++ } finally {server.stop(true)}
++})
++test("extended timeout is confined to native dungeon world generation",()=>{
++ const request={task:"3d-creative",operation:"world",asset_id:"ast_"+"a".repeat(24),timeout:600}
++ expect(()=>validate({...request,dungeon:{style:"dungeon-builder",rooms:4}},"world.compose")).not.toThrow()
++ expect(()=>validate(request,"world.compose")).toThrow("timeout")
++ expect(()=>validate({...request,dungeon:{style:"dungeon-builder"},timeout:841},"world.compose")).toThrow("timeout")
++})
+-- 
+2.55.0
+

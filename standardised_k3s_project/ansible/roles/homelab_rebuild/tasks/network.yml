@@ -1,0 +1,63 @@
+---
+- name: "Homelab Rebuild | Configure LAN VLAN profile"
+  community.general.nmcli:
+    conn_name: homelab-vlan20
+    type: vlan
+    ifname: "{{ homelab_lan_vlan_iface }}"
+    vlandev: "{{ homelab_lan_iface }}"
+    vlanid: "{{ homelab_lan_vlan_id }}"
+    ip4: "{{ homelab_lan_ip_cidr }}"
+    gw4: "{{ homelab_lan_gateway }}"
+    dns4: "{{ homelab_lan_dns }}"
+    method4: manual
+    method6: ignore
+    autoconnect: true
+    state: present
+
+- name: "Homelab Rebuild | Configure DMZ profile"
+  community.general.nmcli:
+    conn_name: homelab-dmz
+    type: ethernet
+    ifname: "{{ homelab_dmz_iface }}"
+    ip4: "{{ homelab_dmz_ip_cidr }}"
+    method4: manual
+    method6: ignore
+    never_default4: true
+    autoconnect: true
+    state: present
+
+- name: "Homelab Rebuild | Bring up LAN VLAN profile"
+  ansible.builtin.command: nmcli con up homelab-vlan20
+  changed_when: false
+  failed_when: false
+
+- name: "Homelab Rebuild | Bring up DMZ profile"
+  ansible.builtin.command: nmcli con up homelab-dmz
+  changed_when: false
+  failed_when: false
+
+- name: "Homelab Rebuild DNS | Configure nsswitch hosts resolution order"
+  ansible.builtin.lineinfile:
+    path: /etc/nsswitch.conf
+    regexp: '^hosts:'
+    line: "hosts:      {{ homelab_nsswitch_hosts }}"
+    backup: true
+    state: present
+
+- name: "Homelab Rebuild DNS | Flush systemd-resolved caches"
+  ansible.builtin.command: resolvectl flush-caches
+  changed_when: false
+  failed_when: false
+
+- name: "Homelab Rebuild DNS | Verify nsswitch hosts resolution order"
+  ansible.builtin.command:
+    argv:
+      - grep
+      - "^hosts:"
+      - /etc/nsswitch.conf
+  register: homelab_nsswitch_check
+  changed_when: false
+
+- name: "Homelab Rebuild DNS | Report nsswitch hosts resolution order"
+  ansible.builtin.debug:
+    msg: "{{ homelab_nsswitch_check.stdout }}"

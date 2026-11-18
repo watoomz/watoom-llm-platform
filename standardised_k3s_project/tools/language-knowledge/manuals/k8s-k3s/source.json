@@ -1,0 +1,875 @@
+{
+  "schema": 1,
+  "product": "k8s-k3s",
+  "version": "k8s-1.36+k3s-v1.36.3",
+  "language": "yaml",
+  "license": "CC-BY-4.0 (Kubernetes docs); k3s docs: see k3s-io/docs repository",
+  "trust_tier": "vendor_doc",
+  "note": "Raw upstream bytes: kubernetes/website release-1.36 at 1de955ebabe7e17da1ebb4f582635491227f4157 (docs and content/en/examples) and k3s-io/docs main at 8958508d493c12778517f2a178080f221cbe1081, fetched 2026-11-10. Cards quote spans verbatim; summaries are the section heading plus its first paragraph. Cloud-provider StorageClass examples were left out on purpose. k3s packaged components (Traefik, local-path, servicelb) differ from stock Kubernetes: check the k3s cards first.",
+  "pages": [
+    {
+      "title": "k3s-add-ons-helm.md",
+      "uri": "https://github.com/k3s-io/docs/blob/8958508d493c12778517f2a178080f221cbe1081/docs/add/ons-helm.md",
+      "file": "k3s-add-ons-helm.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "07413b132a3db4cfcd0215d3c661e23d54e445e68e6be1fecce6b0787483f033"
+    },
+    {
+      "title": "k3s-advanced.md",
+      "uri": "https://github.com/k3s-io/docs/blob/8958508d493c12778517f2a178080f221cbe1081/docs/advanced.md",
+      "file": "k3s-advanced.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "490ebf5662bae013a8f381c46fb49edaa44993bcd923f445b80b4cb3a5ff1226"
+    },
+    {
+      "title": "k3s-cluster-access.md",
+      "uri": "https://github.com/k3s-io/docs/blob/8958508d493c12778517f2a178080f221cbe1081/docs/cluster/access.md",
+      "file": "k3s-cluster-access.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "596639d6ca713173a8846b30cf0a30d69983cd1e8eb672dfa52772bd80bab4be"
+    },
+    {
+      "title": "k3s-datastore-backup-restore.md",
+      "uri": "https://github.com/k3s-io/docs/blob/8958508d493c12778517f2a178080f221cbe1081/docs/datastore/backup-restore.md",
+      "file": "k3s-datastore-backup-restore.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "e6346ee268510aac6286f405654c9d399ca18d4fb404509aaca603fa63ab84ae"
+    },
+    {
+      "title": "k3s-installation-airgap.md",
+      "uri": "https://github.com/k3s-io/docs/blob/8958508d493c12778517f2a178080f221cbe1081/docs/installation/airgap.md",
+      "file": "k3s-installation-airgap.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "447edd2f8cefdcbeda10757409b46f9401bd23b7a1b27f16e2b97d07daaa6684"
+    },
+    {
+      "title": "k3s-installation-configuration.md",
+      "uri": "https://github.com/k3s-io/docs/blob/8958508d493c12778517f2a178080f221cbe1081/docs/installation/configuration.md",
+      "file": "k3s-installation-configuration.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "9c3806f20e2c8074cbd6d483ac1f6b901ab2ea2c8058e1083e61221aa1b69940"
+    },
+    {
+      "title": "k3s-installation-packaged-components.md",
+      "uri": "https://github.com/k3s-io/docs/blob/8958508d493c12778517f2a178080f221cbe1081/docs/installation/packaged-components.md",
+      "file": "k3s-installation-packaged-components.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "c01d109e151362205bd873573c022855c9decc9d1f2355bb13ebd1fd34245e58"
+    },
+    {
+      "title": "k3s-installation-private-registry.md",
+      "uri": "https://github.com/k3s-io/docs/blob/8958508d493c12778517f2a178080f221cbe1081/docs/installation/private-registry.md",
+      "file": "k3s-installation-private-registry.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "ed0a815a6a18cd00d6b16918c20481c11269441e10207851a921404b5da6d504"
+    },
+    {
+      "title": "k3s-installation-requirements.md",
+      "uri": "https://github.com/k3s-io/docs/blob/8958508d493c12778517f2a178080f221cbe1081/docs/installation/requirements.md",
+      "file": "k3s-installation-requirements.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "efe869c3568bd11fd25b10817c0da5541fddadff96ffc60f88fb2bd32993e881"
+    },
+    {
+      "title": "k3s-networking-basic-network-options.md",
+      "uri": "https://github.com/k3s-io/docs/blob/8958508d493c12778517f2a178080f221cbe1081/docs/networking/basic-network-options.md",
+      "file": "k3s-networking-basic-network-options.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "4b00399664b3207eb8419fae29c41f5bd13e95e6592b58f121ab83b890f7c4c8"
+    },
+    {
+      "title": "k3s-networking-distributed-multicloud.md",
+      "uri": "https://github.com/k3s-io/docs/blob/8958508d493c12778517f2a178080f221cbe1081/docs/networking/distributed-multicloud.md",
+      "file": "k3s-networking-distributed-multicloud.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "de751e2d8a27bf46a13ecc2ee3f1e19ff1851d426561c7d2fe7c25a9a05b379b"
+    },
+    {
+      "title": "k3s-networking-networking-services.md",
+      "uri": "https://github.com/k3s-io/docs/blob/8958508d493c12778517f2a178080f221cbe1081/docs/networking/networking-services.md",
+      "file": "k3s-networking-networking-services.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "f4739d71ff3ca012da2dd049ab4ce9f69286c46072f831dc31ec4a0b15df9e5b"
+    },
+    {
+      "title": "k3s-security-hardening-guide.md",
+      "uri": "https://github.com/k3s-io/docs/blob/8958508d493c12778517f2a178080f221cbe1081/docs/security/hardening-guide.md",
+      "file": "k3s-security-hardening-guide.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "a49064f4e9a4a3c1c006920d1426425ad3fdffe8347115b0ef0a19950c94a967"
+    },
+    {
+      "title": "k3s-upgrades-manual.md",
+      "uri": "https://github.com/k3s-io/docs/blob/8958508d493c12778517f2a178080f221cbe1081/docs/upgrades/manual.md",
+      "file": "k3s-upgrades-manual.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "ea07957b86def3c106e9180a411094e5d2a63f4a117910ffd509c849538c832f"
+    },
+    {
+      "title": "k8s-assign-pod-node.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-assign-pod-node.md)",
+      "file": "k8s-assign-pod-node.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "c8a9ec85ae5aa20d7f5fc28e6e91e039f6e1f3e53346d426bfd7cc41ccb9c5b2"
+    },
+    {
+      "title": "k8s-configmap.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-configmap.md)",
+      "file": "k8s-configmap.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "2e3860f6aeb7d86e6d2dd8f32493dbc1d52ce1c54606cb08455107b297a63a2a"
+    },
+    {
+      "title": "k8s-cronjob.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-cronjob.md)",
+      "file": "k8s-cronjob.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "bd9f8ec1b5e89a32db7f7d33d8774849fa32e816375bbb1da4a99def4604a5f0"
+    },
+    {
+      "title": "k8s-daemonset.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-daemonset.md)",
+      "file": "k8s-daemonset.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "f785013513269d60e125244193bcfb345ca244507bc4874ddafd12f62d1dae97"
+    },
+    {
+      "title": "k8s-deployment.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-deployment.md)",
+      "file": "k8s-deployment.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "b4896e5d45a7d97b0d36ca5fe9e2cac2188ab46ce9cfbc61b4c143220e550c98"
+    },
+    {
+      "title": "k8s-ingress.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-ingress.md)",
+      "file": "k8s-ingress.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "b93613d1621fe883b67f79a393cf4b5f6a71f0b7f722b162388f3a21e10fa47e"
+    },
+    {
+      "title": "k8s-job.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-job.md)",
+      "file": "k8s-job.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "a388680aefd82bbc18541be8f7e557495b492d106d754d1fbcb108e6d3f55447"
+    },
+    {
+      "title": "k8s-kubectl-cheatsheet.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-kubectl-cheatsheet.md)",
+      "file": "k8s-kubectl-cheatsheet.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "2591bb535e6b3aa7e7aa8135ca1fd75060540746618c6488360f8b05bda89880"
+    },
+    {
+      "title": "k8s-labels.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-labels.md)",
+      "file": "k8s-labels.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "f1761665a0c702f80c256489e2778bfcb3055246a12c874fd86211183be838d4"
+    },
+    {
+      "title": "k8s-namespaces.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-namespaces.md)",
+      "file": "k8s-namespaces.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "165c4da414c735795f7c274cf2fcd7822671a480bb205cdb35008e476c621143"
+    },
+    {
+      "title": "k8s-network-policy.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-network-policy.md)",
+      "file": "k8s-network-policy.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "c5ab165e6c6d91f6abff48b06d57a57a600d7e8c5e91c3ced2cf0cf777e409a9"
+    },
+    {
+      "title": "k8s-persistent-volumes.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-persistent-volumes.md)",
+      "file": "k8s-persistent-volumes.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "b0da38869bc1cdb5ed19f6424c2ef0fedefb5e10fb3603450f56a6581db90069"
+    },
+    {
+      "title": "k8s-pod-lifecycle.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-pod-lifecycle.md)",
+      "file": "k8s-pod-lifecycle.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "a22f3a96a41e7613e61beb292fc28fa45b9f68e8f65e493e3e940ed1d35a8b51"
+    },
+    {
+      "title": "k8s-probes.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-probes.md)",
+      "file": "k8s-probes.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "158e1b10e7dbd1eb1d7db987d6843583ef3181a6a67e82682e3edd3bdef56038"
+    },
+    {
+      "title": "k8s-rbac.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-rbac.md)",
+      "file": "k8s-rbac.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "9a2b9794954d21f78f565033d9cdcf30592c5e7351224af82c60d1e931e312b9"
+    },
+    {
+      "title": "k8s-resources.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-resources.md)",
+      "file": "k8s-resources.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "34371f30326f7f9f859a20d1edbcef5fc1cc007f92e38e420f0f043ef4cf2637"
+    },
+    {
+      "title": "k8s-secret.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-secret.md)",
+      "file": "k8s-secret.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "30bb29e4040f1464a8cb299524f51e0a1ae2279a63f45b7182b1b8faf27af194"
+    },
+    {
+      "title": "k8s-security-context.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-security-context.md)",
+      "file": "k8s-security-context.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "f362463fd9cc32e39599456b8f32a9699d641967defcaeb0e3fdb77915474d4a"
+    },
+    {
+      "title": "k8s-service.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-service.md)",
+      "file": "k8s-service.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "124a280dfbc2dad83498c579e960e5d199ca612b727033e2a88da1103e1acb51"
+    },
+    {
+      "title": "k8s-statefulset.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-statefulset.md)",
+      "file": "k8s-statefulset.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "4d078d89baf4c8e81e37a51d8f1fcc66739fe8e4732694758ad90cb7529e5707"
+    },
+    {
+      "title": "k8s-storage-classes.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-storage-classes.md)",
+      "file": "k8s-storage-classes.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "d512ca27a20e3bff92a9bd28ea3a1d552bf03f436e06c48b3ec88308e8377dc8"
+    },
+    {
+      "title": "k8s-taint-toleration.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-taint-toleration.md)",
+      "file": "k8s-taint-toleration.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "ca66753e66c25635eae0f770c3c3db50be1b62b854122abb494ae5171abd7d9c"
+    },
+    {
+      "title": "k8s-volumes.md",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/docs/ (k8s-volumes.md)",
+      "file": "k8s-volumes.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "70c1df277b30278ff49e783359d4f7d83b49ca0b2f97c40d3c3a45a0794ed47a"
+    },
+    {
+      "title": "examples/access-endpoints-aggregated.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/access-endpoints-aggregated.yaml)",
+      "file": "examples/access-endpoints-aggregated.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "5b8b926a82bb796195d5d903b0491b0a1382998a4df44c585fc1e4c1b59c7bdc"
+    },
+    {
+      "title": "examples/access-simple-clusterrole.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/access-simple-clusterrole.yaml)",
+      "file": "examples/access-simple-clusterrole.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "246171b01b1878c86b855faa83330240e4e25e353c802359ad33e54dc77cba89"
+    },
+    {
+      "title": "examples/access-simple-clusterrolebinding.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/access-simple-clusterrolebinding.yaml)",
+      "file": "examples/access-simple-clusterrolebinding.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "0ec111b652796edf6a6b6a8d08e1dc41ad725588465aea324cfd5f116bdd4a5c"
+    },
+    {
+      "title": "examples/access-simple-role.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/access-simple-role.yaml)",
+      "file": "examples/access-simple-role.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "543e64e512260f9285b9264104d73688bf0b4a4f3a9dedc714660f7882ff132f"
+    },
+    {
+      "title": "examples/access-simple-rolebinding-with-clusterrole.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/access-simple-rolebinding-with-clusterrole.yaml)",
+      "file": "examples/access-simple-rolebinding-with-clusterrole.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "f6f21185e51a68c18305531cb9e6933baa812ee24e30bf49a0d65c135ee16f35"
+    },
+    {
+      "title": "examples/access-simple-rolebinding-with-role.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/access-simple-rolebinding-with-role.yaml)",
+      "file": "examples/access-simple-rolebinding-with-role.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "3c3ec1ae6e8f2bf505aac3e142268de548c1f26868c546b5dd271f5a7f9139f4"
+    },
+    {
+      "title": "examples/application-job-cronjob.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/application-job-cronjob.yaml)",
+      "file": "examples/application-job-cronjob.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "6941257dacb9405aa961bfe6523ff410925f9e49d0b3b9b0c88979beeeab6722"
+    },
+    {
+      "title": "examples/configmap-configure-pod.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/configmap-configure-pod.yaml)",
+      "file": "examples/configmap-configure-pod.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "53067eeeaf5d63c39bf7941286083ba6a4de385e40dca45a0afa91421d15fa88"
+    },
+    {
+      "title": "examples/configmap-env-configmap.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/configmap-env-configmap.yaml)",
+      "file": "examples/configmap-env-configmap.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "208c2d256d75e0e22a1443377ea5fe0f5937b2a1fc48dcdc91abdb4ef797130b"
+    },
+    {
+      "title": "examples/controllers-daemonset.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/controllers-daemonset.yaml)",
+      "file": "examples/controllers-daemonset.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "6fb6da377c3c1951862404af52d421cadda9d73c5796a79c65ff791e65b802c1"
+    },
+    {
+      "title": "examples/controllers-job-backoff-limit-per-index-example.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/controllers-job-backoff-limit-per-index-example.yaml)",
+      "file": "examples/controllers-job-backoff-limit-per-index-example.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "c1b63494e6de1bfca5434bffd5f5b47c9ae5fbe5d51315e7fcea4386289b45b4"
+    },
+    {
+      "title": "examples/controllers-job-pod-failure-policy-example.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/controllers-job-pod-failure-policy-example.yaml)",
+      "file": "examples/controllers-job-pod-failure-policy-example.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "7531854cdf08e921a1b653546931f83d3d889f0f7f9f6a76a73cb40ce630ab4c"
+    },
+    {
+      "title": "examples/controllers-job-success-policy.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/controllers-job-success-policy.yaml)",
+      "file": "examples/controllers-job-success-policy.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "3726d446b2d398aff18273287cd1edba1dd94caa4e6279e8271bc5678e6120df"
+    },
+    {
+      "title": "examples/controllers-job.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/controllers-job.yaml)",
+      "file": "examples/controllers-job.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "3c8ff7513bd9043899ad5a84cae244b6ddfbff6063b7f83d97eab142c8c522c2"
+    },
+    {
+      "title": "examples/controllers-nginx-deployment.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/controllers-nginx-deployment.yaml)",
+      "file": "examples/controllers-nginx-deployment.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "0c51429243635a7d62846099b45259b9dcd06553a46032d76ad605c6cc1f6c5d"
+    },
+    {
+      "title": "examples/pods-image-volumes.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/pods-image-volumes.yaml)",
+      "file": "examples/pods-image-volumes.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "200c526e3e7f1175d6cf8b1b2f5eece798b30f13d770eb5239847e0ab33f2892"
+    },
+    {
+      "title": "examples/pods-pod-with-affinity-preferred-weight.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/pods-pod-with-affinity-preferred-weight.yaml)",
+      "file": "examples/pods-pod-with-affinity-preferred-weight.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "07a14cddf0c90feff49d69dc3253569d9003e2f5aff571c330b13b09b151c405"
+    },
+    {
+      "title": "examples/pods-pod-with-node-affinity.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/pods-pod-with-node-affinity.yaml)",
+      "file": "examples/pods-pod-with-node-affinity.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "2aad6f57e7d6940904ede0002ce8e2367e5fe2a464e9643bcb310b2ac35d0d57"
+    },
+    {
+      "title": "examples/pods-pod-with-numeric-toleration.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/pods-pod-with-numeric-toleration.yaml)",
+      "file": "examples/pods-pod-with-numeric-toleration.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "a372854034b25901afd09770a59d20b2e41187211181f1c174cbf7acebdb06c3"
+    },
+    {
+      "title": "examples/pods-pod-with-pod-affinity.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/pods-pod-with-pod-affinity.yaml)",
+      "file": "examples/pods-pod-with-pod-affinity.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "c2bf573d43a3a5aeb0b3cc59b00819959cb2061edf4f1cb66cad5d337591b0cc"
+    },
+    {
+      "title": "examples/pods-pod-with-toleration.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/pods-pod-with-toleration.yaml)",
+      "file": "examples/pods-pod-with-toleration.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "327d03a7ef12bd8f2e6ca7e81d2625ab038f26a4f5169ef0177a2eb8969bfbcd"
+    },
+    {
+      "title": "examples/pods-probe-exec-liveness.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/pods-probe-exec-liveness.yaml)",
+      "file": "examples/pods-probe-exec-liveness.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "b953accf65b51da25b3760367908aef58d5393189c6369e4644084c906579259"
+    },
+    {
+      "title": "examples/pods-probe-grpc-liveness.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/pods-probe-grpc-liveness.yaml)",
+      "file": "examples/pods-probe-grpc-liveness.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "54864cb8d77043e32376107927ccbc403e3038ba68df02aa2a30c6f3fe605009"
+    },
+    {
+      "title": "examples/pods-probe-http-liveness.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/pods-probe-http-liveness.yaml)",
+      "file": "examples/pods-probe-http-liveness.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "1ce438d196fff0241e7716a40a292616d2d02784748a629de4d1048a7358372a"
+    },
+    {
+      "title": "examples/pods-probe-tcp-liveness-readiness.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/pods-probe-tcp-liveness-readiness.yaml)",
+      "file": "examples/pods-probe-tcp-liveness-readiness.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "a920ef042558a52a976d892957dd7da2f2adea8f8ffdb945efbdecfab5b7f6ad"
+    },
+    {
+      "title": "examples/pods-resource-pod-level-resources.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/pods-resource-pod-level-resources.yaml)",
+      "file": "examples/pods-resource-pod-level-resources.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "757bf3c141193656da67791626cd7887c4d09cb61ccf8a8dee3748e79aed5dbe"
+    },
+    {
+      "title": "examples/pods-restart-policy-restart-all-containers.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/pods-restart-policy-restart-all-containers.yaml)",
+      "file": "examples/pods-restart-policy-restart-all-containers.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "ae9b00c5d6809ba8ff3006948beda97e45859d83ff4f5e2d8efd9cab254d5e2f"
+    },
+    {
+      "title": "examples/pods-security-security-context-2.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/pods-security-security-context-2.yaml)",
+      "file": "examples/pods-security-security-context-2.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "19035ed86adccfc111e60d8569f99344b8d170f6a629db2385a3f6c7f92cf8a1"
+    },
+    {
+      "title": "examples/pods-security-security-context-3.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/pods-security-security-context-3.yaml)",
+      "file": "examples/pods-security-security-context-3.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "aed8040874a75dbd272ade6bb731b8a59a61917dc3ff1677c8d9d6b70ad61417"
+    },
+    {
+      "title": "examples/pods-security-security-context-4.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/pods-security-security-context-4.yaml)",
+      "file": "examples/pods-security-security-context-4.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "231d40ffb36ae19318d00f32e343ea54a89e4d5b59941f027e58f9b427acee2f"
+    },
+    {
+      "title": "examples/pods-security-security-context-5.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/pods-security-security-context-5.yaml)",
+      "file": "examples/pods-security-security-context-5.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "42105448602182628a64f5e4c97eb076b64704ab771525fd8fe71c1efc3d0c2f"
+    },
+    {
+      "title": "examples/pods-security-security-context-6.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/pods-security-security-context-6.yaml)",
+      "file": "examples/pods-security-security-context-6.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "6f460e652a6fe1b5fbdaf86e606a816cb8d901be8d1ed8d2692f16aec6187d50"
+    },
+    {
+      "title": "examples/pods-security-security-context.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/pods-security-security-context.yaml)",
+      "file": "examples/pods-security-security-context.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "d55c71a9b463475cba42c61e1d80940ba1672f241737bacff33ff0fe37d7e53c"
+    },
+    {
+      "title": "examples/secret-basicauth-secret.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/secret-basicauth-secret.yaml)",
+      "file": "examples/secret-basicauth-secret.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "9fae57e26cc61f9e4ced1e95aa6ac0edc710d5282b41ce9488b6be971d57cdaf"
+    },
+    {
+      "title": "examples/secret-bootstrap-token-secret-base64.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/secret-bootstrap-token-secret-base64.yaml)",
+      "file": "examples/secret-bootstrap-token-secret-base64.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "eca1edc436d5df4b371af23b2b956108930681769a72228316c93cfcb5f28527"
+    },
+    {
+      "title": "examples/secret-bootstrap-token-secret-literal.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/secret-bootstrap-token-secret-literal.yaml)",
+      "file": "examples/secret-bootstrap-token-secret-literal.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "dc366f91d000423bee9f9c5d90adf9516e79dad73d165b8b9ee9e9e8dd2c9586"
+    },
+    {
+      "title": "examples/secret-dockercfg-secret.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/secret-dockercfg-secret.yaml)",
+      "file": "examples/secret-dockercfg-secret.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "ab92a1deb2df3c97cb5d8da0a215826887002d43b9c7c3637651ab1f7ed29ffe"
+    },
+    {
+      "title": "examples/secret-dotfile-secret.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/secret-dotfile-secret.yaml)",
+      "file": "examples/secret-dotfile-secret.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "0a422ce12787ac4a9d8bc15bb093cc4283a927253d592ff2d0e0ffad4dc79222"
+    },
+    {
+      "title": "examples/secret-optional-secret.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/secret-optional-secret.yaml)",
+      "file": "examples/secret-optional-secret.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "3b364ee309967040bd62f4b41c3898a81e4e34485b2655448ddec246c566cc6a"
+    },
+    {
+      "title": "examples/secret-serviceaccount-token-secret.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/secret-serviceaccount-token-secret.yaml)",
+      "file": "examples/secret-serviceaccount-token-secret.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "0693bb86f2fbf9ad60d7f50ce77f4357858ad5a4b8da6c39fec1375eccfa00d7"
+    },
+    {
+      "title": "examples/secret-ssh-auth-secret.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/secret-ssh-auth-secret.yaml)",
+      "file": "examples/secret-ssh-auth-secret.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "bb9355d439dabcb2134e362017bdb26a522cd42f8d81974b018ee27afe8bada4"
+    },
+    {
+      "title": "examples/secret-tls-auth-secret.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/secret-tls-auth-secret.yaml)",
+      "file": "examples/secret-tls-auth-secret.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "8799d698c5f3ee3266e0f5981c8ec8b6040f651e73a00c408f229b9679e9808c"
+    },
+    {
+      "title": "examples/service-networking-default-ingressclass.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/service-networking-default-ingressclass.yaml)",
+      "file": "examples/service-networking-default-ingressclass.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "9d252feaed0a20186faa3d5afe8cfa34da7cf6daeb373678b1316f4f77b471b9"
+    },
+    {
+      "title": "examples/service-networking-external-lb.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/service-networking-external-lb.yaml)",
+      "file": "examples/service-networking-external-lb.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "9487a510b28252470101642f17a930ce07038ac34697b329b1bbdca8188d8801"
+    },
+    {
+      "title": "examples/service-networking-ingress-resource-backend.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/service-networking-ingress-resource-backend.yaml)",
+      "file": "examples/service-networking-ingress-resource-backend.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "d4fc7c5f4e800abc76be6ca031a7b6ce03b22145c0d88fef88d70c7663f27d8d"
+    },
+    {
+      "title": "examples/service-networking-ingress-wildcard-host.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/service-networking-ingress-wildcard-host.yaml)",
+      "file": "examples/service-networking-ingress-wildcard-host.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "f94baf782d671e73aa5a1081cdc639c1831916d263795b59fe5d01703ca234fe"
+    },
+    {
+      "title": "examples/service-networking-minimal-ingress.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/service-networking-minimal-ingress.yaml)",
+      "file": "examples/service-networking-minimal-ingress.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "e26c25fdbb8e1d9787a6acd8117994249f798d313fe25a0abfa323595471efa2"
+    },
+    {
+      "title": "examples/service-networking-name-virtual-host-ingress-no-third-host.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/service-networking-name-virtual-host-ingress-no-third-host.yaml)",
+      "file": "examples/service-networking-name-virtual-host-ingress-no-third-host.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "9641c3d56d6dd82124d00300525486d67204b09e0056cb6b1cf176566f84bc82"
+    },
+    {
+      "title": "examples/service-networking-name-virtual-host-ingress.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/service-networking-name-virtual-host-ingress.yaml)",
+      "file": "examples/service-networking-name-virtual-host-ingress.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "1af1b8ee4246fd1562df85e550e80840dd8e2bf4797f5a15d335ee9940bf7c6f"
+    },
+    {
+      "title": "examples/service-networking-network-policy-allow-all-egress.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/service-networking-network-policy-allow-all-egress.yaml)",
+      "file": "examples/service-networking-network-policy-allow-all-egress.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "2496af65714659a45282b91916e266ac137572ee9cf63ca53320a73a677413a6"
+    },
+    {
+      "title": "examples/service-networking-network-policy-allow-all-ingress.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/service-networking-network-policy-allow-all-ingress.yaml)",
+      "file": "examples/service-networking-network-policy-allow-all-ingress.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "ada9cd28043160431e7a0d1cf0ce208c666362e595b9b97a76b98477202267ac"
+    },
+    {
+      "title": "examples/service-networking-network-policy-default-deny-all.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/service-networking-network-policy-default-deny-all.yaml)",
+      "file": "examples/service-networking-network-policy-default-deny-all.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "47d90b50358bb4b3d25064a5c9695b6ceedd24855ab4c5f946ad51beb0ab29d3"
+    },
+    {
+      "title": "examples/service-networking-network-policy-default-deny-egress.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/service-networking-network-policy-default-deny-egress.yaml)",
+      "file": "examples/service-networking-network-policy-default-deny-egress.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "99561471fce5b0c6db8269136c86685313ab6d157b27ab1e57a6e147c22b6754"
+    },
+    {
+      "title": "examples/service-networking-network-policy-default-deny-ingress.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/service-networking-network-policy-default-deny-ingress.yaml)",
+      "file": "examples/service-networking-network-policy-default-deny-ingress.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "e8020089258bc138e2eee2d61bb6b31efdff59f9d04321058c1534349e7962ce"
+    },
+    {
+      "title": "examples/service-networking-networkpolicy-multiport-egress.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/service-networking-networkpolicy-multiport-egress.yaml)",
+      "file": "examples/service-networking-networkpolicy-multiport-egress.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "84aed8527c23c56a6be3cc91848dc1d6cf7f6e849808ba90346aabdef2d3901d"
+    },
+    {
+      "title": "examples/service-networking-networkpolicy.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/service-networking-networkpolicy.yaml)",
+      "file": "examples/service-networking-networkpolicy.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "8a6341160d695980e7fef6bc2406d64968aefb0eb1eaf74175d319283faa433d"
+    },
+    {
+      "title": "examples/service-networking-simple-fanout-example.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/service-networking-simple-fanout-example.yaml)",
+      "file": "examples/service-networking-simple-fanout-example.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "54aa3a57ff4200515664f161ead449916aac42bc8e7798e6a2be65ea260d8027"
+    },
+    {
+      "title": "examples/service-networking-test-ingress.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/service-networking-test-ingress.yaml)",
+      "file": "examples/service-networking-test-ingress.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "1b8c1d05d54f360be210402b95c3c6baf781636f8521c0faf93c088c50e551f3"
+    },
+    {
+      "title": "examples/service-networking-tls-example-ingress.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/service-networking-tls-example-ingress.yaml)",
+      "file": "examples/service-networking-tls-example-ingress.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "94165a419b3a5187a1e71502d6c9e17df6cbf00c71d906675fa9df743d65c5c0"
+    },
+    {
+      "title": "examples/service-simple-service.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/service-simple-service.yaml)",
+      "file": "examples/service-simple-service.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "b9aa7ed1fcfb4c092ce9a65856b041fe9a7c886c353a1a8399be9a58ad22364f"
+    },
+    {
+      "title": "examples/storage-rro.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/storage-rro.yaml)",
+      "file": "examples/storage-rro.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "5fabe310111d9b6d2f763b138e8889a83eb716eb7ff306427a381e9b45735109"
+    },
+    {
+      "title": "examples/storage-storageclass-low-latency.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/storage-storageclass-low-latency.yaml)",
+      "file": "examples/storage-storageclass-low-latency.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "cea16d012f1d29bab27f6cf7c784cc4efe1c56832adca60a079e5ba423ad90ce"
+    },
+    {
+      "title": "examples/storage-storageclass-pod-volume-binding.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/storage-storageclass-pod-volume-binding.yaml)",
+      "file": "examples/storage-storageclass-pod-volume-binding.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "a9f0f57edd862351fc156127847cbaf4ec7d93a926574d07646249007fe40236"
+    },
+    {
+      "title": "examples/storage-storageclass-storageclass-aws-ebs.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/storage-storageclass-storageclass-aws-ebs.yaml)",
+      "file": "examples/storage-storageclass-storageclass-aws-ebs.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "7dfc3ad74598c4c100c4ef30231e4372c75c73e3583ffdbd79de4f0229e1b6b1"
+    },
+    {
+      "title": "examples/storage-storageclass-storageclass-aws-efs.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/storage-storageclass-storageclass-aws-efs.yaml)",
+      "file": "examples/storage-storageclass-storageclass-aws-efs.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "f3ddf7fa2cd12e42e1d1e2ad1b4dd88af25455a329b2b1d20324e193e059994c"
+    },
+    {
+      "title": "examples/storage-storageclass-storageclass-azure-file.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/storage-storageclass-storageclass-azure-file.yaml)",
+      "file": "examples/storage-storageclass-storageclass-azure-file.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "42eccec76320e6a9912108c798f17ee6382599456312c86d31a55430c8d44cf6"
+    },
+    {
+      "title": "examples/storage-storageclass-storageclass-ceph-rbd.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/storage-storageclass-storageclass-ceph-rbd.yaml)",
+      "file": "examples/storage-storageclass-storageclass-ceph-rbd.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "cbfc0b4bbfb7100e0e7711d615e4665f5c37963dd1304977bade411cf7ae793f"
+    },
+    {
+      "title": "examples/storage-storageclass-storageclass-local.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/storage-storageclass-storageclass-local.yaml)",
+      "file": "examples/storage-storageclass-storageclass-local.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "fedee6c1515e7dbc6947a4216bb4a04cb1951516661b01d91754c519ffed7abb"
+    },
+    {
+      "title": "examples/storage-storageclass-storageclass-nfs.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/storage-storageclass-storageclass-nfs.yaml)",
+      "file": "examples/storage-storageclass-storageclass-nfs.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "c710aa6f1a03d59b2ee44cd6bc2d518fdd01452f67b59745ecba4d46637ed8e6"
+    },
+    {
+      "title": "examples/storage-storageclass-storageclass-portworx-volume.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/storage-storageclass-storageclass-portworx-volume.yaml)",
+      "file": "examples/storage-storageclass-storageclass-portworx-volume.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "be35012db5bad75b52dc09e9558c8f603f3e68d73ddd65a2f7bd485841e76fa0"
+    },
+    {
+      "title": "examples/storage-storageclass-storageclass-topology.yaml",
+      "uri": "https://github.com/kubernetes/website/blob/1de955ebabe7e17da1ebb4f582635491227f4157/content/en/examples/ (examples/storage-storageclass-storageclass-topology.yaml)",
+      "file": "examples/storage-storageclass-storageclass-topology.yaml",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "1af4cd1e1bca8710bf03f3796d6bf5d21a54955aaca2258a4008dae106210f4f"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+---
+watoom_code_image: "127.0.0.1:5000/watoom-code@sha256:a0c220a6c9b4fe2db2d36e8d45a7d7ffa905ab7fff140e2a9dd73cc7acf6a2fa"
+watoom_code_application_commit: 440fb4d1f9409a3c9278e9eabd27be4b657232fe
+watoom_code_image_source_commit: 0ecec40d82b618142c88aa11eef32587be823673
+# Raised 2026-11-09: traced the OOM crash loop into @agentmemory/agentmemory@0.9.29's own load path
+# (IndexPersistence.load(), single eager call at boot) -- it deserializes the current BM25 + vector index
+# generations (confirmed via the live manifest: ~145MB + ~108MB serialized) plus mem:memories.bin (~93MB)
+# into live JS structures every restart. That is real, current, referenced data -- not a leak -- and
+# dmesg confirmed the iii engine process alone reaching ~2.7GB RSS from it within ~20s of start. 4Gi no
+# longer has headroom for that plus the node/BGE/OTel baseline. 8Gi gives roughly 3x the observed peak.
+watoom_code_agentmemory_memory_limit: 8Gi
+# Hybrid recall through resident BGE; watoom-code-memory-embeddings.yml -e watoom_code_memory_embeddings=false is the BM25-only rollback.
+watoom_code_memory_embeddings: true
+# Fixed 2026-11-09: config/agentmemory/iii-config.yaml's iii-observability worker was configured with
+# exporter: memory, sampling_ratio: 1.0 and logs_enabled: true -- retaining every trace/log event in the
+# process's own heap with no visible eviction. Matched the observed symptom exactly: agentmemory OOMKilled
+# roughly hourly (9 restarts in ~9h before this fix), its own iii worker process measured at 2.6GB+ RSS alone
+# shortly before each kill. Cut sampling ~100x and stopped in-memory log retention (logs_console_output still
+# gives stdout visibility). Rollback: the previous digest below.
+# previous: 127.0.0.1:5000/watoom-agentmemory@sha256:979134cb586355234e1acb6fd426e7bd1bd96734a647a59b207c8d24e45f0f3a
+watoom_code_memory_image: 127.0.0.1:5000/watoom-agentmemory@sha256:4cd628c7a09d0062c753f34b4e2be1606c7b3e1d046227e7a81b5f14d8d13ed5
+watoom_code_toolkit_image: '127.0.0.1:5000/watoom-toolkit@sha256:5687b1dc8708d1fddbc88aaea04694cd8898aa8269b2f6123492563e25380682'
+watoom_code_toolkit_source_commit: 08318532e843712cb01cd80dcece17336f0fdac3
+# Language-knowledge canary (Godot cards only) enabled 2026-11-07; set false and re-apply to remove.
+watoom_code_language_knowledge_enabled: true
+watoom_code_language_knowledge_cards: /data/ai/knowledge/cards.jsonl
+# Godot MCP over the restricted rig SSH route (tools/rig-godot-mcp), enabled 2026-11-13; the rig policy names every tool
+# (opened by the owner 2026-11-13). Set false and re-run playbooks/watoom-code-godot-mcp.yml to remove the entry.
+watoom_code_godot_mcp_enabled: true
+# ue-mcp (Unreal) stays off until the rig side exists (tools/rig-ue-mcp/README.md); then set true and run
+# playbooks/watoom-code-ue-mcp.yml.
+watoom_code_ue_mcp_enabled: true
+# Egress NetworkPolicy enabled 2026-11-17 after validating every destination selector against live pod
+# labels on watoom-homelab (caught and fixed a real gap: bge-embeddings was missing from the base rule
+# despite watoom_code_memory_embeddings being live). Rollback: set false and re-run playbooks/watoom-code.yml.
+watoom_code_egress_policy_enabled: true

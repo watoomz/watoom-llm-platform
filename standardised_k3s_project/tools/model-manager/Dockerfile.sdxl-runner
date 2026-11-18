@@ -1,0 +1,5 @@
+ARG MANAGER_IMAGE
+FROM ${MANAGER_IMAGE}
+COPY sdxl_backend.py settings.py /app/model-manager/
+ENV LD_LIBRARY_PATH=/app/runtime/lib PYTHONDONTWRITEBYTECODE=1
+ENTRYPOINT ["/app/runtime/bin/python", "/app/model-manager/sdxl_backend.py"]

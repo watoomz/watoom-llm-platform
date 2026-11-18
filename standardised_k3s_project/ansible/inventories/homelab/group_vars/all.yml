@@ -1,0 +1,110 @@
+---
+project_root: /data/github/watoom-standardised-homelab/standardised_k3s_project
+repo_root: /data/github/watoom-standardised-homelab
+# Root-owned install of the backup tools; units run this copy, never a checkout,
+# so editing a clone cannot change what runs nightly until a playbook re-installs it.
+watoom_backup_libexec: /usr/local/libexec/watoom-backup
+
+homelab_hostname: watoom-homelab
+homelab_timezone: Australia/Brisbane
+homelab_locale: en_GB.UTF-8
+homelab_keymap: au
+
+k3s_kubeconfig: /etc/rancher/k3s/k3s.yaml
+k3s_node_name: watoom-homelab
+k3s_node_ip: 10.99.20.225
+k3s_version: v1.36.3+k3s1
+
+network:
+  lan_parent: enp34s0
+  lan_interface: enp34s0.20
+  lan_vlan_id: 20
+  lan_cidr: 10.99.20.225/24
+  lan_gateway: 10.99.20.1
+  lan_dns:
+    - 10.99.20.225
+    - 10.99.20.1
+    - 1.1.1.1
+  dmz_interface: enp35s0
+  dmz_cidr: 192.168.250.225/24
+  # Render/game workers. Traffic is host-level only: the rig connects in to the homelab
+  # (SSH 22, DNS 53, HTTPS 443); the homelab broker SSHes out to Bazzite. No pod egress.
+  rig_host: 10.99.1.44
+  bazzite_host: 10.99.30.111
+
+homelab_domains:
+  local: internal.homelab.example
+  public: homelab.example
+
+# Explicit, deterministic apply order. Templates, examples and manual jobs are excluded.
+k3s_manifest_groups:
+  namespaces:
+    - manifests/00-namespaces/namespaces.yml
+  infrastructure:
+    - manifests/10-infrastructure/platform-workers/platform-workers.yml
+    - manifests/10-infrastructure/glance/glance-helper-rbac.yml
+    - manifests/10-infrastructure/glance/glance.yml
+    - manifests/10-infrastructure/glance/moss-image-route.yml
+    - manifests/10-infrastructure/monitoring/dcgm-exporter.yml
+    - manifests/10-infrastructure/monitoring/opencode-observability.yml
+    - manifests/10-infrastructure/monitoring/loki.yml
+    - manifests/10-infrastructure/monitoring/mktxp.yml
+    - manifests/10-infrastructure/monitoring/monitoring.yml
+    - manifests/10-infrastructure/traefik/traefik-crd.yml
+    - manifests/10-infrastructure/traefik/traefik-dashboard.yml
+    - manifests/10-infrastructure/traefik/traefik-helm.yml
+  media:
+  games:
+  rbac:
+
+required_k8s_secrets:
+  - { namespace: monitoring, name: grafana-secrets }
+  - { namespace: glance, name: glance-secrets }
+
+host_paths:
+  - /app/glance
+  - /app/grafana/data
+  - /app/prometheus/data
+  - /app/home-assistant/config
+  - /data/Movies
+  - /data/TV
+  - /data/music
+  - /data/audiobooks
+  - /data/podcasts
+  - /data/immich/library
+  - /data/downloads
+  - /data/downloads/incomplete
+  - /data/transcode/plex
+  - /data/iac-web-console/audit
+
+# Credential-bearing files that live beside source in project_root (git-ignored or
+# legacy binaries). /data/github is mounted into WatooM-Code, so only the consuming
+# runtime user may read them. cloudflared images run as 65532 and read --token-file.
+watoom_sensitive_files:
+  - {path: docker/dispatcharr-cloudflare/cloudflared/token, owner: '65532', group: '65532', mode: '0400'}
+  - {path: docker/azuracast/cloudflared/token, owner: '65532', group: '65532', mode: '0400'}
+  - {path: infrastructure/network/router/router/router-full.backup, owner: root, group: root, mode: '0600'}
+  - {path: infrastructure/network/router/switch/switch-full.backup, owner: root, group: root, mode: '0600'}
+
+# Docker projects discovered in the as-built audit.
+docker_stacks:
+game_servers:
+# Exact manifest sets used for per-application reconciliation.
+# Dispatcharr is intentionally excluded; dispatcharr_control owns its VPN/no-VPN mode.
+kubernetes_app_manifests:
+  glance:
+    - manifests/10-infrastructure/glance/glance-helper-rbac.yml
+    - manifests/10-infrastructure/glance/glance.yml
+    - manifests/10-infrastructure/glance/moss-image-route.yml
+
+
+  monitoring:
+    - manifests/10-infrastructure/monitoring/dcgm-exporter.yml
+    - manifests/10-infrastructure/monitoring/opencode-observability.yml
+    - manifests/10-infrastructure/monitoring/loki.yml
+    - manifests/10-infrastructure/monitoring/mktxp.yml
+    - manifests/10-infrastructure/monitoring/monitoring.yml
+
+docker_host_users:
+  - watoom
+  - codex

@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>User Documentation · Agent Export</title><meta name="description" content="Using projects, sessions, agents, models, memory, images and specialist jobs, with practical task examples and troubleshooting."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link active" aria-current="page" href="/guide/llm-user-guide.html">LLM user guide</a><div class="toc"><a class="toc-link" href="#what-the-platform-provides">What the platform provides</a><a class="toc-link" href="#first-successful-task">First successful task</a><a class="toc-link" href="#projects-and-files">Projects and files</a><a class="toc-link" href="#choosing-an-agent">Choosing an agent</a><a class="toc-link" href="#models-and-response-behavior">Models and response behavior</a><a class="toc-link" href="#continue-interrupt-and-recover-work">Continue, interrupt and recover work</a><a class="toc-link" href="#skills-search-and-memory">Skills, search and memory</a><a class="toc-link" href="#images-and-visual-evidence">Images and visual evidence</a><a class="toc-link" href="#specialist-jobs-and-assets">Specialist jobs and assets</a><a class="toc-link" href="#model-manager">Model Manager</a><a class="toc-link" href="#permissions-and-approvals">Permissions and approvals</a><a class="toc-link" href="#understanding-a-final-result">Understanding a final result</a><a class="toc-link" href="#troubleshooting">Troubleshooting</a><a class="toc-link" href="#further-reading">Further reading</a></div><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">LLM user guide</p><h1>User Documentation</h1><p class="lede">Using projects, sessions, agents, models, memory, images and specialist jobs, with practical task examples and troubleshooting.</p></header>
+<div class="content">
+<h2 id="what-the-platform-provides">What the platform provides</h2>
+<p>WatooM Code is the browser workspace for local AI-assisted coding, investigation, writing and reviewed asset workflows. It connects to local inference and installed tools. Glance is the entry point for service links, documentation, the Model Manager, job reference and pipeline prompts.</p>
+<p>Use <code>https://watoom-code.internal.homelab.example</code> on the approved internal network and sign in with your existing credential. Open <code>https://glance.internal.homelab.example/guide/llm-api.html</code> for this documentation set. Do not share passwords or paste them into tasks. If an address is unreachable, check approved network access with the operator; do not alter DNS/firewall settings to work around it.</p>
+<p>The platform can help execute work, but availability of a skill or model is not a guarantee that every operation is installed, authorized or live-qualified. Read the result and its evidence before using an output.</p>
+<h2 id="first-successful-task">First successful task</h2>
+<ol>
+<li>Open WatooM Code and choose the intended project/location. Check the full directory before asking for edits.</li>
+<li>Start a session with <code>watoom-workflow</code> for a multi-step task. Use an existing session to continue the same work.</li>
+<li>Keep the primary Swift model unless the task needs an explicitly supported alternative.</li>
+<li>State the outcome, affected scope, constraints and how you will judge success.</li>
+<li>Watch native status/tool/job activity. Respond to permission/form requests in the UI.</li>
+<li>Review the final changes, tests and artifacts. Approval for a draft or experiment is separate from approval to deploy or publish.</li>
+</ol>
+<p>Example:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-text">In this project, investigate why the save button fails after a refresh.
+Inspect the implementation first. Preserve unrelated changes.
+Fix the smallest proven cause, run the relevant checks, and report the files changed.
+Do not deploy or push without my approval.
+</code></pre></div>
+<p>A message acknowledged or queued is not finished work. An active specialist can legitimately make the interface wait. Avoid submitting the same job again simply because no text has appeared yet.</p>
+<h2 id="projects-and-files">Projects and files</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Typical work</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/data/ai/projects/games/&lt;project&gt;</code></td>
+<td>Game/engine projects</td>
+</tr>
+<tr>
+<td><code>/data/ai/projects/work/&lt;project&gt;</code></td>
+<td>Work projects</td>
+</tr>
+<tr>
+<td><code>/data/ai/projects/writing/&lt;project&gt;</code></td>
+<td>Writing and research</td>
+</tr>
+<tr>
+<td><code>/data/ai/projects/images/&lt;project&gt;</code></td>
+<td>Image/review projects</td>
+</tr>
+<tr>
+<td><code>/data/ai/projects/homelab/&lt;project&gt;</code></td>
+<td>Infrastructure source</td>
+</tr>
+<tr>
+<td><code>/data/ai/projects/llm/&lt;project&gt;</code></td>
+<td>Model/agent/pipeline tooling</td>
+</tr>
+</tbody>
+</table></div>
+<p>The same approved path is used inside the application. Shared assets and engine installations have different permissions; owning an asset does not authorize editing its original library copy. Ask for project-owned derivatives when appropriate. Do not move existing sessions or replace databases to change a project binding.</p>
+<p>A good task names the project and output location. If an agent reports a blocked scope, review the path/authorization instead of asking it to bypass guards. Some shell/code operations remain unavailable until the relevant sandbox is qualified; a guard is not proof of complete filesystem isolation.</p>
+<h2 id="choosing-an-agent">Choosing an agent</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>Use it for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>watoom-workflow</code></td>
+<td>Planning, coordination, task routing and integration</td>
+</tr>
+<tr>
+<td><code>watoom-builder</code></td>
+<td>Scoped implementation and build work</td>
+</tr>
+<tr>
+<td><code>watoom-investigator</code></td>
+<td>Diagnosis, source reading and evidence gathering</td>
+</tr>
+<tr>
+<td><code>watoom-reviewer</code></td>
+<td>Reviewing implementation, tests and evidence</td>
+</tr>
+<tr>
+<td><code>watoom-critic</code></td>
+<td>Independent critique through permitted escalation</td>
+</tr>
+<tr>
+<td><code>watoom-creative-writer</code></td>
+<td>Long-form creative work on the configured creative route</td>
+</tr>
+<tr>
+<td><code>watoom-kali</code></td>
+<td>Separately authorized security work in its own primary session</td>
+</tr>
+</tbody>
+</table></div>
+<p>The coordinator delegates bounded packages and retains canonical progress. Continue the existing child session when a child is still running. Development agents do not receive Kali tooling through ordinary delegation. A request to “ignore the guard” is not a valid repair.</p>
+<p>Useful examples:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-text">Investigate the error, collect one targeted evidence round, and explain the proven cause before proposing a change.
+</code></pre></div>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-text">Review this diff for correctness and regression risk. Return actionable findings with file references; do not edit.
+</code></pre></div>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-text">Plan and implement this feature within the selected project. Keep existing user data and show how the acceptance criteria were checked.
+</code></pre></div>
+<h2 id="models-and-response-behavior">Models and response behavior</h2>
+<p>The normal primary alias is <code>watoom/swift-qwen38-coder</code> in the native application and <code>swift-qwen38-coder</code> in the router. The app budget is 100,000 context tokens and 4,096 output tokens; the backend capacity is 131,072. These are different limits, so a backend capability listing does not mean the app will use the whole capacity.</p>
+<p>Only one large managed model is resident at a time. A model can be listed but unloaded; selection can wait for a controller-mediated switch after active work drains. Do not repeatedly click model loads or ask an agent to scale pods. The small embedding service is independently managed.</p>
+<p>Current primary tuning uses turbo KV, fixed draft depth 5, CUDA graphs, ubatch 1024 and a 300 W configured cap. Threads, checkpoint defaults and 4 GiB prompt cache were retained. Users do not need to reproduce these flags in prompts. Do not change temperature/reasoning/precision just to imitate a benchmark number.</p>
+<p>Long fresh requests spend time reading the prompt. Continuations often reuse cached state, but agent/session changes, prefix edits or checkpoint rollback can require re-prefill. A past cache finding does not prove every delay has the same cause. Report the session/time/action to the operator rather than guessing a cache fix.</p>
+<h2 id="continue-interrupt-and-recover-work">Continue, interrupt and recover work</h2>
+<p>Use the same session to continue the same objective. Give concise steering: the correction, constraint or next result you need. A status question does not need a duplicate task. If work must stop, use supported native interrupt/cancel controls and wait for task-owned jobs to settle.</p>
+<p>After reconnecting, inspect durable messages/inbox/job state. Browser events can be missed while disconnected. A queued input may still be admitted; do not assume a failed connection means nothing happened. Report stuck activity with session/job ID and approximate time. Do not delete inboxes, clear controller state or kill unknown processes.</p>
+<p>For consequential actions, state authorization explicitly: a trial is not production adoption; preparing a PR is not pushing/merging; finding an asset is not purchasing/downloading it; generating an image is not overwriting existing project assets.</p>
+<h2 id="skills-search-and-memory">Skills, search and memory</h2>
+<p>The <a href="/guide/job-reference.html">job reference</a> describes installed skills and example requests; <a href="/guide/pipeline-prompts.html">pipeline prompts</a> provides reusable task formulations. Skill selection loads guidance. It does not install plugins, grant permissions, purchase assets or activate absent backends.</p>
+<p>Web search uses the configured search service. Ask for sources when factual currency matters. AgentMemory is configured persistent recall; it is not the same as the model's active context, prompt cache or a backup. A remembered statement should still be checked against current source when it affects a change.</p>
+<p>Do not put passwords, API tokens or private recovery grants into memory or a task. For facts that must persist, prefer maintained project documentation/checkpoints with the correct scope rather than relying solely on conversational recall.</p>
+<h2 id="images-and-visual-evidence">Images and visual evidence</h2>
+<p>Use the verified vision-capable model for image review. Name the source image/artifact and desired inspection. The runtime may require a receipt tied to the exact path/hash/model before further processing. Review is based on actual pixels, not a description or OCR substitute.</p>
+<p>Example:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-text">Inspect the rendered image at the project capture path.
+Report visible clipping, lighting and pose issues with concrete observations.
+Preserve the source asset. Do not claim a visual pass from file existence alone.
+</code></pre></div>
+<p>Changing an image creates new evidence; an old receipt does not approve a different hash. A read-only reviewer can return the structured receipt without gaining write permission. A physical projector/display is distinct from the model's vision-projector component. Turning a display on may change GPU memory/load; tell the operator if it happens during a qualification run.</p>
+<h2 id="specialist-jobs-and-assets">Specialist jobs and assets</h2>
+<p>Toolkit/engine/image/Mesh workflows execute bounded jobs, often asynchronously. The application and worker can finish different stages at different times. Keep the existing request/job ID for status/recovery; uncertain submission is not permission to create a duplicate.</p>
+<p>For Blender, Godot or Unreal work, specify the project, source asset, output format, constraints and engine validation needed. The owning workflow may require a reviewed task contract, read-only source libraries, hash snapshots and an artifact receipt. An export file alone is not proof of engine import or visible correctness.</p>
+<p>For a game starting point, ask the coordinator to search the game-template catalogue for the genre and target engine, report the selected template's licence/revision, copy it into this project, and verify import before implementation. The game-template or game-blueprint prompt from Glance's Pipeline Prompts page prepares a scoped request; it does not itself launch a build. For terrain, provide a place name or coordinates and a project-local Godot output path. The terrain skill uses open elevation data and generates a scene and float heightmap; use its <code>height_at()</code> API to place objects rather than estimating ground height. See Games and <a href="/guide/llm-extensions.html#game-authoring-templates-terrain-and-asset-discovery">Custom extensions</a>.</p>
+<p>For an owned Fab asset, ask for the advisor's supported pipeline and check format/version/dependency facts before requesting acquisition. Downloads require explicit owner approval for the exact asset and project. An Unreal pack export can be requested through the native game worker; follow its job ID and receipt, then separately verify import and appearance. For an owned MetaHuman <code>.mhpkg</code>, use the <code>watoom-metahuman</code> skill; it supports Unreal installation and a Godot export path, with a separate optional RIG GPU skin-map stage. Godot cannot animate MetaHuman faces through RigLogic, and the target-engine licence still needs owner review.</p>
+<p>Examples:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-text">Create a project-owned derivative of this asset for Godot. Preserve the source,
+validate scale/materials and import, and provide a rendered preview plus evidence.
+</code></pre></div>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-text">Render a preview from the existing rig and animation. Inspect the actual controls,
+use the bounded capture workflow, and do not rebuild or overwrite the source.
+</code></pre></div>
+<p>Security work starts a separately authorized Kali session. Model installation and infrastructure changes use operator workflows; ordinary tool availability does not confer administrative access.</p>
+<h2 id="model-manager">Model Manager</h2>
+<p>Open Glance, then the existing LLM Lab/Model Manager link. Sign in with its separate operator-managed credential when authorized.</p>
+<ol>
+<li>Inspect a supported repository/immutable revision and variant.</li>
+<li>Review exact download size, settings, model limits and dependencies.</li>
+<li>Choose an explicitly compatible installed base for LoRA/checkpoint cases that require it.</li>
+<li>Approve download/setup only for the intended scope.</li>
+<li>Wait for the existing job and distinguish downloaded, configured, registered and tested states.</li>
+<li>Run an authorized generation acceptance before relying on a new model.</li>
+</ol>
+<p>Do not install arbitrary remote code. An unsupported architecture cannot be fixed by changing a label. Removal defaults to preserving files and requires a fresh confirmation; confirmed unshared-file removal quarantines rather than silently purges. Do not repeat an interrupted install under a new identity without checking the first job.</p>
+<h2 id="permissions-and-approvals">Permissions and approvals</h2>
+<p>Read each request's action, path and consequence. Grant only the needed scope. Sensitive operations include infrastructure deployment, model precision changes, deleting/moving shared data, installing remote software, purchases and external publication. Preserve project and owner constraints across follow-ups.</p>
+<p>If a guard rejects something, ask for the actual reason and the supported recovery path. Do not ask the agent to erase durable evidence or invent credentials. When a tool is unavailable, an honest blocked result is preferable to a claimed success from an unrelated substitute.</p>
+<h2 id="understanding-a-final-result">Understanding a final result</h2>
+<p>A useful completion report states what changed, where, how it was checked, artifact locations and unresolved limitations. Separate unit tests from real native/GPU/engine acceptance. Check whether the source was only prepared, committed, published or actually deployed. A successful rollout is not all acceptance gates.</p>
+<p>After a recognised Godot/Blender error or nearby API uncertainty, a <code>Reference lookup</code> block may provide versioned card data. Treat it as reference, not a command to run; check the installed engine/API where the distinction matters. The trigger is unit-tested and simulated, but has not yet been observed on a live agent session.</p>
+<p>For inference changes, expect measured representative latency/throughput, long-context/tool/vision checks, resource headroom, soak/error audit, clean restoration and router evidence. Current gains are measured on the stated workload and hardware, not a promise for every prompt.</p>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Problem</th>
+<th>User action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sign-in fails</td>
+<td>Verify the correct app and credential; ask operator to check auth/origin/TLS</td>
+</tr>
+<tr>
+<td>Model says unavailable/busy</td>
+<td>Wait for current work; report time/model/session; do not force switching</td>
+</tr>
+<tr>
+<td>Input queued without a reply</td>
+<td>Inspect existing activity/job; avoid duplicate submission</td>
+</tr>
+<tr>
+<td>Continuation suddenly slow</td>
+<td>Report session and preceding agent/model switch; let operator inspect token/cache metadata</td>
+</tr>
+<tr>
+<td>Permission/scope blocked</td>
+<td>Confirm the intended project/path and explicit authorization</td>
+</tr>
+<tr>
+<td>Image review blocked</td>
+<td>Supply the exact image and let verified review/receipt complete</td>
+</tr>
+<tr>
+<td>Specialist still running</td>
+<td>Follow the existing job ID and worker status</td>
+</tr>
+<tr>
+<td>Files generated but result unclear</td>
+<td>Ask for actual import/render/test evidence and limitations</td>
+</tr>
+<tr>
+<td>Page or tool differs from docs</td>
+<td>Report URL, action, source/version if known and sanitized error</td>
+</tr>
+</tbody>
+</table></div>
+<p>Never paste credentials or raw private chat/database exports into a support report. Session/job IDs, timestamps, model name, operation and sanitized error usually suffice.</p>
+<h2 id="further-reading">Further reading</h2>
+<p>See the <a href="/guide/llm-api.html">LLM API &amp; reference</a> for integration contracts, the platform source map, current runtime values and operations/administration.</p>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/llm-user-guide.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

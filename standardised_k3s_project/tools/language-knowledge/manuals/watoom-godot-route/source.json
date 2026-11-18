@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "product": "watoom-godot-route",
+  "version": "snapshot-2026-11-13",
+  "language": "internal operational guidance",
+  "license": "proprietary",
+  "trust_tier": "internal_doc",
+  "note": "First-party WatooM documentation of the watoom-godot MCP route (pod -> restricted SSH account on the rig -> policy wrapper -> NPGameDev Godot MCP bridge). The three source files are byte-for-byte copies of tools/rig-godot-mcp/ in this repository as of 2026-11-13. The allow-list on the live rig is C:\\ProgramData\\watoom\\godot-mcp-policy.json; Setup-RigAccount.ps1 installs godot-mcp-policy.reviewed.json (all 115 tool names, opened by the owner on 2026-11-13).",
+  "pages": [
+    {
+      "file": "Setup-RigAccount.ps1",
+      "uri": "internal:tools/rig-godot-mcp/Setup-RigAccount.ps1"
+    },
+    {
+      "file": "rig-godot-mcp-README.md",
+      "uri": "internal:tools/rig-godot-mcp/README.md"
+    },
+    {
+      "file": "godot-mcp-policy.reviewed.json",
+      "uri": "internal:tools/rig-godot-mcp/godot-mcp-policy.reviewed.json"
+    }
+  ]
+}

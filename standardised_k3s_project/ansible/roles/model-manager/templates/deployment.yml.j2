@@ -1,0 +1,92 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-manager
+  namespace: {{ model_manager_namespace }}
+  annotations: {watoom.io/model-manager-release: "{{ model_manager_release }}"}
+  labels: {app: model-manager, watoom.io/owner: model-manager}
+spec:
+  replicas: 1
+  strategy: {type: Recreate, rollingUpdate: null}
+  selector:
+    matchLabels: {app: model-manager}
+  template:
+    metadata:
+      labels: {app: model-manager}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: {{ model_manager_uid }}
+        runAsGroup: {{ model_manager_gid }}
+        fsGroup: {{ model_manager_gid }}
+      containers:
+      - name: manager
+        image: {{ model_manager_image }}
+        args:
+        - --listen
+        - 0.0.0.0
+        - --state
+        - /state
+        - --models
+        - /data/ai/models
+        - --password-file
+        - /private/password
+{% if model_manager_image_mcp_enabled | bool %}
+        - --image-mcp-token-file
+        - /private/image-mcp-token
+{% endif %}
+        - --broker-socket
+        - /broker/broker.sock
+        - --maintenance-file
+        - /broker/maintenance.json
+        - --origin
+        - {{ model_manager_origin }}
+        - --prefix
+        - /model-manager
+        ports: [{containerPort: 8787}]
+        resources:
+          requests: {cpu: 100m, memory: 128Mi}
+          limits: {cpu: "1", memory: 512Mi}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: [ALL]}
+        readinessProbe:
+          tcpSocket: {port: 8787}
+        volumeMounts:
+        - {name: state, mountPath: /state}
+        - {name: password, mountPath: /private/password, readOnly: true}
+{% if model_manager_image_mcp_enabled | bool %}
+        - {name: image-token, mountPath: /private/image-mcp-token, readOnly: true}
+{% endif %}
+        - {name: broker, mountPath: /broker}
+{% for category in ['gguf','diffusion','loras','quarantine'] %}
+        - {name: models-{{ category }}, mountPath: /data/ai/models/{{ category }}/model-manager}
+{% endfor %}
+      volumes:
+      - name: state
+        hostPath: {path: "{{ model_manager_state }}", type: Directory}
+      - name: password
+        hostPath: {path: "{{ model_manager_password_file }}", type: File}
+{% if model_manager_image_mcp_enabled | bool %}
+      - name: image-token
+        hostPath: {path: "{{ model_manager_image_mcp_token_file }}", type: File}
+{% endif %}
+      - name: broker
+        hostPath: {path: "{{ model_manager_broker_root }}", type: Directory}
+{% for category in ['gguf','diffusion','loras','quarantine'] %}
+      - name: models-{{ category }}
+        hostPath: {path: "{{ model_manager_models }}/{{ category }}/model-manager", type: Directory}
+{% endfor %}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels: {watoom.io/owner: model-manager}
+  name: model-manager
+  namespace: {{ model_manager_namespace }}
+  annotations: {watoom.io/model-manager-release: "{{ model_manager_release }}"}
+spec:
+  selector: {app: model-manager}
+  ports: [{port: 8787, targetPort: 8787}]

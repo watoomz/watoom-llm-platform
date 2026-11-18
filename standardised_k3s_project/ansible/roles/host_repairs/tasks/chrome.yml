@@ -1,0 +1,14 @@
+---
+- name: "Google Chrome repository | Reconcile"
+  ansible.builtin.yum_repository:
+    name: google-chrome
+    description: google-chrome
+    baseurl: https://dl.google.com/linux/chrome/rpm/stable/x86_64
+    enabled: true
+    gpgcheck: true
+    gpgkey: https://dl.google.com/linux/linux_signing_key.pub
+
+- name: "Google Chrome stable | Install"
+  ansible.builtin.dnf:
+    name: google-chrome-stable
+    state: present

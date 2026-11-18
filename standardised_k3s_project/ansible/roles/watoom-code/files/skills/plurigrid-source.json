@@ -1,0 +1,491 @@
+{
+  "repository": "https://github.com/plurigrid/asi",
+  "commit": "293ce9f76e3abcd5ba18db284688bc0d9ac6691d",
+  "skills": [
+    "blackhat-go",
+    "botnet-disruption",
+    "botnet-studies",
+    "cat",
+    "consensus",
+    "crdt",
+    "cybernetic-open-game",
+    "derangement-crdt",
+    "doc",
+    "embedded-medical-device",
+    "ghidra-mcp",
+    "ies",
+    "join-semilattice",
+    "kubernetes",
+    "miasm-symbolic",
+    "modal",
+    "r2frida",
+    "radare2-hatchery",
+    "redteam",
+    "rust",
+    "sdf",
+    "security",
+    "signal-isolated-auth",
+    "skill-embedding-vss",
+    "synchronization"
+  ],
+  "files": [
+    {
+      "path": "blackhat-go/CONCOMITANT_SKILLS.md",
+      "sha256": "fc86d1114f89c51433378f4a44312401d68a5846c6f723678832c45749743855",
+      "upstream_blob": "24e57c5539e5c7ac1527806165c6368a15dc1e6d"
+    },
+    {
+      "path": "blackhat-go/SKILL.md",
+      "sha256": "429359feac3e07628a369f79c842ee726ccd7e96644561ee0b3d34a9761a3fee",
+      "upstream_blob": "92ddd733110c93d14de7094cb680fbb079634a81"
+    },
+    {
+      "path": "botnet-disruption/CONCOMITANT_SKILLS.md",
+      "sha256": "01ca7d9ba4d3b7f6232693c0c0e8418c95637ff561d400417ed8d24b4392b452",
+      "upstream_blob": "a2ad69ad95c0b6bda805d2964010ea3c6e64a2a7"
+    },
+    {
+      "path": "botnet-disruption/EQUILIBRIUM-ANALYSIS.md",
+      "sha256": "7b51ee275cbbb21e6105e84f63aa0853c7640bbd576edb67d70f62535adc073d",
+      "upstream_blob": "643106cc62749d6c7692da10146815e79e390751"
+    },
+    {
+      "path": "botnet-disruption/NEIGHBOR_SKILLS.md",
+      "sha256": "c282041a300e2c986cbe5c569ade9f8385ac0bdaca38763f42ef2ad1f61953f4",
+      "upstream_blob": "012ef2049387dd0c934c2cef63603819b59c10e5"
+    },
+    {
+      "path": "botnet-disruption/SKILL.md",
+      "sha256": "725b3ea68ed17a650cbe1ab5c7a7528a7a2d2e3fed3534dc5757c8ebce592218",
+      "upstream_blob": "87a0a633fcabd82498fad777e11b60c4b26e7cba"
+    },
+    {
+      "path": "botnet-studies/CONCOMITANT_SKILLS.md",
+      "sha256": "d725e649258a327a2f5809305e1ac61e7562957c79cbe1e633f82136827168db",
+      "upstream_blob": "e1c99c3a6a3136acef64cb4cefde6b71f921b9e6"
+    },
+    {
+      "path": "botnet-studies/NEIGHBOR_SKILLS.md",
+      "sha256": "1b248c1121a7af5d64e093a08221b7088312324f9c4adaf2702a3059d7cdd088",
+      "upstream_blob": "a99dbc69f13b5d307d701e99ff1b6507463b19f6"
+    },
+    {
+      "path": "botnet-studies/SKILL.md",
+      "sha256": "b95edda3f1ed035235174e6cc3a5115c76a238a3675b2b723827c33db838783b",
+      "upstream_blob": "f797e8a615cdec359a05d741bb80ca0c2563d7b5"
+    },
+    {
+      "path": "botnet-studies/botnet-goblins.scm",
+      "sha256": "07a81cd385ea715f864aea1a3b304df952dd2d1cf92be2cf8784f62e30f4341d",
+      "upstream_blob": "02bb3728f1769c966ed04ddae7e73328f76eaaaa"
+    },
+    {
+      "path": "botnet-studies/dga-analyzer.zig",
+      "sha256": "83636a18f222d1e97a5344b56221099563046e225d2f184c45c9b86a3b831208",
+      "upstream_blob": "3684ff7928f1d16d5441c4126be27b05b49e245f"
+    },
+    {
+      "path": "cat/CONCOMITANT_SKILLS.md",
+      "sha256": "18d7e6f5752fc1e1def50d8f5689f8ee61c38b9efefcd79311c4c7060275eab0",
+      "upstream_blob": "19f7e721613b9e352a447609fc23b90045060d94"
+    },
+    {
+      "path": "cat/SKILL.md",
+      "sha256": "0b15379ed2d0fceecbb2d2ea5ba3a7582b0f9d2db2dc7fa67cfef02aeabfc93c",
+      "upstream_blob": "0e8b1cfc9843864114f66db0453b0016980647ba"
+    },
+    {
+      "path": "cat/cat_pipe.bb",
+      "sha256": "47e02e0bd2999575d4a77d7872b832e9636e5a8d300b55ce6e3878db50a1f168",
+      "upstream_blob": "90e38c3650cdd127b7ec817eaef46882f5c114dc"
+    },
+    {
+      "path": "consensus/CONCOMITANT_SKILLS.md",
+      "sha256": "053a72f741c4d8937412f39feec0160ed5d29fd23c14bf1b7c721893db3168e8",
+      "upstream_blob": "4165d9f359e7785e0cc349fd93ec7c536d8ac28d"
+    },
+    {
+      "path": "consensus/SKILL.md",
+      "sha256": "231250eb5cc0e9879ac2a27a017e2702522fd56f27fbd86baed468e8368378f1",
+      "upstream_blob": "639c3de1ef1205d50d8d5b505343f3444b2a85aa",
+      "upstream_sha256": "0698366fdd6c9d68eae2767239b1f85f01d13c88ef7c33d31575c705db5d41ae"
+    },
+    {
+      "path": "crdt/CONCOMITANT_SKILLS.md",
+      "sha256": "6c8b9ccb6c320fb2b9d3adfee6ccfd3ec04a6416f6ae54332e4f06cfcc3024ed",
+      "upstream_blob": "ed0172acea6472496a5793eb2debbc16180b22c1"
+    },
+    {
+      "path": "crdt/README.md",
+      "sha256": "72e5fcdec8c43b1243a91cf286afafa19b906ea9eea533f5220f00c1db4038c9",
+      "upstream_blob": "e38f19a80fb75bfb595aaaa7671160c68fc1afa2"
+    },
+    {
+      "path": "crdt/SKILL.md",
+      "sha256": "88dbf4996a0383a3b5f4e7e5ce29e1fd541f66f5827ecc2473c409f09652a8ed",
+      "upstream_blob": "5d9d528273c82985c64254efa14e15afc0cca8f4"
+    },
+    {
+      "path": "cybernetic-open-game/CONCOMITANT_SKILLS.md",
+      "sha256": "eddd5f4e32882608c4adcd4ddc51fcd0fe1fd14ffca81ae78f05f54572e5fa76",
+      "upstream_blob": "5895f3588f437247d3aba6b435bff68c218fa6d8"
+    },
+    {
+      "path": "cybernetic-open-game/SKILL.md",
+      "sha256": "8296f9d149f48c522f25bf7d0a80360a644189cef2c7ccd124337fa2ce072ee4",
+      "upstream_blob": "619850ac835ad279fc42e4f0d71408ca9f54bb6f"
+    },
+    {
+      "path": "derangement-crdt/CONCOMITANT_SKILLS.md",
+      "sha256": "9b0ae8f38a6e85cfd607501a405ba7fe44089ef096e071c7f38e12bb11282f8d",
+      "upstream_blob": "38de3e7096f61ad17c4206176fba657548b0bbaf"
+    },
+    {
+      "path": "derangement-crdt/SKILL.md",
+      "sha256": "2c741ea71687bdb7a186124ca5f0480d1a464d11653af76b8c59cff65aaf9265",
+      "upstream_blob": "fe73192ee34f7a175dc98b1bd289cf00d7048a85"
+    },
+    {
+      "path": "derangement-crdt/derangement_crdt.bb",
+      "sha256": "309e0c15ab80ade107cf0f3183e6b693d51031718f0f511ab14ba56dfac0d3db",
+      "upstream_blob": "bc48814d0369501604bd1965f886583766bbe4a4"
+    },
+    {
+      "path": "doc/CONCOMITANT_SKILLS.md",
+      "sha256": "7ae83bb9f551c28568b407dda25d2e3980e92f6164491db53533952b38d3289c",
+      "upstream_blob": "1a50f021438798785a073f0042243582338229a2"
+    },
+    {
+      "path": "doc/LICENSE.txt",
+      "sha256": "4dd13869245e356246a5b770723247bbb80a8f07a181d1d3d873a1734297cdb9",
+      "upstream_blob": "13e25df86ce06eb6488e6a6bc5c5847f5dedc352"
+    },
+    {
+      "path": "doc/SKILL.md",
+      "sha256": "0a635585817d1ac96e8e512114d08258b70f9e54ce0052078a258291ac13a8ed",
+      "upstream_blob": "c6d96121f0dc34f5d325bac8ee5cd54098d32ae0"
+    },
+    {
+      "path": "doc/agents/openai.yaml",
+      "sha256": "b77d452b23dfa0bef7788728317254f07bddcd5f2be1d6678d5c3cf754b833ae",
+      "upstream_blob": "27ce451bb48722fa3592b279efb56dfa1c0fc2a0"
+    },
+    {
+      "path": "doc/assets/doc-small.svg",
+      "sha256": "bd5415fbbfe72c66c1527411d61625731fdd2f75b25d1542510b6ddef699ebe0",
+      "upstream_blob": "97289eb28a926f4beb80a96ef467c8a876d6a377"
+    },
+    {
+      "path": "doc/assets/doc.png",
+      "sha256": "7eadf1088e5062f681dba6596173a1df13bbfbcddd8a8a9bb78fd2071947dcf8",
+      "upstream_blob": "e16517899921ddc1e7691226014b7ef0256c4d54"
+    },
+    {
+      "path": "doc/scripts/render_docx.py",
+      "sha256": "52b3c3158913ebcad2ada7b8193970b70453239e255054aa2d60c1683af08751",
+      "upstream_blob": "907ec89c90ef71b646cad2dbe98dcae4bfe93dae"
+    },
+    {
+      "path": "embedded-medical-device/CONCOMITANT_SKILLS.md",
+      "sha256": "8eec68d125077032698a44095471db3b1f815cdd004aa673ee3599d969364da2",
+      "upstream_blob": "1af418fa9888a8281585da48ec50bc57932a3d40"
+    },
+    {
+      "path": "embedded-medical-device/SKILL.md",
+      "sha256": "6769b0d4efc57e6f84d14fa5a74255906892b5ece115c5059db8e23c30116e09",
+      "upstream_blob": "f2f7940256bd48398edb0dab313003634aaee782"
+    },
+    {
+      "path": "ghidra-mcp/CONCOMITANT_SKILLS.md",
+      "sha256": "57bedfd52aba0abdeebeb9db3115600269d487d0f9923dac2371673d056dc83a",
+      "upstream_blob": "a5471d7e63a10a2cadc93a4a3e47ee29d836d5b0"
+    },
+    {
+      "path": "ghidra-mcp/SKILL.md",
+      "sha256": "0171f1dfb6f43c43589fbe57991d8b94f64cd513bc46f1ad2d8804d54efcf23b",
+      "upstream_blob": "07c848339f51dea417cd1846fe305461e34995ac"
+    },
+    {
+      "path": "ies/CONCOMITANT_SKILLS.md",
+      "sha256": "783bc1cf59e566ad725bf52bdb338f12096184267ba1cf659988498bc9ea7999",
+      "upstream_blob": "e1289899329faaf1624a86f05d07b04bc31bf22c"
+    },
+    {
+      "path": "ies/SKILL.md",
+      "sha256": "08c240db7481084aed8ebea40235dba18e23c95d5afa10f005e86a6996787494",
+      "upstream_blob": "05f3820e752c50c2363885fe0260ec42cf1682f7"
+    },
+    {
+      "path": "join-semilattice/CONCOMITANT_SKILLS.md",
+      "sha256": "373aadf74bd9d2e29067924d59eafb9dbf9a51219e124e518ea176aaa330a4c3",
+      "upstream_blob": "4a617ab1ac65a317ddbcfd87eafa9e756f3d0ef5"
+    },
+    {
+      "path": "join-semilattice/SKILL.md",
+      "sha256": "2f0a3f0cf97bca219960e7896f6ca9c3336bfa2378dfed4cd8d895765206e25c",
+      "upstream_blob": "2086c2207585a4317f4d4b662a24efc5e12c1c55"
+    },
+    {
+      "path": "join-semilattice/lattice.idr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "upstream_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "kubernetes/CONCOMITANT_SKILLS.md",
+      "sha256": "c06234ca349b773ff12cd9faf887dfa7405a7b213a5ea3e55af9dba187afb711",
+      "upstream_blob": "ce19a728153b843fddddef2fdbafac368fd46dec"
+    },
+    {
+      "path": "kubernetes/SKILL.md",
+      "sha256": "cd844487c31819dfc56ffa983b7523f76a10a4458d6e9e3074f024c901b41c71",
+      "upstream_blob": "f80554e9cfec76ac0c0a82a8bc1706df6d0c99e7"
+    },
+    {
+      "path": "miasm-symbolic/CONCOMITANT_SKILLS.md",
+      "sha256": "45dcfa6eaf860f8580920aed3dde487176f08029c3c18573030a34e70380edda",
+      "upstream_blob": "9c49b78dd5103fad4f48cfac0dd4bd79d0230aa8"
+    },
+    {
+      "path": "miasm-symbolic/SKILL.md",
+      "sha256": "c12ba79b612b9dfbe69f8013df7c33a40f439703858f5d4991db9a98302f2f93",
+      "upstream_blob": "ab66666dd99aa0c07b17041c704bb812fe9d257b"
+    },
+    {
+      "path": "modal/CONCOMITANT_SKILLS.md",
+      "sha256": "cf2a70320243cc31606645577b82433697dcb2b50306928aaddf524db8942067",
+      "upstream_blob": "3aa818588fabdf3264687b5a0dcc628224f52681"
+    },
+    {
+      "path": "modal/SKILL.md",
+      "sha256": "2b3918692d5a5be0a7dc03985c26fdded21e088d8f82566bec915e83f536d1e5",
+      "upstream_blob": "1850e54fd04e255f4d3b086b42a0b52ea755ad63"
+    },
+    {
+      "path": "modal/references/api_reference.md",
+      "sha256": "cfde63131bdf4a46bccd5a623e9e7fd52e3f852c21842b016c85ae6dee76f263",
+      "upstream_blob": "b04e1946250075ccdd69358e96c4573d26996ca8"
+    },
+    {
+      "path": "modal/references/examples.md",
+      "sha256": "f714346e2ec8f396435cfb38908179a6ca506d69cb80ee134ca8e58b974679c6",
+      "upstream_blob": "1e38654c2e716f6bb56f670b836798b28afda8e5"
+    },
+    {
+      "path": "modal/references/functions.md",
+      "sha256": "744ec056eb9bee1278815357cf7ae881631d62512e1e13de6dc001039ef2401d",
+      "upstream_blob": "5e64a9f9e59f51b84e177b5da0757627292e3ed8"
+    },
+    {
+      "path": "modal/references/getting-started.md",
+      "sha256": "5def976716dffa732990438cbe6f3fba0333d6c505dd1377fd0b759dc3a122bb",
+      "upstream_blob": "628956d8c777ab1f0840ddfd672d7cb832e3f2d2"
+    },
+    {
+      "path": "modal/references/gpu.md",
+      "sha256": "12c866f9fbd8c0ca5ebf2c52b1526c2ef01c269fad9eb20fe826f54e9c216046",
+      "upstream_blob": "5f18baa99c56c4dde666cc489db1b2a49cf954db"
+    },
+    {
+      "path": "modal/references/images.md",
+      "sha256": "3b454afd61001d4db641850ff96395ec94426c78a8faa5a3a227fa3da5cb5667",
+      "upstream_blob": "476bbf47f259cbb7817ce2201e7ce1d0e9fe281c"
+    },
+    {
+      "path": "modal/references/resources.md",
+      "sha256": "eeb8922013b3b4434f47d93bcdc87a5776bef3bdbce2cac91a85b7ff23e93b6b",
+      "upstream_blob": "94b3ed473c91b3a948dd697002c1959860fdc06d"
+    },
+    {
+      "path": "modal/references/scaling.md",
+      "sha256": "e756d757876e6f6eddc970d12eaf203f8ebd9774f2a1f5a4a55115f8ed019683",
+      "upstream_blob": "6e74c0e90e3dd902cccebbb06268650e497e15d0"
+    },
+    {
+      "path": "modal/references/scheduled-jobs.md",
+      "sha256": "9be2c4e1a84aa1d66dfa066eebcd5bd60845f3cbefdb9569943166c4fdb739d9",
+      "upstream_blob": "ac9a0e141ac1e3dfb1ffc342d593863f87e26c13"
+    },
+    {
+      "path": "modal/references/secrets.md",
+      "sha256": "4d7b0a9f9623294e3408b67f0af6055e577ee02a70ba07d80a63deb1fea1ec52",
+      "upstream_blob": "9aa58ebf9d0f7f4a692485208c5f31a72d53ce5f"
+    },
+    {
+      "path": "modal/references/volumes.md",
+      "sha256": "41af79fcfd229d7d77588b342640deb186cab98a1df12bc869b02f633d801179",
+      "upstream_blob": "9cbb1b21e9260687093144c31ce890a564004c6c"
+    },
+    {
+      "path": "modal/references/web-endpoints.md",
+      "sha256": "6f28073198120d0e038fb9e3910b4ff81dd622d79bf3aecfb61e530faeefb7d1",
+      "upstream_blob": "063ded19d4403ecd9fc63b2506524e328fab337f"
+    },
+    {
+      "path": "r2frida/CONCOMITANT_SKILLS.md",
+      "sha256": "d8cb601e7255e0bc6b4a4961ce259f8bcb8add7635dc89dccd2fbda996d373f0",
+      "upstream_blob": "634d96cc9a88de330176650aa157ca77c8d008a7"
+    },
+    {
+      "path": "r2frida/SKILL.md",
+      "sha256": "b161bf69eee83fdea56497ca9eebfe4aded794dac202cfd0d81a24b298bf5815",
+      "upstream_blob": "e151e0fb3cb888b5aa17111f71aefea27f1f0661"
+    },
+    {
+      "path": "radare2-hatchery/CONCOMITANT_SKILLS.md",
+      "sha256": "ee792185928561d93b1fb6016f5ac5f74c63b6814a5c8baa2b2de18d5efa2141",
+      "upstream_blob": "5aa74ff6560a73be17547a9ea39efa57f99d5495"
+    },
+    {
+      "path": "radare2-hatchery/SKILL.md",
+      "sha256": "78ccc10509e30c609e9100da3c21a82fc8d8ee1308ac620f1111d146b3120ae1",
+      "upstream_blob": "c2ea3633233c3ec13721c3c41d48da1fee3e15a7"
+    },
+    {
+      "path": "redteam/CONCOMITANT_SKILLS.md",
+      "sha256": "5ab4704bb9c7141a7a1bb236f1c370ce0f4babdf9f3d8df8e48a56e72d86ce91",
+      "upstream_blob": "6120f8e569c95340fb467294b0590c811ee3adbb"
+    },
+    {
+      "path": "redteam/SKILL.md",
+      "sha256": "de9e5578a632d8528f2a54529b38a8198dc60ff1e07e1210a4092288f7ed3970",
+      "upstream_blob": "f62f2ae6788ff83dc995a2063e3ecec184a8e45c"
+    },
+    {
+      "path": "rust/CONCOMITANT_SKILLS.md",
+      "sha256": "6196d2edb3290c54b81fe410b6eec39d38ad23f47e6dc03ede908676a74b4c80",
+      "upstream_blob": "f3d91b112ccc29bbef03b0d194b1de2209bb4eb0"
+    },
+    {
+      "path": "rust/SKILL.md",
+      "sha256": "283b9d3f133c1f3528cbc01e181abeeab69ee7cae62df176311d9ef475134f9c",
+      "upstream_blob": "27b30d67c5844544cb8705c2d7ef46047df52f19"
+    },
+    {
+      "path": "sdf/.skill-meta.json",
+      "sha256": "926d3e4e1743055457c9e57ded8ca03a5e0011cb400b32dec7df2291bb67239d",
+      "upstream_blob": "da782c552c1897f1cc2383dfa3ddbc41d87922e3"
+    },
+    {
+      "path": "sdf/CHAPTER_INTERLEAVINGS.md",
+      "sha256": "1672cb3ff8330aea8207b56c32eec5199d85b043dccc728a6c5d316850d4a8a2",
+      "upstream_blob": "a2ea6d07cc3e91440e516357992279a5b2dda71c"
+    },
+    {
+      "path": "sdf/CONCOMITANT_SKILLS.md",
+      "sha256": "277df41c014ac3dc4c86ffc222e87d838d76f84fba910e271e91e22e60db4669",
+      "upstream_blob": "21757d28a05a082ee73776eed7add88fbbd11ef9"
+    },
+    {
+      "path": "sdf/SICP_INTERLEAVING.md",
+      "sha256": "567bec7167e584dc9b53059a72a508fa92526c448b608b487c1c14c31d0efcbc",
+      "upstream_blob": "eeb62134100760033240871e74d8ebcbdc620e79"
+    },
+    {
+      "path": "sdf/SKILL.md",
+      "sha256": "d3bb21a837f3fe8e4b191977acd40da351e9f5a1c914df4ea9c889fc49965314",
+      "upstream_blob": "95644f6aafa37bcd5a38710b6f57831f555f12c6"
+    },
+    {
+      "path": "security/CONCOMITANT_SKILLS.md",
+      "sha256": "afe4e99f72079f78e5ad54afa59bfe854a1abb144b37650d8ea9aa2394bab5dd",
+      "upstream_blob": "44297eb176965788a181fdaf4eadc4760271ec07"
+    },
+    {
+      "path": "security/SKILL.md",
+      "sha256": "887a8c46466e388665d4b6679a6d1fe02c6a79b527c38aed6a5a6291b6831fa3",
+      "upstream_blob": "c4c4d67473962eee964483fb8a00dd1828f8e51e"
+    },
+    {
+      "path": "signal-isolated-auth/CONCOMITANT_SKILLS.md",
+      "sha256": "20507173f370182b5a5a14ec896d80cc351e41a88a7490f0aad1ffa3c3e60c29",
+      "upstream_blob": "39ba87e3aa710bff621d23bc0a0a5f38d98edf24"
+    },
+    {
+      "path": "signal-isolated-auth/SKILL.md",
+      "sha256": "411a392b80dab285b8c788058faec3bd280a2294f017c8bbdfcbd7dd84bf89b2",
+      "upstream_blob": "dd4c78390979c98cefa167ab118af0c5ae093e40"
+    },
+    {
+      "path": "skill-embedding-vss/CONCOMITANT_SKILLS.md",
+      "sha256": "51fb2ae2059bd7a40b4269354339a80a309633671afc59c6772623a98edd1208",
+      "upstream_blob": "1941084b3cf691995b9902e264e99aa87617b0e8"
+    },
+    {
+      "path": "skill-embedding-vss/SKILL.md",
+      "sha256": "9c2a72ba48a85a002b9e2745445b93d8b88ebef9622b678d773353547a8bfe40",
+      "upstream_blob": "cc1a732c9335febc46733481cd5a6bcb25501ecf"
+    },
+    {
+      "path": "skill-embedding-vss/SKILL.md.bak",
+      "sha256": "01f9afd4f64559cc960c2d07167e18060257da8eba2cf8cc86d34941f48f8acd",
+      "upstream_blob": "41553027c16e62053a34e1f87cd365f26044cd3b"
+    },
+    {
+      "path": "skill-embedding-vss/geodesics/padic_ultrametric.geodesic.py",
+      "sha256": "38db63602017087e87567425bd0510537f115325b27cdae82ffc0d8aa33c525d",
+      "upstream_blob": "b8f04b89e7f1d163c42bd27fbb2b08accc988bbd"
+    },
+    {
+      "path": "skill-embedding-vss/geodesics/skill_embedding_vss.geodesic.py",
+      "sha256": "d47905437c708e012e68ca41d91c4cac0a4be7d9a3542bee490bfedc80db0ac7",
+      "upstream_blob": "7d5b5d8dfc660e497671549099779c604b2cfe49"
+    },
+    {
+      "path": "skill-embedding-vss/geodesics/trifurcate_walk.geodesic.py",
+      "sha256": "c7d7557ccaa3f4f0fde8609d0de6b6495da124dcc2b98e8015d3dafa31515eb8",
+      "upstream_blob": "6b0f0487feeffc5176c59cfa331a0a55291dc1b1"
+    },
+    {
+      "path": "skill-embedding-vss/padic_ultrametric.org",
+      "sha256": "2c6ee1b915e0f2ca05d837ab93e385828f2ea7536ad19cdb1b7a8e1afc6da541",
+      "upstream_blob": "2e2068e6acff2e85f9cdd61d37837e0dae2f20ca"
+    },
+    {
+      "path": "skill-embedding-vss/padic_ultrametric.py",
+      "sha256": "624bcdc5aaddd300d7cd48f01ce402340c9dd00d556d7fe283698fdb8292f4b9",
+      "upstream_blob": "5f2672a0af69c836b626df43494f91027c643fe6"
+    },
+    {
+      "path": "skill-embedding-vss/skill_embedding_vss.org",
+      "sha256": "526da4f38c72fb55d0b0b216acdd78a34975cb0843aa83018d636bf1e84e3911",
+      "upstream_blob": "4ccf7502b107a19121db13073c3174685e26cd10"
+    },
+    {
+      "path": "skill-embedding-vss/skill_embedding_vss.py",
+      "sha256": "44e588473c8880b14791d6c7563c5e097b82a23f9955f1e2ec144d75431150c0",
+      "upstream_blob": "f344971110530b7660835b821aa8b9e2a8e86633"
+    },
+    {
+      "path": "skill-embedding-vss/trifurcate_walk.org",
+      "sha256": "781122cbbda4056176c6f0a6f9181d039d5168a4a4f676fa67d9336dee3132e3",
+      "upstream_blob": "a84796a9a8bbdb45b344016c78539951d479f0a5"
+    },
+    {
+      "path": "skill-embedding-vss/trifurcate_walk.py",
+      "sha256": "fac5749c4c5c3ff928713a914fe3843be66c1aa35cb0aa5d4d08d455d2bc60f3",
+      "upstream_blob": "5c60751822e846ef40fac5937646e42c920721b3"
+    },
+    {
+      "path": "synchronization/CONCOMITANT_SKILLS.md",
+      "sha256": "fc2f996cf1cc202337e66f64da8bb3fab921530511502fade55ade0a4a72eec8",
+      "upstream_blob": "05b6ba8791a48aa182d12dbed89b4a674560fb4f"
+    },
+    {
+      "path": "synchronization/SKILL.md",
+      "sha256": "1fc10780b0400c1707d16d0a528495990159c2c02bf987bf97c37c27ad95ff15",
+      "upstream_blob": "01981144378522cdb6c63f053387cd74118c8d0b",
+      "upstream_sha256": "c06dc35e4ca92ddf41e38d33cd18fe5188a7ad95d9996c3fa242d50ec9b74d2b"
+    }
+  ],
+  "license": {
+    "path": "LICENSE",
+    "spdx": "MIT",
+    "sha256": "75389269d21eadf9f51fc4dcf2289a8510a46407f851168fb80c31aa4799b27e"
+  },
+  "examples_executed": false,
+  "external_services_installed": false,
+  "metadata_adaptations": {
+    "consensus": "Normalized unsupported upstream YAML metadata to native name/description; original body unchanged and exact upstream commit/blob retained.",
+    "synchronization": "Normalized unsupported upstream YAML metadata to native name/description; original body unchanged and exact upstream commit/blob retained."
+  }
+}

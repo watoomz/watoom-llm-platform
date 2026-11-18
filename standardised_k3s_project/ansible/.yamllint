@@ -1,0 +1,22 @@
+---
+# Mirrors ansible-lint's embedded yamllint defaults, but leaves block-sequence
+# indentation unconstrained (indent-sequences: whatever). This repository mixes
+# flush and indented sequences (both valid YAML that ansible-core accepts), so
+# the roles lint clean without a large, risky reformat of existing task files.
+extends: default
+rules:
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: false
+  document-start: disable
+  line-length:
+    max: 160
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true
+  indentation:
+    spaces: consistent
+    indent-sequences: whatever

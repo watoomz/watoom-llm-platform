@@ -1,0 +1,7 @@
+---
+- name: "Service {{ host_health_service_target }} | Assert running"
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.services[host_health_service_target + '.service'].state == 'running'
+    fail_msg: "Required service is not running: {{ host_health_service_target }}"
+    success_msg: "Service running: {{ host_health_service_target }}"

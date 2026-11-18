@@ -1,0 +1,7 @@
+---
+required_kubernetes_secrets:
+  - namespace: monitoring
+    name: grafana-secrets
+
+  - namespace: glance
+    name: glance-secrets

@@ -1,0 +1,80 @@
+---
+# Break-glass recovery for the LLM/inference stack (tools/break-glass/break_glass.py).
+# Glance (PIN protected) drops a request in the inbox; this root service validates it and runs the reset.
+- name: Install the break-glass recovery service
+  hosts: all
+  become: true
+  gather_facts: false
+  vars:
+    break_glass_state: /data/ai/helper-scripts/state/break-glass
+    break_glass_script: "{{ playbook_dir }}/../../tools/break-glass/break_glass.py"
+  tasks:
+    - name: Create the break-glass state and inbox directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      loop:
+        - "{{ break_glass_state }}"
+        - "{{ break_glass_state }}/inbox"
+    - name: Create the evidence directory (root only; holds database snapshots)
+      ansible.builtin.file:
+        path: "{{ break_glass_state }}/runs"
+        state: directory
+        owner: root
+        group: root
+        mode: '0700'
+    - name: Install break-glass service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/watoom-break-glass.service
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Process break-glass requests and refresh recovery status
+          [Service]
+          Type=oneshot
+          Environment=KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+          Environment=HOME=/root
+          ExecStart=/usr/bin/python3 -I {{ break_glass_script }} scan
+          TimeoutStartSec=2400
+          MemoryMax=1G
+          Nice=10
+      register: service_unit
+    - name: Install break-glass request trigger
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/watoom-break-glass.path
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Run break-glass when Glance queues a request
+          [Path]
+          PathExistsGlob={{ break_glass_state }}/inbox/*.json
+          Unit=watoom-break-glass.service
+          [Install]
+          WantedBy=multi-user.target
+      register: path_unit
+    - name: Install break-glass status timer
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/watoom-break-glass.timer
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Refresh break-glass status for Glance
+          [Timer]
+          OnBootSec=60s
+          OnUnitInactiveSec=60s
+          Unit=watoom-break-glass.service
+          [Install]
+          WantedBy=timers.target
+      register: timer_unit
+    - name: Reload systemd and enable the trigger and timer
+      ansible.builtin.systemd:
+        daemon_reload: true
+        name: "{{ item }}"
+        enabled: true
+        state: started
+      loop:
+        - watoom-break-glass.path
+        - watoom-break-glass.timer

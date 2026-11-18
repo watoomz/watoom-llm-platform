@@ -1,0 +1,276 @@
+static SPIClass s_sdSpi(FSPI);
+#elif defined(CONFIG_IDF_TARGET_ESP32)
+static SPIClass s_sdSpi(VSPI);
+#else
+static SPIClass s_sdSpi(FSPI);
+#endif
+#endif
+
+/** Tracks whether SD.begin() currently owns a live mount on the shared SPI bus. */
+static bool s_sdFsMounted = false;
+
+/** GPIO CS that last mounted SD (-1 = unknown). Tried first to avoid long SD.begin on wrong CS. */
+static int8_t s_sdLastGoodCs = -1;
+
+/** After a failed mount on classic ESP32, do not keep retrying (SD.begin can WDT). */
+static bool s_sdMountGaveUp = false;
+
+void sdRetryMount() {
+  s_sdMountGaveUp = false;
+}
+
+/** Deselect every other SPI slave that shares the SD bus so none holds MISO. */
+static void sdRaiseCsPin(int pin) {
+  if (pin < 0) {
+    return;
+  }
+  pinMode(pin, OUTPUT);
+  digitalWrite(pin, HIGH);
+}
+
+static void sdReleaseOtherChipSelects() {
+#if defined(CC1101_CS)
+  sdRaiseCsPin(CC1101_CS);
+#endif
+#if defined(PN532_SS)
+  sdRaiseCsPin(PN532_SS);
+#endif
+#if defined(CSN_PIN_1)
+  sdRaiseCsPin(CSN_PIN_1);
+#endif
+#if defined(CSN_PIN_2)
+  sdRaiseCsPin(CSN_PIN_2);
+#endif
+#if defined(CSN_PIN_3)
+  sdRaiseCsPin(CSN_PIN_3);
+#endif
+  // Scanner bit-bangs CE/CSN on these pins; keep CE low / CSN high after leaving.
+#if defined(CE_PIN_3)
+  pinMode(CE_PIN_3, OUTPUT);
+  digitalWrite(CE_PIN_3, LOW);
+#endif
+}
+
+void sdSpiInit() {
+#if defined(SD_SCLK) && defined(SD_MISO) && defined(SD_MOSI) && defined(SD_CS)
+#if TOUCH_SHARES_TFT_SPI
+  s_sdSpi.begin(SD_SCLK, SD_MISO, SD_MOSI, SD_CS);
+#else
+  // On ESP32-S3 (v2), RFID bitbang remaps these pins — reset before reclaim.
+  // On classic ESP32 (v1), SD often shares SPI with TFT_eSPI; gpio_reset_pin
+  // after tft.init() can WDT/reboot during boot SD mount.
+#if BOARD_HAS_ESP32S3
+  gpio_reset_pin((gpio_num_t)SD_SCLK);
+  gpio_reset_pin((gpio_num_t)SD_MISO);
+  gpio_reset_pin((gpio_num_t)SD_MOSI);
+  gpio_reset_pin((gpio_num_t)SD_CS);
+#endif
+  SPI.begin(SD_SCLK, SD_MISO, SD_MOSI, SD_CS);
+  SPI.setDataMode(SPI_MODE0);
+  SPI.setBitOrder(MSBFIRST);
+  SPI.setFrequency(4000000);
+#endif
+#endif
+}
+
+bool sdMountChipSelect(uint8_t cs) {
+#if TOUCH_SHARES_TFT_SPI
+  return SD.begin(cs, s_sdSpi, 4000000);
+#else
+  return SD.begin(cs, SPI, 4000000);
+#endif
+}
+
+void initSDCard() {
+
+#ifdef SD_CD
+  pinMode(SD_CD, INPUT_PULLUP);
+#endif
+
+#if !BOARD_HAS_ESP32S3
+  // Classic ESP32: raise CS only. Full SD.begin is deferred — boot mount was
+  // rebooting right after the intro ("3 sd").
+#if defined(SD_CS)
+  pinMode(SD_CS, OUTPUT);
+  digitalWrite(SD_CS, HIGH);
+#endif
+  sdReleaseOtherChipSelects();
+  // Block auto-mount from settingsLoad / status bar until an SD feature asks.
+  s_sdMountGaveUp = true;
+  updateSdCardStatus();
+  return;
+#else
+  restoreSdAfterSharedSpi();
+  updateSdCardStatus();
+#endif
+}
+
+static bool sdPinIsOkForSdMount(uint8_t pin) {
+#if defined(SD_CS)
+  if (pin == SD_CS) {
+    return true;
+  }
+#endif
+#if defined(SD_CS_PIN)
+#if defined(CC1101_CS)
+  if (SD_CS_PIN != CC1101_CS && pin == SD_CS_PIN) {
+    return true;
+  }
+#else
+  if (pin == SD_CS_PIN) {
+    return true;
+  }
+#endif
+#endif
+  return false;
+}
+
+static void sdAddPinUnique(uint8_t* pins, int* nTry, uint8_t p) {
+  if (!sdPinIsOkForSdMount(p)) {
+    return;
+  }
+  for (int j = 0; j < *nTry; j++) {
+    if (pins[j] == p) {
+      return;
+    }
+  }
+  if (*nTry < 3) {
+    pins[(*nTry)++] = p;
+  }
+}
+
+/** SPI must already be SD wiring. Returns true if SD.begin succeeded. */
+static bool sdTryBeginOrder() {
+  uint8_t tryPins[3];
+  int nTry = 0;
+  if (s_sdLastGoodCs >= 0) {
+    sdAddPinUnique(tryPins, &nTry, (uint8_t)s_sdLastGoodCs);
+  }
+#if defined(SD_CS)
+  sdAddPinUnique(tryPins, &nTry, SD_CS);
+#endif
+#if defined(SD_CS_PIN)
+#if defined(CC1101_CS)
+  if (SD_CS_PIN != CC1101_CS) {
+    sdAddPinUnique(tryPins, &nTry, SD_CS_PIN);
+  }
+#else
+  sdAddPinUnique(tryPins, &nTry, SD_CS_PIN);
+#endif
+#endif
+  for (int i = 0; i < nTry; i++) {
+    if (sdMountChipSelect(tryPins[i])) {
+      s_sdLastGoodCs = (int8_t)tryPins[i];
+      return true;
+    }
+  }
+  s_sdLastGoodCs = -1;
+  return false;
+}
+
+/** Soft remount: keep current SPI pinmux. Safe while CC1101/nRF24 still need the bus
+ *  (same SCK/MISO/MOSI as SD on DIV V2). Only raises other chip-selects and remounts FatFS. */
+static bool sdRemountSoft() {
+  sdReleaseOtherChipSelects();
+
+#if defined(SD_SCLK) && defined(SD_MISO) && defined(SD_MOSI) && defined(SD_CS)
+#if TOUCH_SHARES_TFT_SPI
+  s_sdSpi.begin(SD_SCLK, SD_MISO, SD_MOSI, SD_CS);
+#else
+  // Do not SPI.end()/gpio_reset here — that tears down CC1101 after SubGHz Init.
+  SPI.begin(SD_SCLK, SD_MISO, SD_MOSI, SD_CS);
+  SPI.setDataMode(SPI_MODE0);
+  SPI.setBitOrder(MSBFIRST);
+#endif
+#endif
+
+  SD.end();
+  s_sdFsMounted = false;
+  delay(2);
+  if (sdTryBeginOrder()) {
+    s_sdFsMounted = true;
+#if !TOUCH_SHARES_TFT_SPI
+    // SD.begin() often leaves the bus at 16–40 MHz; CC1101 cannot use that.
+    SPI.setFrequency(4000000);
+#endif
+    return true;
+  }
+  return false;
+}
+
+bool isSDCardAvailable() {
+#ifdef SD_CD
+  updateSdCardStatus();
+  if (!sdCardPresent) {
+    return false;
+  }
+#endif
+
+  // FatFS "exists(/)" can stay true after another feature stole the SPI bus.
+  // cardType() actually talks to the card and catches a dead mount.
+  if (s_sdFsMounted) {
+    if (SD.cardType() != CARD_NONE) {
+      return true;
+    }
+    s_sdFsMounted = false;
+    SD.end();
+  }
+
+#if !BOARD_HAS_ESP32S3
+  if (s_sdMountGaveUp) {
+    return false;
+  }
+#endif
+
+  // Prefer a soft remount so SubGHz (CC1101 on the same SPI pins) stays alive.
+  if (sdRemountSoft()) {
+    return true;
+  }
+
+  // Soft failed — pins may still be in RFID bitbang / Scanner remapped state.
+  // Only do the destructive reclaim when no radio feature owns the bus.
+  if (!feature_active) {
+    restoreSdAfterSharedSpi();
+#if !BOARD_HAS_ESP32S3
+    if (!s_sdFsMounted) {
+      s_sdMountGaveUp = true;
+      Serial.println("[sd] mount failed — will not retry until reboot");
+    }
+#endif
+    return s_sdFsMounted;
+  }
+  return false;
+}
+
+void holdSdInactiveOnSharedSpi() {
+#if defined(SD_CS)
+  pinMode(SD_CS, OUTPUT);
+  digitalWrite(SD_CS, HIGH);
+#endif
+#if !TOUCH_SHARES_TFT_SPI
+  SPI.setDataMode(SPI_MODE0);
+  SPI.setBitOrder(MSBFIRST);
+  SPI.setFrequency(4000000);
+#endif
+}
+
+void reclaimSharedSpiBus() {
+  // Reset pinmux after RFID bitbang / Scanner remaps, but do NOT SD.begin().
+  // Mounting SD here is what broke SubGHz: SD.begin raises SPI clock and parks
+  // the card on the same MISO line CC1101 needs.
+  sdReleaseOtherChipSelects();
+#if defined(SD_CS)
+  pinMode(SD_CS, OUTPUT);
+  digitalWrite(SD_CS, HIGH);
+#endif
+#if defined(CC1101_CS)
+  pinMode(CC1101_CS, OUTPUT);
+  digitalWrite(CC1101_CS, HIGH);
+#endif
+#if defined(PN532_SS)
+  pinMode(PN532_SS, OUTPUT);
+  digitalWrite(PN532_SS, HIGH);
+#endif
+
+  SD.end();
+  s_sdFsMounted = false;

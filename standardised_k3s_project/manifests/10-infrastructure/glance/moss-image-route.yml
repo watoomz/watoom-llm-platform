@@ -1,0 +1,76 @@
+# MOSS Image Studio (host service, tools/moss-image) published under https://glance.internal.homelab.example/moss/
+# The service binds to the k3s bridge address (10.242.0.1), so only pods and the host can reach it directly.
+# Same exposure model as the model-manager route: internal domain, no extra auth. The page can pause the LLM
+# through the GPU controller (30 min WatooM Code quiet-gate), so keep it on the internal network.
+apiVersion: v1
+kind: Service
+metadata:
+  name: moss-image
+  namespace: glance
+spec:
+  ports:
+  - name: http
+    port: 8791
+    targetPort: 8791
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: moss-image
+  namespace: glance
+subsets:
+- addresses:
+  - ip: 10.242.0.1
+  ports:
+  - name: http
+    port: 8791
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: moss-image-strip
+  namespace: glance
+spec:
+  stripPrefix:
+    prefixes:
+    - /moss
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: moss-image-slash
+  namespace: glance
+spec:
+  redirectRegex:
+    regex: ^https://glance\.internal\.watoom\.au/moss$
+    replacement: https://glance.internal.homelab.example/moss/
+    permanent: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: moss-image
+  namespace: glance
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - kind: Rule
+    match: Host(`glance.internal.homelab.example`) && Path(`/moss`)
+    priority: 120
+    middlewares:
+    - name: moss-image-slash
+    services:
+    - name: moss-image
+      port: 8791
+  - kind: Rule
+    match: Host(`glance.internal.homelab.example`) && PathPrefix(`/moss/`)
+    priority: 120
+    middlewares:
+    - name: moss-image-strip
+    services:
+    - name: moss-image
+      nativeLB: true
+      port: 8791
+  tls:
+    secretName: watoom-tls

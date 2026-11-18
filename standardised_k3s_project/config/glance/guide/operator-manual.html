@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Operator manual · Agent Export</title><meta name="description" content="A task-first manual for running the homelab — how to check health, fix, approve, start, stop and restart things safely, what every approval gate means, and when to stop and ask the owner."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link active" aria-current="page" href="/guide/operator-manual.html">Operator manual</a><div class="toc"><a class="toc-link" href="#how-the-pieces-fit-one-minute">How the pieces fit (one minute)</a><a class="toc-link" href="#i-want-to">I want to…</a><a class="toc-link" href="#daily-check">Daily check</a><a class="toc-link" href="#fix-it-start-here">Fix it: start here</a><a class="toc-link" href="#start-stop-and-restart">Start, stop and restart</a><a class="toc-link" href="#game-servers">Game servers</a><a class="toc-link" href="#ai-and-the-gpu">AI and the GPU</a><a class="toc-link" href="#approvals-and-gates">Approvals and gates</a><a class="toc-link" href="#reboot-checklist">Reboot checklist</a><a class="toc-link" href="#disk-space">Disk space</a><a class="toc-link" href="#backups-and-recovery">Backups and recovery</a><a class="toc-link" href="#secrets-and-the-vault">Secrets and the vault</a><a class="toc-link" href="#making-and-publishing-a-lasting-change">Making and publishing a lasting change</a><a class="toc-link" href="#scripts-timers-and-helpers">Scripts, timers and helpers</a><a class="toc-link" href="#when-to-stop-and-ask-the-owner">When to stop and ask the owner</a><a class="toc-link" href="#glossary">Glossary</a></div><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">Operator manual</p><h1>Operator manual</h1><p class="lede">A task-first manual for running the homelab — how to check health, fix, approve, start, stop and restart things safely, what every approval gate means, and when to stop and ask the owner.</p></header>
+<div class="content">
+<p>This page is written for someone who did not build the system. Start at <strong><a href="#i-want-to">I want to…</a></strong> and follow the links. Every command runs on the server (<code>watoom-homelab</code>) over SSH unless it says otherwise. If a step is not covered here, <strong>stop and ask the owner</strong>; do not improvise on the GPU, the router, secrets or Git.</p>
+<blockquote class="callout callout-rule" data-kind="Rule">
+<p>Five things that are never the answer: scaling a model Deployment by hand, editing GPU-controller state, force-deleting things to &quot;clear&quot; them, running <code>git add .</code> / <code>git reset --hard</code> / <code>git clean -fd</code>, and pasting secrets into chat, Git or logs. Each is explained below.</p>
+</blockquote>
+<h2 id="how-the-pieces-fit-one-minute">How the pieces fit (one minute)</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Piece</th>
+<th>What it is</th>
+<th>You will touch it when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Glance</strong> (<code>https://glance.internal.homelab.example</code>)</td>
+<td>The dashboard and this guide. Mostly read-only; it also hosts Model Manager and the Change-requests approval page</td>
+<td>Checking health, approving a change request</td>
+</tr>
+<tr>
+<td><strong>k3s</strong></td>
+<td>Runs almost every service as a Kubernetes app</td>
+<td>Restarting or checking an app</td>
+</tr>
+<tr>
+<td><strong>Docker Compose</strong></td>
+<td>Runs the edge stacks: WireGuard, AzuraCast, the stream, the Cloudflare tunnel</td>
+<td>Restarting a stack</td>
+</tr>
+<tr>
+<td><strong>GPU controller</strong></td>
+<td>A host service that is the <em>only</em> thing allowed to start or stop AI models on the single GPU</td>
+<td>Reading its state; recovering after a failed switch</td>
+</tr>
+<tr>
+<td><strong>LLM router</strong></td>
+<td>The front door for AI requests; asks the controller for the right model</td>
+<td>Reading model status</td>
+</tr>
+<tr>
+<td><strong>WatooM Code</strong></td>
+<td>The AI coding/asset workspace and its helper timers</td>
+<td>Jobs, approvals, backups</td>
+</tr>
+<tr>
+<td><strong>Git + Ansible</strong></td>
+<td>Source of truth. Changes are made in Git, then applied with <code>./ansible-run</code></td>
+<td>Any lasting change</td>
+</tr>
+</tbody>
+</table></div>
+<p>Rule of thumb: <strong>change the source, apply with the owning playbook, then verify.</strong> A one-off live fix is a temporary patch that the next deploy may undo.</p>
+<h2 id="i-want-to">I want to…</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Goal</th>
+<th>Go to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>See whether everything is healthy</td>
+<td><a href="#daily-check">Daily check</a></td>
+</tr>
+<tr>
+<td>Something is red or not loading</td>
+<td><a href="#fix-it-start-here">Fix it: start here</a></td>
+</tr>
+<tr>
+<td>Restart one service</td>
+<td><a href="#start-stop-and-restart">Start, stop and restart</a></td>
+</tr>
+<tr>
+<td>Start or stop a game server</td>
+<td><a href="#game-servers">Game servers</a></td>
+</tr>
+<tr>
+<td>An AI request fails or is slow</td>
+<td><a href="#ai-and-the-gpu">AI and the GPU</a></td>
+</tr>
+<tr>
+<td>Approve something an AI asked for</td>
+<td><a href="#approvals-and-gates">Approvals and gates</a></td>
+</tr>
+<tr>
+<td>Reboot the server safely</td>
+<td><a href="#reboot-checklist">Reboot checklist</a></td>
+</tr>
+<tr>
+<td>Disk is filling up</td>
+<td><a href="#disk-space">Disk space</a></td>
+</tr>
+<tr>
+<td>Restore from backup / rebuild</td>
+<td><a href="#backups-and-recovery">Backups and recovery</a></td>
+</tr>
+<tr>
+<td>Know what a script or timer does</td>
+<td><a href="#scripts-timers-and-helpers">Scripts, timers and helpers</a></td>
+</tr>
+<tr>
+<td>Work out what a word means</td>
+<td><a href="#glossary">Glossary</a></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="daily-check">Daily check</h2>
+<p>Open Glance. On <strong>Home</strong>, look at <em>Needs Attention</em> and <em>Core Status</em>; on <strong>Command Center</strong>, <em>Homelab Health</em> and <em>Namespace Workloads</em> (restart hotspots show anything crash-looping); on <strong>LLM Lab</strong>, <em>LLM Health</em>.</p>
+<p>Then, from the server, the three-line health check:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">kubectl get nodes
+kubectl get pods -A | grep -v -E &#x27;Running|Completed&#x27;     # anything listed needs a look
+cat /data/ai/helper-scripts/state/gpu-controller/state.json   # want: qwen-ready, owner null, uncertain false
+</code></pre></div>
+<p>Normal and not a fault: zero-replica games and utilities (they are <em>on demand</em>); non-primary AI models at <code>0/0</code>; the controller <code>owner</code> being set while a model switch or Mesh job is running.</p>
+<p>For the full check run <code>cd /data/github/watoom-standardised-homelab/standardised_k3s_project &amp;&amp; ./ansible-run playbooks/health.yml</code>. Alerts (disk, memory, backups, primary model down, failed systemd units) are listed in <a href="/guide/monitoring.html">Monitoring</a>; firing alerts can be read with the command shown there.</p>
+<h2 id="fix-it-start-here">Fix it: start here</h2>
+<p>Work top to bottom and stop at the first thing that is wrong.</p>
+<ol>
+<li><strong>Can you reach the server at all?</strong> <code>ip -br addr</code>, <code>ping -c 4 10.99.20.1</code>. If not, this is network: see <a href="/guide/troubleshooting.html#host-or-network-unreachable">Troubleshooting</a>. Do not touch router, VLAN, firewall or DNS settings without the owner.</li>
+<li><strong>Is the node and are the pods fine?</strong> <code>kubectl get nodes</code>; <code>kubectl get pods -A | grep -v -E 'Running|Completed'</code>.</li>
+<li><strong>A pod is not starting:</strong> <code>kubectl -n &lt;ns&gt; describe pod &lt;pod&gt;</code> and read <em>Events</em>. <code>Insufficient nvidia.com/gpu</code> is normal when another model holds the GPU. <code>hostPath … is not a directory</code> means a data folder was moved: restore the folder, do not create an empty one. Full table: <a href="/guide/troubleshooting.html#pod-not-starting">Pod not starting</a>.</li>
+<li><strong>A website gives 404 / 502 / 503:</strong> 404 = no route; 502 = backend refused; 503 = no endpoints (often a deliberately stopped app). See <a href="/guide/troubleshooting.html#https-returns-404-502-or-503">HTTPS errors</a>.</li>
+<li><strong>A Glance widget shows an error:</strong> read the helper logs; the JSON <code>error</code> field names the failing upstream. See <a href="/guide/troubleshooting.html#glance-widget-shows-an-error">Glance widget</a>.</li>
+<li><strong>A systemd unit shows failed:</strong> <code>systemctl --failed --no-pager</code>, then <code>journalctl -u &lt;unit&gt; -n 50 --no-pager</code>. A unit that fails every few seconds is a timer retrying (see <a href="#scripts-timers-and-helpers">timers</a>); read the first error line, not the repeats.</li>
+<li><strong>AI problem:</strong> go to <a href="#ai-and-the-gpu">AI and the GPU</a>.</li>
+<li><strong>Still unclear:</strong> collect <code>kubectl get pods -A</code>, the controller <code>state.json</code>, and the relevant log lines, and send them to the owner. Do not restart things &quot;to see&quot;.</li>
+</ol>
+<h2 id="start-stop-and-restart">Start, stop and restart</h2>
+<p>Always use the smallest owner that covers the thing. The wrapper <code>./ansible-run</code> (in <code>standardised_k3s_project/</code>) presets inventory, vault and execution environment.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Thing</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>One Kubernetes app</td>
+<td><code>./ansible-run playbooks/kubernetes-app.yml -e kubernetes_app_name=radarr -e kubernetes_app_namespace=radarr -e kubernetes_app_action=restart</code></td>
+</tr>
+<tr>
+<td>One Docker stack</td>
+<td><code>./ansible-run playbooks/docker-stack.yml -e docker_stack_target=wireguard -e docker_action=restart</code></td>
+</tr>
+<tr>
+<td>A game server</td>
+<td><code>./ansible-run playbooks/game.yml -e game_name=valheim -e game_action=start</code></td>
+</tr>
+<tr>
+<td>Interactive menu</td>
+<td><code>scripts/watoom-menu.sh</code> (or <code>https://iac-console.internal.homelab.example/menu</code> — the console itself is on demand)</td>
+</tr>
+</tbody>
+</table></div>
+<p>App actions: <code>status</code>, <code>start</code>, <code>stop</code>, <code>restart</code>, <code>reconcile</code>, <code>set_image</code>. Docker actions: <code>status</code>, <code>up</code>, <code>down</code>, <code>restart</code>, <code>pull</code>, <code>reconcile</code>; targets <code>wireguard</code>, <code>azuracast</code>, <code>dispatcharr_cloudflare</code>, <code>all</code>. The menu offers the same for apps (status, start/stop/restart, logs, describe, shell, apply manifest) and stacks.</p>
+<blockquote class="callout callout-warning" data-kind="Warning">
+<p>Never use these for AI models (<code>llama-cpp-*</code>) or the GPU controller. Models are started and stopped only by the controller. See <a href="#ai-and-the-gpu">AI and the GPU</a>.</p>
+</blockquote>
+<p>Stopping an app that other things depend on (Pi-hole = all DNS, Traefik = all websites, the Cloudflare connector = all public access) takes those things down too. Check Services before stopping anything marked <em>running</em>.</p>
+<h2 id="game-servers">Game servers</h2>
+<p>Enshrouded normally runs; the others start on demand. Registered names: <code>cs2</code>, <code>enshrouded</code>, <code>dayz</code>, <code>arma_reforger</code>, <code>valheim</code>.</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">./ansible-run playbooks/game.yml -e game_name=cs2 -e game_action=status
+./ansible-run playbooks/game.yml -e game_name=cs2 -e game_action=start
+./ansible-run playbooks/game.yml -e game_name=cs2 -e game_action=stop
+</code></pre></div>
+<p>A start fails fast if the server's required Secret is missing (see <a href="#secrets-and-the-vault">Secrets</a>). If players cannot connect, work through <a href="/guide/troubleshooting.html#game-server-unreachable">Game server unreachable</a>. Minecraft servers are LAN-only by design. Tell players before a <code>restart</code>.</p>
+<h2 id="ai-and-the-gpu">AI and the GPU</h2>
+<p>Only one big model fits on the GPU. The <strong>GPU controller</strong> decides which one, records every step, and can recover an interrupted switch. Everything else asks it.</p>
+<p><strong>Read the state first:</strong></p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">cat /data/ai/helper-scripts/state/gpu-controller/state.json
+systemctl status watoom-gpu-controller --no-pager
+kubectl -n llama-cpp get deploy | awk &#x27;$2!=&quot;0/0&quot;&#x27;      # which model is actually up
+nvidia-smi
+</code></pre></div>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>You see</th>
+<th>Meaning</th>
+<th>Do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>phase: qwen-ready</code>, <code>owner: null</code>, <code>uncertain: false</code></td>
+<td>Idle and healthy</td>
+<td>Nothing</td>
+</tr>
+<tr>
+<td><code>owner</code> is set</td>
+<td>A model switch, Mesh job or operator task is running</td>
+<td><strong>Wait.</strong> Do not interrupt</td>
+</tr>
+<tr>
+<td><code>uncertain: true</code></td>
+<td>A transition was interrupted</td>
+<td>Use controller recovery (below), never manual scaling</td>
+</tr>
+<tr>
+<td><code>phase: recovery-required</code> for a long time</td>
+<td>The switch failed and is stuck</td>
+<td>See <a href="#stuck-in-recovery-required">Stuck in recovery-required</a></td>
+</tr>
+<tr>
+<td>Router returns 503 for a model</td>
+<td>Usually the controller is mid-switch or in recovery</td>
+<td>Check the state above</td>
+</tr>
+<tr>
+<td>Target model at <code>0/0</code> before a request</td>
+<td>Normal; it is started on demand</td>
+<td>Nothing</td>
+</tr>
+<tr>
+<td><code>CUDA out of memory</code></td>
+<td>Model + context + cache exceed 20 GiB</td>
+<td>Owner decision; do not shrink settings silently</td>
+</tr>
+</tbody>
+</table></div>
+<p>Never run a job that needs the GPU while the owner field is set. An active coding session or busy slot blocks disruptive work — <strong>low GPU use does not mean idle</strong>.</p>
+<p><strong>Checking models through the router:</strong></p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">kubectl -n llama-cpp port-forward svc/llm-router 18000:8000 &amp;
+curl -s localhost:18000/healthz            # router is alive (local check)
+curl -s localhost:18000/health             # also names the active model
+curl -s localhost:18000/models/status
+</code></pre></div>
+<h3 id="stuck-in-recovery-required">Stuck in recovery-required</h3>
+<ol>
+<li>Read <code>state.json</code> and the controller log: <code>journalctl -u watoom-gpu-controller -n 80 --no-pager</code>. The audit trail is <code>/data/ai/helper-scripts/state/gpu-controller/audit.jsonl</code>.</li>
+<li>If the message is <strong><code>Unsafe: deployment identity or model configuration changed</code></strong>, the primary Deployment was changed outside the controller and its pinned fingerprint is stale. This needs a <strong>re-pin</strong> after a human reviews the change — see <a href="#re-pinning-the-primary-model">Re-pinning</a>.</li>
+<li>If the owner is a router process that is still alive, that router needs restarting before <code>recover</code> is accepted: <code>kubectl -n llama-cpp rollout restart deploy/llm-router</code>.</li>
+<li>Ask the controller to restore the primary model through the router: <code>curl -s -X POST localhost:18000/models/load -H 'content-type: application/json' -d '{&quot;model&quot;:&quot;swift-qwen38-coder&quot;}'</code> (with the port-forward above). Then confirm <code>qwen-ready</code>, <code>uncertain:false</code>, and that a real request answers.</li>
+<li>If it will not clear, stop and collect <code>state.json</code>, the last 80 controller log lines and the audit rows around the failure for the owner.</li>
+</ol>
+<h3 id="break-glass-reset-a-wedged-ai-stack">Break glass: reset a wedged AI stack</h3>
+<p>Use this when the AI stack is stuck and you cannot clear it by hand: a held deployment guard, execution claims nobody owns, running-job flags that never clear, a stuck worker, or GPU ownership that will not release. Open <strong>Glance → Break glass</strong> (<code>/command-center/break-glass.html</code>). The page shows what is stuck right now and offers two buttons, both protected by the operator PIN.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Button</th>
+<th>What it does</th>
+<th>What it never does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Clear stale</strong></td>
+<td>Clears only what is provably orphaned: claims whose owner is interrupted and idle, finished or very old worker pods and units, a GPU owner whose process has ended (through the GPU controller).</td>
+<td>Touch running work.</td>
+</tr>
+<tr>
+<td><strong>Force reset</strong> (PIN plus typing <code>RESET</code>)</td>
+<td>Snapshots the database, stops the app and every worker, clears claims, queued inputs, running-job flags and a held deployment guard, recovers GPU ownership through the GPU controller, restarts the router and the app, then checks the guard, executions and model catalogue.</td>
+<td>Delete sessions or history. Queued inputs it clears are saved in the run's evidence.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Glance never touches the cluster itself. It queues a request that the root service <code>watoom-break-glass</code> validates (recent, known mode, cooldown) and runs. Each run writes an evidence bundle (before and after state, steps, database snapshot, cleared rows) to <code>/data/ai/helper-scripts/state/break-glass/runs/&lt;timestamp&gt;/</code>; the five newest snapshots are kept. If a force run dies after stopping the app, the next refresh (within a minute) starts the app again.</p>
+<p>From the host: <code>python3 tools/break-glass/break_glass.py diagnose</code> (read-only), or <code>python3 tools/break-glass/break_glass.py run --mode stale|force --i-approve</code> as root. Install the service with <code>ansible-playbook ansible/playbooks/watoom-break-glass.yml</code>.</p>
+<h3 id="re-pinning-the-primary-model">Re-pinning the primary model</h3>
+<p>The controller remembers each model Deployment's identity and a hash of its spec. If the primary Deployment is edited (for example an env var), the hash no longer matches and <strong>every</strong> controller action, including recover, is refused until a human approves the new hash. This is a safety gate, not a bug.</p>
+<p>The gate only opens if the controller is <code>qwen-ready</code>, unowned and certain, the Deployment UID is unchanged, and only the primary's hash differs. Review the change first, then:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">cd /data/github/watoom-standardised-homelab/standardised_k3s_project
+python3 scripts/gpu-controller-repin-primary.py            # dry run: prints DRIFT old -&gt; new, changes nothing
+python3 scripts/gpu-controller-repin-primary.py --apply    # writes the new hash (backup kept next to the config)
+systemctl restart watoom-gpu-controller.service
+python3 scripts/gpu-controller-repin-primary.py            # should now print UNCHANGED
+</code></pre></div>
+<p>Then copy the new hash into <code>ansible/roles/llm-model-lab/files/gpu-controller.json</code> (the matching <code>spec_sha256</code> line) so a plain playbook rerun does not revert it, and commit that file. The playbook route (<code>playbooks/gpu-controller.yml -e gpu_controller_repin_primary=true</code>) additionally requires <code>gpu_controller_cutover_verified=true</code>, which is a deliberate extra gate for a full controller promotion; do not set it to get past a refusal.</p>
+<h3 id="changing-a-model-setting-safely">Changing a model setting safely</h3>
+<p>Model settings live in the manifest (for example <code>manifests/10-infrastructure/llm/llama-cpp-swift-qwen38.yml</code>). The sequence is: edit in Git → <code>kubectl diff -f &lt;manifest&gt;</code> and confirm only the intended lines differ → apply at a <strong>quiet time</strong> (the model restarts, taking a few minutes) → re-pin → verify <code>qwen-ready</code> and a real answer → keep the old value ready as the rollback. Policy: prefer full GPU residency, never change quantisation, context size or KV precision silently, and validate any placement change with rollback.</p>
+<h3 id="installing-or-removing-models">Installing or removing models</h3>
+<p>Use <strong>LLM Lab → Model Manager</strong> (<code>https://glance.internal.homelab.example/model-manager/</code>). Paste a Hugging Face URL, choose the revision and variant, check the exact size, then <strong>Download &amp; set up</strong>. <em>Downloaded</em>, <em>configured</em>, <em>registered</em> and <em>tested</em> are separate states. Removal unregisters and keeps files unless you explicitly confirm quarantine.</p>
+<h3 id="ai-agents-watoom-code">AI agents (WatooM Code)</h3>
+<p>The coordinator hands work to a builder, investigator, critic and reviewer, one at a time. After two failed attempts the critic must be consulted before another repair. If an agent seems stuck: read its checkpoint under the project's <code>.opencode/work/</code>, do not delete inbox or controller state, and do not kill unknown processes. &quot;Call the critic&quot; from you means exactly one critic review. Source and rules: <a href="/guide/watoom-code.html">WatooM Code</a>.</p>
+<h2 id="approvals-and-gates">Approvals and gates</h2>
+<p>A <strong>gate</strong> is a deliberate stop that needs a human (or a verified condition) before something risky proceeds. Never work around one; each exists because the unsafe path was hit before. All gates, in plain words:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>What it protects</th>
+<th>Where you act</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Change request</strong></td>
+<td>AI cannot edit host-owned files (e.g. the ESP32 worker contract). It files a request; a human approves the exact diff</td>
+<td>Glance → <em>Observe and search</em> → <strong>Change requests</strong>, or <code>python3 tools/change-requests/change_request.py list / show &lt;id&gt; / approve &lt;id&gt; / reject &lt;id&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Operator PIN</strong></td>
+<td>Stops models or other LAN clients approving change requests. Five wrong PINs lock the page for five minutes</td>
+<td>PIN is in the root-only file <code>/root/.watoom-change-request-pin</code>; rotate with <code>scripts/set-change-approval-pin.sh</code> (as root)</td>
+</tr>
+<tr>
+<td><strong>Fab download approval</strong></td>
+<td>AI cannot download paid or owned assets without you</td>
+<td>The agent asks in chat; answer <strong>Approve download</strong> to the exact request. The <code>watoom-fab-approvals</code> timer then fetches it within a minute</td>
+</tr>
+<tr>
+<td><strong>GPU ownership / admission</strong></td>
+<td>Only one job at a time owns the GPU</td>
+<td>Wait for <code>owner: null</code>; never bypass</td>
+</tr>
+<tr>
+<td><strong>Controller fingerprint (re-pin)</strong></td>
+<td>A changed primary Deployment must be reviewed before the controller trusts it</td>
+<td><a href="#re-pinning-the-primary-model">Re-pinning</a></td>
+</tr>
+<tr>
+<td><strong>Release fence</strong></td>
+<td>App, agent, guard, skill and Toolkit releases wait for an idle app and GPU, apply, verify, and roll back on failure</td>
+<td>Run the owning <code>playbooks/watoom-code-*.yml</code> or <code>tools/watoom-code/deploy-platform.py …</code>; do not hand-apply</td>
+</tr>
+<tr>
+<td><strong><code>gpu_controller_cutover_verified</code></strong></td>
+<td>Promoting a new controller runtime</td>
+<td>Owner-run only, after the reviewed cutover gates</td>
+</tr>
+<tr>
+<td><strong>Idle fence (RIG stage updates)</strong></td>
+<td>Installing a new async-stage release while jobs may be queued</td>
+<td>Pause the desktop RIG consumers, stop <code>watoom-rig-async-stage.timer</code>, hold the queue fence, run <code>tools/rig-async-stage/install-runtime.py</code>; see the README in that folder</td>
+</tr>
+<tr>
+<td><strong>Learning curator</strong></td>
+<td>Nightly lesson mining is off by default; nothing durable changes without the idle gate and owner approval</td>
+<td>Levers: <code>watoom_learning_curator_enabled: false</code>, a <code>curator-disabled</code> file, or <code>memory_curator.py rollback --txn &lt;id&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Git</strong></td>
+<td>AI does not stage, commit or push unless asked</td>
+<td>You decide; stage by explicit path only</td>
+</tr>
+<tr>
+<td><strong>Kali security tools</strong></td>
+<td>Only a top-level <code>watoom-kali</code> session may use them</td>
+<td>Start that session deliberately; never delegate it</td>
+</tr>
+<tr>
+<td><strong>Purchases and downloads</strong></td>
+<td>Finding an asset is not buying it</td>
+<td>Always an explicit approval</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Approving a change request, step by step:</strong> open the page; read the reason and the exact diff (red/green lines); confirm the file is one you expect; type the PIN; press <strong>Approve and apply</strong> (or <strong>Reject</strong>). The host applies it within about a minute, only if the request is still the version you reviewed, runs fixed checks, commits and pushes just that file, and restores it if a check fails. Every action is logged to <code>/data/ai/helper-scripts/reports/change-requests/audit.jsonl</code>. If unsure, reject — the model can file a new one.</p>
+<h2 id="reboot-checklist">Reboot checklist</h2>
+<p><strong>Before:</strong></p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">git -C /data/github/watoom-standardised-homelab status --short
+kubectl get pods -A | grep -v -E &#x27;Running|Completed&#x27;
+docker compose ls
+df -h / /app /data
+cat /data/ai/helper-scripts/state/gpu-controller/state.json    # expect qwen-ready, owner null
+</code></pre></div>
+<p>Do not reboot while the controller has an owner or a WatooM Code job is running — an unplanned reboot interrupts work and can leave pods in a bad state.</p>
+<p><strong>After:</strong></p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">ip -br addr; ip route
+systemctl --failed --no-pager
+kubectl get nodes -o wide
+kubectl get pods -A | grep -v -E &#x27;Running|Completed&#x27;
+docker compose ls
+nvidia-smi
+cd /data/github/watoom-standardised-homelab/standardised_k3s_project
+./ansible-run playbooks/health.yml &amp;&amp; ./ansible-run playbooks/validate.yml
+</code></pre></div>
+<p>The controller starts the primary model by itself; wait for <code>qwen-ready</code>. If the model pod reports <strong><code>UnexpectedAdmissionError … no healthy devices</code></strong>, the GPU device plugin had not registered yet: wait a minute or two for <code>kube-system/nvidia-device-plugin-daemonset</code> to be Running, and a replacement pod normally schedules; a leftover pod in <code>Unknown</code>/<code>Failed</code> can then be removed with <code>kubectl -n llama-cpp delete pod &lt;name&gt;</code>. Zero-replica games and utilities stay down by design.</p>
+<h2 id="disk-space">Disk space</h2>
+<p>Alerts fire at <code>/</code> 80%, and <code>/app</code> and <code>/data</code> 90%. Check <code>df -h / /app /data</code>. Most root usage is the container store under <code>/var/lib/rancher/k3s/agent/containerd</code> (images). Do <strong>not</strong> run broad prune commands. To clear space safely, list only images that are untagged <strong>and</strong> referenced by no container, confirm the digest is not named in the repo and is still served by the local registry (<code>127.0.0.1:5000</code>), then remove those one at a time with <code>k3s crictl rmi &lt;id&gt;</code>. Never delete under <code>/data/ai/models</code>, <code>/app</code> service state or <code>/data/backups</code>. Capacity growth beyond that is an owner decision.</p>
+<h2 id="backups-and-recovery">Backups and recovery</h2>
+<p>Only <strong>WatooM Code</strong> state (database, config, AgentMemory) has an automated off-host copy: daily at 03:30, 14 kept in <code>/data/backups/watoom-code</code>. Media and <code>/app</code> service state have <strong>no</strong> off-host backup. Check:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">systemctl list-timers watoom-code-backup.timer watoom-backup-offhost-check.timer --no-pager
+ls -lt /data/backups/watoom-code | head -3
+</code></pre></div>
+<p>Recovery tooling is read-only by default: <code>python3 tools/recovery/recovery.py {inventory,plan,audit,verify-backup,restore-test,restore-bundle,run-phase,capture}</code>. Restores go into a <strong>new empty directory</strong>; there is deliberately no live overwrite. Never restore over live state, and never replay historical jobs. Full procedures: <a href="/guide/recovery.html">Recovery</a> and <a href="/guide/disaster-recovery.html">Disaster recovery</a>.</p>
+<h2 id="secrets-and-the-vault">Secrets and the vault</h2>
+<p>Secrets are stored encrypted in Git (<code>secrets-vault/env.local.vault</code>); the vault password is <strong>not</strong> in Git (<code>/data/secrets/watoom-homelab/ansible-vault-password.txt</code>). Refer to secrets by name only — never print or paste values.</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">scripts/check-required-secrets.sh      # confirms names exist; never prints values
+scripts/restore-vault-secrets.sh       # needs the vault password file
+scripts/render-secrets.sh              # then: kubectl apply -f manifests/05-secrets/
+</code></pre></div>
+<h2 id="making-and-publishing-a-lasting-change">Making and publishing a lasting change</h2>
+<ol>
+<li>Check <code>git status --short --untracked-files=all</code>; leave other people's changes alone.</li>
+<li>Edit the <strong>source</strong> (not a generated file). Generated files: agent prompts (<code>v2-native/agents/*.md</code> from <code>_src</code>), the Glance guide HTML, server catalogue, Glance ConfigMaps.</li>
+<li>Validate: <code>git diff --check</code>, <code>./scripts/watoom-ansible-validate.sh standard</code>, and the relevant renderer's <code>--check</code>.</li>
+<li>Apply through the owning playbook or script; verify the live result and the health signals.</li>
+<li>Stage <strong>explicit paths only</strong> (<code>git add path/one path/two</code>), never <code>git add .</code> or <code>-A</code>. Do not commit or push unless the owner asks.</li>
+</ol>
+<p>Regenerating documentation:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">/data/ai/toolchains/docs-render/bin/python scripts/render-glance-guide.py          # guide pages
+python3 scripts/render-server-catalogue.py                                          # source catalogue
+python3 scripts/render-native-agents.py --check                                     # agent prompt drift
+/data/ai/toolchains/docs-render/bin/python scripts/verify-homelab-documentation.py  # links
+</code></pre></div>
+<p>Guide HTML goes live as soon as the checkout updates; no restart is needed. Never install the markdown library into the system Python; use the <code>docs-render</code> environment.</p>
+<h2 id="scripts-timers-and-helpers">Scripts, timers and helpers</h2>
+<p><strong>Scripts</strong> (in <code>scripts/</code>):</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Script</th>
+<th>Use it to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>watoom-menu.sh</code></td>
+<td>Interactive status/start/stop/restart/logs for apps, Docker stacks and games</td>
+</tr>
+<tr>
+<td><code>post-reboot-health-check.sh</code></td>
+<td>Run the checks after a reboot</td>
+</tr>
+<tr>
+<td><code>check-required-secrets.sh</code>, <code>render-secrets.sh</code>, <code>restore-vault-secrets.sh</code></td>
+<td>Verify, render and restore secrets</td>
+</tr>
+<tr>
+<td><code>set-change-approval-pin.sh</code></td>
+<td>Create or rotate the change-request approval PIN (root)</td>
+</tr>
+<tr>
+<td><code>gpu-controller-repin-primary.py</code></td>
+<td>Re-pin the controller after a reviewed primary Deployment change</td>
+</tr>
+<tr>
+<td><code>check-image-pinning.sh</code>, <code>export-live-image-lock.sh</code></td>
+<td>Check that images are pinned by digest; record live image versions</td>
+</tr>
+<tr>
+<td><code>watoom-ansible-validate.sh</code></td>
+<td>Validation tiers <code>fast</code> / <code>standard</code> / <code>full</code></td>
+</tr>
+<tr>
+<td><code>render-*.py</code>, <code>verify-homelab-documentation.py</code></td>
+<td>Rebuild and check docs, guide, catalogue, agent prompts</td>
+</tr>
+<tr>
+<td><code>repair-project-perms.sh</code>, <code>create-hostpaths.sh</code></td>
+<td>Fix project-folder permissions; create required host folders</td>
+</tr>
+<tr>
+<td><code>cutover-watoom-code-rename.sh</code>, <code>move-state-to-ssd.sh</code>, <code>rebuild-homelab.sh</code></td>
+<td>One-time or recovery tools — <strong>owner only</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Host timers</strong> (<code>systemctl list-timers --no-pager</code>):</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Timer</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>watoom-code-backup</code> (03:30) / <code>watoom-backup-offhost-check</code></td>
+<td>Daily backup and off-host verification</td>
+</tr>
+<tr>
+<td><code>watoom-change-requests</code></td>
+<td>Validates AI change requests and publishes the diff for approval; never applies</td>
+</tr>
+<tr>
+<td><code>watoom-fab-approvals</code> (1 min)</td>
+<td>Processes owner-approved asset downloads</td>
+</tr>
+<tr>
+<td><code>watoom-rig-async-stage</code> (5 s)</td>
+<td>Dispatches RIG game jobs and delivers completions</td>
+</tr>
+<tr>
+<td><code>watoom-game-worker</code> (30 s)</td>
+<td>Runs bounded Godot validation jobs</td>
+</tr>
+<tr>
+<td><code>watoom-image-review</code> (1 min)</td>
+<td>Copies project captures into the review folder</td>
+</tr>
+<tr>
+<td><code>watoom-capability-health</code> (1 h)</td>
+<td>Refreshes the skill/catalogue health view (no inference)</td>
+</tr>
+<tr>
+<td><code>watoom-gpu-controller-credentials</code></td>
+<td>Rotates controller credentials</td>
+</tr>
+</tbody>
+</table></div>
+<p>A timer whose service is <strong>failed</strong> is retried on its interval, so a broken one fills the journal quickly. Read the <strong>first</strong> error, fix the cause, and the next run recovers. Example: <code>watoom-rig-async-stage</code> reporting <code>namespaces &quot;opencode-watoom-stage&quot; not found</code> means the installed (release-pinned) copy still points at the old namespace; it needs the README's controlled update in <code>tools/rig-async-stage/</code>, not a hand edit of the installed files.</p>
+<p><strong>Web helpers:</strong> Glance (<code>/guide</code>, <code>/command-center</code>), Model Manager (<code>/model-manager/</code>), Skill Editor (<code>/skills/</code>), Grafana, Prometheus, the IaC console (on demand), Pi-hole admin.</p>
+<h2 id="when-to-stop-and-ask-the-owner">When to stop and ask the owner</h2>
+<p>Stop and escalate if any of these apply: the controller is <code>uncertain</code> or <code>recovery-required</code> and the steps above do not clear it; you would need <code>sudo</code>/root for something this page does not list; the fix touches the router, VLANs, firewall or DNS; it needs a secret value; it would delete data you cannot re-create; a backup or off-host alert is firing; a command's output differs from what this page says to expect. Say what you ran, what you saw, and attach the relevant <code>state.json</code> and log lines.</p>
+<h2 id="glossary">Glossary</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Owner</strong> (controller field)</td>
+<td>Whoever currently holds the GPU for a job or switch. Null = idle</td>
+</tr>
+<tr>
+<td><strong>qwen-ready</strong></td>
+<td>Healthy idle: the primary model is up and nothing owns the GPU</td>
+</tr>
+<tr>
+<td><strong>Uncertain</strong></td>
+<td>An interrupted transition; needs controller recovery</td>
+</tr>
+<tr>
+<td><strong>Generation</strong></td>
+<td>A counter that only increases each time ownership changes; never hard-code it</td>
+</tr>
+<tr>
+<td><strong>Re-pin / fingerprint</strong></td>
+<td>The controller's remembered hash of a model Deployment; must be re-approved after a reviewed change</td>
+</tr>
+<tr>
+<td><strong>Fence / idle gate</strong></td>
+<td>A precondition that waits for no active work before a risky step</td>
+</tr>
+<tr>
+<td><strong>On demand</strong></td>
+<td>Scaled to zero and started when needed — not a fault</td>
+</tr>
+<tr>
+<td><strong>RIG / Bazzite</strong></td>
+<td>The remote GPU workstation lanes used for heavy Blender/Godot/capture jobs</td>
+</tr>
+<tr>
+<td><strong>Critic / reviewer</strong></td>
+<td>AI roles that challenge a plan (critic) and independently accept finished work (reviewer)</td>
+</tr>
+<tr>
+<td><strong>Receipt</strong></td>
+<td>A recorded proof (hashes, status) that a job or step really ran</td>
+</tr>
+<tr>
+<td><strong>Generated file</strong></td>
+<td>Built by a renderer from a source file; never edit by hand</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/operator-manual.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

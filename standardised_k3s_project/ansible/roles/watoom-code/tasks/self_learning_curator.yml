@@ -1,0 +1,105 @@
+---
+# Memory curator (learning-loop phases 3-4), run every few minutes (idempotent) so owner chat lessons land quickly. Off unless watoom_learning_curator_enabled is true, so it
+# never activates on a routine deploy. Three independent ways to stop or undo it: set the flag false and
+# re-apply (removes the unit); `touch {{ watoom_learning_root }}/curator-disabled` for an immediate runtime
+# no-op; or `memory_curator.py rollback --txn <id>` to revert one night's changes. It writes only the sidecar
+# lesson store, never code, the guard or AgentMemory.
+- name: Validate the curator repository is an absolute path
+  ansible.builtin.assert:
+    that:
+      - (watoom_learning_curator_repo | default('')) is match('^/.+')
+      - (watoom_learning_curator_recall_export | default('')) is match('^/.+/learned-lessons\\.json$')
+    fail_msg: "Set watoom_learning_curator_repo and watoom_learning_curator_recall_export (absolute, ending learned-lessons.json, beside the coordinator-guard packages)."
+  when: watoom_learning_curator_enabled | default(false) | bool
+- name: Install the memory curator script to a root-owned path
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../tools/watoom-code/self_learning/memory_curator.py"
+    dest: /data/ai/helper-scripts/watoom-code/memory_curator.py
+    owner: root
+    group: root
+    mode: '0755'
+  when: watoom_learning_curator_enabled | default(false) | bool
+- name: Install the memory curator service
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/watoom-learning-curator.service
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=WatooM learning memory curator (sidecar lessons only; owner-reversible)
+      StartLimitIntervalSec=0
+      [Service]
+      Type=oneshot
+      # Owner email(s) for owner-fix mining are never committed to this repo; set
+      # WATOOM_OWNER_EMAILS (comma-separated) in this host-local, untracked file once.
+      # Owner-fix mining is simply inert (no lessons curated from it) if the file is absent.
+      EnvironmentFile=-/etc/watoom/learning-curator.env
+      ExecStart=/usr/bin/python3 -I \
+        {{ watoom_learning_curator_script | default('/data/ai/helper-scripts/watoom-code/memory_curator.py') }} \
+        curate --apply \
+        --store {{ watoom_learning_root }}/lessons.sqlite \
+        --repo {{ watoom_learning_curator_repo }} \
+        --since-days {{ watoom_learning_curator_since_days | default(30) | int }} \
+        --chat-db {{ watoom_learning_curator_chat_db | default('/data/ai/watoom-code/application.sqlite') }} \
+        --lesson-marker {{ watoom_learning_curator_lesson_marker | default('+') | quote }} \
+        --receipts-dir {{ watoom_learning_curator_receipts_dir | default('/data/ai/helper-scripts/reports/game-worker') }} \
+        --godot-toolchain {{ watoom_learning_curator_godot_toolchain | default('/data/ai/toolchains/godot') }} \
+        --export-recall {{ watoom_learning_curator_recall_export }}
+      CPUQuota=25%
+      MemoryMax=256M
+      RuntimeMaxSec=300
+      TimeoutStopSec=10
+  register: watoom_learning_curator_service
+  when: watoom_learning_curator_enabled | default(false) | bool
+- name: Install the memory curator timer
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/watoom-learning-curator.timer
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Run the WatooM learning memory curator frequently (cheap, idempotent)
+      [Timer]
+      OnCalendar=*:0/{{ watoom_learning_curator_interval_minutes | default(15) | int }}
+      Persistent=true
+      Unit=watoom-learning-curator.service
+      [Install]
+      WantedBy=timers.target
+  register: watoom_learning_curator_timer
+  when: watoom_learning_curator_enabled | default(false) | bool
+- name: Reload systemd after writing curator units
+  ansible.builtin.systemd:
+    daemon_reload: true
+  when: >-
+    (watoom_learning_curator_enabled | default(false) | bool)
+    and ((watoom_learning_curator_service is changed) or (watoom_learning_curator_timer is changed))
+- name: Enable the curator timer
+  ansible.builtin.systemd:
+    name: watoom-learning-curator.timer
+    enabled: true
+    state: started
+  when: watoom_learning_curator_enabled | default(false) | bool
+- name: Disable and remove the curator when not enabled
+  ansible.builtin.systemd:
+    name: watoom-learning-curator.timer
+    enabled: false
+    state: stopped
+  failed_when: false
+  when: not (watoom_learning_curator_enabled | default(false) | bool)
+- name: Remove curator units when not enabled
+  ansible.builtin.file:
+    path: "/etc/systemd/system/{{ item }}"
+    state: absent
+  loop:
+    - watoom-learning-curator.service
+    - watoom-learning-curator.timer
+  register: watoom_learning_curator_removed
+  when: not (watoom_learning_curator_enabled | default(false) | bool)
+- name: Reload systemd after removing curator units
+  ansible.builtin.systemd:
+    daemon_reload: true
+  when:
+    - not (watoom_learning_curator_enabled | default(false) | bool)
+    - watoom_learning_curator_removed is changed

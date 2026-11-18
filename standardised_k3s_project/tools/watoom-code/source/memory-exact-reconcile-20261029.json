@@ -1,0 +1,24 @@
+{
+  "sourceCommit": "e7e2c3c7fe67255ac87c0995fb920010513f5c5e",
+  "baseCommit": "c822b63210dcad13bd8aeb4a20364b73143f6f24",
+  "image": "127.0.0.1:5000/watoom-code@sha256:bd23e3802e40cf3a83ece5a93b1b83b74115ec5b553f35f40aeb979817987d3b",
+  "supersedes": "127.0.0.1:5000/watoom-code@sha256:0000879e92ab9dc356b4443df759def2755ba0abd3eb401f03d5068bc7957f67",
+  "bundle": "watoom-code-memory-exact-reconcile-20261029.bundle",
+  "bundleSha256": "eea4081d9bd3d1c8971cb8ec5789fc025d8e65a9d57d077130b985d23949707e",
+  "applicationOnly": true,
+  "updatesCapabilities": false,
+  "change": "Outbox reconcile re-sends the exact envelope (no hex-id BM25 searches), 30s..1h backoff, local successor lookup",
+  "checks": {
+    "memoryWorkflowTests": "21/21",
+    "coreTypecheck": "PASS",
+    "routerTests": "4/4",
+    "selectorTests": "10/10",
+    "agentmemoryIdempotencyGate": "PASS"
+  },
+  "deployEvidence": "/data/ai/artifacts/watoom-code-production-consolidation/deploy-20261029T065236Z",
+  "preserved": {
+    "sessions": 652,
+    "children": 562,
+    "projects": 79
+  }
+}

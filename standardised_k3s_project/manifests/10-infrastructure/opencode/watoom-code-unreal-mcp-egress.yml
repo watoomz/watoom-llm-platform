@@ -1,0 +1,20 @@
+# NOT applied by default. Apply only when watoom_code_unreal_mcp_enabled is turned on.
+# Additive to watoom-code-egress: lets the agent pod reach exactly one address and port, the token/policy-gated proxy
+# on the cluster bridge (tools/rig-unreal-mcp). It cannot reach the rest of the node, the LAN, or the rig.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: watoom-code-unreal-mcp-egress
+  namespace: watoom-code
+spec:
+  podSelector:
+    matchLabels:
+      app: watoom-code
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 10.242.0.1/32
+      ports:
+        - {protocol: TCP, port: 15354}

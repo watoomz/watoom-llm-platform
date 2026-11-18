@@ -1,0 +1,7 @@
+FROM 127.0.0.1:5000/watoom-toolkit@sha256:2a12a7ddbab49fdb4c17db85b074b644a6cc97bc27ff1ce5069beeefd04baca3
+ARG WATOOM_SOURCE_COMMIT
+LABEL org.opencontainers.image.revision=$WATOOM_SOURCE_COMMIT watoom.creative.contract="watoom-creative/v1"
+USER 0
+COPY job_admission.py agent.py three_d.py kube_worker.py publish_3d.py catalog.json blender_3d.py asset_catalog.py creative.py creative_blender.py creative_blender_common.py creative_world.py creative_character.py creative_material.py creative_verify.gd dungeon_layout.py dungeon_pipeline.py dungeon_unreal.py dungeon_worker.py dungeon_blender.py dungeon_verify.gd /opt/watoom/
+RUN rm -f /opt/watoom/meshy.py
+USER 1009:1009

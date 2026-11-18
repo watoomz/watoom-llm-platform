@@ -1,0 +1,8 @@
+---
+# MOSS Image Studio: the owner turned this on and started it with one-off `-e` extra-vars at some point
+# (the installed unit file already has real values, not the role's false defaults), but that choice was
+# never persisted, so a plain `ansible-playbook playbooks/moss-image.yml` did nothing and the service had
+# no way to come back after it stopped (host reboot, manual stop) -- found 2026-11-19 when the Glance hub's
+# MOSS link 502'd because nothing was listening on :8791. Persisting the owner's already-made choice here.
+moss_image_enabled: true
+moss_image_start: true

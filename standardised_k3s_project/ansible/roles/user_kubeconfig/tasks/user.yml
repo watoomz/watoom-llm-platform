@@ -1,0 +1,17 @@
+---
+- name: "Kubeconfig {{ kubeconfig_user.name }} | Create .kube directory"
+  ansible.builtin.file:
+    path: "{{ kubeconfig_user.home }}/.kube"
+    state: directory
+    owner: "{{ kubeconfig_user.name }}"
+    group: "{{ kubeconfig_user.name }}"
+    mode: "0700"
+
+- name: "Kubeconfig {{ kubeconfig_user.name }} | Install k3s kubeconfig"
+  ansible.builtin.copy:
+    src: "{{ user_kubeconfig_source }}"
+    dest: "{{ kubeconfig_user.home }}/.kube/config"
+    remote_src: true
+    owner: "{{ kubeconfig_user.name }}"
+    group: "{{ kubeconfig_user.name }}"
+    mode: "0600"

@@ -1,0 +1,27 @@
+# Unreal runtime paths NOT copied to the Bazzite export worker (rsync --exclude-from): sources,
+# intermediates, caches and non-Linux binaries. The Linux editor, its plugins, Config, Content and Shaders stay.
+/Source/
+/Intermediate/
+/Saved/
+/Samples/
+/FeaturePacks/
+/Templates/
+/Engine/Documentation/
+/Engine/Extras/
+/Engine/Source/
+/Engine/Intermediate/
+/Engine/Saved/
+/Engine/DerivedDataCache/
+Intermediate/
+/Engine/Plugins/**/Source/
+/Engine/Binaries/Win64/
+/Engine/Binaries/Mac/
+/Engine/Binaries/Android/
+/Engine/Binaries/IOS/
+/Engine/Binaries/ThirdParty/**/Win64/
+/Engine/Binaries/ThirdParty/**/Mac/
+/Engine/Plugins/**/Binaries/Win64/
+/Engine/Plugins/**/Binaries/Mac/
+*.pdb
+*.debug
+*.sym

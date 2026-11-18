@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.1",
+	"FriendlyName": "WatooM Combat",
+	"Description": "Generic GAS combat core for any game: attribute set (health/shield/stamina/mana/ammo/team), server-side damage execution, generic effects, data-driven melee/gun/spell abilities, projectile and a combat character base. Content (weapons, spells, items) is data assets.",
+	"Category": "Gameplay",
+	"CreatedBy": "WatooM",
+	"CanContainContent": true,
+	"EnabledByDefault": true,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "WatooMCombat",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{ "Name": "GameplayAbilities", "Enabled": true },
+		{ "Name": "Niagara", "Enabled": true },
+		{ "Name": "EnhancedInput", "Enabled": true }
+	]
+}

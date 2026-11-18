@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>WatooM Code and pipelines · Agent Export</title><meta name="description" content="The agent workspace — its components, agents and skills, how projects are scoped, the Toolkit that runs Blender, Unreal and Godot jobs, the background dispatchers and how releases are promoted."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link active" aria-current="page" href="/guide/watoom-code.html">WatooM Code</a><div class="toc"><a class="toc-link" href="#components">Components</a><a class="toc-link" href="#agents">Agents</a><a class="toc-link" href="#skills-and-search">Skills and search</a><a class="toc-link" href="#project-scope">Project scope</a><a class="toc-link" href="#toolkit-and-engines">Toolkit and engines</a><a class="toc-link" href="#background-dispatchers">Background dispatchers</a><a class="toc-link" href="#host-change-requests">Host change requests</a><a class="toc-link" href="#learning-loop">Learning loop</a><a class="toc-link" href="#releases">Releases</a><a class="toc-link" href="#backups">Backups</a><a class="toc-link" href="#complete-platform-manuals">Complete platform manuals</a><a class="toc-link" href="#project-and-source-reference">Project and source reference</a></div><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">WatooM Code</p><h1>WatooM Code and pipelines</h1><p class="lede">The agent workspace — its components, agents and skills, how projects are scoped, the Toolkit that runs Blender, Unreal and Godot jobs, the background dispatchers and how releases are promoted.</p></header>
+<div class="content">
+<h2 id="components">Components</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Where</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WatooM Code app</td>
+<td><code>watoom-code/watoom-code</code> (4096)</td>
+<td>Web UI and agent runtime at <code>https://watoom-code.internal.homelab.example</code></td>
+</tr>
+<tr>
+<td>AgentMemory</td>
+<td><code>watoom-code/agentmemory</code> (3111)</td>
+<td>Long-term memory over MCP, embeddings from <code>bge-embeddings</code></td>
+</tr>
+<tr>
+<td>WatooM Toolkit</td>
+<td><code>watoom-code/watoom-toolkit</code> (8879)</td>
+<td>Controller that launches bounded Blender, Unreal and Godot worker jobs</td>
+</tr>
+<tr>
+<td>Coordinator guard</td>
+<td>plugin in the app</td>
+<td>Enforces routing, handoff, project scope and vision rules</td>
+</tr>
+<tr>
+<td>RIG async stage</td>
+<td><code>watoom-code-rig-jobs/watoom-code</code></td>
+<td>Isolated stage that admits and dispatches background RIG game jobs</td>
+</tr>
+<tr>
+<td>Host dispatchers</td>
+<td>systemd timers</td>
+<td>Bridge app requests to host-side workers (below)</td>
+</tr>
+</tbody>
+</table></div>
+<p>State lives in <code>/data/ai/watoom-code</code> (database, config, skills). Image, Toolkit and AgentMemory digests are pinned in <code>ansible/vars/watoom-code.yml</code>; the role fails closed without them.</p>
+<h2 id="agents">Agents</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>watoom-workflow</code></td>
+<td>Coordinator: plans, routes and hands off; does not implement</td>
+</tr>
+<tr>
+<td><code>watoom-builder</code></td>
+<td>Implements changes and runs builds</td>
+</tr>
+<tr>
+<td><code>watoom-developer</code></td>
+<td>Implements application/game feature code to a spec; not infrastructure or 3D</td>
+</tr>
+<tr>
+<td><code>watoom-automation-expert</code></td>
+<td>Builds and maintains CI/CD pipelines, test harnesses and automation</td>
+</tr>
+<tr>
+<td><code>watoom-3d-modeller</code></td>
+<td>Creates and edits 3D assets; visual work needs pixel review before acceptance</td>
+</tr>
+<tr>
+<td><code>watoom-integration-expert</code></td>
+<td>Wires separate systems/services/APIs together; owns the integration glue</td>
+</tr>
+<tr>
+<td><code>watoom-investigator</code></td>
+<td>Read-heavy diagnosis and research</td>
+</tr>
+<tr>
+<td><code>watoom-reviewer</code></td>
+<td>Reviews changes and evidence</td>
+</tr>
+<tr>
+<td><code>watoom-qa-tester</code></td>
+<td>Read-only: verifies a finished change against its stated spec/acceptance criteria</td>
+</tr>
+<tr>
+<td><code>watoom-adversarial-tester</code></td>
+<td>Read-only: probes a finished change for edge cases, misuse and security failure modes</td>
+</tr>
+<tr>
+<td><code>watoom-blind-tester</code></td>
+<td>Read-only: tests with no prior implementation knowledge, as a first-time user</td>
+</tr>
+<tr>
+<td><code>watoom-researcher</code></td>
+<td>Read-only: answers a specific factual question from authoritative sources</td>
+</tr>
+<tr>
+<td><code>watoom-game-designer</code></td>
+<td>Read-only: mechanics specs, balancing notes and acceptance criteria for a feature</td>
+</tr>
+<tr>
+<td><code>watoom-systems-designer</code></td>
+<td>Read-only: data-model, service-boundary and cross-feature consistency design</td>
+</tr>
+<tr>
+<td><code>watoom-critic</code></td>
+<td>Independent critique; the only child the builder, investigator and reviewer may call</td>
+</tr>
+<tr>
+<td><code>watoom-creative-writer</code></td>
+<td>Long-form writing on the creative model</td>
+</tr>
+<tr>
+<td><code>watoom-kali</code></td>
+<td>Authorised security work; top-level session only, never a delegated child</td>
+</tr>
+</tbody>
+</table></div>
+<p>Development agents cannot see Kali tools. Security work starts a separate primary <code>watoom-kali</code> session.</p>
+<p><strong>When an agent is unsure.</strong> An agent that notices it is guessing about a fact, rather than undecided about scope, stops and delegates one bounded question: to the <code>watoom-investigator</code> if the answer lives in this project's own code or configuration, or to the <code>watoom-researcher</code> if it concerns an external library, API or tool. The called expert checks the versioned reference cards first (the <code>wlk_search</code>, <code>wlk_symbol</code>, <code>wlk_command</code>, <code>wlk_get</code> and <code>wlk_status</code> tools, which cover Godot, Blender, Ansible, Kubernetes/k3s, RHEL system roles, Satellite, the ESP32-DIV board, this project's own pipeline manifests and C/C++), then memory, and only then web documentation. The read-only roles (investigator, critic, reviewer, researcher, QA, adversarial and blind testers, game and systems designers) are explicitly allowed these lookup tools; they cannot change anything with them. Card data is reference material, never instructions.</p>
+<h2 id="skills-and-search">Skills and search</h2>
+<p>Native skills are installed under <code>/data/ai/watoom-code/config/skills</code> from sources pinned in Git (<code>watoom_code_native_skills</code>) and synchronised by <code>playbooks/watoom-native-skills.yml</code>. Browse them with example requests in the <a href="/guide/job-reference.html">Job reference</a>; ready-made pipeline requests are in <a href="/guide/pipeline-prompts.html">Pipeline prompts</a>. Web search uses the in-cluster SearXNG.</p>
+<h3 id="creative-skills-and-project-pipelines">Creative skills and project pipelines</h3>
+<p>The new game-template prompt pipeline helps choose a licence-checked, pinned starter by genre, then asks the agent to copy it into the selected game project, verify the declared Godot import, and build only the requested scope. The game-blueprint pipeline first structures an idea into a plan; prompt preparation does not itself create or validate a game. If no suitable template exists, the agent should continue with a clearly scoped plan rather than force a poor match. Template skills and prompt definitions are under <code>ansible/roles/watoom-code/files/skills/</code>, <code>tools/game-template-catalogue/</code>, and <code>config/glance/pipeline-prompts.json</code>.</p>
+<p>For real-world terrain, ask for <code>watoom-terrain-map</code> with a place or coordinates and project output path. It uses open DEM elevation and creates a Godot scene, float EXR heightmap, collision/mesh builder and rural material. Use the generated <code>height_at()</code> for character/camera placement and take the normal independent capture review. The DEM contains topography only; resolution above source sampling interpolates and does not add detail. Skill source is <code>ansible/roles/watoom-code/files/skills/watoom-terrain-map/</code>.</p>
+<p>The automatic rig fitting and Fab asset advisor are planning/preparation helpers. The rig fitter has staged human, animal and bird fitting paths; the advisor maps a query or owned asset to a declared conversion/preparation route and its preconditions. Treat its result as a candidate pipeline, then verify exact format, dependencies, engine import and actual output. For Fab acquisitions, search the owned catalogue, submit one exact asset/project request, and wait for the owner-bound approval before download. An owned asset or a project task does not itself authorize acquisition. The <code>watoom-fab-owned-assets</code> skill and <code>tools/fab/</code> own this workflow.</p>
+<p>Unreal pack export is available as a native game-worker operation for bounded asset export requests. The agent submits a pack, <code>/Game</code> root, selected classes and optional include/exclude filters through the worker contract; the result is collected in the project with a receipt. The export can run on Bazzite by default and does not imply that the source pack was modified. Import, gameplay and visual acceptance remain separate checks.</p>
+<p>The <code>watoom-metahuman</code> skill now provides owned <code>.mhpkg</code> inspection, verified Unreal installation, and an Unreal-to-Godot export path. It can produce meshes, DNA, textures, a Godot scene and setup script; GPU skin maps come from the separate RIG Unreal lane. Godot faces remain static because RigLogic is unavailable there. Read <a href="/guide/llm-extensions.html#metahuman-package-conversion">Custom extensions</a> for exact limits, test status and source paths before using it.</p>
+<h2 id="project-scope">Project scope</h2>
+<p>Projects live at <code>/data/ai/projects/&lt;group&gt;/&lt;project&gt;</code>. Each group is mounted read-write at the same path inside the app; the rest of <code>/data/ai</code> is read-only.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Group</th>
+<th>For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>games</code></td>
+<td>Godot and Unreal game builds</td>
+</tr>
+<tr>
+<td><code>work</code></td>
+<td>Employer work</td>
+</tr>
+<tr>
+<td><code>writing</code></td>
+<td>Stories and documents</td>
+</tr>
+<tr>
+<td><code>images</code></td>
+<td>Image and render projects (<code>images/review</code>, <code>images/generated</code>)</td>
+</tr>
+<tr>
+<td><code>homelab</code></td>
+<td>Homelab infrastructure, including this repository</td>
+</tr>
+<tr>
+<td><code>llm</code></td>
+<td>Model, agent and pipeline tooling (<code>llm/pipelines/…</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="new-session-project-picker">New-session project picker</h3>
+<p>The picker groups existing projects into <strong>Games, Work, Writing, Images, Homelab, LLM &amp; tooling</strong>. Select a space when creating a project so it is placed under the matching <code>/data/ai/projects/&lt;group&gt;/</code> root. These six spaces map one-to-one to the directories in <code>/data/ai/projects/AGENTS.md</code>.</p>
+<p>Grouping is config-driven: <code>watoom_code_project_spaces</code> in <code>ansible/roles/watoom-code/defaults/main.yml</code> is rendered by <code>tasks/coordinator_guard.yml</code> to <code>&lt;config-root&gt;/watoom-spaces.json</code> and exposed by <code>GET /api/config/spaces</code>. If that file is absent, the picker gracefully shows a flat project list.</p>
+<p>To add a space, update the defaults list (ID, label and description), keep its ID aligned with a configured project group and <code>/data/ai/projects/AGENTS.md</code>, then re-apply the owning <code>watoom-code</code> role through the existing approved release route. The defaults list controls display order.</p>
+<p>Shared inputs are in <code>/data/ai/assets</code>. Run evidence is kept with each job or under <code>/data/ai/helper-scripts/reports</code>; <code>/data/ai/artifacts</code> holds only ESP32 build output and Unreal pack exports.</p>
+<h2 id="toolkit-and-engines">Toolkit and engines</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Engine</th>
+<th>Version</th>
+<th>Location</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Blender</td>
+<td>5.2.3 (in the Toolkit image)</td>
+<td><code>/data/ai/toolchains/blender/5.2.3</code> on the host</td>
+</tr>
+<tr>
+<td>Unreal Engine</td>
+<td>5.8.3</td>
+<td><code>/data/ai/toolchains/unreal/5.8.3</code></td>
+</tr>
+<tr>
+<td>Godot</td>
+<td>4.7.2</td>
+<td><code>/data/ai/toolchains/godot/4.7.2</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>The Toolkit image (<code>tools/watoom-toolkit/Containerfile.3d</code>) carries Blender and the worker code. Jobs run as separate pods with fixed CPU, memory and time limits, read inputs by hash and write outputs plus a receipt. <code>3d.inspect</code> performs export/re-import, Godot import, Unreal import and LOD checks.</p>
+<h3 id="godot-editor-mcp">Godot Editor MCP</h3>
+<p><code>watoom-code</code> can inspect and drive the Godot Editor that is open on the rig through the <code>watoom-godot</code> MCP server. The agent pod runs <code>ssh</code> to a restricted account (<code>godotmcp</code>) on the rig at <code>10.99.1.44:2223</code>. That account can only run one launcher, <code>C:\watoom\rig-godot-mcp\run-godot-mcp.cmd</code>, which starts a policy wrapper in front of the NPGameDev <code>godot-mcp-server</code>; the bridge then talks to the editor plugin over loopback on the rig. The policy gate lives on the rig, so the pod cannot loosen it.</p>
+<p>As of 2026-11-13 the rig policy names every tool in the toolkit's reference (115 names), including the write tools and <code>execute_code</code>; the owner opened it. The rig's <code>godot-mcp-policy.reviewed.json</code> is the reviewed list and <code>C:\ProgramData\watoom\godot-mcp-policy.json</code> is the live copy, re-read on every request. To close one tool, add its name to <code>deny_names</code> (deny wins). A tool added by a later toolkit update stays blocked until its name is added. Agents are told to prefer read-only tools, keep write tools to what the task needs, and use <code>execute_code</code>/<code>node_call_method</code> only when no dedicated tool does the job. The <code>godot-mcp-toolkit</code> and <code>watoom-godot-route</code> language-knowledge cards describe each tool, its access label and the route policy; experts read them when an agent is unsure how to use a tool. The Godot Editor must be open on the rig with the <code>godot_mcp_toolkit</code> plugin enabled; if it is closed the tool list is empty. The server entry is merged into the existing configuration by <code>watoom_code_godot_mcp_enabled</code> through <code>playbooks/watoom-code-godot-mcp.yml</code>, followed by a restart of the <code>watoom-code</code> pod. To switch it off, set the variable to <code>false</code>, re-run that playbook (it removes the entry) and restart the pod, or disable the <code>godotmcp</code> account on the rig. Rig-side setup, the verified Windows OpenSSH behaviour and the extra steps for opening further tools are in <code>tools/rig-godot-mcp/README.md</code>.</p>
+<h3 id="unreal-editor-mcp-not-yet-enabled">Unreal Editor MCP (not yet enabled)</h3>
+<p>The same route exists for Unreal through db-lyon/ue-mcp (<code>watoom-ue</code>, pinned 1.4.14, micro context strategy: one gateway tool, about 240 tokens). The lab side (SSH playbook, config entry, policy wrapper, converter, cards) is built and tested; it stays off (<code>watoom_code_ue_mcp_enabled: false</code>) until the rig side is installed from <code>tools/rig-ue-mcp/README.md</code>: the plugin in the project, a restricted <code>uemcp</code> account on port 2224, a router exception and the policy file. Nothing has run against the rig's Unreal 5.8 editor yet. The rig policy allows every ue-mcp category and denies nothing (all 3,714 actions, opened by the owner on 2026-11-14), so the model is told to prefer dedicated actions over the Python and console escape hatches and to read before it changes. A category added by a later release stays blocked until the policy is regenerated. The language-knowledge product <code>ue-mcp</code> has one card per action (3,714) with its effect and whether the route allows it. The texture-layering skill's <code>unreal_landscape_export.py</code> prepares the 16-bit heightmap and uint8 layer-weight tiles that <code>landscape.import_heightmap</code> and <code>landscape.set_layer_weight_region</code> take.</p>
+<h3 id="building-a-game-end-to-end">Building a game end to end</h3>
+<p>The <code>watoom-game-blueprint</code> skill now carries a task-by-task plan for each engine: <code>references/engine-godot.md</code>, <code>engine-unreal.md</code> and <code>engine-threejs.md</code>. Every task row names the agent that does it (game designer, systems designer, developer, builder, 3D modeller, integration expert, automation expert, reviewer, the three testers), the tool or pipeline to use (the Godot and Unreal editor tools, the terrain and texture-layering scripts, the worker bridge, headless Chrome for Three.js) and a done-when check. <code>references/agents.md</code> says which agent to call for what, and <code>templates/project-docs.md</code> gives the four short documents (specs, GDD, architecture, test log) every task cites. The Unreal and Three.js plans are new and untested end to end; the Unreal plan assumes Blueprint-only because the rig has no C++ toolchain.</p>
+<h3 id="texture-layering">Texture layering</h3>
+<p>The <code>watoom-texture-layering</code> skill covers layered texturing for terrain and props. <code>scripts/layer_masks.py</code> turns a terrain heightmap and a layer spec (slope, height, curvature and noise rules) into splat weight maps that sum to exactly 255 per pixel; <code>scripts/blender_layered_material.py</code> builds a stacked PBR material in Blender (slope, height, noise, vertex-colour, AO and edge masks, macro variation, detail normal); <code>templates/terrain_layered.gdshader</code> draws up to eight layers in Godot with height-blend, triplanar cliffs and anti-tiling. The mask maths, the Blender build and render, and the shader compile are covered by unit tests on the lab; the shader's rendered look on a GPU and Terrain3D control-map import still need the rig. The <code>watoom-texture-layering</code> cards state the layering rules, and experts read them when an agent is unsure how to layer a material.</p>
+<p>Unreal validation starts from a pinned asset-registry seed beside the engine (<code>asset-registry-seed-&lt;engine-sha&gt;</code>). Each job verifies its SHA-256 before use and falls back to a cold scan if it is missing or altered, so it changes speed only, never results.</p>
+<h2 id="background-dispatchers">Background dispatchers</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Timer</th>
+<th>Interval</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>watoom-game-worker</code></td>
+<td>30 s after idle</td>
+<td>Runs admitted, bounded Godot validation jobs</td>
+</tr>
+<tr>
+<td><code>watoom-rig-async-stage</code></td>
+<td>5 s after idle</td>
+<td>Admits RIG game jobs, reconciles the broker queue, delivers completions through a durable outbox</td>
+</tr>
+<tr>
+<td><code>watoom-workstation-render-stage-scan</code></td>
+<td>polling</td>
+<td>Admits render requests from the workstation inbox</td>
+</tr>
+<tr>
+<td><code>watoom-fab-approvals</code></td>
+<td>1 min</td>
+<td>Processes owner-approved Fab asset acquisitions</td>
+</tr>
+<tr>
+<td><code>watoom-image-review</code></td>
+<td>1 min</td>
+<td>Copies project captures into <code>images/review</code></td>
+</tr>
+<tr>
+<td><code>watoom-capability-health</code></td>
+<td>1 h</td>
+<td>Refreshes the native catalogue and learning health (no inference)</td>
+</tr>
+<tr>
+<td><code>watoom-change-requests</code></td>
+<td>30 s after idle</td>
+<td>Validates model change requests and publishes the diff for operator approval; never applies anything</td>
+</tr>
+</tbody>
+</table></div>
+<p>The render broker queue is <code>/data/ai/helper-scripts/state/workstation-render-stage/queue.sqlite</code>. The in-cluster stage worker claims <code>godot</code> jobs; the Windows workstation worker claims <code>blender</code> render jobs. Inputs are snapshotted by hash at admission through the <code>watoom-workstation-inputs.socket</code> service, so later edits to a source file never change a queued job.</p>
+<h2 id="host-change-requests">Host change requests</h2>
+<p>Models cannot edit host-owned files such as the ESP32 worker contract, which live in the read-only canonical checkout. When a failure is caused by one, the model files a change request that an operator approves. Check for a named option first: ESP32 builds that exceed the default 128 files / 4 MiB source budget add <code>&quot;source_profile&quot;:&quot;large&quot;</code> (up to 1024 files / 16 MiB) to the build manifest, with no request needed.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Who</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>File</td>
+<td>Model, in any project</td>
+<td>Writes <code>.opencode/change-requests/&lt;id&gt;.json</code> (<code>schema</code>, <code>id</code>, <code>file</code>, <code>old</code>, <code>new</code>, <code>reason</code>) in its project root. <code>old</code> must match the target exactly once; at most 40 changed lines; one fresh id per request</td>
+</tr>
+<tr>
+<td>Scan</td>
+<td><code>watoom-change-requests</code> timer</td>
+<td>Checks the request against the allowlist and publishes <code>&lt;id&gt;.status.json</code>: <code>PENDING_APPROVAL</code> with the exact diff, or <code>REJECTED</code> with the reason</td>
+</tr>
+<tr>
+<td>Decide</td>
+<td>Operator, on the host</td>
+<td><code>change_request.py list</code>, <code>show &lt;id&gt;</code>, then <code>approve &lt;id&gt;</code> or <code>reject &lt;id&gt;</code> (add <code>--project NAME</code> if two projects share an id)</td>
+</tr>
+<tr>
+<td>Decide in Glance</td>
+<td>Operator, in the browser</td>
+<td>Open <strong>Change requests</strong> under <em>Observe and search</em> (<code>/command-center/change-requests.html</code>). It shows each pending diff with the reason and <strong>Approve and apply</strong> / <strong>Reject</strong> buttons. Enter the operator PIN (root-only file <code>/root/.watoom-change-request-pin</code>) so models and other LAN clients cannot approve; five wrong PINs lock it for five minutes. The decision is queued and the host scanner applies it within about a minute, only if the request is still the version you reviewed</td>
+</tr>
+<tr>
+<td>Apply</td>
+<td><code>approve</code></td>
+<td>Re-checks the request and target are unchanged, applies the edit, runs the fixed checks from the policy, then commits and pushes only that file. A failed check restores the file</td>
+</tr>
+</tbody>
+</table></div>
+<p>To create or rotate the PIN run <code>scripts/set-change-approval-pin.sh</code> as root. It stores the PIN and its salted hash in the encrypted vault (<code>CHANGE_REQUEST_PIN</code>, <code>GLANCE_CHANGE_APPROVAL_PIN_HASH</code>), writes the root-only file, applies only the <code>glance-change-approval</code> Secret and restarts Glance. The cluster never holds the PIN itself. <a href="/guide/security.html">Where secrets live</a></p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">python3 tools/change-requests/change_request.py list
+python3 tools/change-requests/change_request.py show &lt;id&gt;
+python3 tools/change-requests/change_request.py approve &lt;id&gt;
+</code></pre></div>
+<blockquote class="callout callout-rule" data-kind="Rule">
+<p>The policy <code>tools/change-requests/policy.json</code> is the only authority. Only allowlisted files are accepted (currently the ESP32 <code>contract.py</code>, <code>runner.py</code>, <code>worker.py</code> and operations doc), the checks are fixed argv lists a request cannot choose, a target with uncommitted changes is refused, and models cannot approve their own requests or run host commands. Queues are found in every <code>/data/ai/projects/&lt;group&gt;/&lt;project&gt;/.opencode/change-requests</code> whose path contains no symlinks. Every action is appended to <code>/data/ai/helper-scripts/reports/change-requests/audit.jsonl</code>. Adding a file or project scope means editing the policy and reviewing its check.</p>
+</blockquote>
+<h2 id="learning-loop">Learning loop</h2>
+<p>Phase 2 uses <code>tools/watoom-code/verification_loop.py</code>, a harness-run, read-only grader orchestrator. It selects graders by file type: <code>ansible-lint</code> and <code>ansible-playbook --syntax-check</code> for Ansible, YAML parse, <code>bash -n</code>, <code>py_compile</code> and JSON parse (plus <code>yamllint</code> when the repository pins a configuration). The JSON verdict includes overall, per-file and per-grader results; exit status is 0 or 1. <strong>The verdict belongs to the harness, never the agent's self-report.</strong> Run it over the changeset before presenting work to the owner; fix failures and re-run.</p>
+<p>From <code>standardised_k3s_project/</code>, for example:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">python3 tools/watoom-code/verification_loop.py --path docs/guide/watoom-code.md --path config/glance/guide/assets/search-index.json --evidence /path/to/task-evidence
+</code></pre></div>
+<p>Paths are relative to that project root; repeat <code>--path</code> for every changed file. Unsupported file types and missing graders are reported as <code>SKIP</code>, not proof of correctness. Markdown and HTML still require the existing guide renderer and documentation link checks.</p>
+<p>Phases 3–4 use <code>tools/watoom-code/self_learning/memory_curator.py</code>: a deterministic nightly curator with <strong>no LLM/GPU</strong>. It mines the owner's commits over agent-authored paths into procedural lessons and can ingest verification failures from an evidence root as episodic incidents. Its journalled writes go only to the sidecar <code>&lt;watoom_learning_root&gt;/lessons.sqlite</code>, separate from AgentMemory. The shipped timer mines owner commits; evidence ingestion requires supplying <code>--evidence-root</code> to the curator.</p>
+<p>The curator is <strong>off by default</strong>. <code>ansible/roles/watoom-code/tasks/self_learning_curator.yml</code>, wired into <code>ansible/playbooks/watoom-code-self-learning-controller.yml</code>, installs the nightly timer only when <code>watoom_learning_curator_enabled: true</code>.</p>
+<p>Other learning inputs are owner chat lessons marked with <code>+</code> and verified engine/API error lessons shown to agents. These feed the guarded lesson path; they do not silently patch source or override the current API reference. Phase 2's verification grader chooses static checks by file type and emits a harness-owned JSON verdict. A <code>SKIP</code> means that grader could not check that file, not that it passed. The critic also has a source-verification instruction for API/library fixes. Sources include <code>tools/watoom-code/verification_loop.py</code>, <code>tools/watoom-code/self_learning/</code>, <code>ansible/roles/watoom-code/files/skills/self-learning/</code>, and the shared agent instructions.</p>
+<p>Three independent stop/rollback levers are available:</p>
+<ol>
+<li>Set <code>watoom_learning_curator_enabled: false</code> and re-apply the controller playbook to stop the timer and remove its service/timer units.</li>
+<li>Run <code>touch &lt;watoom_learning_root&gt;/curator-disabled</code>; the next curate/apply run is a no-op (<code>DISABLED</code>). Substitute the configured root before running.</li>
+<li>Undo one night's journalled transaction using its printed transaction ID:</li>
+</ol>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">python3 tools/watoom-code/self_learning/memory_curator.py rollback --store /configured/learning/root/lessons.sqlite --txn TRANSACTION_ID
+</code></pre></div>
+<p>Replace the store path and transaction ID with the configured values. Sidecar lessons can auto-apply; nothing durable in code, the harness, coordinator guard or AgentMemory changes without the existing idle gate and owner approval. The full design and decisions are in <code>docs/proposals/learning-loop-design.md</code>, sections 3 and 6.</p>
+<h2 id="releases">Releases</h2>
+<p>Production changes to the app, guard, skills or Toolkit are promoted through fenced routes that wait for an idle app and GPU, apply, verify and roll back on failure:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Change</th>
+<th>Route</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>App, agents, guard, skills</td>
+<td>the owning <code>playbooks/watoom-code-*.yml</code>, run under the release fence</td>
+</tr>
+<tr>
+<td>Toolkit image</td>
+<td><code>tools/watoom-code/deploy-platform.py --blender-toolkit-only</code> with an exact-image acceptance bundle (fixtures, review and engine hashes)</td>
+</tr>
+<tr>
+<td>Model placement</td>
+<td>GPU controller with rollback (see <a href="/guide/ai.html">AI platform</a>)</td>
+</tr>
+</tbody>
+</table></div>
+<p>After a Toolkit promotion, the app's location bindings are reloaded while idle. A one-off repair must never become a hidden dependency: fix source, add a regression check, release through the route above.</p>
+<p>The application source port, GUI plugin, scroll fix and file-download feature are tracked as separate immutable image pins. Reasoning-level GUI controls (<code>xhigh</code>, <code>medium</code>, <code>low</code>, <code>off</code>) are supplied through the model capability/variant configuration. For the Qwen model, <code>preserve_thinking=false</code> drops stale prior reasoning from context while allowing fresh reasoning each turn. The exact supported variants and chat-template settings are source-controlled; avoid copying backend flags into user prompts. The prompt-cache disk tier is owned by the LLM serving configuration and uses <code>/data</code>; cache reuse is an optimization, not a guarantee for a new or changed prompt prefix.</p>
+<h2 id="backups">Backups</h2>
+<p><code>watoom-code-backup.timer</code> runs daily at 03:30. It takes a verified copy of the SQLite database, configuration and AgentMemory, keeping 14 copies in <code>/data/backups/watoom-code</code>. It then exports a rotating off-host set that the workstation pulls. <code>watoom-backup-offhost-check.timer</code> checks the pull receipts hourly.</p>
+<h2 id="complete-platform-manuals">Complete platform manuals</h2>
+<p>Use the <a href="/guide/llm-user-guide.html">LLM user guide</a> for end-to-end workflows and the <a href="/guide/llm-api.html">LLM API &amp; reference</a> for integration contracts, the platform source map, operations, maintenance and recovery.</p>
+<h2 id="project-and-source-reference">Project and source reference</h2>
+<p>See the <a href="/guide/llm-project.html">LLM project guide</a> for requirements, configuration, deployment,
+development and troubleshooting; <a href="/guide/llm-extensions.html">custom extensions</a> for plugins,
+agents, skills and worker integrations; and the <a href="/guide/server-catalogue.html">server automation reference</a>
+for every tracked script, playbook, role and tool. <a href="/guide/llm-publication.html">GitHub publication</a>
+covers the separate private distribution and source provenance.</p>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/watoom-code.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

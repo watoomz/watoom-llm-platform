@@ -1,0 +1,222 @@
+---
+- name: Require reviewed immutable manager artifact and source
+  ansible.builtin.assert:
+    that:
+      - model_manager_enabled | bool
+      - model_manager_image is match('^.+@sha256:[a-f0-9]{64}$')
+      - model_manager_release is match('^[a-f0-9]{40}$')
+- name: Require validated controller integration before production registration
+  ansible.builtin.assert:
+    that: model_manager_stage_only | bool or model_manager_controller_verified | bool
+- name: Refuse broker replacement during active manager work
+  ansible.builtin.command:
+    argv:
+    - python3
+    - -c
+    - |
+      import pathlib,sqlite3,sys
+      p=pathlib.Path(sys.argv[1])
+      if p.exists():
+        db=sqlite3.connect(p.as_uri()+'?mode=ro',uri=True)
+        try:
+          active=db.execute("SELECT count(*) FROM jobs WHERE state IN ('GENERATING','DOWNLOADING','REMOVING')").fetchone()[0]
+          if active:raise SystemExit('Active Model Manager work: wait or reconcile ownership before deployment')
+        finally:db.close()
+    - "{{ model_manager_state }}/catalog.sqlite"
+  changed_when: false
+- name: Ensure isolated application namespace exists
+  ansible.builtin.command:
+    argv: [kubectl, get, namespace, "{{ model_manager_namespace }}", --ignore-not-found, -o, name]
+  register: model_manager_ns
+  changed_when: false
+- name: Create missing manager namespace
+  ansible.builtin.command:
+    argv: [kubectl, create, namespace, "{{ model_manager_namespace }}"]
+  when: model_manager_ns.stdout | trim == ''
+  changed_when: true
+- name: Inspect same-name resources before installing
+  ansible.builtin.command:
+    argv: [kubectl, -n, "{{ model_manager_namespace }}", get, "{{ item }}", model-manager, --ignore-not-found, -o, json]
+  loop: [deployment, service, ingressroute]
+  register: model_manager_existing
+  changed_when: false
+- name: Protect foreign resources from apply
+  ansible.builtin.assert:
+    that: >-
+      item.stdout | trim == '' or
+      ((item.stdout | from_json).metadata.labels | default({})).get('watoom.io/owner', '') == 'model-manager'
+    fail_msg: A same-name resource is not owned by model-manager; no overwrite is allowed.
+  loop: "{{ model_manager_existing.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+- name: Require scoped immutable SDXL runtime path
+  ansible.builtin.assert:
+    that: model_manager_sdxl_runtime.path is match('^/data/ai/toolchains/model-manager-sdxl/[a-f0-9]{64}/bundle/rootfs/opt/conda$')
+  when: model_manager_sdxl_runtime is not none
+- name: Preserve executable container labels only on the published runtime
+  ansible.builtin.file:
+    path: "{{ model_manager_sdxl_runtime.path }}"
+    state: directory
+    setype: container_file_t
+    recurse: true
+    follow: false
+  when: model_manager_sdxl_runtime is not none
+- name: Create manager-owned state
+  ansible.builtin.file:
+    path: "{{ model_manager_state }}"
+    state: directory
+    owner: "{{ model_manager_uid }}"
+    group: "{{ model_manager_gid }}"
+    mode: "0750"
+- name: Create only dedicated model-manager storage
+  ansible.builtin.file:
+    path: "{{ model_manager_models }}/{{ item }}/model-manager"
+    state: directory
+    owner: "{{ model_manager_uid }}"
+    group: "{{ model_manager_gid }}"
+    mode: "0750"
+  loop: [gguf, diffusion, loras, quarantine]
+- name: Create root-owned broker runtime directory
+  ansible.builtin.file:
+    path: "{{ model_manager_broker_root }}"
+    state: directory
+    owner: root
+    group: "{{ model_manager_gid }}"
+    mode: "0750"
+- name: Create immutable runtime source directory
+  ansible.builtin.file:
+    path: "/app/model-manager/releases/{{ model_manager_release }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+- name: Install versioned broker source
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../tools/model-manager/{{ item }}"
+    dest: "/app/model-manager/releases/{{ model_manager_release }}/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: [server.py, hf.py, settings.py, store.py, worker.py, operations.py, download.py, file_lock.py, broker_service.py, broker.py, workload.py, native_admission.py, gguf_header.py, runtime_payload.py, admission_errors.py, image_mcp.py, image_publish.py]
+- name: Install existing native admission client without network maintenance actions
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../tools/watoom-code/{{ item }}"
+    dest: "/app/model-manager/releases/{{ model_manager_release }}/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: [maintenance_guard.py, release_guard.py]
+- name: Install standard context migration from authoritative application role
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../roles/watoom-code/files/enable-model-context.py"
+    dest: "/app/model-manager/releases/{{ model_manager_release }}/enable-model-context.py"
+    owner: root
+    group: root
+    mode: "0644"
+- name: Check operator-owned authentication file exists
+  ansible.builtin.stat:
+    path: "{{ model_manager_password_file }}"
+  register: model_manager_auth_file
+  no_log: true
+- name: Refuse unauthenticated installation
+  ansible.builtin.assert:
+    that: model_manager_auth_file.stat.isreg | default(false)
+    fail_msg: Prepare the private authentication file through the installation runner first.
+- name: Prepare generation-only image interface
+  when: model_manager_image_mcp_enabled | bool
+  block:
+  - name: Inspect operator-owned image token
+    ansible.builtin.stat:
+      path: "{{ model_manager_image_mcp_token_file }}"
+    register: model_manager_image_token
+    no_log: true
+  - name: Require private generation-only token
+    ansible.builtin.assert:
+      that:
+        - model_manager_image_token.stat.isreg | default(false)
+        - model_manager_image_token.stat.uid == 0
+        - model_manager_image_token.stat.mode == '0640'
+        - model_manager_image_token.stat.gid == model_manager_gid | int
+        - model_manager_image_token.stat.size >= 32
+    no_log: true
+  - name: Create root-owned image publication directory
+    ansible.builtin.file:
+      path: "{{ model_manager_image_output_root }}"
+      state: directory
+      owner: root
+      group: "{{ model_manager_image_output_gid }}"
+      mode: '0755'
+      setype: container_file_t
+- name: Install private broker configuration
+  ansible.builtin.template:
+    src: broker.json.j2
+    dest: "{{ model_manager_broker_root }}/config.json"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  register: model_manager_broker_config
+- name: Install scoped broker service
+  ansible.builtin.template:
+    src: broker.service.j2
+    dest: "/etc/systemd/system/{{ model_manager_service_name }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+  register: model_manager_broker_unit
+- name: Initialize owned catalog without changing user models
+  ansible.builtin.command:
+    argv:
+    - setpriv
+    - "--reuid={{ model_manager_uid }}"
+    - "--regid={{ model_manager_gid }}"
+    - --clear-groups
+    - python3
+    - -c
+    - "import sys;sys.path.insert(0,sys.argv[1]);from store import Store;Store(sys.argv[2])"
+    - "/app/model-manager/releases/{{ model_manager_release }}"
+    - "{{ model_manager_state }}/catalog.sqlite"
+    creates: "{{ model_manager_state }}/catalog.sqlite"
+- name: Start broker without touching existing model workloads
+  ansible.builtin.systemd:
+    name: "{{ model_manager_service_name }}.service"
+    daemon_reload: true
+    enabled: true
+    state: "{{ 'restarted' if model_manager_broker_config.changed or model_manager_broker_unit.changed else 'started' }}"
+- name: Render isolated CPU application and Service
+  ansible.builtin.template:
+    src: deployment.yml.j2
+    dest: "{{ model_manager_broker_root }}/deployment.yml"
+    owner: root
+    group: root
+    mode: "0600"
+- name: Apply only manager resources
+  ansible.builtin.command:
+    argv: [kubectl, apply, -f, "{{ model_manager_broker_root }}/deployment.yml"]
+  register: model_manager_apply
+  changed_when: "'created' in model_manager_apply.stdout or 'configured' in model_manager_apply.stdout"
+
+
+- name: Render approved existing-host model manager route
+  ansible.builtin.template:
+    src: route.yml.j2
+    dest: "{{ model_manager_broker_root }}/route.yml"
+    owner: root
+    group: root
+    mode: "0600"
+  when: model_manager_publish_route | bool
+- name: Apply approved model manager application route
+  ansible.builtin.command:
+    argv: [kubectl, apply, -f, "{{ model_manager_broker_root }}/route.yml"]
+  when: model_manager_publish_route | bool
+  register: model_manager_route
+  changed_when: "'created' in model_manager_route.stdout or 'configured' in model_manager_route.stdout"
+
+- name: Install normal administrative helper after approved source promotion
+  ansible.builtin.template:
+    src: model-manager-admin.py.j2
+    dest: /data/ai/helper-scripts/model-manager-admin.py
+    owner: root
+    group: root
+    mode: "0750"
+  when: not model_manager_stage_only | bool

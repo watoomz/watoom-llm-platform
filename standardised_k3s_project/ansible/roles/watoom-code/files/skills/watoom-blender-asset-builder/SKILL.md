@@ -1,0 +1,51 @@
+---
+name: watoom-blender-asset-builder
+description: Coordinate reference-driven Blender game assets, EL4CTEO CPU skills, versioned source, recovery, visual review, and real Godot/Unreal validation through existing native tools.
+---
+# Production Blender Asset Builder
+
+## Execution boundary (verified deployment)
+
+### Running Blender from a game project (native worker)
+
+From a session in `/data/ai/projects/games/<project>`, run any Blender stage through `watoom_game_worker` with `operation:"blender"`. Write `.opencode/blender-jobs/<job>/request.json`:
+
+```json
+{"schema":1,"blend":"art/hero.blend","script":"skill:blender-export-pipelines/scripts/export_asset.py","args":["--preset","godot","--out","{out}/hero.glb"]}
+```
+
+- `script`: a project `.py` file or `skill:<skill>/scripts/<file>.py`. `blend` is optional and opened first. `{out}` in `args` becomes `.opencode/blender-out/<job>/`, the only writable folder; the project is read-only, with no network.
+- Limits: `deadline_sec` 60-900 (default 300); `memory_gib` 2-6 (default 4, and skill scripts need 4). It uses the same qualified Blender 5.2.1 server profile the skill scripts verify.
+- The receipt (`.opencode/blender-out/<job>/result.json`, and the worker status) gives `script_result` (the last `@@JSON@@` line), `traceback`, `errors` and `outputs`. Chain stages by pointing the next job's `blend` or `args` at the previous job's output.
+- Each job name is used once.
+
+Pipeline revisions outside a game project still use the dry-run rule below.
+
+The request runner is a local subprocess runner, not a worker dispatcher. `pipeline.py` / `request_pipeline.py` launch Blender in the caller's cgroup. Python wrappers, `start_new_session`, selecting a builder agent, `--resume`, `--retry-failed` and `--engine-job` do not allocate memory or move execution to the capture worker. The application cgroup is 2GiB; external workers are separately bounded: server CPU 4GiB or RIG Windows Job Object 8GiB. Profile verification does not turn this local runner into a dispatcher.
+
+In the application shell, prepare metadata and use `--dry-run` only. Any non-dry-run invocation may start unfinished Blender stages. Execute those only through an explicitly verified external worker integration; this document does not provide such a launcher for custom stages. Never guess dispatcher options, nest subprocesses to evade the guard, or strip source assets to fit the app limit.
+
+Exit `-9` means SIGKILL. Attribute it to OOM only with matching kernel/cgroup memory-event evidence; bone count and a missing report do not prove OOM. Preserve the failed attempt and report the missing route instead of retrying unchanged.
+
+Use the existing serial watoom-workflow -> watoom-builder -> investigator/reviewer hierarchy and native AgentMemory. No duplicate services or model changes. Recall a relevant verified recipe before substantive work; remember only successful scoped recipes with evidence and limits after delivery.
+
+Create a new revision under /data/ai/projects/llm/pipelines/blender-asset-builder/<revision>. Preserve original sources, acquired Fab packages and game assets. Inspect references and installed capabilities first. Record reference provenance and a specification including scale, target engines, triangle budget, material/UV needs and applicable animations. The magpie direction is funny and stylized, occasionally dark; preserve recognizable Australian magpie anatomy and plumage.
+
+Load only relevant installed blender-* skills, not the whole library. Use pinned Blender 5.2.1 and the shared worker profiles: server CPU/4GiB/two threads or RIG OptiX/8GiB/four threads, with explicit CPU available. Component stages remain bounded to 300 seconds. GPU contexts require actual RIG qualification; preserve capability-dependent fallback warnings. Do not install addons/MCP/software. Respect admitted workers and never execute Blender in the application shell. Use relevant hard-surface, sculpt/retopo, UV/baking/PBR, rig/skin/animation, lighting/render and QA modules. Independently author geometry/scripts for the requested asset; no fixed pilot-only completion claims.
+
+Start fresh model scripts with an empty scene; QA all intended runtime geometry and reject stray startup objects. Author request.json and task-local Blender scripts. Schema and a minimal example are in references/request-workflow.md. Run `python3 /config/skills/watoom-blender-asset-builder/scripts/pipeline.py --request <revision>/request.json --dry-run`. Run without `--dry-run` only inside a separately verified external worker; the app shell is not that worker. It checkpoints source/script/input/output hashes, serial stages and bounded failures. `--resume` revalidates completed outputs. Inspect failure logs and partial outputs before `--resume --retry-failed` (one retry, retained old outputs). Changed accepted inputs require a new revision. Legacy --root pilot mode is retained for historical diagnosis only; never use it for production.
+
+After local MODEL/MATERIALS/QA/EXPORT and previews, use the directly exposed native `watoom_specialist_run` exactly once with capability `3d.inspect`, specialistID `local-toolkit`, a unique job, and payload `{task:"3d-inspect",path:"pipelines/blender-asset-builder/<revision>/<source.blend>",parameters:{engine_validation:1},timeout:420}`. The existing worker validates Blender export/reimport, Godot import/playback, Unreal static/skeletal import/reimport, collision, LODs, dependencies and playback. Do not run Unreal inside the app or overwrite Wombat/Moonstone. Poll/reconcile the existing native job; never blindly replay uncertain work. Use a new job for a genuinely new validated source revision.
+
+Native `artifact:generated/watoom-toolkit-3d/v1/<id>/...` references map under `/generated`, for example `/generated/generated/watoom-toolkit-3d/v1/<id>/manifest.json`. Read the exact receipt path. Keep searches scoped to the task or one relevant installed skill; never search the whole filesystem. Declare imported task-local Python modules in stage inputs so their hashes participate in resume validation.
+
+Resume the runner with `--engine-job <native-job-name>`. It verifies the completed native database receipt, exact request path, source hash, published artifact hashes and actual Godot/Unreal results. If admission refuses or a tool fails, retain PARTIAL/FAIL and evidence.
+
+Inspect actual multi-view/reference and animation/deformation images with available image tools; successful geometry QA does not prove appearance. Record reviewer, notes, checks and each reviewed local image hash in reports/visual-review.json. Never manufacture a visual PASS. The runner closes only after both real engine evidence and explicit image review pass. If creative quality remains uncertain, report it and retain the revision for review. Deliver source/export paths, previews, per-stage results, engine receipts and durable state. Update AgentMemory with the proven recipe and retrieve it in a later session before reuse.
+
+The runner automatically adds mandatory SOURCE_QA after EXPORT. QA must write the actual qa_check result (or its upstream field), including validated object metrics. Finalize runtime mesh names before QA. SOURCE_QA reopens the packed engine_source and checks every mesh against that validated name set, triangle count and strict geometry/UV checks. Save packed runtime source and exports before adding preview floors or other render geometry. Extra preview meshes fail delivery even when engine import succeeds. SOURCE_QA is reserved and cannot be supplied by the request.
+
+<!-- GODOT_PARTICLE_RECIPE_4_7_V1 -->
+## Verified particle recipe (supersedes P7 opaque-quad guidance)
+The previous claim that Godot 4.7.2 cannot texture GPUParticles3D is superseded. Load `/data/ai/projects/llm/pipelines/godot-particle-vfx-v1/README.md` and `profile.json` before creating/changing Godot particles. Use `scripts/particle_vfx_recipe.gd`: a Mesh draw pass owns the surface material; RGB opacity masks need derived alpha; ground decals face Y. Preserve intentional opaque effects and qualify other engine versions. The current recipe was validated with 160/160 tests, zero runtime errors, fresh gameplay frames, independent synthetic effects and negative opaque controls. Historical records remain unchanged below/above this correction.
+For future Blender/Godot particle jobs, use the registered `particle-vfx` mode of `/data/ai/helper-scripts/watoom-blender-unified/current/runner.py` with a schema-1 request declaring engine/texture_encoding/texture/fresh output; runtime needs `--i-approve`. Always import new textures, run alpha/draw-pass checks and bounded visual smoke tests; preserve failed reports and never accept a failed output. Do not run engines in the app cgroup or invent native worker methods. Read exact schema/commands and proof in the recipe. AgentMemory lookup key: `godot-particle-vfx-4.7.2-poo-alpha-v1`.

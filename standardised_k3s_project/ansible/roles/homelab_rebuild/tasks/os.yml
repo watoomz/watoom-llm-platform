@@ -1,0 +1,27 @@
+---
+- name: "Homelab Rebuild | Set hostname"
+  ansible.builtin.hostname:
+    name: "{{ homelab_hostname }}"
+
+- name: "Homelab Rebuild | Set timezone"
+  community.general.timezone:
+    name: "{{ homelab_timezone }}"
+
+- name: "Homelab Rebuild | Set locale"
+  ansible.builtin.command: "localectl set-locale LANG={{ homelab_locale }}"
+  changed_when: false
+
+- name: "Homelab Rebuild | Set keymap"
+  ansible.builtin.command: "localectl set-keymap {{ homelab_keymap }}"
+  changed_when: false
+
+- name: "Homelab Rebuild | Enable base services"
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - NetworkManager
+    - firewalld
+    - sshd
+    - chronyd

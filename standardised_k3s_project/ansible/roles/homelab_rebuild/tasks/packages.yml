@@ -1,0 +1,61 @@
+---
+- name: "Homelab Rebuild | Upgrade Fedora packages"
+  ansible.builtin.dnf:
+    name: "*"
+    state: latest
+    update_cache: true
+
+- name: "Homelab Rebuild | Install base packages"
+  ansible.builtin.dnf:
+    name: "{{ homelab_base_packages }}"
+    state: present
+
+- name: "Homelab Rebuild | Install RPM Fusion repos"
+  ansible.builtin.dnf:
+    name:
+      - "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_facts.distribution_major_version }}.noarch.rpm"
+      - "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_facts.distribution_major_version }}.noarch.rpm"
+    state: present
+    disable_gpg_check: true
+
+- name: "Homelab Rebuild | Configure Google Chrome repo"
+  ansible.builtin.yum_repository:
+    name: google-chrome
+    description: google-chrome
+    baseurl: https://dl.google.com/linux/chrome/rpm/stable/x86_64
+    enabled: true
+    gpgcheck: true
+    gpgkey: https://dl.google.com/linux/linux_signing_key.pub
+
+- name: "Homelab Rebuild | Install KDE Plasma Workspaces group"
+  ansible.builtin.dnf:
+    name: "@KDE Plasma Workspaces"
+    state: present
+  when: homelab_manage_desktop_packages | bool
+
+- name: "Homelab Rebuild | Install desktop, NVIDIA, and gaming packages"
+  ansible.builtin.dnf:
+    name: "{{ homelab_desktop_packages }}"
+    state: present
+  when: homelab_manage_desktop_packages | bool
+
+- name: "Homelab Rebuild | Enable Docker"
+  ansible.builtin.systemd:
+    name: docker
+    enabled: true
+    state: started
+
+- name: "Homelab Rebuild | Set graphical target"
+  ansible.builtin.file:
+    src: /usr/lib/systemd/system/graphical.target
+    dest: /etc/systemd/system/default.target
+    state: link
+    force: true
+  when: homelab_manage_desktop_packages | bool
+
+- name: "Homelab Rebuild | Enable Plasma login when present"
+  ansible.builtin.systemd:
+    name: plasmalogin.service
+    enabled: true
+  failed_when: false
+  when: homelab_manage_desktop_packages | bool

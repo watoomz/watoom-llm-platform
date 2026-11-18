@@ -1,0 +1,391 @@
+- name: Install canonical project and capture layout
+  ansible.builtin.import_tasks: project_layout.yml
+- name: Install narrow SELinux module for k3s kubectl nnp_transition to iptables
+  ansible.builtin.copy:
+    src: selinux/watoom_k3s_nnp.te
+    dest: /usr/local/share/selinux/watoom_k3s_nnp.te
+    owner: root
+    group: root
+    mode: '0644'
+  register: watoom_k3s_nnp_source
+- name: Check whether SELinux module is loaded
+  ansible.builtin.command:
+    argv: [semodule, -l]
+  register: watoom_k3s_nnp_loaded
+  changed_when: false
+- name: Compile and load SELinux module
+  ansible.builtin.shell: |
+    set -e
+    d=$(mktemp -d)
+    checkmodule -M -m -o "$d/watoom_k3s_nnp.mod" /usr/local/share/selinux/watoom_k3s_nnp.te
+    semodule_package -o "$d/watoom_k3s_nnp.pp" -m "$d/watoom_k3s_nnp.mod"
+    semodule -i "$d/watoom_k3s_nnp.pp"
+    rm -rf "$d"
+  when: watoom_k3s_nnp_source.changed or ('watoom_k3s_nnp' not in watoom_k3s_nnp_loaded.stdout)
+  changed_when: true
+- name: Persist project group SELinux labels
+  community.general.sefcontext:
+    target: '{{ watoom_code_project_groups_root }}/{{ item }}(/.*)?'
+    setype: container_file_t
+    state: present
+  loop: "{{ watoom_code_project_groups }}"
+- name: Apply project group labels
+  ansible.builtin.command:
+    argv: [restorecon, -R, -v, '{{ watoom_code_project_groups_root }}/{{ item }}']
+  loop: "{{ watoom_code_project_groups }}"
+  register: watoom_group_labels
+  changed_when: "'Relabeled' in watoom_group_labels.stdout"
+- name: Require isolated staging and immutable release
+  ansible.builtin.assert:
+    that:
+    - watoom_code_namespace == 'watoom-code'
+    - watoom_code_root == '/data/ai/watoom-code'
+    - watoom_code_image is defined
+    - watoom_code_image_source_commit is defined
+    - watoom_code_memory_image is defined
+    - watoom_code_toolkit_image is defined
+    - watoom_code_toolkit_source_commit is defined
+    - '''@sha256:'' in watoom_code_image'
+    fail_msg: Load ansible/vars/watoom-code.yml; application image pins have no role default.
+- name: Create private staging directories
+  ansible.builtin.file:
+    path: '{{ watoom_code_root }}/{{ item }}'
+    state: directory
+    owner: '{{ ''1000'' if item == ''memory'' else (''1009'' if item in [''workspace'', ''toolkit-state'', ''generated'',
+      ''generated/generated'', ''generated/generated/watoom-toolkit-3d'', ''generated/generated/watoom-toolkit-3d/v1''] else
+      ''1001'') }}'
+    group: '{{ ''1000'' if item == ''memory'' else (''1009'' if item in [''workspace'', ''toolkit-state'', ''generated'',
+      ''generated/generated'', ''generated/generated/watoom-toolkit-3d'', ''generated/generated/watoom-toolkit-3d/v1''] else
+      ''1001'') }}'
+    mode: '{{ ''0770'' if item == ''workspace'' else (''0750'' if item.startswith(''generated'') else ''0700'') }}'
+  loop:
+  - home
+  - uploads
+  - config
+  - config/agents
+  - memory
+  - workspace
+  - toolkit-state
+  - generated
+  - generated/generated
+  - generated/generated/watoom-toolkit-3d
+  - generated/generated/watoom-toolkit-3d/v1
+  - render
+  - backups
+  - artifacts
+  - skills
+- name: Install maintained native skills
+  ansible.builtin.import_tasks: native-skills.yml
+- name: Persist SELinux label for isolated application data
+  community.general.sefcontext:
+    target: '{{ watoom_code_root }}(/.*)?'
+    setype: container_file_t
+    state: present
+- name: Apply SELinux label only to staging application data
+  ansible.builtin.command:
+    argv:
+    - restorecon
+    - -R
+    - -v
+    - '{{ watoom_code_root }}'
+  register: watoom_code_labels
+  changed_when: '''Relabeled'' in watoom_code_labels.stdout'
+- name: >-
+    Create the watoom-tools directory (several unconditional tasks stage into it - dev workspace,
+    coordinator guard, language-knowledge, openspec-notify - not only the Mesh adapter below)
+  ansible.builtin.file:
+    path: "{{ watoom_code_root }}/config/watoom-tools"
+    state: directory
+    owner: "{{ watoom_code_uid }}"
+    group: "{{ watoom_code_gid }}"
+    mode: '0750'
+
+- name: Install the existing Mesh MCP adapter for WatooM Code
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../llm-model-lab/files/watoom-llama-mesh.py"
+    dest: "{{ watoom_code_root }}/config/watoom-tools/watoom-llama-mesh.py"
+    owner: "{{ watoom_code_uid }}"
+    group: "{{ watoom_code_gid }}"
+    mode: '0644'
+  when: watoom_code_mesh_enabled | bool
+
+- name: Require completed isolated development preparation before preserving its native integration
+  ansible.builtin.stat:
+    path: '{{ watoom_code_root }}/config/watoom-tools/dev-workspace-{{ watoom_code_dev_package_sha }}/index.js'
+  register: watoom_code_dev_native_file
+  when: watoom_code_dev_enabled | default(false) | bool
+
+- name: Refuse a production configuration that references an unprepared dev package
+  ansible.builtin.assert:
+    that:
+      - watoom_code_dev_native_file.stat.isreg | default(false)
+    fail_msg: Run the guarded dev-workspace-only preparation before the full application role.
+  when: watoom_code_dev_enabled | default(false) | bool
+
+- name: Seed configuration without replacing user state
+  ansible.builtin.template:
+    src: opencode.json.j2
+    dest: '{{ watoom_code_root }}/config/opencode.json'
+    owner: '1001'
+    group: '1001'
+    mode: '0600'
+    force: false
+- name: Maintain generation-only image MCP integration
+  ansible.builtin.import_tasks: image-mcp.yml
+  when: watoom_code_image_mcp_enabled | bool
+
+- name: Maintain the Godot MCP entry in existing configuration (removed when disabled)
+  ansible.builtin.include_tasks: godot_mcp.yml
+  tags: [godot_mcp]
+
+- name: Maintain the ue-mcp entry in existing configuration (removed when disabled)
+  ansible.builtin.include_tasks: ue_mcp.yml
+  tags: [ue_mcp]
+
+- name: Enable maintained native router catalog without replacing user settings
+  ansible.builtin.script:
+    cmd: enable-router-discovery.py {{ watoom_code_root }}/config/opencode.json
+    executable: /usr/bin/python3
+  register: watoom_code_router_catalog
+  changed_when: "'CHANGED' == watoom_code_router_catalog.stdout | trim"
+- name: Maintain native SearXNG web search integration
+  ansible.builtin.import_tasks: searxng.yml
+- name: Maintain the stable 100K Swift application context baseline
+  ansible.builtin.script:
+    cmd: enable-swift-context.py {{ watoom_code_root }}/config/opencode.json {{ watoom_code_swift_context_tokens | int }}
+    executable: /usr/bin/python3
+  register: watoom_code_swift_context
+  changed_when: "'CHANGED' == watoom_code_swift_context.stdout | trim"
+- name: Maintain GUI reasoning levels
+  ansible.builtin.include_tasks: reasoning_variants.yml
+- name: Maintain versioned native coordinator guard
+  ansible.builtin.include_tasks: coordinator_guard.yml
+  tags: [agent_roster]
+- name: Maintain deterministic image prompt transport
+  ansible.builtin.include_tasks: image_scope.yml
+  when: watoom_code_image_mcp_enabled | bool
+- name: Maintain RAM-resident language knowledge plugin
+  ansible.builtin.include_tasks: language_knowledge.yml
+  tags: [language_knowledge]
+- name: Maintain MOSS Image tool plugin
+  ansible.builtin.include_tasks: moss_image_plugin.yml
+- name: Install maintained native agent instructions
+  ansible.builtin.include_tasks: native_agents.yml
+  tags: [watoom_openspec, agent_roster]
+- name: Initialize independent skills catalog
+  ansible.builtin.script:
+    cmd: init-catalog.py {{ watoom_code_root }}
+    executable: /usr/bin/python3
+    creates: '{{ watoom_code_root }}/catalog.sqlite'
+- name: Preserve existing staging sessions at a stable database path
+  ansible.builtin.script:
+    cmd: init-application-db.py {{ watoom_code_root }}
+    executable: /usr/bin/python3
+  register: watoom_code_database
+  changed_when: '''ADOPTED'' in watoom_code_database.stdout'
+- name: Create staging namespace
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: '{{ watoom_code_namespace }}'
+- name: Read existing staging credentials
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    namespace: '{{ watoom_code_namespace }}'
+    name: watoom-code-auth
+  register: watoom_code_auth
+  no_log: true
+- name: Create independent staging credentials once
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: watoom-code-auth
+        namespace: '{{ watoom_code_namespace }}'
+      stringData:
+        OPENCODE_PASSWORD: '{{ lookup(''ansible.builtin.password'', ''/dev/null'', length=48, chars=[''ascii_letters'', ''digits''])
+          }}'
+        AGENTMEMORY_SECRET: '{{ lookup(''ansible.builtin.password'', ''/dev/null'', length=48, chars=[''ascii_letters'', ''digits''])
+          }}'
+        token: '{{ lookup(''ansible.builtin.password'', ''/dev/null'', length=48, chars=[''ascii_letters'', ''digits'']) }}'
+  when: watoom_code_auth.resources | length == 0
+  no_log: true
+- name: Render isolated resources
+  ansible.builtin.template:
+    src: resources.json.j2
+    dest: '{{ watoom_code_root }}/render/resources.json'
+    mode: '0600'
+  register: watoom_code_render
+- name: Validate isolated resources with the API server
+  ansible.builtin.command:
+    argv:
+    - kubectl
+    - apply
+    - --dry-run=server
+    - -f
+    - '{{ watoom_code_root }}/render/resources.json'
+  changed_when: false
+- name: Snapshot current managed deployments before reconciliation
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    kind: Deployment
+    namespace: '{{ watoom_code_namespace }}'
+    label_selectors:
+      - app.kubernetes.io/managed-by=watoom-code-ansible
+  register: watoom_code_prior
+- name: Save reversible deployment snapshot
+  ansible.builtin.copy:
+    content: '{{ {"apiVersion": "v1", "kind": "List", "items": watoom_code_prior.resources} | to_nice_json }}'
+    dest: '{{ watoom_code_root }}/backups/deployments-before-apply.json'
+    mode: '0600'
+  when: watoom_code_render.changed
+- name: Deploy and validate with automatic reversible rollback
+  block:
+  - name: Apply isolated resources
+    kubernetes.core.k8s:
+      state: present
+      src: '{{ watoom_code_root }}/render/resources.json'
+    when: watoom_code_apply | bool
+  - name: Wait for the isolated application and dependencies
+    ansible.builtin.command:
+      argv:
+      - kubectl
+      - -n
+      - '{{ watoom_code_namespace }}'
+      - rollout
+      - status
+      - deployment/{{ item }}
+      - --timeout={{ watoom_code_rollout_timeout }}
+    loop:
+    - agentmemory
+    - watoom-toolkit
+    - watoom-code
+    changed_when: false
+    when: watoom_code_apply | bool
+  - name: Read the actual native specialist deployment identity
+    kubernetes.core.k8s_info:
+      api_version: apps/v1
+      kind: Deployment
+      namespace: '{{ watoom_code_namespace }}'
+      name: watoom-toolkit
+    register: watoom_code_toolkit_identity
+  - name: Bind the managed native specialist to verified runtime identity
+    ansible.builtin.script:
+      cmd: bind-specialist.py {{ watoom_code_root }} {{ watoom_code_toolkit_identity.resources[0].metadata.uid }} {{ watoom_code_toolkit_image
+        }} {{ watoom_code_toolkit_source_commit }}
+      executable: /usr/bin/python3
+    register: watoom_code_binding
+    changed_when: '''CHANGED'' in watoom_code_binding.stdout and ''UNCHANGED'' not in watoom_code_binding.stdout'
+  rescue:
+  - name: Restore captured deployments without touching persistent user data
+    kubernetes.core.k8s:
+      state: present
+      definition: '{{ {''apiVersion'': item.apiVersion, ''kind'': item.kind, ''metadata'': {''name'': item.metadata.name,
+        ''namespace'': item.metadata.namespace}, ''spec'': item.spec} }}'
+    loop: '{{ watoom_code_prior.resources }}'
+  - name: Validate restored deployments
+    ansible.builtin.command:
+      argv:
+      - kubectl
+      - -n
+      - '{{ watoom_code_namespace }}'
+      - rollout
+      - status
+      - deployment/{{ item.metadata.name }}
+      - --timeout=180s
+    loop: '{{ watoom_code_prior.resources }}'
+    changed_when: false
+  - name: Report failed acceptance after restoration
+    ansible.builtin.fail:
+      msg: >-
+        Deployment validation failed; prior Deployment specs (image, env, probes, resources) were restored
+        for the watoom-code-ansible-managed deployments. ServiceAccounts, Roles, RoleBindings, Services,
+        Secrets and volume definitions were NOT rolled back and remain at the new version from this run:
+        if the failure was caused by one of those (not by the Deployment spec itself), restoring the
+        Deployments alone does not undo it. Persistent user data was preserved either way. Inspect
+        backups/deployments-before-apply.json for the restored specs.
+
+
+- name: Read actual router model IDs without loading models
+  ansible.builtin.command:
+    argv:
+    - kubectl
+    - -n
+    - llama-cpp
+    - exec
+    - deployment/llm-router
+    - --
+    - python3
+    - -c
+    - 'import json,urllib.request;print(json.dumps(json.load(urllib.request.urlopen("http://127.0.0.1:8000/v1/models",timeout=10))))'
+  register: watoom_code_context_inventory
+  changed_when: false
+  retries: 3
+  delay: 10
+  until:
+    - watoom_code_context_inventory.rc == 0
+    - watoom_code_context_inventory.stdout | default('') | trim | length > 0
+- name: Validate the router model inventory before it replaces the application default
+  ansible.builtin.assert:
+    that:
+      - (watoom_code_context_inventory.stdout | from_json).data is defined
+    fail_msg: >-
+      llm-router returned something that is not a /v1/models response after {{ watoom_code_context_inventory.attempts
+      | default(1) }} attempt(s): {{ watoom_code_context_inventory.stdout | default('') | truncate(200) }}.
+      Not overwriting the existing model-context-inventory.json with it.
+- name: Preserve current model inventory for application defaults
+  ansible.builtin.copy:
+    content: "{{ watoom_code_context_inventory.stdout }}"
+    dest: "{{ watoom_code_root }}/config/model-context-inventory.json"
+    owner: '1001'
+    group: '1001'
+    mode: '0644'
+- name: Maintain standard application context for all offered language models
+  ansible.builtin.script:
+    cmd: >-
+      enable-model-context.py {{ watoom_code_root }}/config/opencode.json
+      {{ watoom_code_root }}/config/model-context-inventory.json
+      {{ watoom_code_swift_context_tokens | int }}
+      {{ watoom_code_model_output_tokens | int }}
+    executable: /usr/bin/python3
+  register: watoom_code_model_context
+  changed_when: "'UPDATED' in watoom_code_model_context.stdout"
+
+- name: Maintain common project image review copies
+  ansible.builtin.include_tasks: image_review.yml
+
+- name: Create root-owned directory for scripts that root timers execute
+  ansible.builtin.file:
+    path: /data/ai/helper-scripts/watoom-code
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Maintain owner-approved Fab acquisition
+  ansible.builtin.import_tasks: fab_catalog.yml
+
+- name: Maintain bounded native game worker requests
+  ansible.builtin.import_tasks: game_worker.yml
+
+- name: Maintain game-session resume watchdog
+  ansible.builtin.import_tasks: game_session_watchdog.yml
+
+- name: Maintain rig project enrollment sync
+  ansible.builtin.import_tasks: rig_project_sync.yml
+
+- name: Maintain owner-added Sims library read access
+  ansible.builtin.import_tasks: sims_library.yml
+
+- name: Maintain explicitly qualified model capability metadata
+  ansible.builtin.import_tasks: verified_model_capabilities.yml
+
+- name: Maintain independent Homelab LLM project without relocating existing sessions
+  ansible.builtin.import_tasks: homelab_project.yml
+  when: watoom_code_homelab_project_enabled | default(true) | bool

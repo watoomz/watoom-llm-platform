@@ -1,0 +1,216 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: searxng-config
+  namespace: searxng
+  labels:
+    app: searxng
+    app.kubernetes.io/name: searxng
+    app.kubernetes.io/part-of: ollama
+    app.kubernetes.io/managed-by: kubectl
+data:
+  settings.yml: |
+    use_default_settings: true
+
+    # Keep Google CSE and add a tested independent index. These default engines
+    # currently return CAPTCHA/rate-limit failures from this host.
+    engines:
+      - name: mwmbl
+        disabled: false
+      - name: brave
+        disabled: true
+      - name: duckduckgo
+        disabled: true
+      - name: startpage
+        disabled: true
+      # The only working general web engine is mwmbl (small index), so niche
+      # library/repo queries return zero results. Add engines that work from this
+      # host to the default `general` category so websearch finds repos and Q&A.
+      # Independent general web engines that currently answer from this host
+      # (bing, yandex; checked by single-engine queries); duckduckgo/startpage/brave stay off.
+      - name: yandex
+        disabled: false
+        weight: 0.4
+      - name: bing
+        disabled: false
+        weight: 0.6
+      - name: crates.io
+        disabled: false
+        categories: [it, packages, general]
+      - name: pkg.go.dev
+        disabled: false
+        categories: [it, packages, general]
+      - name: github
+        categories: [it, repos, general]
+      - name: stackoverflow
+        categories: [it, q&a, general]
+      - name: pypi
+        categories: [it, packages, general]
+
+    general:
+      instance_name: WatooM SearXNG
+
+    search:
+      safe_search: 0
+      autocomplete: ""
+      default_lang: en
+      formats:
+        - html
+        - json
+
+    server:
+      bind_address: 0.0.0.0
+      port: 8080
+      base_url: https://searxng.internal.homelab.example/
+      image_proxy: false
+      limiter: false
+      method: GET
+      secret_key: REPLACE_WITH_DEPLOYMENT_SECRET
+
+    ui:
+      static_use_hash: true
+
+    outgoing:
+      request_timeout: 8.0
+      max_request_timeout: 15.0
+      pool_connections: 50
+      pool_maxsize: 20
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: searxng
+  namespace: searxng
+  annotations:
+    homelab.watoom/internal-url: http://searxng.searxng.svc.cluster.local:8080
+    homelab.watoom/public-url: https://searxng.internal.homelab.example
+  labels:
+    app: searxng
+    app.kubernetes.io/name: searxng
+    app.kubernetes.io/part-of: ollama
+    app.kubernetes.io/managed-by: kubectl
+    homelab.watoom/category: Infrastructure
+    homelab.watoom/icon: search
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: searxng
+  template:
+    metadata:
+      labels:
+        app: searxng
+        app.kubernetes.io/name: searxng
+        app.kubernetes.io/part-of: ollama
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: searxng
+        image: docker.io/searxng/searxng@sha256:11a9b34cdc0b1ec2b991470a2762ecb5a1a531898289fb51dcd015260450729e
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: TZ
+          value: Australia/Brisbane
+        - name: SEARXNG_SETTINGS_PATH
+          value: /etc/searxng/settings.yml
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 15
+          timeoutSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: "1"
+            memory: 1Gi
+        volumeMounts:
+        - name: searxng-config
+          mountPath: /etc/searxng/settings.yml
+          subPath: settings.yml
+          readOnly: true
+      volumes:
+      - name: searxng-config
+        configMap:
+          name: searxng-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: searxng
+  namespace: searxng
+  labels:
+    app: searxng
+    app.kubernetes.io/name: searxng
+    app.kubernetes.io/part-of: ollama
+    app.kubernetes.io/managed-by: kubectl
+spec:
+  type: ClusterIP
+  selector:
+    app: searxng
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
+    protocol: TCP
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: searxng
+  namespace: searxng
+  labels:
+    app.kubernetes.io/name: searxng
+    app.kubernetes.io/part-of: ollama
+    app.kubernetes.io/managed-by: kubectl
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - kind: Rule
+    match: Host(`searxng.internal.homelab.example`)
+    services:
+    - name: searxng
+      namespace: searxng
+      port: 8080
+      nativeLB: true
+  tls:
+    secretName: watoom-tls
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: searxng-http
+  namespace: searxng
+  labels:
+    app.kubernetes.io/name: searxng-http
+    app.kubernetes.io/part-of: ollama
+    app.kubernetes.io/managed-by: kubectl
+spec:
+  entryPoints:
+  - web
+  routes:
+  - kind: Rule
+    match: Host(`searxng.internal.homelab.example`)
+    services:
+    - name: searxng
+      namespace: searxng
+      port: 8080
+      nativeLB: true

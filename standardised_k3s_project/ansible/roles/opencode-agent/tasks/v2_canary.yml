@@ -1,0 +1,811 @@
+---
+- name: OpenCode V2 Canary | Validate canary variables
+  ansible.builtin.assert:
+    that:
+      - opencode_agent_v2_canary_version is match('^2[.]')
+      - opencode_agent_v2_canary_image_tag | length > 0
+      - opencode_agent_v2_canary_image | length > 0
+      - opencode_agent_v2_canary_home_path | length > 0
+      - opencode_agent_v2_canary_workspace_host | length > 0
+      - opencode_agent_v2_canary_unreal_engine_host | length > 0
+      - opencode_agent_v2_canary_unreal_engine_mount | length > 0
+      - opencode_agent_v2_canary_unreal_project_host | length > 0
+      - opencode_agent_router_base_url | length > 0
+
+- name: OpenCode V2 Canary | Ensure isolated host directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - path: "{{ opencode_agent_v2_canary_state_root }}"
+      mode: "0755"
+    - path: "{{ opencode_agent_v2_canary_build_cache_host }}"
+      owner: "{{ opencode_agent_run_uid }}"
+      group: "{{ opencode_agent_run_gid }}"
+      mode: "0750"
+    - path: "{{ opencode_agent_v2_canary_home_path }}"
+      owner: "{{ opencode_agent_run_uid }}"
+      group: "{{ opencode_agent_run_gid }}"
+      mode: "0750"
+    - path: "{{ opencode_agent_v2_canary_render_root }}"
+      mode: "0755"
+    - path: "{{ opencode_agent_v2_canary_workspace_host }}"
+      owner: "{{ opencode_agent_run_uid }}"
+      group: "{{ opencode_agent_run_gid }}"
+      mode: "0775"
+    - path: "{{ opencode_agent_v2_canary_home_path }}/.config/opencode"
+      owner: "{{ opencode_agent_run_uid }}"
+      group: "{{ opencode_agent_run_gid }}"
+      mode: "0755"
+    - path: "{{ opencode_agent_v2_canary_home_path }}/.config/opencode/agent"
+      owner: "{{ opencode_agent_run_uid }}"
+      group: "{{ opencode_agent_run_gid }}"
+      mode: "0750"
+    - path: "{{ opencode_agent_v2_canary_home_path }}/.config/opencode/commands"
+      owner: "{{ opencode_agent_run_uid }}"
+      group: "{{ opencode_agent_run_gid }}"
+      mode: "0750"
+    - path: "{{ opencode_agent_v2_canary_home_path }}/.config/opencode/skills"
+      owner: "{{ opencode_agent_run_uid }}"
+      group: "{{ opencode_agent_run_gid }}"
+      mode: "0750"
+    - path: "{{ opencode_agent_v2_canary_home_path }}/.config/opencode/tools"
+      owner: "{{ opencode_agent_run_uid }}"
+      group: "{{ opencode_agent_run_gid }}"
+      mode: "0750"
+    - path: "{{ opencode_agent_v2_canary_home_path }}/.config/opencode/plugins"
+      owner: "{{ opencode_agent_run_uid }}"
+      group: "{{ opencode_agent_run_gid }}"
+      mode: "0750"
+    - path: "{{ opencode_agent_v2_canary_home_path }}/.config/opencode/plugins/searxng-search"
+      owner: "{{ opencode_agent_run_uid }}"
+      group: "{{ opencode_agent_run_gid }}"
+      mode: "0750"
+    - path: "{{ opencode_agent_v2_canary_home_path }}/.config/opencode/watoom-tools"
+      owner: "{{ opencode_agent_run_uid }}"
+      group: "{{ opencode_agent_run_gid }}"
+      mode: "0750"
+
+# WATOOM-UNREAL-WORKSPACE-BEGIN
+
+- name: OpenCode V2 Canary | Ensure games workspace is writable
+  ansible.builtin.file:
+    path: "{{ opencode_agent_v2_canary_workspace_host }}/games"
+    state: directory
+    owner: "{{ opencode_agent_run_uid }}"
+    group: "{{ opencode_agent_run_gid }}"
+    mode: "0775"
+
+- name: OpenCode V2 Canary | Ensure Wombat Australia project ownership
+  ansible.builtin.file:
+    path: "{{ opencode_agent_v2_canary_unreal_project_host }}"
+    state: directory
+    owner: "{{ opencode_agent_run_uid }}"
+    group: "{{ opencode_agent_run_gid }}"
+    recurse: true
+
+# WATOOM-UNREAL-WORKSPACE-END
+
+- name: OpenCode V2 Canary | Detect SELinux mode
+  ansible.builtin.command:
+    argv:
+      - getenforce
+  register: opencode_v2_canary_selinux
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: OpenCode V2 Canary | Read SELinux file contexts
+  ansible.builtin.command:
+    argv:
+      - semanage
+      - fcontext
+      - -l
+  register: opencode_v2_canary_fcontexts
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  when:
+    - opencode_v2_canary_selinux.rc == 0
+    - opencode_v2_canary_selinux.stdout | trim != "Disabled"
+
+- name: OpenCode V2 Canary | Persist container SELinux file contexts
+  ansible.builtin.command:
+    argv:
+      - semanage
+      - fcontext
+      - -a
+      - -t
+      - container_file_t
+      - "{{ item }}(/.*)?"
+  loop:
+    - "{{ opencode_agent_v2_canary_workspace_host }}"
+    - "{{ opencode_agent_v2_canary_home_path }}"
+    - "{{ opencode_agent_v2_canary_unreal_engine_host }}"
+  when:
+    - opencode_v2_canary_selinux.rc == 0
+    - opencode_v2_canary_selinux.stdout | trim != "Disabled"
+    - opencode_v2_canary_fcontexts.rc == 0
+    - (item ~ '(/.*)?') not in opencode_v2_canary_fcontexts.stdout
+
+- name: OpenCode V2 Canary | Restore SELinux labels
+  ansible.builtin.command:
+    argv:
+      - restorecon
+      - -RFv
+      - "{{ item }}"
+  loop:
+    - "{{ opencode_agent_v2_canary_workspace_host }}"
+    - "{{ opencode_agent_v2_canary_home_path }}"
+    - "{{ opencode_agent_v2_canary_unreal_engine_host }}"
+  register: opencode_v2_canary_restorecon
+  changed_when: opencode_v2_canary_restorecon.stdout | trim | length > 0
+  when:
+    - opencode_v2_canary_selinux.rc == 0
+    - opencode_v2_canary_selinux.stdout | trim != "Disabled"
+
+- name: OpenCode V2 Canary | Install small global AGENTS policy
+  ansible.builtin.copy:
+    src: v2-native/AGENTS.md
+    dest: "{{ opencode_agent_v2_canary_home_path }}/.config/opencode/AGENTS.md"
+    owner: "{{ opencode_agent_run_uid }}"
+    group: "{{ opencode_agent_run_gid }}"
+    mode: "0644"
+  register: opencode_v2_canary_agents_policy
+  tags:
+    - opencode_v2_security
+
+- name: OpenCode V2 Canary | Install native agents
+  ansible.builtin.copy:
+    src: v2-native/agents/
+    dest: "{{ opencode_agent_v2_canary_home_path }}/.config/opencode/agent/"
+    owner: "{{ opencode_agent_run_uid }}"
+    group: "{{ opencode_agent_run_gid }}"
+    mode: "0644"
+  register: opencode_v2_canary_agent_files
+  tags:
+    - opencode_v2_security
+
+- name: OpenCode V2 Canary | Remove legacy plural agent directory
+  ansible.builtin.file:
+    path: "{{ opencode_agent_v2_canary_home_path }}/.config/opencode/agents"
+    state: absent
+  register: opencode_v2_canary_legacy_agent_dir
+
+
+- name: OpenCode V2 Canary | Install native commands
+  ansible.builtin.copy:
+    src: v2-native/commands/
+    dest: "{{ opencode_agent_v2_canary_home_path }}/.config/opencode/commands/"
+    owner: "{{ opencode_agent_run_uid }}"
+    group: "{{ opencode_agent_run_gid }}"
+    mode: "0644"
+  register: opencode_v2_canary_command_files
+
+- name: OpenCode V2 Canary | Install native skills
+  ansible.builtin.copy:
+    src: v2-native/skills/
+    dest: "{{ opencode_agent_v2_canary_home_path }}/.config/opencode/skills/"
+    owner: "{{ opencode_agent_run_uid }}"
+    group: "{{ opencode_agent_run_gid }}"
+    mode: preserve
+  register: opencode_v2_canary_skill_files
+
+- name: OpenCode V2 Canary | Remove explicitly retired native skills
+  ansible.builtin.file:
+    path: >-
+      {{ opencode_agent_v2_canary_home_path
+      }}/.config/opencode/skills/{{ item }}
+    state: absent
+  loop:
+    - unity-6
+
+- name: OpenCode V2 Canary | Install helper tools
+  ansible.builtin.copy:
+    src: v2-native/tools/
+    dest: "{{ opencode_agent_v2_canary_home_path }}/.config/opencode/watoom-tools/"
+    owner: "{{ opencode_agent_run_uid }}"
+    group: "{{ opencode_agent_run_gid }}"
+    mode: "0755"
+  register: opencode_v2_canary_tool_files
+
+
+- name: OpenCode V2 Canary | Install SearXNG V2 plugin package manifest
+  ansible.builtin.copy:
+    src: v2-native/plugins/searxng-search/package.json
+    dest: >-
+      {{ opencode_agent_v2_canary_home_path
+      }}/.config/opencode/plugins/searxng-search/package.json
+    owner: "{{ opencode_agent_run_uid }}"
+    group: "{{ opencode_agent_run_gid }}"
+    mode: "0644"
+
+- name: OpenCode V2 Canary | Install SearXNG V2 search plugin
+  ansible.builtin.template:
+    src: searxng-search-v2.js.j2
+    dest: >-
+      {{ opencode_agent_v2_canary_home_path
+      }}/.config/opencode/plugins/searxng-search/index.js
+    owner: "{{ opencode_agent_run_uid }}"
+    group: "{{ opencode_agent_run_gid }}"
+    mode: "0644"
+  register: opencode_v2_canary_searxng_plugin
+
+# WATOOM-AGENTMEMORY-ASSETS-BEGIN
+- name: OpenCode V2 Canary | Create AgentMemory vendor directory
+  ansible.builtin.file:
+    path: "{{ opencode_agent_v2_canary_home_path }}/.config/opencode/plugins/agentmemory"
+    state: directory
+    owner: "{{ opencode_agent_run_uid }}"
+    group: "{{ opencode_agent_run_gid }}"
+    mode: "0755"
+
+- name: OpenCode V2 Canary | Install audited AgentMemory capture implementation
+  ansible.builtin.copy:
+    src: v2-native/plugins/agentmemory/agentmemory-capture.ts
+    dest: "{{ opencode_agent_v2_canary_home_path }}/.config/opencode/plugins/agentmemory/agentmemory-capture.ts"
+    owner: "{{ opencode_agent_run_uid }}"
+    group: "{{ opencode_agent_run_gid }}"
+    mode: "0644"
+  register: opencode_v2_agentmemory_vendor
+
+- name: OpenCode V2 Canary | Install AgentMemory capture plugin
+  ansible.builtin.copy:
+    src: v2-native/plugins/agentmemory-v2.ts
+    dest: "{{ opencode_agent_v2_canary_home_path }}/.config/opencode/plugins/agentmemory-capture.ts"
+    owner: "{{ opencode_agent_run_uid }}"
+    group: "{{ opencode_agent_run_gid }}"
+    mode: "0644"
+  register: opencode_v2_agentmemory_plugin
+
+- name: OpenCode V2 Canary | Install AgentMemory recall command
+  ansible.builtin.copy:
+    src: v2-native/commands/recall.md
+    dest: "{{ opencode_agent_v2_canary_home_path }}/.config/opencode/commands/recall.md"
+    owner: "{{ opencode_agent_run_uid }}"
+    group: "{{ opencode_agent_run_gid }}"
+    mode: "0644"
+  register: opencode_v2_agentmemory_recall
+
+- name: OpenCode V2 Canary | Install AgentMemory remember command
+  ansible.builtin.copy:
+    src: v2-native/commands/remember.md
+    dest: "{{ opencode_agent_v2_canary_home_path }}/.config/opencode/commands/remember.md"
+    owner: "{{ opencode_agent_run_uid }}"
+    group: "{{ opencode_agent_run_gid }}"
+    mode: "0644"
+  register: opencode_v2_agentmemory_remember
+# WATOOM-AGENTMEMORY-ASSETS-END
+
+# BEGIN WATOOM V2 JSON AGENT REGISTRY
+
+- name: OpenCode V2 Canary | Ensure project configuration directory exists
+  ansible.builtin.file:
+    path: "{{ opencode_agent_v2_canary_workspace_host }}/.opencode"
+    state: directory
+    owner: "{{ opencode_agent_run_uid }}"
+    group: "{{ opencode_agent_run_gid }}"
+    mode: "0755"
+  tags:
+    - opencode_v2_security
+    - opencode
+    - opencode_v2
+    - opencode_v2_agents
+
+- name: OpenCode V2 Canary | Reconcile approved Toolkit integration
+  ansible.builtin.include_tasks: v2_toolkit.yml
+  tags: [opencode_v2_security, opencode_v2_toolkit]
+
+- name: OpenCode V2 Canary | Deploy WatooM JSON agent registry
+  ansible.builtin.copy:
+    src: v2-native/opencode-project-agents.json
+    dest: "{{ opencode_agent_v2_canary_workspace_host }}/.opencode/opencode.json"
+    owner: "{{ opencode_agent_run_uid }}"
+    group: "{{ opencode_agent_run_gid }}"
+    mode: "0644"
+  register: opencode_v2_project_agent_registry
+  tags:
+    - opencode_v2_security
+    - opencode
+    - opencode_v2
+    - opencode_v2_agents
+
+- name: OpenCode V2 Canary | Restore project agent registry SELinux labels
+  ansible.builtin.command:
+    argv:
+      - restorecon
+      - -RFv
+      - "{{ opencode_agent_v2_canary_workspace_host }}/.opencode"
+  register: opencode_v2_json_agents_restorecon
+  changed_when: opencode_v2_json_agents_restorecon.stdout | trim | length > 0
+  tags:
+    - opencode_v2_security
+    - opencode
+    - opencode_v2
+    - opencode_v2_agents
+
+# END WATOOM V2 JSON AGENT REGISTRY
+
+- name: OpenCode V2 Canary | Render native V2 configuration
+  ansible.builtin.template:
+    src: opencode-v2-canary.json.j2
+    dest: "{{ opencode_agent_v2_canary_render_root }}/opencode.json"
+    owner: root
+    group: root
+    mode: "0644"
+  register: opencode_v2_canary_config
+  tags:
+    - opencode_v2_security
+
+- name: OpenCode V2 Canary | Validate rendered JSON
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -m
+      - json.tool
+      - "{{ opencode_agent_v2_canary_render_root }}/opencode.json"
+  changed_when: false
+  tags:
+    - opencode_v2_security
+
+- name: OpenCode V2 Canary | Ensure coding image build directory
+  ansible.builtin.file:
+    path: "{{ opencode_agent_v2_canary_image_root }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: OpenCode V2 Canary | Render V2 coding Dockerfile
+  ansible.builtin.template:
+    src: opencode-v2-coding-Dockerfile.j2
+    dest: "{{ opencode_agent_v2_canary_image_root }}/Dockerfile"
+    owner: root
+    group: root
+    mode: "0644"
+  register: opencode_v2_canary_dockerfile
+
+- name: OpenCode V2 Canary | Check coding image in Docker
+  ansible.builtin.command:
+    argv:
+      - docker
+      - image
+      - inspect
+      - "{{ opencode_agent_v2_canary_image }}"
+  register: opencode_v2_canary_docker_image
+  changed_when: false
+  failed_when: false
+
+- name: OpenCode V2 Canary | Build pinned V2 coding image
+  ansible.builtin.command:
+    argv:
+      - docker
+      - build
+      - --pull
+      - --tag
+      - "{{ opencode_agent_v2_canary_image }}"
+      - --file
+      - "{{ opencode_agent_v2_canary_image_root }}/Dockerfile"
+      - "{{ opencode_agent_v2_canary_image_root }}"
+  when: opencode_v2_canary_dockerfile.changed or opencode_v2_canary_docker_image.rc != 0
+  register: opencode_v2_canary_image_build
+
+- name: OpenCode V2 Canary | Verify local registry API
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:5000/v2/"
+    method: GET
+    status_code: 200
+    return_content: false
+  changed_when: false
+
+- name: OpenCode V2 Canary | Check coding image in local registry
+  ansible.builtin.uri:
+    url: >-
+      http://127.0.0.1:5000/v2/watoom-opencode-coding-v2/manifests/{{ opencode_agent_v2_canary_image_tag }}
+    method: HEAD
+    headers:
+      Accept: >-
+        application/vnd.oci.image.index.v1+json,
+        application/vnd.docker.distribution.manifest.v2+json
+    status_code:
+      - 200
+      - 404
+    return_content: false
+  register: opencode_v2_canary_registry_image
+  changed_when: false
+
+- name: OpenCode V2 Canary | Push coding image to local registry
+  ansible.builtin.command:
+    argv:
+      - docker
+      - push
+      - "{{ opencode_agent_v2_canary_image }}"
+  register: opencode_v2_canary_registry_push
+  changed_when: true
+  when:
+    - >-
+      opencode_v2_canary_dockerfile.changed
+      or opencode_v2_canary_docker_image.rc != 0
+      or opencode_v2_canary_registry_image.status != 200
+
+- name: OpenCode V2 Canary | Verify coding image in local registry
+  ansible.builtin.uri:
+    url: >-
+      http://127.0.0.1:5000/v2/watoom-opencode-coding-v2/manifests/{{ opencode_agent_v2_canary_image_tag }}
+    method: HEAD
+    headers:
+      Accept: >-
+        application/vnd.oci.image.index.v1+json,
+        application/vnd.docker.distribution.manifest.v2+json
+    status_code: 200
+    return_content: false
+  changed_when: false
+
+- name: OpenCode V2 Canary | Ensure namespace exists
+  ansible.builtin.shell: |
+    set -Eeuo pipefail
+    kubectl create namespace "{{ opencode_agent_v2_canary_namespace }}" \
+      --dry-run=client -o yaml | kubectl apply -f -
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+- name: OpenCode V2 Canary | Require existing server auth secret
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - -n
+      - "{{ opencode_agent_v2_canary_namespace }}"
+      - get
+      - secret
+      - opencode-server-auth
+  changed_when: false
+
+- name: OpenCode V2 Canary | Apply isolated ConfigMap
+  ansible.builtin.shell: |
+    set -Eeuo pipefail
+    kubectl -n "{{ opencode_agent_v2_canary_namespace }}" create configmap opencode-v2-canary-config \
+      --from-file=opencode.json="{{ opencode_agent_v2_canary_render_root }}/opencode.json" \
+      --dry-run=client -o yaml | kubectl apply -f -
+  args:
+    executable: /bin/bash
+  changed_when: false
+  tags:
+    - opencode_v2_security
+
+- name: OpenCode V2 Canary | Render isolated workload
+  ansible.builtin.template:
+    src: opencode-v2-canary-k8s.yaml.j2
+    dest: "{{ opencode_agent_v2_canary_render_root }}/opencode-v2-canary.yaml"
+    owner: root
+    group: root
+    mode: "0644"
+  register: opencode_v2_canary_manifest
+
+- name: OpenCode V2 Canary | Apply isolated workload
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - apply
+      - -f
+      - "{{ opencode_agent_v2_canary_render_root }}/opencode-v2-canary.yaml"
+  register: opencode_v2_canary_apply
+  changed_when: >-
+    ('created' in opencode_v2_canary_apply.stdout) or
+    ('configured' in opencode_v2_canary_apply.stdout)
+
+- name: OpenCode V2 Canary | Restart only canary when configuration/assets changed
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - -n
+      - "{{ opencode_agent_v2_canary_namespace }}"
+      - rollout
+      - restart
+      - "deployment/{{ opencode_agent_v2_canary_deployment }}"
+  when: >-
+    (opencode_v2_canary_config is defined and opencode_v2_canary_config.changed) or
+    (opencode_v2_canary_agents_policy is defined and opencode_v2_canary_agents_policy.changed) or
+    (opencode_v2_canary_agent_files is defined and opencode_v2_canary_agent_files.changed) or
+    (opencode_v2_canary_legacy_agent_dir is defined and opencode_v2_canary_legacy_agent_dir.changed) or
+    (opencode_v2_canary_command_files is defined and opencode_v2_canary_command_files.changed) or
+    (opencode_v2_canary_skill_files is defined and opencode_v2_canary_skill_files.changed) or
+    (opencode_v2_canary_tool_files is defined and opencode_v2_canary_tool_files.changed) or
+    (opencode_v2_canary_image_build is defined and opencode_v2_canary_image_build.changed) or
+    (opencode_v2_agentmemory_vendor is defined and opencode_v2_agentmemory_vendor.changed) or
+    (opencode_v2_agentmemory_plugin is defined and opencode_v2_agentmemory_plugin.changed) or
+    (opencode_v2_agentmemory_recall is defined and opencode_v2_agentmemory_recall.changed) or
+    (opencode_v2_agentmemory_remember is defined and opencode_v2_agentmemory_remember.changed) or
+    (opencode_v2_project_agent_registry is defined and opencode_v2_project_agent_registry.changed)
+  changed_when: true
+  tags:
+    - opencode_v2_security
+
+- name: OpenCode V2 Canary | Wait for rollout
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - -n
+      - "{{ opencode_agent_v2_canary_namespace }}"
+      - rollout
+      - status
+      - "deployment/{{ opencode_agent_v2_canary_deployment }}"
+      - --timeout=180s
+  changed_when: false
+  tags:
+    - opencode_v2_security
+
+- name: OpenCode V2 Canary | Read running version
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - -n
+      - "{{ opencode_agent_v2_canary_namespace }}"
+      - exec
+      - "deployment/{{ opencode_agent_v2_canary_deployment }}"
+      - --
+      - opencode
+      - --version
+  register: opencode_v2_canary_live_version
+  changed_when: false
+  tags:
+    - opencode_v2_security
+
+- name: OpenCode V2 Canary | Require V2 runtime
+  ansible.builtin.assert:
+    that:
+      - opencode_v2_canary_live_version.stdout | trim is match('^(opencode[ ]+v)?2[.]')
+    fail_msg: >-
+      Canary did not start OpenCode V2. Got:
+      {{ opencode_v2_canary_live_version.stdout | trim }}
+  tags:
+    - opencode_v2_security
+
+- name: OpenCode V2 Canary | Report isolation
+  ansible.builtin.debug:
+    msg:
+      - "OpenCode V2 canary is running as {{ opencode_agent_v2_canary_deployment }}."
+      - "Legacy canary is explicitly enabled for testing; production is watoom-code/watoom-code."
+      - "Canary service: http://{{ opencode_agent_v2_canary_service }}.{{ opencode_agent_v2_canary_namespace }}.svc.cluster.local:{{ opencode_agent_v2_canary_port }}"
+      - "Run scripts/verify-opencode-v2-canary.sh next."
+
+# BEGIN WATOOM V2 LOOP GUARD TASKS
+
+- name: Query OpenCode V2 canary runtime identity
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - -n
+      - opencode
+      - exec
+      - deployment/opencode-v2-canary
+      - --
+      - sh
+      - -lc
+      - 'printf "%s:%s
+" "$(id -u)" "$(id -g)"'
+  register: opencode_v2_loop_guard_runtime_identity
+  changed_when: false
+  when:
+    - opencode_v2_loop_guard_enabled | bool
+  tags:
+    - opencode
+    - opencode_v2
+    - loop_guard
+
+- name: Parse OpenCode V2 canary runtime identity
+  ansible.builtin.set_fact:
+    opencode_v2_loop_guard_runtime_uid: >-
+      {{ opencode_v2_loop_guard_runtime_identity.stdout.split(':')[0] }}
+    opencode_v2_loop_guard_runtime_gid: >-
+      {{ opencode_v2_loop_guard_runtime_identity.stdout.split(':')[1] }}
+  when:
+    - opencode_v2_loop_guard_enabled | bool
+  tags:
+    - opencode
+    - opencode_v2
+    - loop_guard
+
+# Remove the experimental project layouts used while identifying the 2.0.7
+# loader contract.
+- name: Ensure OpenCode 2.0.7 global config directory exists
+  ansible.builtin.file:
+    path: >-
+      {{ opencode_v2_loop_guard_home_root
+         }}/.config/opencode
+    state: directory
+    owner: "{{ opencode_v2_loop_guard_runtime_uid }}"
+    group: "{{ opencode_v2_loop_guard_runtime_gid }}"
+    mode: "0755"
+  when:
+    - opencode_v2_loop_guard_enabled | bool
+  tags:
+    - opencode
+    - opencode_v2
+    - loop_guard
+
+- name: Ensure OpenCode 2.0.7 loop-guard package directory exists
+  ansible.builtin.file:
+    path: >-
+      {{ opencode_v2_loop_guard_home_root
+         }}/.config/opencode/plugins/watoom-loop-guard
+    state: directory
+    owner: "{{ opencode_v2_loop_guard_runtime_uid }}"
+    group: "{{ opencode_v2_loop_guard_runtime_gid }}"
+    mode: "0755"
+  when:
+    - opencode_v2_loop_guard_enabled | bool
+  tags:
+    - opencode
+    - opencode_v2
+    - loop_guard
+
+# OpenCode 2.0.7's directory resolver probes the "server" export first.
+- name: Deploy OpenCode 2.0.7 loop-guard package manifest
+  ansible.builtin.copy:
+    dest: >-
+      {{ opencode_v2_loop_guard_home_root
+         }}/.config/opencode/plugins/watoom-loop-guard/package.json
+    owner: "{{ opencode_v2_loop_guard_runtime_uid }}"
+    group: "{{ opencode_v2_loop_guard_runtime_gid }}"
+    mode: "0644"
+    content: |
+      {
+        "name": "watoom-opencode-loop-guard",
+        "version": "1.0.0",
+        "private": true,
+        "type": "module",
+        "main": "./index.js",
+        "exports": {
+          ".": "./index.js",
+          "./server": "./index.js"
+        }
+      }
+  when:
+    - opencode_v2_loop_guard_enabled | bool
+  tags:
+    - opencode
+    - opencode_v2
+    - loop_guard
+
+- name: Deploy OpenCode 2.0.7 mechanical loop guard
+  ansible.builtin.template:
+    src: watoom-loop-guard.js.j2
+    dest: >-
+      {{ opencode_v2_loop_guard_home_root
+         }}/.config/opencode/plugins/watoom-loop-guard/index.js
+    owner: "{{ opencode_v2_loop_guard_runtime_uid }}"
+    group: "{{ opencode_v2_loop_guard_runtime_gid }}"
+    mode: "0644"
+  when:
+    - opencode_v2_loop_guard_enabled | bool
+  tags:
+    - opencode
+    - opencode_v2
+    - loop_guard
+
+# IMPORTANT: OpenCode 2.0.7 uses the singular `plugin` registration field.
+- name: Register loop guard with OpenCode 2.0.7
+  ansible.builtin.copy:
+    dest: >-
+      {{ opencode_v2_loop_guard_home_root
+         }}/.config/opencode/opencode.json
+    owner: "{{ opencode_v2_loop_guard_runtime_uid }}"
+    group: "{{ opencode_v2_loop_guard_runtime_gid }}"
+    mode: "0644"
+    content: |
+      {
+        "$schema": "https://opencode.ai/config.json",
+        "plugin": [
+          "/home/opencode/.config/opencode/plugins/watoom-loop-guard",
+          "/home/opencode/.config/opencode/plugins/agentmemory-capture.ts"
+        ]
+      }
+  when:
+    - opencode_v2_loop_guard_enabled | bool
+  tags:
+    - opencode
+    - opencode_v2
+    - loop_guard
+
+# END WATOOM V2 LOOP GUARD TASKS
+
+# BEGIN WATOOM V2 PRODUCTION PROMOTION TASKS
+
+- name: Query current production OpenCode Service selector
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - -n
+      - opencode
+      - get
+      - service
+      - "{{ opencode_v2_production_service_name }}"
+      - -o
+      - 'jsonpath={.spec.selector.app}'
+  register: opencode_v2_production_service_current
+  changed_when: false
+  when:
+    - opencode_v2_promote_production_service | bool
+  tags:
+    - opencode
+    - opencode_v2
+    - production_promotion
+
+- name: Route production OpenCode Service to verified V2 deployment
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - -n
+      - opencode
+      - patch
+      - service
+      - "{{ opencode_v2_production_service_name }}"
+      - --type=merge
+      - -p
+      - >-
+        {{
+          {
+            'spec': {
+              'selector': opencode_v2_production_service_selector
+            }
+          } | to_json
+        }}
+  when:
+    - opencode_v2_promote_production_service | bool
+    - >-
+      opencode_v2_production_service_current.stdout
+      != opencode_v2_production_service_selector['app']
+  changed_when: true
+  tags:
+    - opencode
+    - opencode_v2
+    - production_promotion
+
+- name: Verify production OpenCode Service selector
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - -n
+      - opencode
+      - get
+      - service
+      - "{{ opencode_v2_production_service_name }}"
+      - -o
+      - 'jsonpath={.spec.selector.app}'
+  register: opencode_v2_production_service_verify
+  changed_when: false
+  when:
+    - opencode_v2_promote_production_service | bool
+  tags:
+    - opencode
+    - opencode_v2
+    - production_promotion
+
+- name: Assert production OpenCode Service selects V2
+  ansible.builtin.assert:
+    that:
+      - >-
+        opencode_v2_production_service_verify.stdout
+        == opencode_v2_production_service_selector['app']
+    fail_msg: >-
+      Production OpenCode Service selector did not converge to
+      {{ opencode_v2_production_service_selector['app'] }}
+  when:
+    - opencode_v2_promote_production_service | bool
+  tags:
+    - opencode
+    - opencode_v2
+    - production_promotion
+
+# END WATOOM V2 PRODUCTION PROMOTION TASKS
+
+- name: OpenCode V2 Canary | Deploy OpenSpec workflow
+  ansible.builtin.include_tasks: v2_openspec.yml
+
+
+- name: Reconcile authorized narrow LLaMA-Mesh integration
+  ansible.builtin.include_tasks: mesh_integration.yml

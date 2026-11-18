@@ -1,0 +1,40 @@
+{
+  "_comment": "Asset catalog: one entry per foliage FAMILY (the type name without the trailing _01 / _Var02 variant numbers, see ue_foliage_census.py). Fill it BEFORE a model scatters a family, and audit the live level against it with: ue_foliage_census.py --project profile.json --heights live_heights.png --catalog this_file.json. Heights are metres above the sea surface (ground Z - sea_cm) / 100. near_water_m [min, max] is the distance to the nearest creek, lake or sea edge (null = no limit; [0, 0] means in the water itself); the census measures it on the heights grid (about 8 m per pixel on the test game) and needs --water-mask for creeks and lakes. Distance to water, not height above the sea, is the axis for water-bound families (wet_margin, aquatic, tree_riparian): creeks and lakes lie at any height, so those entries have no upper above_sea_m limit (null). Values below are the test game's (ZAS) and are starting points, not truths: look at the asset at eye level in sun and shade first, and set verified to the date you did.",
+  "categories": {
+    "tree_upland": "Canopy trees on dry ground; never in or at the water line; thin on steep ground.",
+    "tree_riparian": "Trees that want wet feet: creek banks and lake edges.",
+    "shrub": "Bushes and mid-storey plants on dry ground, clustered under or beside trees.",
+    "groundcover": "Low plants and ferns on shaded forest floor.",
+    "grass": "Grass tufts and patches; meadow and open ground; the main density carrier.",
+    "flower": "Flower patches in open ground, small clusters, never uniform.",
+    "wet_margin": "Marsh and emergent plants (sedges, broad-leaf marsh plants): creek banks, lake margins and the shallows; roots in wet ground, leaves above the water.",
+    "aquatic": "Floating or submerged plants: standing in water only, on a water body that is deep enough and calm enough.",
+    "dune_coast": "Beach and dune plants: sand layer, close above the sea, wind-exposed.",
+    "dry_scrub": "Drought plants: well-drained, high or sandy ground, away from water.",
+    "rock": "Boulders and pebbles: banks, slopes and creek beds; any ground but never floating.",
+    "prop": "Authored village props (houses, fences, barrels): only inside a placed village footprint, never scattered."
+  },
+  "families": {
+    "SM_Tree": {"category": "tree_upland", "above_sea_m": [1.0, 60.0], "max_slope": 0.6, "near_water_m": [8, null], "notes": "Wildwood trees; leaves read pale if the ambient light is high; keep 8 m back from the water line.", "verified": null},
+    "SM_Bush": {"category": "shrub", "above_sea_m": [1.0, 60.0], "max_slope": 0.6, "near_water_m": [3, null], "verified": null},
+    "SM_Plant": {"category": "wet_margin", "above_sea_m": [-0.3, null], "max_slope": 0.25, "near_water_m": [0, 16], "allow_in_sea": false, "notes": "Wildwood broad-leaf rosettes: marsh plants. Place on creek and lake margins and in the shallows (within about two landscape pixels of water), not on dry upland. Census 2026-11-16: median 21 m above the sea and most instances far from any water, so most were misplaced; one alone on a dry slope was removed.", "verified": null},
+    "SM_GrassPatch": {"category": "grass", "above_sea_m": [0.5, 80.0], "max_slope": 0.5, "near_water_m": [1, null], "verified": null},
+    "SM_ENV_PLANT_grass_village": {"category": "grass", "above_sea_m": [0.5, 80.0], "max_slope": 0.5, "near_water_m": [1, null], "verified": null},
+    "SM_Flowers_White": {"category": "flower", "above_sea_m": [1.0, 60.0], "max_slope": 0.4, "near_water_m": [2, null], "verified": null},
+    "SM_Flowers_Blue": {"category": "flower", "above_sea_m": [1.0, 60.0], "max_slope": 0.4, "near_water_m": [2, null], "verified": null},
+    "SM_Flowers_Pink": {"category": "flower", "above_sea_m": [1.0, 60.0], "max_slope": 0.4, "near_water_m": [2, null], "verified": null},
+    "SM_MT_PM_V60_Cyperus_eragrostis": {"category": "wet_margin", "above_sea_m": [-0.3, null], "max_slope": 0.25, "near_water_m": [0, 16], "notes": "Sedge: creek and lake margins, at any height above the sea. Census 2026-11-16: median 36 m above the sea and about 30 m from water, so it stood too far from the water.", "verified": null},
+    "SM_MT_PM_V60_Ammophila_arenaria": {"category": "dune_coast", "above_sea_m": [0.3, 6.0], "max_slope": 0.4, "near_water_m": [0, 60], "notes": "Marram grass: sand layer close to the sea.", "verified": null},
+    "SM_MT_PM_V60_Agave_sisalana": {"category": "dry_scrub", "above_sea_m": [3.0, 80.0], "max_slope": 0.5, "near_water_m": [20, null], "verified": null},
+    "SM_MT_PM_V60_Cistus_albidus": {"category": "dry_scrub", "above_sea_m": [3.0, 80.0], "max_slope": 0.5, "near_water_m": [20, null], "verified": null},
+    "SM_MT_PM_V60_Alnus_cremastogyne": {"category": "tree_riparian", "above_sea_m": [0.3, null], "max_slope": 0.4, "near_water_m": [1, 40], "verified": null},
+    "SM_MT_PM_V60_Abelia_grandiflora": {"category": "shrub", "above_sea_m": [1.0, 60.0], "max_slope": 0.5, "near_water_m": [3, null], "verified": null},
+    "banana": {"category": "tree_riparian", "above_sea_m": [0.5, null], "max_slope": 0.4, "near_water_m": [2, 60], "verified": null},
+    "tropicalPlant": {"category": "groundcover", "above_sea_m": [1.0, 60.0], "max_slope": 0.5, "near_water_m": [2, null], "verified": null},
+    "bigplant": {"category": "groundcover", "above_sea_m": [1.0, 60.0], "max_slope": 0.5, "near_water_m": [2, null], "verified": null},
+    "treeplant": {"category": "shrub", "above_sea_m": [1.0, 60.0], "max_slope": 0.5, "near_water_m": [2, null], "verified": null},
+    "groundPlant": {"category": "groundcover", "above_sea_m": [1.0, 60.0], "max_slope": 0.5, "near_water_m": [2, null], "verified": null},
+    "SM_Boulder": {"category": "rock", "above_sea_m": [-0.5, 80.0], "allow_in_sea": true, "verified": null},
+    "SM_Stone_Pebble": {"category": "rock", "above_sea_m": [-0.5, 80.0], "allow_in_sea": true, "verified": null}
+  }
+}

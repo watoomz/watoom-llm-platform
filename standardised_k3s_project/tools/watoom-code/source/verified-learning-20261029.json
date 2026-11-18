@@ -1,0 +1,26 @@
+{
+  "sourceCommit": "786682b1489e92cba4e4b5a277bd49c565c94e4f",
+  "baseCommit": "64b56be16885ed34d0a40bcaaee8f89b1cd2390c",
+  "image": "127.0.0.1:5000/watoom-code@sha256:6e097b0967e0ac8e42ebeb0cf9945d4e8278627dba6fa0d961e6e9a01b716c2d",
+  "supersedes": "127.0.0.1:5000/watoom-code@sha256:c770078a500a32b617e360cf4795e1bb11f4d53f78d028659c0da2a9ad86686d",
+  "bundle": "watoom-code-verified-learning-20261029.bundle",
+  "bundleSha256": "110e8b8cbe990a95871672d86a10a71374059b4286a1c7e10ca9b54670b609a0",
+  "applicationOnly": true,
+  "updatesCapabilities": true,
+  "change": "watoom_memory_learn (runtime-verified evidence, structured knowledge, exact-key dedup/revision); compact knowledge recall; targeted automatic recall per user turn, risky command or failure",
+  "checks": {
+    "learningRecallTests": "11/11",
+    "memorySuites": "32/32",
+    "coreTypecheck": "PASS",
+    "routerTests": "4/4",
+    "selectorTests": "10/10",
+    "fullCoreSuite": "5323 pass / 48 fail, all failing suites pre-existing (session-runner 19/19 reproduced with the pre-change loop) and unrelated to memory"
+  },
+  "deployEvidence": "/data/ai/artifacts/watoom-code-production-consolidation/deploy-20261029T073913Z",
+  "guardAndAgentsEvidence": "/data/ai/artifacts/bge-agentmemory/learning-release-20261029T073850Z",
+  "preserved": {
+    "sessions": 652,
+    "children": 562,
+    "projects": 79
+  }
+}

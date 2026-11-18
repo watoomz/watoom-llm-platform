@@ -1,0 +1,13 @@
+{
+  "schema": "watoom.human_pose_recipe.v1",
+  "armature": "REPLACE_WITH_EXACT_ARMATURE_NAME",
+  "pose_name": "idle_relaxed",
+  "frame": 1,
+  "calibration_verified": false,
+  "human_reviewed": false,
+  "poses": {
+    "REPLACE_WITH_CALIBRATED_CONTROL_BONE": {
+      "rotation_quaternion": [1, 0, 0, 0]
+    }
+  }
+}

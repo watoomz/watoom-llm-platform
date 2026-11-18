@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Ansible playbook reference · Agent Export</title><meta name="description" content="Source-backed purpose and interfaces for each tracked component; inspect gates and configuration before running."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link active" aria-current="page" href="/guide/server-playbooks.html">Playbooks</a><div class="toc"><a class="toc-link" href="#invocation-and-inputs">Invocation and inputs</a><a class="toc-link" href="#ansible-playbooks-ansible-lint-api-yml">ansible/playbooks/ansible-lint-api.yml</a><a class="toc-link" href="#ansible-playbooks-artex-yml">ansible/playbooks/artex.yml</a><a class="toc-link" href="#ansible-playbooks-creative-asset-readers-yml">ansible/playbooks/creative-asset-readers.yml</a><a class="toc-link" href="#ansible-playbooks-docker-host-yml">ansible/playbooks/docker-host.yml</a><a class="toc-link" href="#ansible-playbooks-foundation-yml">ansible/playbooks/foundation.yml</a><a class="toc-link" href="#ansible-playbooks-godot-mcp-ssh-yml">ansible/playbooks/godot-mcp-ssh.yml</a><a class="toc-link" href="#ansible-playbooks-gpu-controller-yml">ansible/playbooks/gpu-controller.yml</a><a class="toc-link" href="#ansible-playbooks-gpu-host-yml">ansible/playbooks/gpu-host.yml</a><a class="toc-link" href="#ansible-playbooks-gpu-unlock-yml">ansible/playbooks/gpu-unlock.yml</a><a class="toc-link" href="#ansible-playbooks-health-yml">ansible/playbooks/health.yml</a><a class="toc-link" href="#ansible-playbooks-host-paths-yml">ansible/playbooks/host-paths.yml</a><a class="toc-link" href="#ansible-playbooks-host-repair-yml">ansible/playbooks/host-repair.yml</a><a class="toc-link" href="#ansible-playbooks-image-audit-yml">ansible/playbooks/image-audit.yml</a><a class="toc-link" href="#ansible-playbooks-install-collections-yml">ansible/playbooks/install-collections.yml</a><a class="toc-link" href="#ansible-playbooks-kubeconfig-yml">ansible/playbooks/kubeconfig.yml</a><a class="toc-link" href="#ansible-playbooks-kubernetes-app-yml">ansible/playbooks/kubernetes-app.yml</a><a class="toc-link" href="#ansible-playbooks-kubernetes-secrets-yml">ansible/playbooks/kubernetes-secrets.yml</a><a class="toc-link" href="#ansible-playbooks-kubernetes-yml">ansible/playbooks/kubernetes.yml</a><a class="toc-link" href="#ansible-playbooks-llama-mesh-pipeline-recovery-yml">ansible/playbooks/llama-mesh-pipeline-recovery.yml</a><a class="toc-link" href="#ansible-playbooks-llm-bge-embeddings-yml">ansible/playbooks/llm-bge-embeddings.yml</a><a class="toc-link" href="#ansible-playbooks-llm-model-lab-yml">ansible/playbooks/llm-model-lab.yml</a><a class="toc-link" href="#ansible-playbooks-model-manager-yml">ansible/playbooks/model-manager.yml</a><a class="toc-link" href="#ansible-playbooks-moss-image-yml">ansible/playbooks/moss-image.yml</a><a class="toc-link" href="#ansible-playbooks-opencode-llama-mesh-integration-yml">ansible/playbooks/opencode-llama-mesh-integration.yml</a><a class="toc-link" href="#ansible-playbooks-project-layout-yml">ansible/playbooks/project-layout.yml</a><a class="toc-link" href="#ansible-playbooks-projects-share-yml">ansible/playbooks/projects-share.yml</a><a class="toc-link" href="#ansible-playbooks-secrets-yml">ansible/playbooks/secrets.yml</a><a class="toc-link" href="#ansible-playbooks-secure-sensitive-files-yml">ansible/playbooks/secure-sensitive-files.yml</a><a class="toc-link" href="#ansible-playbooks-site-yml">ansible/playbooks/site.yml</a><a class="toc-link" href="#ansible-playbooks-skill-editor-yml">ansible/playbooks/skill-editor.yml</a><a class="toc-link" href="#ansible-playbooks-tasks-watoom-backup-libexec-yml">ansible/playbooks/tasks/watoom-backup-libexec.yml</a><a class="toc-link" href="#ansible-playbooks-templates-bge-embeddings-yml-j2">ansible/playbooks/templates/bge-embeddings.yml.j2</a><a class="toc-link" href="#ansible-playbooks-tickets-board-yml">ansible/playbooks/tickets-board.yml</a><a class="toc-link" href="#ansible-playbooks-tuned-virtual-guest-yml">ansible/playbooks/tuned-virtual-guest.yml</a><a class="toc-link" href="#ansible-playbooks-ue-mcp-ssh-yml">ansible/playbooks/ue-mcp-ssh.yml</a><a class="toc-link" href="#ansible-playbooks-unreal-engine-publish-yml">ansible/playbooks/unreal-engine-publish.yml</a><a class="toc-link" href="#ansible-playbooks-unreal-engine-yml">ansible/playbooks/unreal-engine.yml</a><a class="toc-link" href="#ansible-playbooks-unreal-mcp-tunnel-yml">ansible/playbooks/unreal-mcp-tunnel.yml</a><a class="toc-link" href="#ansible-playbooks-unreal-project-yml">ansible/playbooks/unreal-project.yml</a><a class="toc-link" href="#ansible-playbooks-validate-yml">ansible/playbooks/validate.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-asset-archive-yml">ansible/playbooks/watoom-asset-archive.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-backup-offhost-yml">ansible/playbooks/watoom-backup-offhost.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-blender-compatibility-labels-yml">ansible/playbooks/watoom-blender-compatibility-labels.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-blender-unified-v3-yml">ansible/playbooks/watoom-blender-unified-v3.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-break-glass-yml">ansible/playbooks/watoom-break-glass.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-change-requests-yml">ansible/playbooks/watoom-change-requests.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-agent-routing-yml">ansible/playbooks/watoom-code-agent-routing.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-agents-yml">ansible/playbooks/watoom-code-agents.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-asset-capture-skill-yml">ansible/playbooks/watoom-code-asset-capture-skill.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-backup-yml">ansible/playbooks/watoom-code-backup.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-capture-scope-yml">ansible/playbooks/watoom-code-capture-scope.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-context-yml">ansible/playbooks/watoom-code-context.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-coordinator-guard-yml">ansible/playbooks/watoom-code-coordinator-guard.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-cutover-yml">ansible/playbooks/watoom-code-cutover.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-data-access-yml">ansible/playbooks/watoom-code-data-access.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-dev-yml">ansible/playbooks/watoom-code-dev.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-engine-inspection-yml">ansible/playbooks/watoom-code-engine-inspection.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-engineering-skills-yml">ansible/playbooks/watoom-code-engineering-skills.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-fab-assets-yml">ansible/playbooks/watoom-code-fab-assets.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-game-worker-memory-yml">ansible/playbooks/watoom-code-game-worker-memory.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-game-worker-yml">ansible/playbooks/watoom-code-game-worker.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-godot-mcp-yml">ansible/playbooks/watoom-code-godot-mcp.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-guard-knowledge-yml">ansible/playbooks/watoom-code-guard-knowledge.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-guard-yml">ansible/playbooks/watoom-code-guard.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-homelab-project-yml">ansible/playbooks/watoom-code-homelab-project.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-image-mcp-yml">ansible/playbooks/watoom-code-image-mcp.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-image-review-yml">ansible/playbooks/watoom-code-image-review.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-image-scope-yml">ansible/playbooks/watoom-code-image-scope.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-lan-route-yml">ansible/playbooks/watoom-code-lan-route.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-memory-catalogue-yml">ansible/playbooks/watoom-code-memory-catalogue.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-memory-embeddings-yml">ansible/playbooks/watoom-code-memory-embeddings.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-memory-health-yml">ansible/playbooks/watoom-code-memory-health.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-memory-observability-yml">ansible/playbooks/watoom-code-memory-observability.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-moss-image-plugin-yml">ansible/playbooks/watoom-code-moss-image-plugin.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-native-tool-selection-yml">ansible/playbooks/watoom-code-native-tool-selection.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-operator-commands-yml">ansible/playbooks/watoom-code-operator-commands.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-pose-worker-yml">ansible/playbooks/watoom-code-pose-worker.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-read-access-yml">ansible/playbooks/watoom-code-read-access.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-reasoning-variants-yml">ansible/playbooks/watoom-code-reasoning-variants.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-render-routing-yml">ansible/playbooks/watoom-code-render-routing.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-searxng-yml">ansible/playbooks/watoom-code-searxng.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-self-learning-controller-yml">ansible/playbooks/watoom-code-self-learning-controller.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-self-learning-cutover-yml">ansible/playbooks/watoom-code-self-learning-cutover.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-self-learning-optimisation-yml">ansible/playbooks/watoom-code-self-learning-optimisation.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-self-learning-runner-yml">ansible/playbooks/watoom-code-self-learning-runner.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-self-learning-stage-yml">ansible/playbooks/watoom-code-self-learning-stage.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-ue-mcp-yml">ansible/playbooks/watoom-code-ue-mcp.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-uploads-yml">ansible/playbooks/watoom-code-uploads.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-visual-diagnosis-yml">ansible/playbooks/watoom-code-visual-diagnosis.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-workstation-capture-yml">ansible/playbooks/watoom-code-workstation-capture.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-code-yml">ansible/playbooks/watoom-code.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-native-skills-yml">ansible/playbooks/watoom-native-skills.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-node-textfile-yml">ansible/playbooks/watoom-node-textfile.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-platform-alerts-yml">ansible/playbooks/watoom-platform-alerts.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-recovery-export-yml">ansible/playbooks/watoom-recovery-export.yml</a><a class="toc-link" href="#ansible-playbooks-watoom-workstation-render-stage-yml">ansible/playbooks/watoom-workstation-render-stage.yml</a><a class="toc-link" href="#ansible-playbooks-worker-status-yml">ansible/playbooks/worker-status.yml</a></div><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">Playbooks</p><h1>Ansible playbook reference</h1><p class="lede">Source-backed purpose and interfaces for each tracked component; inspect gates and configuration before running.</p></header>
+<div class="content">
+<p>This catalogue is generated from tracked source and untracked code candidates by <code>scripts/render-server-catalogue.py</code>. It does not run programs or certify their deployment. Source links use the configured WatooM source repository; the separate LLM repository retains the same <code>standardised_k3s_project/</code> paths. Descriptions name their evidence basis; a filename summary is not a verified operational contract.</p>
+<p>Read <a href="/guide/operations.html">Operations</a>, <a href="/guide/llm-project.html">installation and configuration</a>, and <a href="/guide/software-design.html">the software design</a> before executing deployment or recovery helpers. Run no bulk scripts from this list.</p>
+<h2 id="invocation-and-inputs">Invocation and inputs</h2>
+<p>From the project root, use <code>./ansible-run playbooks/&lt;name&gt;.yml</code> only after reading that playbook and its role defaults. The wrapper sets inventory/vault/execution environment. Play-level variables, vars files, includes and gates remain authoritative; there is no universal safe apply command. Use <code>scripts/watoom-ansible-validate.sh standard</code> for production-bound Ansible source.</p>
+<h2 id="ansible-playbooks-ansible-lint-api-yml">ansible/playbooks/ansible-lint-api.yml</h2>
+<p>Reconcile ansible-lint API host service</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/ansible-lint-api.yml" rel="noopener"><code>ansible/playbooks/ansible-lint-api.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Reconcile ansible-lint API host service.</p>
+<h2 id="ansible-playbooks-artex-yml">ansible/playbooks/artex.yml</h2>
+<p>Deploy ARTEX (FailSafe source build, internal ingress only)</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/artex.yml" rel="noopener"><code>ansible/playbooks/artex.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Deploy ARTEX (FailSafe source build, internal ingress only).</p>
+<h2 id="ansible-playbooks-creative-asset-readers-yml">ansible/playbooks/creative-asset-readers.yml</h2>
+<p>Maintain narrowly verified asset-reader access without changing ownership</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/creative-asset-readers.yml" rel="noopener"><code>ansible/playbooks/creative-asset-readers.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Maintain narrowly verified asset-reader access without changing ownership; Allow existing creative executor group to read verified legacy generated assets.</p>
+<h2 id="ansible-playbooks-docker-host-yml">ansible/playbooks/docker-host.yml</h2>
+<p>Manage WatooM Docker host prerequisites</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/docker-host.yml" rel="noopener"><code>ansible/playbooks/docker-host.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Manage WatooM Docker host prerequisites.</p>
+<h2 id="ansible-playbooks-foundation-yml">ansible/playbooks/foundation.yml</h2>
+<p>Prepare homelab host foundations</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/foundation.yml" rel="noopener"><code>ansible/playbooks/foundation.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Prepare homelab host foundations.</p>
+<h2 id="ansible-playbooks-godot-mcp-ssh-yml">ansible/playbooks/godot-mcp-ssh.yml</h2>
+<p>Generate and stage the lab's SSH identity for the rig's Godot MCP account</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/godot-mcp-ssh.yml" rel="noopener"><code>ansible/playbooks/godot-mcp-ssh.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Generate and stage the lab's SSH identity for the rig's Godot MCP account; Key directory; Generate the lab's SSH identity for this route only; Read the generated public key; Show the public key to install on the rig (see README step 2); Try to learn the rig's host key, if its SSH server is already up (best-effort); Pin the rig's host key once known (idempotent; re-run this playbook after the rig's sshd is up); Compute the fingerprint of the host key just pinned; Verify the pinned host key out of band (the first connection is trust-on-first-use); Warn if the rig's host key is not yet known. Further steps are in source.</p>
+<h2 id="ansible-playbooks-gpu-controller-yml">ansible/playbooks/gpu-controller.yml</h2>
+<p>Promote reviewed GPU controller runtime only</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/gpu-controller.yml" rel="noopener"><code>ansible/playbooks/gpu-controller.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Promote reviewed GPU controller runtime only; Install the reviewed controller runtime.</p>
+<h2 id="ansible-playbooks-gpu-host-yml">ansible/playbooks/gpu-host.yml</h2>
+<p>Reconcile WatooM GPU host policy</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/gpu-host.yml" rel="noopener"><code>ansible/playbooks/gpu-host.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Reconcile WatooM GPU host policy.</p>
+<h2 id="ansible-playbooks-gpu-unlock-yml">ansible/playbooks/gpu-unlock.yml</h2>
+<p>Install pinned GPU unlock without rebooting the host</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/gpu-unlock.yml" rel="noopener"><code>ansible/playbooks/gpu-unlock.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Install pinned GPU unlock without rebooting the host; Reconcile only the GPU unlock component.</p>
+<h2 id="ansible-playbooks-health-yml">ansible/playbooks/health.yml</h2>
+<p>Validate WatooM host health</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/health.yml" rel="noopener"><code>ansible/playbooks/health.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Validate WatooM host health.</p>
+<h2 id="ansible-playbooks-host-paths-yml">ansible/playbooks/host-paths.yml</h2>
+<p>Reconcile WatooM host paths</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/host-paths.yml" rel="noopener"><code>ansible/playbooks/host-paths.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Reconcile WatooM host paths.</p>
+<h2 id="ansible-playbooks-host-repair-yml">ansible/playbooks/host-repair.yml</h2>
+<p>Manage WatooM host repair action</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/host-repair.yml" rel="noopener"><code>ansible/playbooks/host-repair.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Manage WatooM host repair action.</p>
+<h2 id="ansible-playbooks-image-audit-yml">ansible/playbooks/image-audit.yml</h2>
+<p>Audit WatooM workload images</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/image-audit.yml" rel="noopener"><code>ansible/playbooks/image-audit.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Audit WatooM workload images.</p>
+<h2 id="ansible-playbooks-install-collections-yml">ansible/playbooks/install-collections.yml</h2>
+<p>Verify Ansible collection dependencies are installed</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/install-collections.yml" rel="noopener"><code>ansible/playbooks/install-collections.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Verify Ansible collection dependencies are installed; Dependency installation command.</p>
+<h2 id="ansible-playbooks-kubeconfig-yml">ansible/playbooks/kubeconfig.yml</h2>
+<p>Reconcile WatooM user kubeconfigs</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/kubeconfig.yml" rel="noopener"><code>ansible/playbooks/kubeconfig.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Reconcile WatooM user kubeconfigs.</p>
+<h2 id="ansible-playbooks-kubernetes-app-yml">ansible/playbooks/kubernetes-app.yml</h2>
+<p>Manage one WatooM Kubernetes application</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/kubernetes-app.yml" rel="noopener"><code>ansible/playbooks/kubernetes-app.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Manage one WatooM Kubernetes application.</p>
+<h2 id="ansible-playbooks-kubernetes-secrets-yml">ansible/playbooks/kubernetes-secrets.yml</h2>
+<p>Reconcile WatooM Kubernetes secrets</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/kubernetes-secrets.yml" rel="noopener"><code>ansible/playbooks/kubernetes-secrets.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Reconcile WatooM Kubernetes secrets.</p>
+<h2 id="ansible-playbooks-kubernetes-yml">ansible/playbooks/kubernetes.yml</h2>
+<p>Reconcile Kubernetes workloads</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/kubernetes.yml" rel="noopener"><code>ansible/playbooks/kubernetes.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Reconcile Kubernetes workloads.</p>
+<h2 id="ansible-playbooks-llama-mesh-pipeline-recovery-yml">ansible/playbooks/llama-mesh-pipeline-recovery.yml</h2>
+<p>Persist WatooM LLaMA-Mesh host queue recovery</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/llama-mesh-pipeline-recovery.yml" rel="noopener"><code>ansible/playbooks/llama-mesh-pipeline-recovery.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Persist WatooM LLaMA-Mesh host queue recovery; Reconcile only mesh pipeline recovery.</p>
+<h2 id="ansible-playbooks-llm-bge-embeddings-yml">ansible/playbooks/llm-bge-embeddings.yml</h2>
+<p>Deploy BGE embeddings (CPU by default)</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/llm-bge-embeddings.yml" rel="noopener"><code>ansible/playbooks/llm-bge-embeddings.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Deploy BGE embeddings (CPU by default); Maintain the model directories; Install the official BGE revision (checksum-pinned); Install the GGUF conversion (checksum-pinned); Prove the GGUF equals the official weights, tokenizer and pooling; Publish the chunking proxy; Apply the BGE Service and NetworkPolicy; Apply the BGE Deployment and wait until Available; Read the Service address (the host cannot resolve cluster DNS); Check a 384-dimension embedding through the Service.</p>
+<h2 id="ansible-playbooks-llm-model-lab-yml">ansible/playbooks/llm-model-lab.yml</h2>
+<p>Deploy the LLM model lab</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/llm-model-lab.yml" rel="noopener"><code>ansible/playbooks/llm-model-lab.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Deploy the LLM model lab.</p>
+<h2 id="ansible-playbooks-model-manager-yml">ansible/playbooks/model-manager.yml</h2>
+<p>Install isolated model manager and narrow lifecycle broker</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/model-manager.yml" rel="noopener"><code>ansible/playbooks/model-manager.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Install isolated model manager and narrow lifecycle broker.</p>
+<h2 id="ansible-playbooks-moss-image-yml">ansible/playbooks/moss-image.yml</h2>
+<p>MOSS Image Studio (GPU sessions via the GPU controller)</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/moss-image.yml" rel="noopener"><code>ansible/playbooks/moss-image.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: MOSS Image Studio (GPU sessions via the GPU controller).</p>
+<h2 id="ansible-playbooks-opencode-llama-mesh-integration-yml">ansible/playbooks/opencode-llama-mesh-integration.yml</h2>
+<p>Persist narrow OpenCode LLaMA-Mesh integration</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/opencode-llama-mesh-integration.yml" rel="noopener"><code>ansible/playbooks/opencode-llama-mesh-integration.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Persist narrow OpenCode LLaMA-Mesh integration; Reconcile only authorized mesh integration.</p>
+<h2 id="ansible-playbooks-project-layout-yml">ansible/playbooks/project-layout.yml</h2>
+<p>Maintain project storage and capture viewing layout without application rollout</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/project-layout.yml" rel="noopener"><code>ansible/playbooks/project-layout.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Maintain project storage and capture viewing layout without application rollout.</p>
+<h2 id="ansible-playbooks-projects-share-yml">ansible/playbooks/projects-share.yml</h2>
+<p>Share the projects folder with the rig</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/projects-share.yml" rel="noopener"><code>ansible/playbooks/projects-share.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Share the projects folder with the rig.</p>
+<h2 id="ansible-playbooks-secrets-yml">ansible/playbooks/secrets.yml</h2>
+<p>Restore WatooM homelab secret source</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/secrets.yml" rel="noopener"><code>ansible/playbooks/secrets.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Restore WatooM homelab secret source.</p>
+<h2 id="ansible-playbooks-secure-sensitive-files-yml">ansible/playbooks/secure-sensitive-files.yml</h2>
+<p>Restrict credential-bearing files in the project checkout</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/secure-sensitive-files.yml" rel="noopener"><code>ansible/playbooks/secure-sensitive-files.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Restrict credential-bearing files in the project checkout; Inspect sensitive files; Require every sensitive file to be a regular file; Apply owner and mode (content never read).</p>
+<h2 id="ansible-playbooks-site-yml">ansible/playbooks/site.yml</h2>
+<p>Reconcile the LLM platform host</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/site.yml" rel="noopener"><code>ansible/playbooks/site.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Reconcile the LLM platform host.</p>
+<h2 id="ansible-playbooks-skill-editor-yml">ansible/playbooks/skill-editor.yml</h2>
+<p>Install the Glance skill editor (SKILL.md edits committed to Git)</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/skill-editor.yml" rel="noopener"><code>ansible/playbooks/skill-editor.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Install the Glance skill editor (SKILL.md edits committed to Git).</p>
+<h2 id="ansible-playbooks-tasks-watoom-backup-libexec-yml">ansible/playbooks/tasks/watoom-backup-libexec.yml</h2>
+<p>Maintain the root-owned backup tool directory</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/tasks/watoom-backup-libexec.yml" rel="noopener"><code>ansible/playbooks/tasks/watoom-backup-libexec.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Maintain the root-owned backup tool directory; Install the backup tools from the reviewed source.</p>
+<h2 id="ansible-playbooks-templates-bge-embeddings-yml-j2">ansible/playbooks/templates/bge-embeddings.yml.j2</h2>
+<p>Source component: bge embeddings.yml. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/templates/bge-embeddings.yml.j2" rel="noopener"><code>ansible/playbooks/templates/bge-embeddings.yml.j2</code></a>. Description basis: filename summary.</p>
+<p>Named steps: llama-server; embed-proxy; model; proxy; gpu-observation.</p>
+<h2 id="ansible-playbooks-tickets-board-yml">ansible/playbooks/tickets-board.yml</h2>
+<p>Install the tickets board (kanban over the ticket store, served under Glance at /tickets/)</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/tickets-board.yml" rel="noopener"><code>ansible/playbooks/tickets-board.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Install the tickets board (kanban over the ticket store, served under Glance at /tickets/).</p>
+<h2 id="ansible-playbooks-tuned-virtual-guest-yml">ansible/playbooks/tuned-virtual-guest.yml</h2>
+<p>Configure TuneD virtual-guest profile</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/tuned-virtual-guest.yml" rel="noopener"><code>ansible/playbooks/tuned-virtual-guest.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Configure TuneD virtual-guest profile.</p>
+<h2 id="ansible-playbooks-ue-mcp-ssh-yml">ansible/playbooks/ue-mcp-ssh.yml</h2>
+<p>Generate and stage the lab's SSH identity for the rig's ue-mcp account</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/ue-mcp-ssh.yml" rel="noopener"><code>ansible/playbooks/ue-mcp-ssh.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Generate and stage the lab's SSH identity for the rig's ue-mcp account; Key directory; Generate the lab's SSH identity for this route only; Read the generated public key; Show the public key to install on the rig (see README step 2); Try to learn the rig's host key, if its SSH server is already up (best-effort); Pin the rig's host key once known (idempotent; re-run this playbook after the rig's sshd is up); Compute the fingerprint of the host key just pinned; Verify the pinned host key out of band (the first connection is trust-on-first-use); Warn if the rig's host key is not yet known. Further steps are in source.</p>
+<h2 id="ansible-playbooks-unreal-engine-publish-yml">ansible/playbooks/unreal-engine-publish.yml</h2>
+<p>Publish already built and validated Unreal output without rebuilding</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/unreal-engine-publish.yml" rel="noopener"><code>ansible/playbooks/unreal-engine-publish.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Publish already built and validated Unreal output without rebuilding; Materialize the versioned runtime using the normal build role.</p>
+<h2 id="ansible-playbooks-unreal-engine-yml">ansible/playbooks/unreal-engine.yml</h2>
+<p>Build the pinned Unreal toolchain from source through maintained IaC</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/unreal-engine.yml" rel="noopener"><code>ansible/playbooks/unreal-engine.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Build the pinned Unreal toolchain from source through maintained IaC.</p>
+<h2 id="ansible-playbooks-unreal-mcp-tunnel-yml">ansible/playbooks/unreal-mcp-tunnel.yml</h2>
+<p>Install the Unreal MCP tunnel endpoint and proxy</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/unreal-mcp-tunnel.yml" rel="noopener"><code>ansible/playbooks/unreal-mcp-tunnel.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Install the Unreal MCP tunnel endpoint and proxy; Tunnel-only account; Authorized keys directory; Rig tunnel key, restricted to the single reverse forward; sshd rules for the tunnel account; Install the drop-in; Validate sshd configuration; Remove the drop-in again if sshd rejects it; Stop here; Reload sshd. Further steps are in source.</p>
+<h2 id="ansible-playbooks-unreal-project-yml">ansible/playbooks/unreal-project.yml</h2>
+<p>Stage an explicitly selected Unreal complete-project starter</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/unreal-project.yml" rel="noopener"><code>ansible/playbooks/unreal-project.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Stage an explicitly selected Unreal complete-project starter.</p>
+<h2 id="ansible-playbooks-validate-yml">ansible/playbooks/validate.yml</h2>
+<p>Validate WatooM homelab</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/validate.yml" rel="noopener"><code>ansible/playbooks/validate.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Validate WatooM homelab.</p>
+<h2 id="ansible-playbooks-watoom-asset-archive-yml">ansible/playbooks/watoom-asset-archive.yml</h2>
+<p>Install the asset archive host worker</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-asset-archive.yml" rel="noopener"><code>ansible/playbooks/watoom-asset-archive.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Install the asset archive host worker; Worker script; Shared request queue (the pod can only write under projects/*); Worker service; Enable and start the worker; Restart asset archive worker.</p>
+<h2 id="ansible-playbooks-watoom-backup-offhost-yml">ansible/playbooks/watoom-backup-offhost.yml</h2>
+<p>Publish verified backups for the rig to pull</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-backup-offhost.yml" rel="noopener"><code>ansible/playbooks/watoom-backup-offhost.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Publish verified backups for the rig to pull; Install the backup tools outside any checkout; Maintain the pull group; Maintain the jailed pull-only account; Maintain the off-host export and receipt trees; Check existing jail bind mounts; Create jail mountpoints only when not mounted; Bind the export read-only and the receipts writable into the jail; Label only the off-host tree for SSH access; Apply the off-host labels. Further steps are in source.</p>
+<h2 id="ansible-playbooks-watoom-blender-compatibility-labels-yml">ansible/playbooks/watoom-blender-compatibility-labels.yml</h2>
+<p>Label the separately installed Blender 5.2 compatibility runtime</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-blender-compatibility-labels.yml" rel="noopener"><code>ansible/playbooks/watoom-blender-compatibility-labels.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Label the separately installed Blender 5.2 compatibility runtime; Persist runtime directory label; Persist executable release labels; Apply labels only to the new release; Apply parent directory label.</p>
+<h2 id="ansible-playbooks-watoom-blender-unified-v3-yml">ansible/playbooks/watoom-blender-unified-v3.yml</h2>
+<p>Activate validated WatooM Blender v3 helpers</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-blender-unified-v3.yml" rel="noopener"><code>ansible/playbooks/watoom-blender-unified-v3.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Activate validated WatooM Blender v3 helpers; Require explicit approval; Read supplied package digest; Read release manifest digest; Verify pinned release provenance; Verify all installed helper hashes; Activate with validated receipt and automatic rollback; Record activation result.</p>
+<h2 id="ansible-playbooks-watoom-break-glass-yml">ansible/playbooks/watoom-break-glass.yml</h2>
+<p>Install the break-glass recovery service</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-break-glass.yml" rel="noopener"><code>ansible/playbooks/watoom-break-glass.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Install the break-glass recovery service; Create the break-glass state and inbox directories; Create the evidence directory (root only; holds database snapshots); Install break-glass service; Install break-glass request trigger; Install break-glass status timer; Reload systemd and enable the trigger and timer.</p>
+<h2 id="ansible-playbooks-watoom-change-requests-yml">ansible/playbooks/watoom-change-requests.yml</h2>
+<p>Install the audited host change-request scanner</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-change-requests.yml" rel="noopener"><code>ansible/playbooks/watoom-change-requests.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Install the audited host change-request scanner; Create model-writable change-request queues; Install change-request scan service; Install change-request scan timer; Activate change-request timer.</p>
+<h2 id="ansible-playbooks-watoom-code-agent-routing-yml">ansible/playbooks/watoom-code-agent-routing.yml</h2>
+<p>Deploy only reviewed agent routing and coordinator guard</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-agent-routing.yml" rel="noopener"><code>ansible/playbooks/watoom-code-agent-routing.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Deploy only reviewed agent routing and coordinator guard; Require native idle deployment guard; Install scoped agent routing.</p>
+<h2 id="ansible-playbooks-watoom-code-agents-yml">ansible/playbooks/watoom-code-agents.yml</h2>
+<p>Update maintained WatooM Code instructions without application rollout</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-agents.yml" rel="noopener"><code>ansible/playbooks/watoom-code-agents.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Update maintained WatooM Code instructions without application rollout; Install native agents through the authoritative role task.</p>
+<h2 id="ansible-playbooks-watoom-code-asset-capture-skill-yml">ansible/playbooks/watoom-code-asset-capture-skill.yml</h2>
+<p>Install owner-requested asset image and clip capture skill</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-asset-capture-skill.yml" rel="noopener"><code>ansible/playbooks/watoom-code-asset-capture-skill.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Install owner-requested asset image and clip capture skill; Install maintained capture skill only; Preserve container-readable capture skill label.</p>
+<h2 id="ansible-playbooks-watoom-code-backup-yml">ansible/playbooks/watoom-code-backup.yml</h2>
+<p>Schedule verified WatooM-Code backups</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-backup.yml" rel="noopener"><code>ansible/playbooks/watoom-code-backup.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Schedule verified WatooM-Code backups; Install the backup tools outside any checkout; Create the private backup destination; Install the backup service and daily timer; watoom-code-backup.service; watoom-code-backup.timer; Enable the daily backup timer.</p>
+<h2 id="ansible-playbooks-watoom-code-capture-scope-yml">ansible/playbooks/watoom-code-capture-scope.yml</h2>
+<p>Activate precise capture admission diagnostics under native fence</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-capture-scope.yml" rel="noopener"><code>ansible/playbooks/watoom-code-capture-scope.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Activate precise capture admission diagnostics under native fence; Require native release fence; Install immutable capture guard diagnostics; Install capture project preflight guidance.</p>
+<h2 id="ansible-playbooks-watoom-code-context-yml">ansible/playbooks/watoom-code-context.yml</h2>
+<p>Deploy WatooM Code context reliability application only</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-context.yml" rel="noopener"><code>ansible/playbooks/watoom-code-context.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Deploy WatooM Code context reliability application only; Require the durable application admission fence; Set only the reviewed application image; app; Wait for the application rollout.</p>
+<h2 id="ansible-playbooks-watoom-code-coordinator-guard-yml">ansible/playbooks/watoom-code-coordinator-guard.yml</h2>
+<p>Deploy only the reviewed native coordinator guard</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-coordinator-guard.yml" rel="noopener"><code>ansible/playbooks/watoom-code-coordinator-guard.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Deploy only the reviewed native coordinator guard; Require native idle deployment guard; Install and select the immutable coordinator guard.</p>
+<h2 id="ansible-playbooks-watoom-code-cutover-yml">ansible/playbooks/watoom-code-cutover.yml</h2>
+<p>Apply reviewed WatooM Code production candidate</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-cutover.yml" rel="noopener"><code>ansible/playbooks/watoom-code-cutover.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Apply reviewed WatooM Code production candidate; Require explicit production approval; Read the reviewed deployment; Fence ownership to the existing application deployment; Reconcile the existing application deployment; Wait for the reviewed release.</p>
+<h2 id="ansible-playbooks-watoom-code-data-access-yml">ansible/playbooks/watoom-code-data-access.yml</h2>
+<p>Maintain agent evidence access without application rollout</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-data-access.yml" rel="noopener"><code>ansible/playbooks/watoom-code-data-access.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Maintain agent evidence access without application rollout; Install maintained agent permissions; Apply maintained bounded receipt access.</p>
+<h2 id="ansible-playbooks-watoom-code-dev-yml">ansible/playbooks/watoom-code-dev.yml</h2>
+<p>Prepare isolated development access without replacing production services</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-dev.yml" rel="noopener"><code>ansible/playbooks/watoom-code-dev.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Prepare isolated development access without replacing production services; Reconcile only the dedicated development workspace components.</p>
+<h2 id="ansible-playbooks-watoom-code-engine-inspection-yml">ansible/playbooks/watoom-code-engine-inspection.yml</h2>
+<p>Activate bounded owned Unreal inspection route</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-engine-inspection.yml" rel="noopener"><code>ansible/playbooks/watoom-code-engine-inspection.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Activate bounded owned Unreal inspection route; Maintain engine inspection contract.</p>
+<h2 id="ansible-playbooks-watoom-code-engineering-skills-yml">ansible/playbooks/watoom-code-engineering-skills.yml</h2>
+<p>Install engineering-discipline skills</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-engineering-skills.yml" rel="noopener"><code>ansible/playbooks/watoom-code-engineering-skills.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Install engineering-discipline skills; Install skill directories; Install licence and source record; Restore skill labels.</p>
+<h2 id="ansible-playbooks-watoom-code-fab-assets-yml">ansible/playbooks/watoom-code-fab-assets.yml</h2>
+<p>Maintain Fab acquisition instructions</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-fab-assets.yml" rel="noopener"><code>ansible/playbooks/watoom-code-fab-assets.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Maintain Fab acquisition instructions; Install maintained agent instructions; Install owner-answer approval worker.</p>
+<h2 id="ansible-playbooks-watoom-code-game-worker-memory-yml">ansible/playbooks/watoom-code-game-worker-memory.yml</h2>
+<p>Activate controller-owned CPU game worker handoff</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-game-worker-memory.yml" rel="noopener"><code>ansible/playbooks/watoom-code-game-worker-memory.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Activate controller-owned CPU game worker handoff; Install reviewed controller service module; Activate reviewed controller service module; Install maintained worker units.</p>
+<h2 id="ansible-playbooks-watoom-code-game-worker-yml">ansible/playbooks/watoom-code-game-worker.yml</h2>
+<p>Activate bounded native game worker interface</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-game-worker.yml" rel="noopener"><code>ansible/playbooks/watoom-code-game-worker.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Activate bounded native game worker interface; Maintain operator request worker; Install versioned native tools; Install maintained worker instructions.</p>
+<h2 id="ansible-playbooks-watoom-code-godot-mcp-yml">ansible/playbooks/watoom-code-godot-mcp.yml</h2>
+<p>Maintain only the Godot MCP integration in the watoom-code configuration</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-godot-mcp.yml" rel="noopener"><code>ansible/playbooks/watoom-code-godot-mcp.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Maintain only the Godot MCP integration in the watoom-code configuration; Merge (or remove) the watoom-godot MCP entry in existing configuration.</p>
+<h2 id="ansible-playbooks-watoom-code-guard-knowledge-yml">ansible/playbooks/watoom-code-guard-knowledge.yml</h2>
+<p>Deploy the native coordinator guard and language-knowledge cards under the held release fence</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-guard-knowledge.yml" rel="noopener"><code>ansible/playbooks/watoom-code-guard-knowledge.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Deploy the native coordinator guard and language-knowledge cards under the held release fence; Require native idle deployment guard; Install and select the immutable coordinator guard; Install and select the language-knowledge package and cards.</p>
+<h2 id="ansible-playbooks-watoom-code-guard-yml">ansible/playbooks/watoom-code-guard.yml</h2>
+<p>Update only native coordinator guard source and configuration</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-guard.yml" rel="noopener"><code>ansible/playbooks/watoom-code-guard.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Update only native coordinator guard source and configuration; Apply maintained versioned guard.</p>
+<h2 id="ansible-playbooks-watoom-code-homelab-project-yml">ansible/playbooks/watoom-code-homelab-project.yml</h2>
+<p>Maintain the Homelab LLM checkout and native policy only</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-homelab-project.yml" rel="noopener"><code>ansible/playbooks/watoom-code-homelab-project.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Maintain the Homelab LLM checkout and native policy only; Apply project-only tasks without restarting application or inference.</p>
+<h2 id="ansible-playbooks-watoom-code-image-mcp-yml">ansible/playbooks/watoom-code-image-mcp.yml</h2>
+<p>Maintain only the production image MCP integration</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-image-mcp.yml" rel="noopener"><code>ansible/playbooks/watoom-code-image-mcp.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Maintain only the production image MCP integration; Install scoped image credentials and merge its MCP entry.</p>
+<h2 id="ansible-playbooks-watoom-code-image-review-yml">ansible/playbooks/watoom-code-image-review.yml</h2>
+<p>Maintain common project image review copies</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-image-review.yml" rel="noopener"><code>ansible/playbooks/watoom-code-image-review.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Maintain common project image review copies.</p>
+<h2 id="ansible-playbooks-watoom-code-image-scope-yml">ansible/playbooks/watoom-code-image-scope.yml</h2>
+<p>Maintain only deterministic production image prompt transport</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-image-scope.yml" rel="noopener"><code>ansible/playbooks/watoom-code-image-scope.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Maintain only deterministic production image prompt transport; Install versioned image-scope package and merge its native plugin entry.</p>
+<h2 id="ansible-playbooks-watoom-code-lan-route-yml">ansible/playbooks/watoom-code-lan-route.yml</h2>
+<p>Publish isolated WatooM Code LAN route</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-lan-route.yml" rel="noopener"><code>ansible/playbooks/watoom-code-lan-route.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Publish isolated WatooM Code LAN route; Require explicit release approval; Read authoritative existing LAN certificate; Install isolated copy of existing LAN certificate; Publish validated isolated application on existing TLS entrypoint.</p>
+<h2 id="ansible-playbooks-watoom-code-memory-catalogue-yml">ansible/playbooks/watoom-code-memory-catalogue.yml</h2>
+<p>Promote the verified native memory and catalogue candidate only</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-memory-catalogue.yml" rel="noopener"><code>ansible/playbooks/watoom-code-memory-catalogue.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Promote the verified native memory and catalogue candidate only; Require native release fence and an immutable candidate; Install reviewed pipeline descriptions and dependencies; Preserve explicitly verified model capabilities; Set candidate image and read-only observation access; app; ownership-observations; Wait for the pinned application rollout.</p>
+<h2 id="ansible-playbooks-watoom-code-memory-embeddings-yml">ansible/playbooks/watoom-code-memory-embeddings.yml</h2>
+<p>Configure AgentMemory embeddings</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-memory-embeddings.yml" rel="noopener"><code>ansible/playbooks/watoom-code-memory-embeddings.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Configure AgentMemory embeddings; Fix the snapshot name once; Set the snapshot paths; Confirm AgentMemory can reach the embedding service; Export a portable, human-readable memory snapshot before stopping AgentMemory; Restrict the export snapshot's permissions; Stop, snapshot and reconfigure AgentMemory (restore the replica on any failure); Stop AgentMemory for a consistent snapshot (clients queue in their outbox); Wait for the AgentMemory pod to exit; Snapshot the memory store. Further steps are in source.</p>
+<h2 id="ansible-playbooks-watoom-code-memory-health-yml">ansible/playbooks/watoom-code-memory-health.yml</h2>
+<p>Restore WatooM Code AgentMemory within bounded host capacity</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-memory-health.yml" rel="noopener"><code>ansible/playbooks/watoom-code-memory-health.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Restore WatooM Code AgentMemory within bounded host capacity; Set the evidenced AgentMemory startup memory ceiling; agentmemory; Verify AgentMemory readiness.</p>
+<h2 id="ansible-playbooks-watoom-code-memory-observability-yml">ansible/playbooks/watoom-code-memory-observability.yml</h2>
+<p>Install read-only GPU observations without changing models or routing</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-memory-observability.yml" rel="noopener"><code>ansible/playbooks/watoom-code-memory-observability.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Install read-only GPU observations without changing models or routing; Require verified idle release boundary; Create root-owned observation directory; Install observation-aware controller modules; Read current controller configuration; Preserve configuration and add observation destination; Install existing controller unit with the observation write directory; Label the observation directory for read-only container access; Apply observation labels; Activate the existing controller at the verified idle boundary. Further steps are in source.</p>
+<h2 id="ansible-playbooks-watoom-code-moss-image-plugin-yml">ansible/playbooks/watoom-code-moss-image-plugin.yml</h2>
+<p>Update only the MOSS Image plugin (versioned dir + selection)</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-moss-image-plugin.yml" rel="noopener"><code>ansible/playbooks/watoom-code-moss-image-plugin.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Update only the MOSS Image plugin (versioned dir + selection).</p>
+<h2 id="ansible-playbooks-watoom-code-native-tool-selection-yml">ansible/playbooks/watoom-code-native-tool-selection.yml</h2>
+<p>Deploy scoped native tool selection guidance</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-native-tool-selection.yml" rel="noopener"><code>ansible/playbooks/watoom-code-native-tool-selection.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Deploy scoped native tool selection guidance; Require native idle release guard; Install managed native agent guidance.</p>
+<h2 id="ansible-playbooks-watoom-code-operator-commands-yml">ansible/playbooks/watoom-code-operator-commands.yml</h2>
+<p>Install operator-commands guidance</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-operator-commands.yml" rel="noopener"><code>ansible/playbooks/watoom-code-operator-commands.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Install operator-commands guidance; Install skill directories; Restore skill labels.</p>
+<h2 id="ansible-playbooks-watoom-code-pose-worker-yml">ansible/playbooks/watoom-code-pose-worker.yml</h2>
+<p>Activate fixed pose worker integration under native admission guard</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-pose-worker.yml" rel="noopener"><code>ansible/playbooks/watoom-code-pose-worker.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Activate fixed pose worker integration under native admission guard; Require existing scoped admission fence; Install immutable native capture mode registration; Install maintained pose helper skill; Install matching capture and animation routing; Install qualified Shadowheart rig routing reference; Restore owned skill labels.</p>
+<h2 id="ansible-playbooks-watoom-code-read-access-yml">ansible/playbooks/watoom-code-read-access.yml</h2>
+<p>Deploy scoped native read access under the held release fence</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-read-access.yml" rel="noopener"><code>ansible/playbooks/watoom-code-read-access.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Deploy scoped native read access under the held release fence; Require native idle deployment guard; Install immutable coordinator guard; Install managed role policies; Expose server repositories as read-only evidence.</p>
+<h2 id="ansible-playbooks-watoom-code-reasoning-variants-yml">ansible/playbooks/watoom-code-reasoning-variants.yml</h2>
+<p>Update only the WatooM-Code GUI reasoning levels</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-reasoning-variants.yml" rel="noopener"><code>ansible/playbooks/watoom-code-reasoning-variants.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Update only the WatooM-Code GUI reasoning levels; Apply maintained reasoning variants.</p>
+<h2 id="ansible-playbooks-watoom-code-render-routing-yml">ansible/playbooks/watoom-code-render-routing.yml</h2>
+<p>Activate reviewed render-capture defaults under the coordinator admission fence</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-render-routing.yml" rel="noopener"><code>ansible/playbooks/watoom-code-render-routing.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Activate reviewed render-capture defaults under the coordinator admission fence; Require admission-fenced invocation from the release coordinator; Install and select the tested immutable application-shell engine guard; Install only the shared capture skill and its maintained references; Apply only the owned default-capture block to managed execution agents; Apply only the maintained critic step budget; Restore existing container-readable labels on only the owned paths; Install external capture worker contract.</p>
+<h2 id="ansible-playbooks-watoom-code-searxng-yml">ansible/playbooks/watoom-code-searxng.yml</h2>
+<p>Maintain only the native SearXNG search provider</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-searxng.yml" rel="noopener"><code>ansible/playbooks/watoom-code-searxng.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Maintain only the native SearXNG search provider; Install the maintained search provider without replacing user settings.</p>
+<h2 id="ansible-playbooks-watoom-code-self-learning-controller-yml">ansible/playbooks/watoom-code-self-learning-controller.yml</h2>
+<p>Arm only the reviewed learning recovery checkpoint</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-self-learning-controller.yml" rel="noopener"><code>ansible/playbooks/watoom-code-self-learning-controller.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Arm only the reviewed learning recovery checkpoint; Require an owned checkpoint root; Install the independently scheduled controller; Install the nightly memory curator (off unless watoom_learning_curator_enabled).</p>
+<h2 id="ansible-playbooks-watoom-code-self-learning-cutover-yml">ansible/playbooks/watoom-code-self-learning-cutover.yml</h2>
+<p>Apply only an explicitly authorised WatooM learning configuration</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-self-learning-cutover.yml" rel="noopener"><code>ansible/playbooks/watoom-code-self-learning-cutover.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Apply only an explicitly authorised WatooM learning configuration; Require the exact approval and scoped release paths; Install the immutable native plugin package; Create only the new owned learning directories; Install the reviewed configuration atomically; Apply existing SELinux labels only to new release paths; Apply the checksum-pinned application deployment; Wait for actual candidate rollout.</p>
+<h2 id="ansible-playbooks-watoom-code-self-learning-optimisation-yml">ansible/playbooks/watoom-code-self-learning-optimisation.yml</h2>
+<p>Schedule guarded existing Skill improvement and rollback</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-self-learning-optimisation.yml" rel="noopener"><code>ansible/playbooks/watoom-code-self-learning-optimisation.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Schedule guarded existing Skill improvement and rollback; Require the private approved release evidence root; Install the deterministic existing Skill controller; Install the bounded optimisation schedule; Enable guarded periodic improvement.</p>
+<h2 id="ansible-playbooks-watoom-code-self-learning-runner-yml">ansible/playbooks/watoom-code-self-learning-runner.yml</h2>
+<p>Run the reviewed learning migration independently of Codex</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-self-learning-runner.yml" rel="noopener"><code>ansible/playbooks/watoom-code-self-learning-runner.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Run the reviewed learning migration independently of Codex; Require a dedicated private evidence root; Install the bounded resumable runner; Start the approved runner.</p>
+<h2 id="ansible-playbooks-watoom-code-self-learning-stage-yml">ansible/playbooks/watoom-code-self-learning-stage.yml</h2>
+<p>Deploy only the isolated WatooM learning candidate</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-self-learning-stage.yml" rel="noopener"><code>ansible/playbooks/watoom-code-self-learning-stage.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Deploy only the isolated WatooM learning candidate; Require explicitly scoped staging inputs; Create only the explicitly named isolated learning namespace; Provide the isolated application Service for maintenance acceptance; Persist labels only for isolated candidate data; Restore isolated data labels; Apply reviewed candidate manifest; Verify candidate memory readiness; Verify candidate application readiness; Install independently scheduled release recovery.</p>
+<h2 id="ansible-playbooks-watoom-code-ue-mcp-yml">ansible/playbooks/watoom-code-ue-mcp.yml</h2>
+<p>Maintain only the ue-mcp integration in the watoom-code configuration</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-ue-mcp.yml" rel="noopener"><code>ansible/playbooks/watoom-code-ue-mcp.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Maintain only the ue-mcp integration in the watoom-code configuration; Merge (or remove) the watoom-ue MCP entry in existing configuration.</p>
+<h2 id="ansible-playbooks-watoom-code-uploads-yml">ansible/playbooks/watoom-code-uploads.yml</h2>
+<p>Enable durable WatooM Code uploads</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-uploads.yml" rel="noopener"><code>ansible/playbooks/watoom-code-uploads.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Enable durable WatooM Code uploads; Require native idle admission fence; Create private persistent upload staging; Apply existing production SELinux policy; Mount the writable upload staging directory; app; uploads.</p>
+<h2 id="ansible-playbooks-watoom-code-visual-diagnosis-yml">ansible/playbooks/watoom-code-visual-diagnosis.yml</h2>
+<p>Activate maintained engine visual diagnosis</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-visual-diagnosis.yml" rel="noopener"><code>ansible/playbooks/watoom-code-visual-diagnosis.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Activate maintained engine visual diagnosis; Install maintained diagnosis skill, agent routing and templates.</p>
+<h2 id="ansible-playbooks-watoom-code-workstation-capture-yml">ansible/playbooks/watoom-code-workstation-capture.yml</h2>
+<p>Activate the qualified workstation capture backend under native admission fence</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-workstation-capture.yml" rel="noopener"><code>ansible/playbooks/watoom-code-workstation-capture.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Activate the qualified workstation capture backend under native admission fence; Require native admission fence; Maintain qualified backend and SFTP transport; Select the immutable capture tool description and preserve app shell guard; Maintain the admitted capture backend selection.</p>
+<h2 id="ansible-playbooks-watoom-code-yml">ansible/playbooks/watoom-code.yml</h2>
+<p>Deploy WatooM Code</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code.yml" rel="noopener"><code>ansible/playbooks/watoom-code.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Deploy WatooM Code.</p>
+<h2 id="ansible-playbooks-watoom-native-skills-yml">ansible/playbooks/watoom-native-skills.yml</h2>
+<p>Install approved native skills without restarting services</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-native-skills.yml" rel="noopener"><code>ansible/playbooks/watoom-native-skills.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Install approved native skills without restarting services; Reconcile maintained native skills only.</p>
+<h2 id="ansible-playbooks-watoom-node-textfile-yml">ansible/playbooks/watoom-node-textfile.yml</h2>
+<p>Publish WatooM host health metrics to node-exporter</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-node-textfile.yml" rel="noopener"><code>ansible/playbooks/watoom-node-textfile.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Publish WatooM host health metrics to node-exporter; Create the node-exporter textfile directories (readable by nobody); Install the failed-unit metric writer; Install the metric writer service and timer; watoom-node-textfile.service; watoom-node-textfile.timer; Enable the metric writer timer.</p>
+<h2 id="ansible-playbooks-watoom-platform-alerts-yml">ansible/playbooks/watoom-platform-alerts.yml</h2>
+<p>Forward Prometheus platform alerts to Discord through Grafana</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-platform-alerts.yml" rel="noopener"><code>ansible/playbooks/watoom-platform-alerts.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Forward Prometheus platform alerts to Discord through Grafana; Reconcile platform folder, contact point, route and forwarding rule; Show reconcile result.</p>
+<h2 id="ansible-playbooks-watoom-recovery-export-yml">ansible/playbooks/watoom-recovery-export.yml</h2>
+<p>Publish verified environment recovery bundles through the existing backup jail</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-recovery-export.yml" rel="noopener"><code>ansible/playbooks/watoom-recovery-export.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Publish verified environment recovery bundles through the existing backup jail; Require an exact completed recovery run; Check the selected private recovery manifest; Refuse incomplete or missing captures; Require the existing pull-only account; Install existing reviewed backup export helpers; Maintain only the separate environment receipt directory; Publish verified runs without pruning application backups.</p>
+<h2 id="ansible-playbooks-watoom-workstation-render-stage-yml">ansible/playbooks/watoom-workstation-render-stage.yml</h2>
+<p>Isolated workstation render staging transport</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-workstation-render-stage.yml" rel="noopener"><code>ansible/playbooks/watoom-workstation-render-stage.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Isolated workstation render staging transport.</p>
+<h2 id="ansible-playbooks-worker-status-yml">ansible/playbooks/worker-status.yml</h2>
+<p>Install the worker status collector</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/worker-status.yml" rel="noopener"><code>ansible/playbooks/worker-status.yml</code></a>. Description basis: first named play/task.</p>
+<p>Named steps: Install the worker status collector; Collector directories; Ensure the node-exporter textfile destination exists; Install the collector and the Bazzite access helper it reuses (outside any checkout); Collector service; Collector timer; Enable the timer.</p>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/server-playbooks.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

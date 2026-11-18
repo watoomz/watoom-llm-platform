@@ -1,0 +1,785 @@
+From 943cbe35777c98ed6696f3c411acb3bd40a8e67e Mon Sep 17 00:00:00 2001
+From: Agent Export <codex@agent.example>
+Date: Wed, 4 Nov 2026 06:55:07 +1000
+Subject: [PATCH] server: write prompt-cache disk spills on a background thread
+ (--cache-disk-async)
+
+A RAM eviction wrote its ~2 GiB entry to the disk tier on the server loop. On a
+busy HDD that took 17-65 s per write, during which no request or /metrics was
+served.
+
+The disk tier's write() is split into plan_write (index work), write_file (file
+I/O, no index access) and commit_write (index work); write() runs the three in
+order, unchanged for existing callers. The prompt cache hands evicted entries
+(moved, not copied) to one writer thread. disk_mtx guards the index; the
+writer holds it only for plan and commit, never during the file I/O, so
+lookups, restores and /metrics go on while a file is written.
+
+--cache-disk-async N (LLAMA_ARG_CACHE_DISK_ASYNC, default 1) bounds entries
+queued or being written; with the queue full an eviction is dropped and
+counted instead of blocking. 0 = synchronous, as before. Shutdown/sleep
+flushes drain the queue first. New metrics:
+prompt_cache_disk_async_{pending,writes_total,drops_total,dropped_bytes_total}.
+
+Tests: test-prompt-cache-disk 423/423 (10 repeated runs), and 3/3 under
+ThreadSanitizer with no reports.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ common/arg.cpp                            |  13 ++
+ common/common.h                           |   1 +
+ tests/test-prompt-cache-disk.cpp          | 113 +++++++++++++++
+ tools/server/server-context.cpp           |  13 ++
+ tools/server/server-prompt-cache-disk.cpp |  66 ++++++++-
+ tools/server/server-prompt-cache-disk.h   |  37 +++++
+ tools/server/server-task.cpp              | 169 +++++++++++++++++++++-
+ tools/server/server-task.h                |  56 +++++++
+ 8 files changed, 455 insertions(+), 13 deletions(-)
+
+diff --git a/common/arg.cpp b/common/arg.cpp
+index f01da27..21a92ad 100644
+--- a/common/arg.cpp
++++ b/common/arg.cpp
+@@ -2023,6 +2023,19 @@ common_params_context common_params_parser_init(common_params & params, llama_ex
+             params.cache_ram_ckpt = value;
+         }
+     ).set_env("LLAMA_ARG_CACHE_RAM_CHECKPOINTS").set_examples({LLAMA_EXAMPLE_SERVER}));
++    add_opt(common_arg(
++        {"--cache-disk-async"}, "N",
++        string_format("write prompts evicted from the RAM cache to the disk tier on a background thread, so the server "
++            "never waits for disk I/O; at most N are queued or being written (each holds its host RAM until written), "
++            "a further eviction while the queue is full is dropped and counted in /metrics "
++            "(default: %d, 0 = write synchronously)", params.cache_disk_async),
++        [](common_params & params, int value) {
++            if (value < 0) {
++                throw std::invalid_argument("cache-disk-async must be >= 0");
++            }
++            params.cache_disk_async = value;
++        }
++    ).set_env("LLAMA_ARG_CACHE_DISK_ASYNC").set_examples({LLAMA_EXAMPLE_SERVER}));
+     add_opt(common_arg(
+         {"--no-cache-disk"},
+         "disable the prompt-cache disk tier (RAM cache only)",
+diff --git a/common/common.h b/common/common.h
+index 6083e59..a28c199 100644
+--- a/common/common.h
++++ b/common/common.h
+@@ -809,6 +809,7 @@ struct common_params {
+     int32_t cache_disk_mib      = 16384; // disk tier size limit in MiB, -1 = no limit (free-space guard only), 0 = disable
+     int32_t cache_disk_min_free_mib = -1; // [#187] free space the disk tier leaves on its filesystem in MiB (-1 = max(10%, 8 GiB))
+     float   cache_disk_min_free_pct = -1.0f; // ... or as a percentage of the filesystem (-1 = unset; set by --cache-disk-min-free N%)
++    int32_t cache_disk_async    = 1;     // evicted prompts queued for / being written by the background disk writer (0 = synchronous)
+     int32_t cache_ram_ckpt      = 4;     // RAM tier: newest context checkpoints kept per entry (+ log-spaced older), 0 = all
+     std::string eval_cache_path;          // --eval-cache DIR: read-mostly folder of pre-built prompt states (empty = off)
+     bool        eval_cache_build = false; // --eval-cache-build: requests may add entries to the eval-cache folder
+diff --git a/tests/test-prompt-cache-disk.cpp b/tests/test-prompt-cache-disk.cpp
+index c3cf8b4..277930a 100644
+--- a/tests/test-prompt-cache-disk.cpp
++++ b/tests/test-prompt-cache-disk.cpp
+@@ -18,7 +18,9 @@
+ #include <new>
+ #include <string>
+ #include <algorithm>
++#include <atomic>
+ #include <cstdint>
++#include <thread>
+ #include <vector>
+ 
+ #ifndef _WIN32
+@@ -1046,6 +1048,116 @@ static void test_fit_ram(const std::string & root) {
+     CHECK(!pc);
+ }
+ 
++static server_prompt text_prompt(int id, size_t n_tokens) {
++    server_prompt p;
++    p.tokens = server_tokens(make_entry(id, n_tokens, 0).tokens, false);
++    return p;
++}
++
++// --cache-disk-async: an eviction is handed to the background writer; the server loop goes on without waiting for
++// the file I/O, can take the index lock while the file is being written, and a full queue drops instead of blocking
++static void test_async_spill(const std::string & root) {
++    const std::string dir = root + "/async";
++
++    std::atomic<bool> entered{false};
++    std::atomic<bool> release{false};
++
++    {
++        server_prompt_cache pc(1024, 0);
++        pc.disk = make_tier(dir, "k", 0);
++        pc.disk_async_max = 1;
++        pc.disk.before_write_file_fn = [&]() {
++            entered = true;
++            while (!release) {
++                std::this_thread::sleep_for(std::chrono::milliseconds(1));
++            }
++        };
++
++        const server_prompt a = text_prompt(11, 300);
++        const server_prompt b = text_prompt(12, 400);
++        const server_prompt c = text_prompt(13, 500);
++
++        CHECK(pc.alloc(a, 1*MiB, 0) != nullptr);
++        CHECK(pc.alloc(b, 1*MiB, 0) != nullptr);
++        CHECK(pc.alloc(c, 1*MiB, 0) != nullptr);
++        CHECK(pc.states.size() == 3);
++
++        // evict a: queued; the writer takes it and stops inside write_file, i.e. without the lock
++        pc.limit_size = 2*MiB + 512*1024;
++        pc.update();
++        CHECK(pc.states.size() == 2);
++        for (int i = 0; i < 5000 && !entered; ++i) {
++            std::this_thread::sleep_for(std::chrono::milliseconds(1));
++        }
++        CHECK(entered);
++
++        {
++            // the index lock is free while the entry is being written: lookups and /metrics do not wait for I/O
++            std::unique_lock<std::mutex> lock(pc.disk_mtx, std::try_to_lock);
++            CHECK(lock.owns_lock());
++            CHECK(pc.disk_async_pending() == 1);
++            CHECK(pc.disk.n_match() == 0); // not on disk yet, so not found by lookups
++        }
++
++        // evict b while a is still being written: the queue (max 1) is full, so b is dropped, not waited for
++        pc.limit_size = 1*MiB + 512*1024;
++        const int64_t t0 = ggml_time_us();
++        pc.update();
++        CHECK(ggml_time_us() - t0 < 1000*1000);
++        CHECK(pc.states.size() == 1);
++        {
++            std::lock_guard<std::mutex> lock(pc.disk_mtx);
++            CHECK(pc.n_disk_async_drops == 1 && pc.bytes_disk_async_drops == 1*MiB);
++        }
++
++        release = true;
++        pc.disk_drain();
++        {
++            std::lock_guard<std::mutex> lock(pc.disk_mtx);
++            CHECK(pc.disk_async_pending() == 0);
++            CHECK(pc.n_disk_async_writes == 1);
++            CHECK(pc.disk.n_match() == 1);
++            CHECK(find_entry(pc.disk, a.tokens.get_text_tokens()) != pc.disk.entries.end());
++            CHECK(find_entry(pc.disk, b.tokens.get_text_tokens()) == pc.disk.entries.end());
++        }
++
++        // a lookup restores the background-written entry from disk
++        server_prompt_disk_record r;
++        CHECK(pc.disk.read(find_entry(pc.disk, a.tokens.get_text_tokens()), r) && r.tokens == a.tokens.get_text_tokens());
++        CHECK(r.main.size() == 1*MiB);
++
++        // flush_to_disk waits for the queue, then writes the RAM entry (c) synchronously
++        pc.disk.before_write_file_fn = nullptr;
++        pc.flush_to_disk();
++        CHECK(pc.disk.n_match() == 2);
++
++        // queued at destruction: the destructor lets the writer finish it
++        const server_prompt d = text_prompt(14, 600);
++        CHECK(pc.alloc(d, 1*MiB, 0) != nullptr);
++        pc.limit_size = 1*MiB + 512*1024;
++        pc.update(); // evicts c (already on disk: the writer finds it there and writes nothing)
++        pc.disk_drain();
++        pc.limit_size = 512*1024;
++        pc.update(); // evicts d
++    }
++
++    server_prompt_disk_tier t = make_tier(dir, "k", 0);
++    CHECK(t.n_match() == 3);
++    CHECK(count_files(dir, ".tmp") == 0);
++
++    // 0 = synchronous, as before: on disk when update() returns
++    {
++        const std::string dir0 = root + "/async0";
++        server_prompt_cache pc(1024, 0);
++        pc.disk = make_tier(dir0, "k", 0);
++        pc.disk_async_max = 0;
++        CHECK(pc.alloc(text_prompt(21, 300), 1*MiB, 0) != nullptr);
++        pc.limit_size = 512*1024;
++        pc.update();
++        CHECK(pc.disk.n_match() == 1 && pc.n_disk_async_writes == 0);
++    }
++}
++
+ int main() {
+     const std::string root = (fs::temp_directory_path() / ("llama.cpp-pcdisk-test-" + std::to_string((long long) std::chrono::steady_clock::now().time_since_epoch().count()))).string();
+     fs::create_directories(root);
+@@ -1066,6 +1178,7 @@ int main() {
+     test_owned_spec_state(root);
+     test_fit_ram(root);
+     test_disk_lookup_ram(root);
++    test_async_spill(root);
+ 
+     std::error_code ec;
+     fs::remove_all(root, ec);
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index db00fd2..5eedb24 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -2571,6 +2571,14 @@ private:
+                 if (dir.empty() || !prompt_cache->disk_open(dir, prompt_cache_key(), limit, err)) {
+                     SRV_WRN("prompt cache disk tier disabled, running RAM-only: %s\n",
+                             dir.empty() ? "no cache directory could be determined" : err.c_str());
++                } else {
++                    prompt_cache->disk_async_max = (size_t) std::max(0, params_base.cache_disk_async);
++                    if (prompt_cache->disk_async_max > 0) {
++                        SRV_INF("prompt cache disk tier: background writer, at most %zu evicted prompts queued or being written\n",
++                                prompt_cache->disk_async_max);
++                    } else {
++                        SRV_INF("%s", "prompt cache disk tier: synchronous writes (--cache-disk-async 0)\n");
++                    }
+                 }
+             } else {
+                 SRV_INF("%s", "prompt cache disk tier is disabled\n");
+@@ -4452,12 +4460,17 @@ private:
+                     res->metrics             = metrics;
+ 
+                     if (prompt_cache && prompt_cache->disk_enabled()) {
++                        std::lock_guard<std::mutex> disk_lock(prompt_cache->disk_mtx);
+                         const auto & disk = prompt_cache->disk;
+                         const auto   si   = disk.space_check();
+                         res->disk_enabled          = true;
+                         res->disk_guard_active     = disk.guard_active;
+                         res->disk_guard_skips      = disk.n_guard_skips;
+                         res->disk_guard_skip_bytes = disk.bytes_guard_skips;
++                        res->disk_async_pending    = prompt_cache->disk_async_pending();
++                        res->disk_async_writes     = prompt_cache->n_disk_async_writes;
++                        res->disk_async_drops      = prompt_cache->n_disk_async_drops;
++                        res->disk_async_drop_bytes = prompt_cache->bytes_disk_async_drops;
+                         if (si.state != server_prompt_disk_tier::SPACE_UNKNOWN) {
+                             res->disk_free_bytes  = (double) si.available;
+                             res->disk_floor_bytes = (double) si.reserve;
+diff --git a/tools/server/server-prompt-cache-disk.cpp b/tools/server/server-prompt-cache-disk.cpp
+index 4f21bdf..673e492 100644
+--- a/tools/server/server-prompt-cache-disk.cpp
++++ b/tools/server/server-prompt-cache-disk.cpp
+@@ -516,6 +516,34 @@ bool server_prompt_disk_tier::write(const llama_tokens & tokens,
+                                     const std::list<common_prompt_checkpoint> & checkpoints,
+                                     const std::vector<uint8_t> & spec,
+                                     const std::vector<float> & lora_scales, size_t ram_budget) {
++    write_plan plan;
++    if (!plan_write(tokens, main, drft, checkpoints, spec, lora_scales, ram_budget, plan)) {
++        return false;
++    }
++    if (plan.already) {
++        return true;
++    }
++
++    const int64_t t_start = ggml_time_us();
++
++    if (!write_file(plan, tokens, main, drft, checkpoints, spec, lora_scales)) {
++        return false;
++    }
++
++    commit_write(plan, tokens, checkpoints.size(), t_start);
++
++    return true;
++}
++
++bool server_prompt_disk_tier::plan_write(const llama_tokens & tokens,
++                                         const std::vector<uint8_t> & main,
++                                         const std::vector<uint8_t> & drft,
++                                         const std::list<common_prompt_checkpoint> & checkpoints,
++                                         const std::vector<uint8_t> & spec,
++                                         const std::vector<float> & lora_scales, size_t ram_budget,
++                                         write_plan & plan) {
++    plan = write_plan();
++
+     if (!enabled() || tokens.empty() || main.empty()) {
+         return false;
+     }
+@@ -531,6 +559,7 @@ bool server_prompt_disk_tier::write(const llama_tokens & tokens,
+     for (const auto & e : entries) {
+         if (e.match && pc_common_prefix(e.tokens, tokens) == tokens.size()) {
+             SRV_TRC("prompt cache disk tier: prompt with %zu tokens is already on disk\n", tokens.size());
++            plan.already = true;
+             return true;
+         }
+     }
+@@ -563,16 +592,34 @@ bool server_prompt_disk_tier::write(const llama_tokens & tokens,
+         }
+     }
+ 
+-    const int64_t t_start = ggml_time_us();
+-
+     const int      pid  = pc_getpid();
+     const uint64_t s    = seq++;
+     const auto     t_us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+ 
+     char name[96];
+     snprintf(name, sizeof(name), "pc-%016" PRIx64 "-%d-%" PRIu64 ".bin", (uint64_t) t_us, pid, s);
+-    const std::string file = (fs::path(dir) / name).string();
+-    const std::string tmp  = (fs::path(dir) / (std::string(".") + name + ".tmp")).string();
++    plan.file    = (fs::path(dir) / name).string();
++    plan.tmp     = (fs::path(dir) / (std::string(".") + name + ".tmp")).string();
++    plan.payload = payload;
++    plan.total   = total;
++
++    return true;
++}
++
++bool server_prompt_disk_tier::write_file(const write_plan & plan,
++                                         const llama_tokens & tokens,
++                                         const std::vector<uint8_t> & main,
++                                         const std::vector<uint8_t> & drft,
++                                         const std::list<common_prompt_checkpoint> & checkpoints,
++                                         const std::vector<uint8_t> & spec,
++                                         const std::vector<float> & lora_scales) const {
++    const std::string & file    = plan.file;
++    const std::string & tmp     = plan.tmp;
++    const uint64_t      payload = plan.payload;
++
++    if (before_write_file_fn) {
++        before_write_file_fn();
++    }
+ 
+     FILE * f = fopen(tmp.c_str(), "wb");
+     if (!f) {
+@@ -627,6 +674,13 @@ bool server_prompt_disk_tier::write(const llama_tokens & tokens,
+         return false;
+     }
+ 
++    return true;
++}
++
++void server_prompt_disk_tier::commit_write(const write_plan & plan, const llama_tokens & tokens, size_t n_checkpoints, int64_t t_start) {
++    const std::string & file  = plan.file;
++    const uint64_t      total = plan.total;
++
+     // superseded: stored prompts that are a prefix of this one
+     for (auto it = entries.begin(); it != entries.end();) {
+         if (it->match && pc_common_prefix(it->tokens, tokens) == it->tokens.size()) {
+@@ -647,10 +701,8 @@ bool server_prompt_disk_tier::write(const llama_tokens & tokens,
+     entries.push_back(std::move(e));
+ 
+     SRV_INF("prompt cache disk tier: wrote %zu tokens, %zu checkpoints, %.1f MiB in %.1f ms (%zu entries, %.1f MiB on disk)\n",
+-            tokens.size(), checkpoints.size(), total / (1024.0 * 1024.0), (ggml_time_us() - t_start) / 1000.0,
++            tokens.size(), n_checkpoints, total / (1024.0 * 1024.0), (ggml_time_us() - t_start) / 1000.0,
+             entries.size(), size() / (1024.0 * 1024.0));
+-
+-    return true;
+ }
+ 
+ bool server_prompt_disk_tier::read(std::list<server_prompt_disk_entry>::iterator it, server_prompt_disk_record & out, size_t ram_budget) {
+diff --git a/tools/server/server-prompt-cache-disk.h b/tools/server/server-prompt-cache-disk.h
+index a52f984..8c61231 100644
+--- a/tools/server/server-prompt-cache-disk.h
++++ b/tools/server/server-prompt-cache-disk.h
+@@ -74,6 +74,9 @@ struct server_prompt_disk_tier {
+     // monotonic clock in microseconds for the warning rate limit, injectable for tests (default ggml_time_us)
+     std::function<int64_t()> clock_us_fn;
+ 
++    // called by write_file() before any I/O, injectable for tests (holds a background write in its unlocked phase)
++    std::function<void()> before_write_file_fn;
++
+     // temp files older than this are leftovers of a crashed writer
+     int64_t     tmp_stale_s = 120;
+ 
+@@ -118,6 +121,40 @@ struct server_prompt_disk_tier {
+                const std::vector<float> & lora_scales = {},
+                size_t ram_budget = SIZE_MAX);
+ 
++    // write() in three steps, so that a background writer can do the slow file I/O without holding the lock
++    // that guards `entries` (a ~2 GiB spill to a busy HDD blocked the server loop for 17-65 s):
++    //   plan_write   - index work: dedupe, limit and guard checks, make room, pick the file name (needs the lock)
++    //   write_file   - serialize to the temp file and rename it into place; reads only dir/key/key_hash, which do
++    //                  not change after open(), so it runs without the lock
++    //   commit_write - index work: drop superseded entries and add the new one (needs the lock)
++    struct write_plan {
++        std::string file;
++        std::string tmp;
++        uint64_t    payload = 0;
++        uint64_t    total   = 0;
++        bool        already = false; // a matching entry already holds this prompt: nothing to write
++    };
++
++    // false = skipped (same rules as write()); true with plan.already = nothing to write
++    bool plan_write(const llama_tokens & tokens,
++                    const std::vector<uint8_t> & main,
++                    const std::vector<uint8_t> & drft,
++                    const std::list<common_prompt_checkpoint> & checkpoints,
++                    const std::vector<uint8_t> & spec,
++                    const std::vector<float> & lora_scales,
++                    size_t ram_budget,
++                    write_plan & plan);
++
++    bool write_file(const write_plan & plan,
++                    const llama_tokens & tokens,
++                    const std::vector<uint8_t> & main,
++                    const std::vector<uint8_t> & drft,
++                    const std::list<common_prompt_checkpoint> & checkpoints,
++                    const std::vector<uint8_t> & spec,
++                    const std::vector<float> & lora_scales) const;
++
++    void commit_write(const write_plan & plan, const llama_tokens & tokens, size_t n_checkpoints, int64_t t_start_us);
++
+     // read a matching entry; a file that fails to parse or to verify is deleted
+     bool read(std::list<server_prompt_disk_entry>::iterator it, server_prompt_disk_record & out, size_t ram_budget = SIZE_MAX);
+ 
+diff --git a/tools/server/server-task.cpp b/tools/server/server-task.cpp
+index 79f70d8..3040fca 100644
+--- a/tools/server/server-task.cpp
++++ b/tools/server/server-task.cpp
+@@ -10,6 +10,8 @@
+ #include "speculative.h"
+ #include "server-common.h"
+ 
++#include <cinttypes>
++
+ #include <sstream>
+ #include <algorithm>
+ #include <cstring>
+@@ -1645,6 +1647,12 @@ std::string server_task_result_metrics::to_metrics() {
+             { "prompt_cache_disk_guard_active", "Prompt-cache disk tier: 1 while writes are being skipped at the free-space floor", disk_guard_active ? 1.0 : 0.0 },
+             { "prompt_cache_disk_free_bytes",   "Prompt-cache disk tier: free bytes on the cache filesystem (-1 = unknown)",       disk_free_bytes },
+             { "prompt_cache_disk_floor_bytes",  "Prompt-cache disk tier: free-space floor in bytes; writes are skipped below it",   disk_floor_bytes },
++            { "prompt_cache_disk_async_pending", "Prompt-cache disk tier: evicted prompts queued for or being written by the background writer", (double) disk_async_pending },
++        });
++        add_items("counter", {
++            { "prompt_cache_disk_async_writes_total",       "Prompt-cache disk tier: entries written by the background writer",                    (double) disk_async_writes },
++            { "prompt_cache_disk_async_drops_total",        "Prompt-cache disk tier: evicted prompts not spilled because the writer queue was full", (double) disk_async_drops },
++            { "prompt_cache_disk_async_dropped_bytes_total", "Prompt-cache disk tier: bytes of evicted prompts not spilled because the queue was full", (double) disk_async_drop_bytes },
+         });
+     }
+ 
+@@ -2047,6 +2055,12 @@ bool server_prompt_cache::load(server_prompt & prompt, const server_tokens & tok
+ 
+     SRV_TRC(" - looking for better prompt, base f_keep = %.3f, f_sim = %.3f\n", f_keep_best, f_sim_best);
+ 
++    // the disk index is shared with the background writer: hold its lock while an iterator into it is live
++    std::unique_lock<std::mutex> disk_lock(disk_mtx, std::defer_lock);
++    if (disk_enabled()) {
++        disk_lock.lock();
++    }
++
+     auto it_best      = states.end();
+     auto it_best_disk = disk.entries.end();
+ 
+@@ -2125,6 +2139,10 @@ bool server_prompt_cache::load(server_prompt & prompt, const server_tokens & tok
+     }
+ 
+     if (use_staging) {
++        if (disk_lock.owns_lock()) {
++            disk_lock.unlock();
++        }
++
+         SRV_INF(" - found better prompt in the disk-tier staging area with f_keep = %.3f, f_sim = %.3f\n", f_keep_best, f_sim_best);
+ 
+         const bool ok = restore(staging, ctx_tgt, ctx_dft, id_slot, spec);
+@@ -2157,6 +2175,9 @@ bool server_prompt_cache::load(server_prompt & prompt, const server_tokens & tok
+             return false;
+         }
+ 
++        // the record is in memory: the writer may change the index again while the state is restored
++        disk_lock.unlock();
++
+         server_prompt_cache_state state;
+         // keep the server's projector flag, so media chunks can still follow the restored text prefix
+         state.prompt.tokens      = server_tokens(rec.tokens, tokens_new.has_mtmd);
+@@ -2179,6 +2200,10 @@ bool server_prompt_cache::load(server_prompt & prompt, const server_tokens & tok
+         return true;
+     }
+ 
++    if (disk_lock.owns_lock()) {
++        disk_lock.unlock();
++    }
++
+     if (it_best != states.end()) {
+         const int64_t t_start = ggml_time_us();
+         const size_t  n_bytes = it_best->size(); // restore() may release the state buffers
+@@ -2293,7 +2318,7 @@ void server_prompt_cache::update() {
+ 
+     if (disk_enabled()) {
+         if (staging_pending) {
+-            disk_spill(staging);
++            disk_spill_async(std::move(staging));
+ 
+             staging = server_prompt_cache_state();
+             staging_pending = false;
+@@ -2321,6 +2346,8 @@ void server_prompt_cache::update() {
+ //
+ 
+ bool server_prompt_cache::disk_open(const std::string & dir, const std::string & key, size_t limit_bytes, std::string & err) {
++    std::lock_guard<std::mutex> lock(disk_mtx);
++
+     if (!disk.open(dir, key, limit_bytes, err)) {
+         return false;
+     }
+@@ -2360,13 +2387,13 @@ void server_prompt_cache::evict_front() {
+     }
+ 
+     if (disk_enabled()) {
+-        disk_spill(states.front());
++        disk_spill_async(std::move(states.front()));
+     }
+ 
+     states.pop_front();
+ }
+ 
+-bool server_prompt_cache::disk_spill(const server_prompt_cache_state & state) {
++bool server_prompt_cache::disk_spill_admit(const server_prompt_cache_state & state, llama_tokens & tokens, size_t & ram_budget) {
+     // with --mmproj every prompt has has_mtmd set; only prompts that really hold media chunks skip the disk tier
+     if (state.prompt.tokens.has_media()) {
+         static bool warned = false;
+@@ -2392,8 +2419,130 @@ bool server_prompt_cache::disk_spill(const server_prompt_cache_state & state) {
+         SRV_WRN("%s", "prompt cache disk spill skipped to leave 5 GiB free\n");
+         return false;
+     }
+-    return disk.write(state.prompt.tokens.get_text_tokens(), state.data.main, state.data.drft, state.prompt.checkpoints,
+-            state.data.spec, state.prompt.lora_scales, fit_ram ? budget - token_bytes : SIZE_MAX);
++
++    tokens     = state.prompt.tokens.get_text_tokens();
++    ram_budget = fit_ram ? budget - token_bytes : SIZE_MAX;
++
++    return true;
++}
++
++bool server_prompt_cache::disk_spill(const server_prompt_cache_state & state) {
++    llama_tokens tokens;
++    size_t       ram_budget = SIZE_MAX;
++    if (!disk_spill_admit(state, tokens, ram_budget)) {
++        return false;
++    }
++
++    std::lock_guard<std::mutex> lock(disk_mtx);
++
++    return disk.write(tokens, state.data.main, state.data.drft, state.prompt.checkpoints,
++            state.data.spec, state.prompt.lora_scales, ram_budget);
++}
++
++bool server_prompt_cache::disk_spill_async(server_prompt_cache_state && state) {
++    if (disk_async_max == 0) {
++        return disk_spill(state);
++    }
++
++    llama_tokens tokens;
++    size_t       ram_budget = SIZE_MAX;
++    if (!disk_spill_admit(state, tokens, ram_budget)) {
++        return false;
++    }
++
++    std::unique_lock<std::mutex> lock(disk_mtx);
++
++    if (disk_async_pending() >= disk_async_max) {
++        n_disk_async_drops++;
++        bytes_disk_async_drops += state.size();
++
++        const int64_t t_now = ggml_time_us();
++        if (n_disk_async_drops == 1 || t_now - disk_t_drop_warn >= 60ll*1000*1000) {
++            SRV_WRN("prompt cache disk tier: writer busy (%zu queued or writing, --cache-disk-async %zu), "
++                    "not spilling evicted prompt of %.1f MiB (%" PRIu64 " dropped in total)\n",
++                    disk_async_pending(), disk_async_max, state.size() / (1024.0 * 1024.0), n_disk_async_drops);
++            disk_t_drop_warn = t_now;
++        }
++
++        return false;
++    }
++
++    if (!disk_thread.joinable()) {
++        disk_thread = std::thread([this]() { disk_writer_loop(); });
++    }
++
++    disk_job job;
++    job.tokens     = std::move(tokens);
++    job.state      = std::move(state);
++    job.ram_budget = ram_budget;
++    disk_jobs.push_back(std::move(job));
++
++    lock.unlock();
++    disk_cv.notify_all();
++
++    return true;
++}
++
++size_t server_prompt_cache::disk_async_pending() const {
++    return disk_jobs.size() + (disk_busy ? 1 : 0);
++}
++
++void server_prompt_cache::disk_writer_loop() {
++    while (true) {
++        disk_job job;
++
++        std::unique_lock<std::mutex> lock(disk_mtx);
++        disk_cv.wait(lock, [this]() { return disk_stop || !disk_jobs.empty(); });
++        if (disk_jobs.empty()) {
++            return; // stopping, and everything queued has been written
++        }
++
++        job = std::move(disk_jobs.front());
++        disk_jobs.pop_front();
++        disk_busy = true;
++
++        const auto & st = job.state;
++
++        server_prompt_disk_tier::write_plan plan;
++        bool ok = disk.plan_write(job.tokens, st.data.main, st.data.drft, st.prompt.checkpoints, st.data.spec,
++                st.prompt.lora_scales, job.ram_budget, plan);
++
++        if (ok && !plan.already) {
++            // the slow part runs without the lock: lookups, restores and /metrics on the server loop go on
++            lock.unlock();
++            const int64_t t_start = ggml_time_us();
++            ok = disk.write_file(plan, job.tokens, st.data.main, st.data.drft, st.prompt.checkpoints, st.data.spec,
++                    st.prompt.lora_scales);
++            lock.lock();
++
++            if (ok) {
++                disk.commit_write(plan, job.tokens, st.prompt.checkpoints.size(), t_start);
++                n_disk_async_writes++;
++            }
++        }
++
++        disk_busy = false;
++        lock.unlock();
++        disk_cv.notify_all();
++
++        // the entry's buffers are freed here, outside the lock
++    }
++}
++
++void server_prompt_cache::disk_drain() {
++    std::unique_lock<std::mutex> lock(disk_mtx);
++    disk_cv.wait(lock, [this]() { return disk_jobs.empty() && !disk_busy; });
++}
++
++server_prompt_cache::~server_prompt_cache() {
++    {
++        std::lock_guard<std::mutex> lock(disk_mtx);
++        disk_stop = true;
++    }
++    disk_cv.notify_all();
++    if (disk_thread.joinable()) {
++        disk_thread.join();
++    }
+ }
+ 
+ void server_prompt_cache::flush_to_disk() {
+@@ -2401,9 +2550,16 @@ void server_prompt_cache::flush_to_disk() {
+         return;
+     }
+ 
++    // queued evictions are older than the RAM entries: let them reach the disk first
++    disk_drain();
++
+     size_t n = 0;
+     const size_t n_total = states.size() + (staging_pending ? 1 : 0);
+-    const size_t n_guard_skips0 = disk.n_guard_skips;
++    size_t n_guard_skips0 = 0;
++    {
++        std::lock_guard<std::mutex> lock(disk_mtx);
++        n_guard_skips0 = disk.n_guard_skips;
++    }
+     for (const auto & state : states) {
+         n += disk_spill(state) ? 1 : 0;
+     }
+@@ -2415,6 +2571,7 @@ void server_prompt_cache::flush_to_disk() {
+         staging_pending = false;
+     }
+ 
++    std::lock_guard<std::mutex> lock(disk_mtx);
+     SRV_INF("prompt cache: flushed %zu of %zu prompts to the disk tier (%zu entries, %.1f MiB on disk)\n",
+             n, n_total, disk.entries.size(), disk.size() / (1024.0 * 1024.0));
+     if (disk.n_guard_skips > n_guard_skips0) {
+diff --git a/tools/server/server-task.h b/tools/server/server-task.h
+index db58310..c1ad415 100644
+--- a/tools/server/server-task.h
++++ b/tools/server/server-task.h
+@@ -3,10 +3,14 @@
+ #include "common.h"
+ #include "llama.h"
+ 
++#include <condition_variable>
++#include <deque>
+ #include <string>
+ #include <unordered_set>
+ #include <list>
+ #include <map>
++#include <mutex>
++#include <thread>
+ 
+ // TODO: prevent including the whole server-common.h as we only use server_tokens
+ #include "server-common.h"
+@@ -560,6 +564,11 @@ struct server_task_result_metrics : server_task_result {
+     uint64_t disk_guard_skip_bytes = 0;
+     double   disk_free_bytes       = -1.0;
+     double   disk_floor_bytes      = -1.0;
++    // background disk writer (--cache-disk-async)
++    uint64_t disk_async_pending    = 0;
++    uint64_t disk_async_writes     = 0;
++    uint64_t disk_async_drops      = 0;
++    uint64_t disk_async_drop_bytes = 0;
+ 
+     virtual json to_json() override;
+ 
+@@ -687,6 +696,12 @@ struct server_prompt_cache {
+         this->limit_tokens = limit_tokens;
+     }
+ 
++    // stops the background disk writer after it has written what is queued
++    ~server_prompt_cache();
++
++    server_prompt_cache(const server_prompt_cache &)             = delete;
++    server_prompt_cache & operator=(const server_prompt_cache &) = delete;
++
+     static void configure(std::unique_ptr<server_prompt_cache> & cache, int32_t limit_mib, size_t n_ctx, bool fit_ram);
+ 
+     bool fit_ram = false;
+@@ -704,8 +719,27 @@ struct server_prompt_cache {
+     size_t limit_tokens = 0;
+ 
+     // disk tier: RAM evictions are spilled here and consulted on a RAM miss (see server-prompt-cache-disk.h)
++    // while the background writer runs, access `disk` only under disk_mtx
+     server_prompt_disk_tier disk;
+ 
++    // --cache-disk-async N: RAM evictions are handed (moved, not copied) to one background writer thread, so the
++    // server loop never waits for disk I/O. At most N entries are queued or being written; this bounds the host
++    // RAM they keep after leaving the RAM tier. With the queue full, a further eviction is dropped (counted in
++    // /metrics) instead of blocking. 0 = write synchronously on the server loop. Shutdown / sleep flushes wait
++    // for the queue and then write synchronously. An entry is found by lookups only once it is on disk.
++    size_t disk_async_max = 0;
++
++    std::mutex disk_mtx; // guards disk and the writer queue below
++
++    // counters (read under disk_mtx)
++    uint64_t n_disk_async_writes     = 0; // entries the background writer put on disk
++    uint64_t n_disk_async_drops      = 0; // evictions dropped because the queue was full
++    uint64_t bytes_disk_async_drops  = 0;
++    size_t   disk_async_pending() const; // queued + being written; call under disk_mtx
++
++    // block until the background writer is idle and its queue is empty
++    void disk_drain();
++
+     // --cache-ram-checkpoints: context checkpoints a RAM entry keeps, the newest ram_ckpt_keep plus one each time
+     // the distance from the end doubles (server_prompt_keep_checkpoints); 0 = all. The slot keeps its full list.
+     size_t ram_ckpt_keep          = 0;
+@@ -767,6 +801,28 @@ private:
+     void evict_front();
+ 
+     bool disk_spill(const server_prompt_cache_state & state);
++
++    // checks of disk_spill() shared by both paths; fills the text tokens and the writer's RAM budget
++    bool disk_spill_admit(const server_prompt_cache_state & state, llama_tokens & tokens, size_t & ram_budget);
++
++    // hand an evicted entry to the background writer (or write it now when disk_async_max == 0)
++    bool disk_spill_async(server_prompt_cache_state && state);
++
++    struct disk_job {
++        llama_tokens              tokens;
++        server_prompt_cache_state state;
++        size_t                    ram_budget = SIZE_MAX;
++    };
++
++    std::condition_variable disk_cv;
++    std::deque<disk_job>    disk_jobs;
++    bool                    disk_busy = false; // the writer holds a job outside the queue
++    bool                    disk_stop = false;
++    std::thread             disk_thread;
++
++    int64_t disk_t_drop_warn = 0;
++
++    void disk_writer_loop();
+ };
+ 
+ // used exclusively by router mode
+-- 
+2.55.0
+

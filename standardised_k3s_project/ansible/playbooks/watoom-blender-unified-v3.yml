@@ -1,0 +1,39 @@
+---
+- name: Activate validated WatooM Blender v3 helpers
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    unified_lock: "{{ lookup('file', playbook_dir + '/../../config/blender-unified-v3/release-lock.json') | from_json }}"
+  tasks:
+    - name: Require explicit approval
+      ansible.builtin.assert:
+        that: ["unified_approved | default(false) | bool"]
+        fail_msg: "Set unified_approved=true to authorize activation (--i-approve)."
+    - name: Read supplied package digest
+      ansible.builtin.stat:
+        path: /data/ai/helper-scripts/watoom-blender-unified-v3.zip
+        checksum_algorithm: sha256
+      register: unified_package
+    - name: Read release manifest digest
+      ansible.builtin.stat:
+        path: "{{ unified_lock.release }}/release-manifest.json"
+        checksum_algorithm: sha256
+      register: unified_manifest
+    - name: Verify pinned release provenance
+      ansible.builtin.assert:
+        that:
+          - unified_package.stat.checksum == unified_lock.package_sha256
+          - unified_manifest.stat.checksum == unified_lock.manifest_sha256
+    - name: Verify all installed helper hashes
+      ansible.builtin.command:
+        argv: [python3, "{{ unified_lock.release }}/fix.py", check]
+      changed_when: false
+    - name: Activate with validated receipt and automatic rollback
+      ansible.builtin.command:
+        argv: [python3, "{{ unified_lock.release }}/fix.py", install, --validation, "{{ unified_lock.validation }}", --i-approve]
+      register: unified_activation
+      changed_when: "'PASS activated;' in unified_activation.stdout"
+    - name: Record activation result
+      ansible.builtin.debug:
+        var: unified_activation.stdout

@@ -1,0 +1,20 @@
+{
+  "sourceCommit": "400a7697a28668b64eb48a01f569a69e73c1d8f7",
+  "baseCommit": "786682b1489e92cba4e4b5a277bd49c565c94e4f",
+  "image": "127.0.0.1:5000/watoom-code@sha256:f024f74089ca3c509b85053a14971e0a912e31b3ef29c34cb80d54f82003956e",
+  "supersedes": "127.0.0.1:5000/watoom-code@sha256:6e097b0967e0ac8e42ebeb0cf9945d4e8278627dba6fa0d961e6e9a01b716c2d",
+  "bundle": "watoom-code-file-download-20261104.bundle",
+  "bundleSha256": "ed5167f0f21dc3c8409715952fb69fbf32efe9a96c39dcc246799308560380d7",
+  "applicationOnly": true,
+  "change": "Download button in every file tab (code view and media/binary viewers); re-reads exact bytes via the authenticated fs.read API so unknown binaries and oversized media download intact",
+  "checks": {
+    "appFileTests": "90/90",
+    "routerTests": "4/4",
+    "selectorTests": "10/10",
+    "changedFilesTypecheck": "no errors in changed files (package typecheck has unrelated pre-existing errors from partial dependency links)",
+    "liveByteCheck": "fs.read of project.godot sha256 matches disk"
+  },
+  "deployEvidence": "/data/ai/artifacts/watoom-code-production-consolidation/deploy-20261104T071028Z",
+  "preserved": {"sessions": 735, "children": 635, "projects": 86},
+  "notes": "Superseded once the OpenCode v2.2.5 port lands; v2.2.5 ships its own file download."
+}

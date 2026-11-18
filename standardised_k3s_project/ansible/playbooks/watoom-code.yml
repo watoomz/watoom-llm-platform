@@ -1,0 +1,9 @@
+---
+- name: Deploy WatooM Code
+  hosts: homelab
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../vars/watoom-code.yml
+  roles:
+    - watoom-code

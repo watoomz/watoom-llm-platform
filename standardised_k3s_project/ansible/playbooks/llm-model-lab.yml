@@ -1,0 +1,8 @@
+---
+- name: Deploy the LLM model lab
+  hosts: homelab
+  become: true
+  gather_facts: false
+  roles:
+    - role: llm-model-lab
+      tags: [llm-model-lab]

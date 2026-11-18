@@ -1,0 +1,24 @@
+secrets/.env.local
+manifests/05-secrets/*-generated.yml
+.codex-backups/
+*.before-*
+*.bak
+*.tmp
+docker/azuracast/.env
+docker/azuracast/azuracast.env
+docker/azuracast/cloudflared/
+
+# Local Docker/Cloudflare authentication material
+docker/dispatcharr-cloudflare/.env
+docker/dispatcharr-cloudflare/cloudflared/token
+docker/dispatcharr-cloudflare/nginx/.htpasswd
+secrets/.env.local
+
+# Temporary Ansible Vault backup copies
+secrets-vault/*.before-*
+
+# Server-private owner instructions; maintained role uses a remote source.
+ansible/roles/watoom-code/files/skills/reverse-engineer-feature/SKILL.md
+
+# Server-private credentials (service logins, LLM passwords); never commit.
+/.private/

@@ -1,0 +1,46 @@
+---
+- name: MOSS Image Studio is disabled unless explicitly enabled
+  ansible.builtin.debug:
+    msg: "moss_image_enabled is false: nothing installed"
+  when: not (moss_image_enabled | bool)
+
+- name: Install MOSS Image Studio unit and start it only on request
+  when: moss_image_enabled | bool
+  block:
+    - name: Check the engine and model files exist (they are downloaded separately, never by this role)
+      ansible.builtin.stat:
+        path: "{{ item }}"
+        get_checksum: false   # the model files are gigabytes; existence is all we need
+        get_mime: false
+      loop:
+        - /data/ai/projects/images/moss-image/models/components/dit/moss_image_sft_int8_convrot.safetensors
+        - /data/ai/projects/images/moss-image/models/components/text_encoder/qwen3.5_9b_w4a8_gptq.safetensors
+        - /data/ai/projects/images/moss-image/models/components/vae/flux2-vae.safetensors
+      register: moss_image_files
+      failed_when: not moss_image_files.stat.exists
+    - name: Allow only the k3s pod subnet to reach the Studio port (Glance route and widget)
+      ansible.posix.firewalld:
+        zone: FedoraServer
+        rich_rule: 'rule family="ipv4" source address="10.242.0.0/24" port port="{{ moss_image_port }}" protocol="tcp" accept'
+        permanent: true
+        immediate: true
+        state: enabled
+      when: moss_image_pod_firewall | bool
+    - name: Install the unit
+      ansible.builtin.template:
+        src: watoom-moss-image.service.j2
+        dest: /etc/systemd/system/watoom-moss-image.service
+        owner: root
+        group: root
+        mode: "0644"
+      register: moss_image_unit
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+      when: moss_image_unit.changed
+    - name: Start and enable only when requested
+      ansible.builtin.systemd:
+        name: watoom-moss-image.service
+        state: started
+        enabled: true
+      when: moss_image_start | bool

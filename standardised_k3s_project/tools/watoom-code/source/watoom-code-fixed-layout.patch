@@ -1,0 +1,77 @@
+diff --git a/packages/core/src/watoom/creative-contract.ts b/packages/core/src/watoom/creative-contract.ts
+index 4a01c08..8300a96 100644
+--- a/packages/core/src/watoom/creative-contract.ts
++++ b/packages/core/src/watoom/creative-contract.ts
+@@ -43,7 +43,7 @@ export function validate(input: Record<string,unknown>, capability: string) {
+ }
+ export function outputs(input: Record<string,unknown>) {
+  if (input.task === "asset-index" || input.task === "asset-search") return ["result.json","manifest.json"]
+- if(input.dungeon!==undefined) return dungeonOutputs
++ if(input.dungeon!==undefined) return [...dungeonOutputs,...((input.dungeon as Record<string,unknown>).fixed_layout!==undefined?["overhead.png"]:[])]
+  return ["asset.blend","asset.glb","manifest.json","validation.json","front.png","back.png","left.png","right.png","top.png","perspective.png","creative.json","godot-validation.json","project.godot","scene.tscn","verify.gd",
+  ...(input.operation === "world" ? ["world-layout.json"] : input.operation === "material" ? ["albedo.png","normal.png","roughness.png","metallic.png","orm.png"] : input.operation === "character" ? ["Idle-a.png","Idle-b.png","Walk-a.png","Walk-b.png","Run-a.png","Run-b.png"] : [])]
+ }
+diff --git a/packages/core/src/watoom/dungeon-contract.ts b/packages/core/src/watoom/dungeon-contract.ts
+index 9721056..a5f62da 100644
+--- a/packages/core/src/watoom/dungeon-contract.ts
++++ b/packages/core/src/watoom/dungeon-contract.ts
+@@ -3,9 +3,38 @@ export const dungeonOutputs=["dungeon.umap","asset.glb","perspective.png","manif
+ export function validateDungeon(value:unknown) {
+  if (typeof value!=="object" || value===null || Array.isArray(value)) throw Error("Invalid dungeon options")
+  const options=value as Record<string,unknown>
+- const allowed=["style","rooms","levels","grid","room_size","cell_size","floor_height"]
++ const allowed=["style","rooms","levels","grid","room_size","cell_size","floor_height","fixed_layout"]
+  if(Object.keys(options).some(key=>!allowed.includes(key))) throw Error("Unknown dungeon option")
+  if(!["dungeon-builder","dungeon-forge","mixed"].includes(String(options.style))) throw Error("Invalid dungeon style")
++ if(options.fixed_layout!==undefined) {
++  if(Object.keys(options).some(k=>!["style","fixed_layout"].includes(k)))throw Error("Fixed layout cannot be mixed with procedural options")
++  const b=options.fixed_layout as Record<string,unknown>
++  if(!b || typeof b!=="object" || Array.isArray(b) || Object.keys(b).some(k=>!["cols","rows","cell_cm","rock_cells","wall_edges","door_edges"].includes(k)))throw Error("Unknown fixed-layout field")
++  const cols=Number(b.cols),rows=Number(b.rows),cell=b.cell_cm===undefined?200:Number(b.cell_cm)
++  if(typeof b.cols!=="number" || typeof b.rows!=="number" || (b.cell_cm!==undefined && typeof b.cell_cm!=="number") || !Number.isInteger(cols) || !Number.isInteger(rows) || !Number.isInteger(cell) || cols<2 || cols>32 || rows<2 || rows>32 || cell<150 || cell>400)throw Error("Fixed board dimensions outside bounds")
++  const point=(v:unknown):string=>{
++   if(!Array.isArray(v) || v.length!==2 || v.some(x=>typeof x!=="number" || !Number.isInteger(x)) || v[0]<0 || v[0]>=cols || v[1]<0 || v[1]>=rows)throw Error("Invalid board cell")
++   return v.join(",")
++  }
++  const rocks=b.rock_cells??[]
++  if(!Array.isArray(rocks) || rocks.length>cols*rows)throw Error("Invalid rock cells")
++  const blocked=new Set(rocks.map(point))
++  if(blocked.size!==rocks.length || cols*rows-blocked.size<2)throw Error("Duplicate rock or insufficient floor")
++  for(const key of ["wall_edges","door_edges"]) {
++   const edges=b[key]??[]
++   if(!Array.isArray(edges) || edges.length>2048)throw Error("Edge budget exceeded")
++   const seen=new Set<string>()
++   for(const edge of edges) {
++    if(!Array.isArray(edge) || edge.length!==2)throw Error("Invalid board edge")
++    const a=point(edge[0]),c=point(edge[1])
++    if(blocked.has(a)||blocked.has(c)||Math.abs(edge[0][0]-edge[1][0])+Math.abs(edge[0][1]-edge[1][1])!==1)throw Error("Edges must join adjacent floor")
++    const identity=[a,c].sort().join("|")
++    if(seen.has(identity))throw Error("Duplicate board edge")
++    seen.add(identity)
++   }
++  }
++  return options
++ }
+  const defaults:Record<string,number>={rooms:12,levels:1,grid:8,room_size:600,cell_size:800,floor_height:400}
+  for(const key of Object.keys(defaults)) if(options[key]!==undefined) {
+   if(typeof options[key]!=="number" || !Number.isInteger(options[key])) throw Error("Integer dungeon dimensions required")
+diff --git a/packages/core/test/watoom-dungeon-contract.test.ts b/packages/core/test/watoom-dungeon-contract.test.ts
+index f6931ed..8177456 100644
+--- a/packages/core/test/watoom-dungeon-contract.test.ts
++++ b/packages/core/test/watoom-dungeon-contract.test.ts
+@@ -22,3 +22,15 @@ test("mixed mode requires distinct indexed anchors",()=>{
+  expect(()=>validate({...good,asset_ids:[id],dungeon:{style:"mixed"}},"world.compose")).toThrow()
+  expect(()=>validate({...good,asset_ids:["ast_"+"b".repeat(24)],dungeon:{style:"mixed"}},"world.compose")).not.toThrow()
+ })
++
++test("fixed board stays bounded and requires both preview views",()=>{
++ const board={cols:26,rows:19,cell_cm:200,rock_cells:[[0,0]],door_edges:[[[1,0],[2,0]]]}
++ const request={...good,dungeon:{style:"dungeon-builder",fixed_layout:board},timeout:840}
++ expect(()=>validate(request,"world.compose")).not.toThrow()
++ expect(outputs(request)).toContain("overhead.png")
++ expect(outputs(request)).toContain("perspective.png")
++ expect(outputs(good)).not.toContain("overhead.png")
++ for(const fixed_layout of [{...board,cols:true},{...board,cell_cm:"200"},{...board,door_edges:[[[1,0],[3,0]]]},{...board,script:"run-anything"}])
++  expect(()=>validate({...request,dungeon:{style:"dungeon-builder",fixed_layout}},"world.compose")).toThrow()
++ expect(()=>validate({...request,dungeon:{...request.dungeon,rooms:2}},"world.compose")).toThrow()
++})

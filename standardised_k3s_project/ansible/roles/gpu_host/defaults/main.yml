@@ -1,0 +1,20 @@
+---
+# Durable host GPU policy for the GPU used by the local LLM stack.
+gpu_host_expected_name: NVIDIA GeForce GPU
+gpu_host_power_limit_watts: 300
+gpu_host_power_limit_service_name: watoom-gpu-power-limit
+gpu_host_nvidia_smi_bin: /usr/bin/nvidia-smi
+gpu_host_persistence_service_name: nvidia-persistenced
+
+# nvidia-powerd is package-managed and currently enabled but inactive on this
+# host. This role does not manage it; the durable cap only needs nvidia-smi and
+# nvidia-persistenced.
+
+# Reviewed GPU unlock release. Separate playbook; normal GPU policy does not install it.
+gpu_host_unlock_revision: af28cbbfd3d922a659227ecfb7369adfd924cf03
+gpu_host_unlock_root: /app/gpu-unlock
+gpu_host_unlock_rpm_release: 1.0.0-1.fc44
+gpu_host_unlock_target: '0000:10:00.0'
+gpu_host_unlock_boot_enabled: true
+gpu_host_unlock_backup: /data/ai/helper-scripts/reports/gpu-unlock-af28cbbf
+gpu_host_unlock_build_user: codex

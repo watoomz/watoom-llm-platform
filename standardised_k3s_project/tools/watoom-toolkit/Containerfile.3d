@@ -1,0 +1,18 @@
+FROM 127.0.0.1:5000/watoom-toolkit@sha256:3b2368f5c45c8ebced2644ac6f316ef499512de912afa4c6be85a3e37212ef39
+USER 0
+# Blender 5.2.3 LTS replaces the base image's 4.2.23: pipeline sources are saved with Blender 5.2,
+# which 4.2 cannot open. Official build, verified against Blender's published SHA-256.
+ARG BLENDER_URL=https://download.blender.org/release/Blender5.2/blender-5.2.3-linux-x64.tar.xz
+ARG BLENDER_SHA256=78486c018b4443efe5e75ab54c290ed8c15abafd249b862c2c9ce2530a918eec
+RUN curl -fsSL -o /tmp/blender.tar.xz "$BLENDER_URL" \
+ && echo "$BLENDER_SHA256  /tmp/blender.tar.xz" | sha256sum -c - \
+ && rm -rf /opt/blender && mkdir /opt/blender \
+ && tar -xJf /tmp/blender.tar.xz -C /opt/blender --strip-components=1 --no-same-owner \
+ && rm /tmp/blender.tar.xz \
+ && /opt/blender/blender --version | grep -q '^Blender 5\.2\.3 '
+COPY job_admission.py agent.py three_d.py kube_worker.py publish_3d.py catalog.json blender_3d.py asset_catalog.py creative.py creative_blender.py creative_blender_common.py creative_world.py creative_character.py creative_material.py creative_verify.gd fixed_layout.py dungeon_layout.py dungeon_recipes.py dungeon_pipeline.py dungeon_unreal.py dungeon_worker.py dungeon_blender.py dungeon_verify.gd engine_export.py engine_verify_unreal.py engine_playback_unreal.py engine_verify.gd engine_validate_worker.py /opt/watoom/
+LABEL org.opencontainers.image.title="WatooM Production 3D Toolkit" org.opencontainers.image.version="3d-1.1.0" watoom.asset-assistant.revision="76780c798562ef63786bc75debe3ec084d1025f2"
+# Last, so a new commit only rebuilds this metadata layer, not the Blender layer above.
+ARG WATOOM_SOURCE_COMMIT
+LABEL org.opencontainers.image.revision=$WATOOM_SOURCE_COMMIT watoom.creative.contract="watoom-creative/v1"
+USER 1009:1009

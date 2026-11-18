@@ -1,0 +1,114 @@
+---
+- name: Inspect dedicated image project directory
+  ansible.builtin.stat:
+    path: "{{ watoom_code_image_projects_root }}"
+    follow: false
+  register: watoom_code_image_project_root
+- name: Require a real directory for the dedicated image project mount
+  ansible.builtin.assert:
+    that: >-
+      not watoom_code_image_project_root.stat.exists or
+      ((watoom_code_image_project_root.stat.isdir | default(false)) and
+       not (watoom_code_image_project_root.stat.islnk | default(false)))
+- name: Create missing image project root without changing existing contents or permissions
+  ansible.builtin.file:
+    path: "{{ watoom_code_image_projects_root }}"
+    state: directory
+    owner: '1009'
+    group: '1009'
+    mode: '2770'
+    setype: container_file_t
+  when: not watoom_code_image_project_root.stat.exists
+- name: Create canonical project groups and shared capture index
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: '1009'
+    group: '1009'
+    mode: '2770'
+  loop: "{{ watoom_code_project_groups | map('regex_replace', '^', watoom_code_project_groups_root ~ '/') | list + ['/data/ai/captures'] }}"
+- name: Install maintained capture index command
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../tools/watoom-code/project_captures.py"
+    dest: /data/ai/helper-scripts/register-project-captures.py
+    owner: root
+    group: root
+    mode: '0755'
+- name: Allow application and owner to use canonical project groups and captures
+  ansible.builtin.command:
+    argv:
+      - setfacl
+      - -m
+      - u:1001:rwx,u:1000:rx,d:u:1001:rwx,d:u:1000:rx,d:u:1009:rwx
+      - "{{ item }}"
+  loop: "{{ watoom_code_project_groups | map('regex_replace', '^', watoom_code_project_groups_root ~ '/') | list + ['/data/ai/captures'] }}"
+  changed_when: false
+- name: Inspect configured project roots without creating example projects
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop: "{{ ((watoom_code_capture_projects | default([])) + (watoom_code_migrated_project_roots | default([]))) | unique | list }}"
+  register: watoom_capture_existing
+- name: Ensure existing project capture directories exist
+  ansible.builtin.file:
+    path: "{{ item.item }}/.opencode/captures"
+    state: directory
+    mode: '2770'
+  loop: "{{ watoom_capture_existing.results }}"
+  when: item.stat.isdir | default(false)
+- name: Grant capture-only access to application, worker and owner
+  ansible.builtin.command:
+    argv: [setfacl, -m, 'u:1001:rwx,u:1009:rwx,u:1000:rx,d:u:1001:rwx,d:u:1009:rwx,d:u:1000:rx', "{{ item.item }}/.opencode/captures"]
+  loop: "{{ watoom_capture_existing.results }}"
+  when: item.stat.isdir | default(false)
+  changed_when: false
+- name: Register existing project capture directories in common viewing tree
+  ansible.builtin.command:
+    argv: [python3, /data/ai/helper-scripts/register-project-captures.py, --project, "{{ item.item }}"]
+  loop: "{{ watoom_capture_existing.results }}"
+  when: item.stat.isdir | default(false)
+  changed_when: false
+
+- name: Inspect explicitly migrated project roots
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop: "{{ watoom_code_migrated_project_roots | default([]) }}"
+  register: watoom_migrated_roots
+- name: Preserve application access for migrated project homes
+  ansible.builtin.command:
+    argv: [setfacl, -m, 'u:1001:rwx,d:u:1001:rwx', "{{ item.item }}"]
+  loop: "{{ watoom_migrated_roots.results }}"
+  when: item.stat.isdir | default(false)
+  changed_when: false
+
+- name: Install scoped candidate access reconciler
+  ansible.builtin.copy:
+    src: '{{ role_path }}/../../../tools/watoom-code/project_access.py'
+    dest: /data/ai/helper-scripts/project-access.py
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Preserve only explicitly configured candidate source access
+  ansible.builtin.command:
+    argv: >-
+      {{ ['python3', '/data/ai/helper-scripts/project-access.py', '--project', item.project,
+          '--evidence', '/data/ai/helper-scripts/reports/project-access', '--i-approve']
+         + (item.directories | map('regex_replace', '^(.*)$', '--directory=\1') | list)
+         + (item.trees | map('regex_replace', '^(.*)$', '--tree=\1') | list) }}
+  loop: '{{ watoom_code_editable_project_scopes | default([]) }}'
+  register: watoom_code_project_access_result
+  changed_when: "'changed_paths=0' not in watoom_code_project_access_result.stdout"
+
+- name: Maintain Magpie project engine routing instructions
+  ansible.builtin.copy:
+    src: projects/magpie-flight-godot-candidate-AGENTS.md
+    dest: /data/ai/projects/games/magpie-flight-godot-candidate/AGENTS.md
+    owner: '1009'
+    group: '1009'
+    mode: '0644'
+  when: >-
+    '/data/ai/projects/games/magpie-flight-godot-candidate' in
+    (watoom_code_editable_project_scopes | default([]) | map(attribute='project') | list)
+
+- name: Preserve application read access to bounded Toolkit receipts
+  ansible.builtin.import_tasks: data_access.yml

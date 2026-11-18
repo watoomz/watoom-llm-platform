@@ -1,0 +1,15 @@
+[Unit]
+Description=Recover ended Mesh workers through the exclusive GPU controller
+Requires=k3s.service watoom-gpu-controller.service
+After=k3s.service watoom-gpu-controller.service
+StartLimitIntervalSec=900
+StartLimitBurst=5
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /data/ai/helper-scripts/llama_mesh_pipeline.py recover-queue
+RemainAfterExit=no
+Restart=on-failure
+RestartSec=60
+TimeoutStartSec=1800
+[Install]
+WantedBy=multi-user.target

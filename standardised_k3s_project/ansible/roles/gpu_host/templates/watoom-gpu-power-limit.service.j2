@@ -1,0 +1,14 @@
+[Unit]
+Description=Apply WatooM NVIDIA GPU power limit
+Requires={{ gpu_host_persistence_service_name }}.service
+After={{ gpu_host_persistence_service_name }}.service
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/sh -c 'for i in $(seq 1 20); do {{ gpu_host_nvidia_smi_bin }} -L >/dev/null 2>&1 && exit 0; sleep 1; done; exit 1'
+ExecStart={{ gpu_host_nvidia_smi_bin }} -pm 1
+ExecStart={{ gpu_host_nvidia_smi_bin }} -pl {{ gpu_host_power_limit_watts }}
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

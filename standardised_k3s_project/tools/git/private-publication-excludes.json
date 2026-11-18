@@ -1,0 +1,6 @@
+{
+  "paths": [
+    "standardised_k3s_project/ansible/roles/watoom-code/files/skills/reverse-engineer-feature/SKILL.md"
+  ],
+  "reason": "Owner-sensitive native instruction body is maintained only in the server-private skill source; never publish its history"
+}

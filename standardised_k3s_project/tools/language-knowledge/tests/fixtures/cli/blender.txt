@@ -1,0 +1,59 @@
+Blender 5.2.3 LTS
+Usage: blender [args ...] [file] [args ...]
+
+Render Options:
+-b or --background
+	Run in background (often used for UI-less rendering).
+
+	The audio device is disabled in background-mode by default
+	and can be re-enabled by passing in '-setaudio Default' afterwards.
+-a or --render-anim
+	Render frames from start to end (inclusive).
+-f or --render-frame <frame>
+	Render frame <frame> and save it.
+
+Cycles Render Options:
+	Cycles add-on options must be specified following a double dash.
+--cycles-device <device>
+	Set the device used for rendering.
+--cycles-print-stats
+	Log statistics about render memory and time usage.
+
+Animation Playback Options:
+-a <options> <file(s)>
+	Run as an animation player (ignored if '-b' is set).
+	Playback Arguments:
+	-f <fps> <fps_base>
+		Specify FPS to start with.
+	-p <sx> <sy>
+		Open with lower left corner at <sx>, <sy>.
+
+Python Options:
+--python-expr <expression>
+	Run the given expression as a Python script.
+--python-exit-code <code>
+	Set the exit-code if a Python exception is raised
+	(only for scripts executed from the command line), zero disables.
+
+Logging Options:
+--log <match>
+	Enable logging categories.
+	--log "*": log everything
+	--log "event": logs every category starting with 'event'.
+
+Misc Options:
+-noaudio
+	Force sound system to None.
+/?
+	Print this help text and exit (Windows only).
+--
+	End option processing, following arguments passed unchanged.
+--last <arg>
+	This option must be last argument.
+
+Argument Order:
+	Arguments are executed in the order they are given. eg:
+	# blender --background test.blend --render-frame 1
+
+Environment Variables:
+  $BLENDER_USER_CONFIG Directory for user configuration files.

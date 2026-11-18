@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Server automation reference · Agent Export</title><meta name="description" content="Complete tracked-source coverage for operator scripts, Ansible playbooks and roles, tools, checks and deployed payloads."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link active" aria-current="page" href="/guide/server-catalogue.html">Server reference</a><div class="toc"><a class="toc-link" href="#coverage">Coverage</a><a class="toc-link" href="#how-to-use-the-reference">How to use the reference</a><a class="toc-link" href="#source-and-runtime-boundaries">Source and runtime boundaries</a></div><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">Server reference</p><h1>Server automation reference</h1><p class="lede">Complete tracked-source coverage for operator scripts, Ansible playbooks and roles, tools, checks and deployed payloads.</p></header>
+<div class="content">
+<p>This catalogue is generated from tracked source and untracked code candidates by <code>scripts/render-server-catalogue.py</code>. It does not run programs or certify their deployment. Source links use the configured WatooM source repository; the separate LLM repository retains the same <code>standardised_k3s_project/</code> paths. Descriptions name their evidence basis; a filename summary is not a verified operational contract.</p>
+<p>Read <a href="/guide/operations.html">Operations</a>, <a href="/guide/llm-project.html">installation and configuration</a>, and <a href="/guide/software-design.html">the software design</a> before executing deployment or recovery helpers. Run no bulk scripts from this list.</p>
+<h2 id="coverage">Coverage</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th style="text-align:right">Source files</th>
+<th>Reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>scripts/</code></td>
+<td style="text-align:right">46</td>
+<td><a href="/guide/server-scripts.html">Operator scripts</a></td>
+</tr>
+<tr>
+<td><code>ansible/playbooks/</code></td>
+<td style="text-align:right">97</td>
+<td><a href="/guide/server-playbooks.html">Playbooks</a></td>
+</tr>
+<tr>
+<td><code>ansible/roles/</code></td>
+<td style="text-align:right">1422</td>
+<td><a href="/guide/server-roles.html">Roles and deployed payloads</a></td>
+</tr>
+<tr>
+<td><code>tools/</code></td>
+<td style="text-align:right">1429</td>
+<td><a href="/guide/server-tools.html">Tools and checks</a></td>
+</tr>
+</tbody>
+</table></div>
+<p>The <a href="/guide/assets/server-catalogue.json">machine-readable inventory</a> records every tracked file in these four areas, including non-executable templates, fixtures, bundled dependency files, and private-source placeholders. It contains paths, file hashes and descriptions, not private instruction bodies or secret values. Untracked code candidates are included for completeness; inclusion does not claim they are committed. Runtime helper copies and external application source are outside this catalogue.</p>
+<h2 id="how-to-use-the-reference">How to use the reference</h2>
+<ol>
+<li>Start with the task in Operations or the LLM project guide.</li>
+<li>Locate its playbook and the role/tasks it imports.</li>
+<li>Inspect defaults, required variables, templates, and the exact helper in Git.</li>
+<li>Validate the change using the documented tier; apply only the owning playbook.</li>
+<li>Verify runtime behaviour and record rollback evidence.</li>
+</ol>
+<h2 id="source-and-runtime-boundaries">Source and runtime boundaries</h2>
+<p>The operator checkout is desired state. <code>/data/ai/helper-scripts</code> contains installed runtime copies and state; fix their owner source rather than editing an installed copy. <code>archive/</code>, <code>retired/</code> and historical acceptance notes are references, not installation instructions. Test/acceptance/cutover names never imply permission to run on production. Use the <a href="/guide/llm-extensions.html">custom extensions map</a> for plugins, agents, skills and workers, and <a href="/guide/llm-publication.html">GitHub publication</a> for external source and distribution boundaries.</p>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/server-catalogue.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

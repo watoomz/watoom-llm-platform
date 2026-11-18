@@ -1,0 +1,3 @@
+---
+image_audit_action: check
+image_audit_output: "{{ project_root }}/docs/LIVE_IMAGE_LOCK.md"

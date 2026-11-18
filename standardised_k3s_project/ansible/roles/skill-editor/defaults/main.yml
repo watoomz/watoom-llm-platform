@@ -1,0 +1,24 @@
+---
+# Glance skill editor: authenticated UI pod + root broker that commits SKILL.md edits to Git.
+skill_editor_namespace: glance
+skill_editor_uid: 1010
+skill_editor_gid: 1010
+skill_editor_origin: https://glance.internal.homelab.example
+skill_editor_prefix: /skills
+skill_editor_port: 8788
+skill_editor_image: docker.io/library/python@sha256:6d43704baacd1bfbe7c295d7f13079d5d8104ed33568873133f8fc69980419df
+skill_editor_app_root: /app/skill-editor
+skill_editor_state: /data/ai/helper-scripts/state/skill-editor
+skill_editor_socket_dir: /data/ai/helper-scripts/state/skill-editor/socket
+skill_editor_password_file: /data/ai/private/skill-editor/password
+skill_editor_service_name: watoom-skill-editor-broker
+# Canonical checkout that playbooks deploy from; edits are committed to its main branch.
+skill_editor_repo: /data/github/watoom-standardised-homelab
+skill_editor_skills_path: standardised_k3s_project/ansible/roles/watoom-code/files/skills
+skill_editor_branch: main
+# Live WatooM-Code skill tree (watoom_code_root/config/skills) and its owner.
+skill_editor_live_root: /data/ai/watoom-code/config/skills
+skill_editor_live_uid: 1001
+skill_editor_live_gid: 1001
+skill_editor_author_name: Agent Export
+skill_editor_author_email: codex@agent.example

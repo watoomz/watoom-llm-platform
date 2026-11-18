@@ -1,0 +1,133 @@
+{
+  "status": "REVIEW_REQUIRED",
+  "files": 12676,
+  "excluded": 1765,
+  "quarantined_findings": [],
+  "review_candidates": [
+    {
+      "path": "standardised_k3s_project/ansible/roles/opencode-agent/defaults/main.yml",
+      "rule": "literal-credential-review",
+      "line": 14
+    },
+    {
+      "path": "standardised_k3s_project/ansible/roles/opencode-agent/defaults/main.yml",
+      "rule": "literal-credential-review",
+      "line": 113
+    },
+    {
+      "path": "standardised_k3s_project/manifests/10-infrastructure/llm/searxng.yml",
+      "rule": "literal-credential-review",
+      "line": 69
+    },
+    {
+      "path": "standardised_k3s_project/manifests/10-infrastructure/monitoring/mktxp.yml",
+      "rule": "literal-credential-review",
+      "line": 175
+    },
+    {
+      "path": "standardised_k3s_project/tools/language-knowledge/manuals/ansible/sources/aap/rulebook-sources.rst",
+      "rule": "literal-credential-review",
+      "line": 174
+    },
+    {
+      "path": "standardised_k3s_project/tools/language-knowledge/manuals/k8s-k3s/sources/examples/secret-bootstrap-token-secret-base64.yaml",
+      "rule": "literal-credential-review",
+      "line": 11
+    },
+    {
+      "path": "standardised_k3s_project/tools/language-knowledge/manuals/k8s-k3s/sources/examples/secret-bootstrap-token-secret-literal.yaml",
+      "rule": "literal-credential-review",
+      "line": 14
+    },
+    {
+      "path": "standardised_k3s_project/tools/language-knowledge/manuals/k8s-k3s/sources/examples/secret-dotfile-secret.yaml",
+      "rule": "literal-credential-review",
+      "line": 6
+    },
+    {
+      "path": "standardised_k3s_project/tools/language-knowledge/manuals/k8s-k3s/sources/examples/secret-dotfile-secret.yaml",
+      "rule": "literal-credential-review",
+      "line": 16
+    },
+    {
+      "path": "standardised_k3s_project/tools/language-knowledge/manuals/k8s-k3s/sources/examples/storage-storageclass-storageclass-ceph-rbd.yaml",
+      "rule": "literal-credential-review",
+      "line": 13
+    },
+    {
+      "path": "application/packages/ai/test/provider/bedrock-converse.test.ts",
+      "rule": "literal-credential-review",
+      "line": 1801
+    },
+    {
+      "path": "application/packages/ai/test/provider/bedrock-converse.test.ts",
+      "rule": "literal-credential-review",
+      "line": 1823
+    },
+    {
+      "path": "application/packages/ai/test/provider/bedrock-converse.test.ts",
+      "rule": "literal-credential-review",
+      "line": 1841
+    },
+    {
+      "path": "application/packages/ai/test/provider/bedrock-converse.test.ts",
+      "rule": "literal-credential-review",
+      "line": 1874
+    },
+    {
+      "path": "application/packages/ai/test/provider/bedrock-mantle.test.ts",
+      "rule": "literal-credential-review",
+      "line": 154
+    },
+    {
+      "path": "application/packages/ai/test/provider/google-vertex.test.ts",
+      "rule": "literal-credential-review",
+      "line": 25
+    },
+    {
+      "path": "application/packages/app/e2e/regression/home.spec.ts",
+      "rule": "literal-credential-review",
+      "line": 300
+    },
+    {
+      "path": "application/packages/app/e2e/regression/settings.spec.ts",
+      "rule": "literal-credential-review",
+      "line": 1799
+    },
+    {
+      "path": "application/packages/app/e2e/regression/settings.spec.ts",
+      "rule": "literal-credential-review",
+      "line": 1843
+    },
+    {
+      "path": "application/packages/codemode/test/openapi.test.ts",
+      "rule": "literal-credential-review",
+      "line": 940
+    },
+    {
+      "path": "application/packages/codemode/test/openapi.test.ts",
+      "rule": "literal-credential-review",
+      "line": 954
+    },
+    {
+      "path": "application/packages/codemode/test/openapi.test.ts",
+      "rule": "literal-credential-review",
+      "line": 962
+    },
+    {
+      "path": "application/packages/console/app/src/lib/salesforce.ts",
+      "rule": "literal-credential-review",
+      "line": 11
+    },
+    {
+      "path": "application/packages/core/test/voice.test.ts",
+      "rule": "literal-credential-review",
+      "line": 24
+    },
+    {
+      "path": "application/packages/core/test/voice.test.ts",
+      "rule": "literal-credential-review",
+      "line": 25
+    }
+  ]
+}

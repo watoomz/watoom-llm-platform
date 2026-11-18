@@ -1,0 +1,118 @@
+---
+# Switch AgentMemory between hybrid BM25 + BGE vector recall and BM25-only, touching only the
+# agentmemory Deployment (a full watoom-code role run re-applies every stage resource).
+# Requires playbooks/llm-bge-embeddings.yml. The store is snapshotted while AgentMemory is
+# stopped; existing memories are re-embedded on start, nothing stored is removed.
+#   enable:   no extra vars (production vars set watoom_code_memory_embeddings: true)
+#   rollback: -e watoom_code_memory_embeddings=false
+- name: Configure AgentMemory embeddings
+  hosts: homelab
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../roles/watoom-code/defaults/main.yml
+    - ../vars/watoom-code.yml
+  vars:
+    memory_dir: "{{ watoom_code_root }}/memory"
+    # Each run produces one generation (a .tar.gz + an .export.json.gz sharing the same timestamp stamp).
+    # This playbook only ever runs for a deliberate migration, never on a schedule, so rotation happens
+    # here rather than via a separate systemd timer -- there is nothing accumulating between runs to guard.
+    memory_snapshot_keep_generations: 5
+  tasks:
+    - name: Fix the snapshot name once
+      ansible.builtin.set_fact:
+        snapshot_stamp: "{{ lookup('ansible.builtin.pipe', 'date -u +%Y%m%dT%H%M%SZ') }}"
+    - name: Set the snapshot paths
+      ansible.builtin.set_fact:
+        snapshot: "{{ watoom_code_root }}/backups/memory-before-embeddings-{{ snapshot_stamp }}.tar.gz"
+        snapshot_export: "{{ watoom_code_root }}/backups/memory-before-embeddings-{{ snapshot_stamp }}.export.json.gz"
+    - name: Confirm AgentMemory can reach the embedding service
+      ansible.builtin.command:
+        argv: [kubectl, -n, "{{ watoom_code_namespace }}", exec, deploy/agentmemory, --,
+               curl, -sf, -m, "10", -o, /dev/null, -X, POST, -H, "content-type: application/json",
+               -d, '{"input":"probe"}', "{{ watoom_code_memory_embedding_url }}/v1/embeddings"]
+      changed_when: false
+      when: watoom_code_memory_embeddings | bool
+    # 2026-11-09: added after finding the raw filesystem tar below opaque and needlessly large -- it
+    # carries the derived BM25/vector search index shards (which just regenerate from the memories on
+    # restart) alongside the actual data. AgentMemory's own export (GET /agentmemory/export) is a
+    # structured, human-readable JSON dump of memories/sessions/observations/lessons/etc, explicitly
+    # without those derived indexes, and round-trips through its own POST /agentmemory/import. Needs the
+    # pod running, so this runs before the stop-for-consistency step below; the secret stays inside the
+    # pod's own shell the whole time, never passed through an ansible variable or logged.
+    - name: Export a portable, human-readable memory snapshot before stopping AgentMemory
+      ansible.builtin.shell:
+        cmd: >
+          kubectl -n {{ watoom_code_namespace }} exec deploy/agentmemory --
+          sh -c 'curl -sf http://localhost:3111/agentmemory/export -H "Authorization: Bearer $AGENTMEMORY_SECRET"'
+          | gzip -9 > {{ snapshot_export }}
+      changed_when: true
+    - name: Restrict the export snapshot's permissions
+      ansible.builtin.file:
+        path: "{{ snapshot_export }}"
+        mode: '0600'
+    - name: Stop, snapshot and reconfigure AgentMemory (restore the replica on any failure)
+      block:
+        - name: Stop AgentMemory for a consistent snapshot (clients queue in their outbox)
+          ansible.builtin.command:
+            argv: [kubectl, -n, "{{ watoom_code_namespace }}", scale, deployment/agentmemory, --replicas=0]
+        - name: Wait for the AgentMemory pod to exit
+          ansible.builtin.command:
+            argv: [kubectl, -n, "{{ watoom_code_namespace }}", wait, --for=delete, pod, -l, app=agentmemory, --timeout=120s]
+          changed_when: false
+        - name: Snapshot the memory store
+          community.general.archive:
+            path: "{{ memory_dir }}"
+            dest: "{{ snapshot }}"
+            format: gz
+            mode: '0600'
+        - name: Set the embedding environment and start AgentMemory
+          kubernetes.core.k8s:
+            state: patched
+            merge_type: strategic-merge
+            definition:
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata: {name: agentmemory, namespace: "{{ watoom_code_namespace }}"}
+              spec:
+                replicas: 1
+                template:
+                  spec:
+                    containers:
+                      - name: agentmemory
+                        env: "{{ watoom_code_memory_embedding_env if watoom_code_memory_embeddings | bool
+                                 else watoom_code_memory_embedding_env | map(attribute='name')
+                                      | map('community.general.dict_kv', 'name')
+                                      | map('combine', {'$patch': 'delete'}) | list }}"
+      rescue:
+        - name: Bring AgentMemory back up after a failed stop/snapshot/reconfigure
+          ansible.builtin.command:
+            argv: [kubectl, -n, "{{ watoom_code_namespace }}", scale, deployment/agentmemory, --replicas=1]
+        - name: Fail the play after restoring the service
+          ansible.builtin.fail:
+            msg: AgentMemory stop/snapshot/reconfigure failed; the replica count was restored to 1 and the play stopped.
+    - name: Verify AgentMemory readiness
+      ansible.builtin.command:
+        argv: [kubectl, -n, "{{ watoom_code_namespace }}", rollout, status, deployment/agentmemory, --timeout=300s]
+      changed_when: false
+    - name: Find existing memory snapshot files
+      ansible.builtin.find:
+        paths: "{{ watoom_code_root }}/backups"
+        patterns: "memory-before-embeddings-*"
+        file_type: file
+      register: memory_snapshot_files
+    - name: Determine which snapshot generations to keep
+      ansible.builtin.set_fact:
+        memory_snapshot_stamps_to_keep: "{{ (memory_snapshot_files.files | map(attribute='path') | map('basename')
+          | map('regex_replace', '^memory-before-embeddings-([0-9TZ]+)\\..*$', '\\1') | unique
+          | sort | reverse | list)[:memory_snapshot_keep_generations] }}"
+    - name: Remove snapshot generations beyond the retention count
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ memory_snapshot_files.files }}"
+      loop_control: {label: "{{ item.path | basename }}"}
+      when: (item.path | basename | regex_replace('^memory-before-embeddings-([0-9TZ]+)\\..*$', '\\1')) not in memory_snapshot_stamps_to_keep
+    - name: Report the snapshot
+      ansible.builtin.debug:
+        msg: "Snapshots {{ snapshot_export }} (structured, restore via POST /agentmemory/import) and {{ snapshot }} (exact-bytes fallback); embeddings {{ 'on' if watoom_code_memory_embeddings | bool else 'off' }}"

@@ -1,0 +1,148 @@
+---
+- name: "Ansible Lint API | Assert Fedora host"
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.distribution == "Fedora"
+    fail_msg: "The ansible_lint_api role currently targets the Fedora homelab host."
+
+- name: "Ansible Lint API | Check required commands"
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop:
+    - "{{ ansible_lint_api_python_bin }}"
+    - "{{ ansible_lint_api_ansible_lint_bin }}"
+    - "{{ ansible_lint_api_ansible_playbook_bin }}"
+  register: ansible_lint_api_required_commands
+
+- name: "Ansible Lint API | Assert required commands exist"
+  ansible.builtin.assert:
+    that:
+      - ansible_lint_api_required_commands.results | selectattr('stat.exists') | list | length == ansible_lint_api_required_commands.results | length
+    fail_msg: "Missing one or more required ansible-lint-api commands."
+
+- name: "Ansible Lint API | Check required Python imports"
+  ansible.builtin.command:
+    argv:
+      - "{{ ansible_lint_api_python_bin }}"
+      - -c
+      - "import yaml; import jinja2"
+  register: ansible_lint_api_python_imports
+  changed_when: false
+  failed_when: ansible_lint_api_python_imports.rc != 0
+
+- name: "Ansible Lint API | Ensure install directory exists"
+  ansible.builtin.file:
+    path: "{{ ansible_lint_api_install_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "Ansible Lint API | Install server"
+  ansible.builtin.template:
+    src: server.py.j2
+    dest: "{{ ansible_lint_api_install_dir }}/server.py"
+    owner: root
+    group: root
+    mode: "0755"
+  notify: Restart ansible lint api
+
+- name: "Ansible Lint API | Install regression checks"
+  ansible.builtin.copy:
+    src: regression_static_checks.py
+    dest: "{{ ansible_lint_api_install_dir }}/regression_static_checks.py"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "Ansible Lint API | Install policy engine"
+  ansible.builtin.copy:
+    src: policy_engine.py
+    dest: "{{ ansible_lint_api_install_dir }}/policy_engine.py"
+    owner: root
+    group: root
+    mode: "0755"
+  notify: Restart ansible lint api
+
+- name: "Ansible Lint API | Install validation runner"
+  ansible.builtin.copy:
+    src: watoom_ansible_validate.py
+    dest: "{{ ansible_lint_api_install_dir }}/watoom_ansible_validate.py"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "Ansible Lint API | Ensure systemd drop-in directory exists"
+  ansible.builtin.file:
+    path: "/etc/systemd/system/{{ ansible_lint_api_service_name }}.service.d"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "Ansible Lint API | Install systemd unit"
+  ansible.builtin.template:
+    src: watoom-ansible-lint-api.service.j2
+    dest: "/etc/systemd/system/{{ ansible_lint_api_service_name }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart ansible lint api
+
+- name: "Ansible Lint API | Install systemd environment"
+  ansible.builtin.template:
+    src: listen.conf.j2
+    dest: "/etc/systemd/system/{{ ansible_lint_api_service_name }}.service.d/listen.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart ansible lint api
+
+- name: "Ansible Lint API | Compile installed Python"
+  ansible.builtin.command:
+    argv:
+      - "{{ ansible_lint_api_python_bin }}"
+      - -m
+      - py_compile
+      - "{{ ansible_lint_api_install_dir }}/server.py"
+      - "{{ ansible_lint_api_install_dir }}/regression_static_checks.py"
+      - "{{ ansible_lint_api_install_dir }}/policy_engine.py"
+      - "{{ ansible_lint_api_install_dir }}/watoom_ansible_validate.py"
+  register: ansible_lint_api_py_compile
+  changed_when: false
+  failed_when: ansible_lint_api_py_compile.rc != 0
+
+- name: "Ansible Lint API | Run static-check regressions before restart"
+  ansible.builtin.command:
+    argv:
+      - "{{ ansible_lint_api_python_bin }}"
+      - "{{ ansible_lint_api_install_dir }}/regression_static_checks.py"
+  args:
+    chdir: "{{ ansible_lint_api_install_dir }}"
+  register: ansible_lint_api_regression
+  changed_when: false
+  failed_when: ansible_lint_api_regression.rc != 0
+
+- name: "Ansible Lint API | Apply pending restart after regression gate"
+  ansible.builtin.meta: flush_handlers
+
+- name: "Ansible Lint API | Ensure service is enabled and started"
+  ansible.builtin.systemd:
+    name: "{{ ansible_lint_api_service_name }}"
+    daemon_reload: true
+    enabled: "{{ ansible_lint_api_service_enabled }}"
+    state: "{{ ansible_lint_api_service_state }}"
+
+- name: "Ansible Lint API | Verify health endpoint"
+  ansible.builtin.uri:
+    url: "{{ ansible_lint_api_health_url }}"
+    method: GET
+    return_content: true
+    status_code: 200
+  register: ansible_lint_api_health
+  retries: 10
+  delay: 2
+  until:
+    - ansible_lint_api_health.status == 200
+    - ansible_lint_api_health.json.status == "ok"
+  changed_when: false

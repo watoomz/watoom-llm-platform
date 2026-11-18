@@ -1,0 +1,657 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import shlex
+import subprocess
+import sys
+import tempfile
+import time
+import urllib.parse
+import uuid
+
+SCRIPT = Path(__file__).resolve()
+PROJECT = SCRIPT.parent.parent
+LLM_ANSIBLE_ROLES_PATH = PROJECT / "ansible/roles"
+
+REGISTRY_PATH = PROJECT / "config/llm/model-lab/models.json"
+INVENTORY = PROJECT / "ansible/inventories/homelab/hosts.yml"
+PLAYBOOK = PROJECT / "ansible/playbooks/llm-model-lab.yml"
+
+
+def load_registry():
+    return json.loads(REGISTRY_PATH.read_text())
+
+
+def run(cmd, *, check=True, capture=False, env=None):
+    if cmd and Path(str(cmd[0])).name == "ansible-playbook":
+        merged_env = dict(os.environ)
+        if env:
+            merged_env.update(env)
+        existing_roles = merged_env.get("ANSIBLE_ROLES_PATH", "")
+        repo_roles = str(LLM_ANSIBLE_ROLES_PATH)
+        merged_env["ANSIBLE_ROLES_PATH"] = (
+            repo_roles
+            if not existing_roles
+            else f"{repo_roles}:{existing_roles}"
+        )
+        env = merged_env
+    print("+", " ".join(shlex.quote(str(x)) for x in cmd), file=sys.stderr)
+    return subprocess.run(cmd, check=check, text=True,
+                          stdout=subprocess.PIPE if capture else None,
+                          stderr=subprocess.PIPE if capture else None,
+                          env=env)
+
+
+def model(reg, name):
+    try:
+        return reg["models"][name]
+    except KeyError:
+        raise SystemExit(f"unknown model {name!r}; use 'llm-models list'")
+
+
+def root(reg):
+    return Path(reg["storage_root"])
+
+
+def models_root(reg):
+    """Canonical GGUF model storage root."""
+    return root(reg) / "models" / "gguf"
+
+
+def ensure_dirs(reg):
+    r = root(reg)
+    mr = models_root(reg)
+
+    for p in [
+        r,
+        r / "models",
+        mr,
+        r / "state",
+        r / "results",
+        r / "cache",
+        r / "change-backups",
+    ]:
+        p.mkdir(parents=True, exist_ok=True)
+
+    for mid in reg["models"]:
+        (mr / mid).mkdir(parents=True, exist_ok=True)
+
+
+def quant_info(m, fallback=False):
+    return m["fallback" if fallback else "primary"]
+
+
+def model_dir(reg, name):
+    return models_root(reg) / name
+
+
+def file_path(reg, name, fallback=False):
+    m=model(reg,name); q=quant_info(m,fallback)
+    return model_dir(reg,name)/q["filename"]
+
+
+def sha256(path):
+    h=hashlib.sha256()
+    with path.open("rb") as f:
+        for block in iter(lambda:f.read(8*1024*1024), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
+def verify_one(reg,name,fallback=False,quiet=False):
+    m=model(reg,name); q=quant_info(m,fallback); p=file_path(reg,name,fallback)
+    if not p.is_file():
+        if not quiet: print(f"MISSING {p}")
+        return False
+    got=sha256(p); ok=got.lower()==q["sha256"].lower()
+    if not quiet: print(f"{'OK' if ok else 'BAD'} {name} {q['quant']} {p.name} sha256={got}")
+    return ok
+
+
+def hf_url(m,q):
+    repo=m["repository"]; rev=m.get("revision","main")
+    fname=urllib.parse.quote(q["filename"], safe="-_.()")
+    return f"https://huggingface.co/{repo}/resolve/{rev}/{fname}?download=true"
+
+
+def cmd_list(args,reg):
+    ensure_dirs(reg)
+    print(f"storage_root={reg['storage_root']}")
+    for name,m in reg["models"].items():
+        active=model_dir(reg,name)/"active.gguf"
+        active_target="-"
+        if active.is_symlink():
+            try: active_target=active.resolve().name
+            except Exception: active_target="BROKEN"
+        pri=file_path(reg,name,False).exists(); fb=file_path(reg,name,True).exists()
+        print(f"{name:28} primary={m['primary']['quant']:22} downloaded={'yes' if pri else 'no':3} fallback={'yes' if fb else 'no':3} active={active_target}")
+
+
+def cmd_download(args,reg):
+    ensure_dirs(reg); m=model(reg,args.model); q=quant_info(m,args.fallback)
+    dest=file_path(reg,args.model,args.fallback); part=dest.with_suffix(dest.suffix+".part")
+    if dest.exists() and verify_one(reg,args.model,args.fallback):
+        print(f"already verified: {dest}")
+    else:
+        url=hf_url(m,q)
+        curl=["curl","--fail","--location","--retry","5","--retry-delay","2","--retry-all-errors","--continue-at","-","--output",str(part)]
+        token=os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_TOKEN")
+        cfg=None
+        try:
+            if token:
+                fd, cfgname=tempfile.mkstemp(prefix="hf-curl-", dir=str(root(reg)/"state"), text=True)
+                os.fchmod(fd,0o600)
+                with os.fdopen(fd,"w") as fh:
+                    fh.write('header = "Authorization: Bearer '+token.replace('"','')+'"\n')
+                cfg=Path(cfgname); curl += ["--config",str(cfg)]
+            curl += [url]
+            run(curl)
+        finally:
+            if cfg: cfg.unlink(missing_ok=True)
+        got=sha256(part)
+        if got.lower()!=q["sha256"].lower():
+            raise SystemExit(f"SHA256 mismatch for {part}: expected {q['sha256']} got {got}; .part retained")
+        os.replace(part,dest)
+        print(f"downloaded and verified: {dest}")
+    print(f"ready: {args.model} {q['quant']} at {dest}")
+    print("download does not alter active.gguf; use 'llm-models activate' to switch")
+
+
+def set_active_symlink(reg,name,target):
+    d=model_dir(reg,name); active=d/"active.gguf"; tmp=d/".active.gguf.new"
+    tmp.unlink(missing_ok=True)
+    tmp.symlink_to(target.name)
+    os.replace(tmp,active)
+
+
+def cmd_verify(args,reg):
+    ok=verify_one(reg,args.model,args.fallback)
+    raise SystemExit(0 if ok else 2)
+
+
+def kubectl_json(*parts):
+    cp=run(["kubectl",*parts,"-o","json"],capture=True)
+    return json.loads(cp.stdout)
+
+
+def active_deployments(reg):
+    names=[]
+    router_known=list(reg.get("exclusive_gpu_deployments", [])) + [m["deployment"] for m in reg["models"].values()]
+    for dep in router_known:
+        cp=run(["kubectl","-n",reg["namespace"],"get","deploy",dep,"-o","json"],check=False,capture=True)
+        if cp.returncode==0:
+            obj=json.loads(cp.stdout); spec=int(obj.get("spec",{}).get("replicas",0) or 0)
+            ready=int(obj.get("status",{}).get("readyReplicas",0) or 0)
+            if spec>0 or ready>0: names.append((dep,spec,ready))
+    return names
+
+
+def require_active_model(reg, name):
+    """Require an already-active/ready candidate before running model tests."""
+    m = model(reg, name)
+    target = m["deployment"]
+    link = model_dir(reg, name) / "active.gguf"
+    if not link.is_symlink():
+        raise SystemExit(
+            f"SAFETY BLOCK: {name} has no active.gguf selection; "
+            f"run './scripts/llm-models activate {name}' first"
+        )
+
+    active = active_deployments(reg)
+    for dep, spec, ready in active:
+        if dep == target and int(spec) > 0 and int(ready) > 0:
+            return
+
+    details = ", ".join(
+        f"{dep}:spec={spec},ready={ready}" for dep, spec, ready in active
+    ) or "<none>"
+    raise SystemExit(
+        f"SAFETY BLOCK: {name} is not active and ready "
+        f"(expected {target}); active deployments: {details}. "
+        f"Run './scripts/llm-models activate {name}' first."
+    )
+
+
+def safety_check(reg):
+    dep=kubectl_json("-n","pi-agent","get","deploy","pi-agent")
+    containers=dep.get("spec",{}).get("template",{}).get("spec",{}).get("containers",[])
+    env={}
+    for c in containers:
+        if c.get("name")=="pi-agent":
+            for item in c.get("env",[]):
+                if "value" in item:
+                    env[item.get("name")]=str(item["value"])
+
+    capture=str(env.get("WATOOM_KALI_CAPTURE_ONLY") or "0").lower()
+    if capture in {"1","true","yes","on"}:
+        raise SystemExit(
+            "SAFETY BLOCK: Pi is still in WATOOM_KALI_CAPTURE_ONLY mode; "
+            "normal Kali execution must be enabled first"
+        )
+
+    max_calls=env.get("WATOOM_MODEL_MAX_CALLS")
+    try:
+        n=int(max_calls or "")
+    except Exception:
+        n=-1
+
+    if n<1 or n>int(reg.get("model_max_calls",3)):
+        raise SystemExit(
+            f"SAFETY BLOCK: Pi WATOOM_MODEL_MAX_CALLS must be "
+            f"1..{reg.get('model_max_calls',3)}, got {max_calls!r}"
+        )
+
+    print(f"safety: capture_only={capture} model_max_calls={n}")
+
+
+def save_state(reg, data):
+    p=root(reg)/"state"/"previous.json"; tmp=p.with_suffix(".tmp")
+    tmp.write_text(json.dumps(data,indent=2)+"\n"); os.replace(tmp,p)
+
+
+def scale(reg,dep,n):
+    run(["kubectl","-n",reg["namespace"],"scale","deploy",dep,f"--replicas={n}"])
+
+
+def wait_ready(reg,dep,timeout=300):
+    run(["kubectl","-n",reg["namespace"],"rollout","status","deploy",dep,f"--timeout={timeout}s"])
+
+
+def wait_scaled_down(reg, dep, timeout=180):
+    """Wait until all pods for a deployment are gone so the GPU is released."""
+    deadline = time.monotonic() + timeout
+    selector = f"app={dep}"
+    while True:
+        cp = run(["kubectl", "-n", reg["namespace"], "get", "pods", "-l", selector, "-o", "json"],
+                 check=False, capture=True)
+        if cp.returncode == 0:
+            try:
+                items = json.loads(cp.stdout or "{}").get("items", [])
+            except Exception:
+                items = ["unparseable"]
+            if not items:
+                print(f"scaled-down: {dep}=0 pods")
+                return
+        if time.monotonic() >= deadline:
+            raise RuntimeError(f"timed out waiting for {dep} pods to terminate")
+        time.sleep(2)
+
+
+def service_health(reg, service, timeout=15):
+    code=("import sys,urllib.request\n"
+          "url=sys.argv[1]\n"
+          "with urllib.request.urlopen(url,timeout=float(sys.argv[2])) as r:\n"
+          " print(r.status); print(r.read().decode())")
+    url=f"http://{service}.{reg['namespace']}.svc.cluster.local:8000/health"
+    cp=run(["kubectl","-n",reg["namespace"],"exec","deploy/llm-router","--","python3","-c",code,url,str(timeout)], capture=True)
+    if not cp.stdout.startswith("200\n"):
+        raise RuntimeError(f"health check failed for {service}: {cp.stdout.strip()}")
+    print(f"health: {service}=200")
+
+
+def router_known_deployments(reg):
+    out=[]
+    for dep in list(reg.get("exclusive_gpu_deployments", [])) + [m["deployment"] for m in reg["models"].values()]:
+        if dep not in out:
+            out.append(dep)
+    return out
+
+
+def startup_diagnostics(reg, dep, lines=180):
+    """Best-effort evidence when a candidate does not become ready."""
+    print(f"startup diagnostics for {dep}:", file=sys.stderr)
+    run(["kubectl","-n",reg["namespace"],"get","pods","-l",f"app={dep}","-o","wide"], check=False)
+    run(["kubectl","-n",reg["namespace"],"describe","deploy",dep], check=False)
+    # Deployment logs works even while pods are crash-looping; --prefix makes multi-pod output attributable.
+    run(["kubectl","-n",reg["namespace"],"logs",f"deploy/{dep}","-c","llama-server","--tail",str(lines),"--prefix=true"], check=False)
+    print("If logs report an unknown/unsupported GGUF architecture, stop here: the pinned llama.cpp image needs compatibility review; do not blindly upgrade it.", file=sys.stderr)
+
+
+def refuse_legacy_gpu_mutation(reg):
+    if (root(reg)/"helper-scripts/config/gpu-controller.json").is_file():
+        raise SystemExit("Exclusive GPU controller owns model activation and rollback; use controller-mediated operations. No symlinks or replicas were changed.")
+
+
+def cmd_activate(args,reg):
+    refuse_legacy_gpu_mutation(reg)
+    ensure_dirs(reg); safety_check(reg); m=model(reg,args.model)
+    q=quant_info(m,args.fallback); p=file_path(reg,args.model,args.fallback)
+    if not verify_one(reg,args.model,args.fallback): raise SystemExit("model must be downloaded and SHA-verified before activation")
+    prev=active_deployments(reg)
+    old_link=model_dir(reg,args.model)/"active.gguf"; old_target=None
+    if old_link.is_symlink():
+        try: old_target=old_link.resolve().name
+        except Exception: old_target=None
+    save_state(reg,{"ts":time.time(),"previous_deployments":prev,"model":args.model,"previous_quant":old_target})
+    set_active_symlink(reg,args.model,p)
+    target=m["deployment"]
+    target_was_active = any(
+        dep == target and (int(spec) > 0 or int(ready) > 0)
+        for dep, spec, ready in prev
+    )
+    quant_changed = old_target != p.name
+    try:
+        for dep in router_known_deployments(reg):
+            if dep != target: scale(reg,dep,0)
+        # Changing active.gguf does not reload weights in an already-running llama-server.
+        # For a same-deployment quant switch, fully stop the old pod first so the GPU is
+        # released and the replacement process resolves the new symlink at startup.
+        if target_was_active and quant_changed:
+            print(f"quant change detected: {old_target or '-'} -> {p.name}; restarting {target}")
+            scale(reg,target,0)
+            wait_scaled_down(reg,target)
+        scale(reg,target,1); wait_ready(reg,target)
+        service_health(reg,m["service"])
+        print(f"ACTIVE {args.model} quant={q['quant']} deployment={target}")
+    except Exception:
+        startup_diagnostics(reg,target)
+        print("activation failed; attempting rollback",file=sys.stderr)
+        scale(reg,target,0)
+        if old_target:
+            old_path=model_dir(reg,args.model)/old_target
+            if old_path.exists(): set_active_symlink(reg,args.model,old_path)
+        else:
+            (model_dir(reg,args.model)/"active.gguf").unlink(missing_ok=True)
+        for dep,spec,_ready in prev:
+            if spec>0: scale(reg,dep,spec)
+        for dep,spec,_ready in prev:
+            if spec>0: wait_ready(reg,dep)
+        raise
+
+
+def cmd_rollback(args,reg):
+    refuse_legacy_gpu_mutation(reg)
+    p=root(reg)/"state"/"previous.json"
+    if not p.exists(): raise SystemExit(f"no rollback state: {p}")
+    data=json.loads(p.read_text()); current=data.get("model")
+    if current in reg["models"] and data.get("previous_quant"):
+        candidate=model_dir(reg,current)/data["previous_quant"]
+        if candidate.exists(): set_active_symlink(reg,current,candidate)
+    for dep in router_known_deployments(reg): scale(reg,dep,0)
+    restored=[]
+    for dep,spec,_ in data.get("previous_deployments",[]):
+        if int(spec)>0:
+            scale(reg,dep,int(spec)); restored.append(dep)
+    for dep in restored: wait_ready(reg,dep)
+    print("rollback restored:",", ".join(restored) if restored else "no previously active deployment")
+
+
+def router_request(reg,path,payload=None):
+    has_body = payload is not None
+    code=("import json,sys,urllib.error,urllib.request\n"
+          "base=sys.argv[1]; path=sys.argv[2]; has_body=(sys.argv[3]=='1')\n"
+          "data=sys.stdin.buffer.read() if has_body else None\n"
+          "method='POST' if has_body else 'GET'\n"
+          "req=urllib.request.Request(base+path,data=data,method=method,headers={'Content-Type':'application/json'})\n"
+          "try:\n"
+          " with urllib.request.urlopen(req,timeout=180) as r: print(r.read().decode())\n"
+          "except urllib.error.HTTPError as e:\n"
+          " body=e.read().decode(errors='replace')\n"
+          " print(f'HTTP {e.code}: {body}',file=sys.stderr)\n"
+          " raise SystemExit(22)")
+    cmd=["kubectl","-n",reg["namespace"],"exec"]
+    if has_body:
+        cmd.append("-i")
+    cmd += ["deploy/llm-router","--","python3","-c",code,reg["router_service"],path,"1" if has_body else "0"]
+    inp=json.dumps(payload) if has_body else None
+    print("+", " ".join(shlex.quote(x) for x in cmd), file=sys.stderr)
+    started=time.monotonic()
+    try:
+        cp=subprocess.run(
+            cmd,input=inp,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+            timeout=200,
+        )
+    except subprocess.TimeoutExpired:
+        raise SystemExit(f"FAIL: router request timed out after 200s path={path}")
+    elapsed_ms=round((time.monotonic()-started)*1000,1)
+    if cp.returncode:
+        detail=(cp.stderr or cp.stdout or "").strip()
+        raise SystemExit(detail or f"router request failed rc={cp.returncode} path={path}")
+    return json.loads(cp.stdout), elapsed_ms
+
+
+def gpu_snapshot():
+    fields=["name","memory.used","memory.total","power.draw","power.limit","temperature.gpu","utilization.gpu"]
+    cp=run(["nvidia-smi",f"--query-gpu={','.join(fields)}","--format=csv,noheader,nounits"],check=False,capture=True)
+    rows=[]
+    if cp.returncode==0:
+        for line in cp.stdout.splitlines():
+            vals=[x.strip() for x in line.split(",")]
+            if len(vals)==len(fields): rows.append(dict(zip(fields,vals)))
+    return {"returncode":cp.returncode,"gpus":rows,"stderr":cp.stderr.strip() if cp.stderr else ""}
+
+
+def request_record(reg,path,payload=None):
+    before=gpu_snapshot()
+    response,elapsed_ms=router_request(reg,path,payload)
+    after=gpu_snapshot()
+    usage=response.get("usage") if isinstance(response,dict) else None
+    return {"elapsed_ms":elapsed_ms,"gpu_before":before,"gpu_after":after,"usage":usage,"response":response}
+
+
+def cmd_test(args,reg):
+    safety_check(reg); require_active_model(reg,args.model)
+    m=model(reg,args.model); alias=m["router_alias"]
+    results={"model":args.model,"timestamp":time.time(),"context_size":reg.get("context_size"),"tests":{}}
+    out=root(reg)/"results"/f"{args.model}-{int(time.time())}.json"
+    try:
+        results["tests"]["models"]=request_record(reg,"/v1/models")
+        simple={"model":alias,"messages":[{"role":"user","content":"Reply with exactly MODEL_LAB_OK"}],"max_tokens":32,"temperature":0}
+        results["tests"]["simple"]=request_record(reg,"/v1/chat/completions",simple)
+        multi={"model":alias,"messages":[{"role":"user","content":"Remember token ALPHA-713."},{"role":"assistant","content":"I will remember it."},{"role":"user","content":"Return only the token I asked you to remember."}],"max_tokens":64,"temperature":0}
+        results["tests"]["multi_turn"]=request_record(reg,"/v1/chat/completions",multi)
+        tool={
+          "model":alias,
+          "messages":[{"role":"user","content":"Use the model_lab_probe tool exactly once with value SAFE_CAPTURE_ONLY. Do not answer in prose."}],
+          "tools":[{"type":"function","function":{"name":"model_lab_probe","description":"Safe synthetic model-lab probe","parameters":{"type":"object","properties":{"value":{"type":"string"}},"required":["value"],"additionalProperties":False}}}],
+          "tool_choice":"auto","max_tokens":256,"temperature":0
+        }
+        results["tests"]["tool_call"]=request_record(reg,"/v1/chat/completions",tool)
+        msg=results["tests"]["tool_call"]["response"].get("choices",[{}])[0].get("message",{})
+        tool_calls=msg.get("tool_calls") or []
+        results["native_tool_calls_present"]=bool(tool_calls)
+        results["tool_names"]=[tc.get("function",{}).get("name") for tc in tool_calls if isinstance(tc,dict)]
+        if not tool_calls:
+            raise RuntimeError("no native message.tool_calls returned")
+        print("PASS native tool_calls present")
+    except BaseException as exc:
+        results["error"]=f"{type(exc).__name__}: {exc}"
+        raise
+    finally:
+        results["gpu_final"]=gpu_snapshot()
+        out.write_text(json.dumps(results,indent=2)+"\n")
+        print(f"results={out}")
+
+def cmd_test_pi(args,reg):
+    safety_check(reg); require_active_model(reg,args.model); model(reg,args.model)
+    prompt=("This is a model-lab safety test. Use exactly one kali_exec tool call whose command only prints "
+            "MODEL_LAB_CAPTURE_ONLY using printf. Do not perform network access, discovery, scanning, file modification, or package installation.")
+    pi_model=f"llm-router-local/{args.model}"
+    cmd=["kubectl","-n","pi-agent","exec","deploy/pi-agent","--","bash","-lc",
+         'cd /data/pi-agent/workspace && exec pi --mode json --no-session --model "$1" --tools kali_exec "$2"',
+         "bash",pi_model,prompt]
+    run(cmd)
+    print("Recent guard events:")
+    run(["kubectl","-n","pi-agent","exec","deploy/pi-agent","--","bash","-lc","tail -n 30 /home/pi/.pi/agent/model-call-events.jsonl || true"],check=False)
+    print("This test executes only a harmless printf payload; it emits no scan packets.")
+
+
+
+def cmd_test_breaker(args,reg):
+    """Prove the Pi and router model-call breakers without reaching a GPU backend."""
+    dep=kubectl_json("-n","pi-agent","get","deploy","pi-agent")
+    containers=dep.get("spec",{}).get("template",{}).get("spec",{}).get("containers",[])
+    env={}
+    for c in containers:
+        if c.get("name")=="pi-agent":
+            for item in c.get("env",[]):
+                if "value" in item: env[item.get("name")]=str(item["value"])
+    capture=str(env.get("WATOOM_KALI_CAPTURE_ONLY") or "0").lower()
+    if capture in {"1","true","yes","on"}:
+        raise SystemExit(
+            "SAFETY BLOCK: Pi is unexpectedly in capture-only mode; "
+            "normal Kali execution must be enabled before breaker testing"
+        )
+
+    before=run(["kubectl","-n","pi-agent","exec","deploy/pi-agent","--","bash","-lc",
+                "wc -l < /home/pi/.pi/agent/model-call-events.jsonl 2>/dev/null || echo 0"],capture=True,check=False)
+    try: start_line=int((before.stdout or "0").strip().splitlines()[-1])
+    except Exception: start_line=0
+
+    # Override only this child Pi process. max=0 means the first model context event
+    # must abort before provider dispatch. Pi 0.85.1 reports that abort in its JSON
+    # event stream but may still exit 0, so validate structured output + guard log
+    # rather than treating shell return code as the success signal.
+    cmd=["kubectl","-n","pi-agent","exec","deploy/pi-agent","--","bash","-lc",
+         'cd /data/pi-agent/workspace && WATOOM_MODEL_MAX_CALLS=0 exec pi --mode json --no-session --model llm-router-local/swift-qwen38-coder "Reply with BREAKER_SHOULD_NOT_REACH_PROVIDER"']
+    cp=run(cmd,check=False,capture=True)
+    if cp.stdout:
+        print(cp.stdout,end="" if cp.stdout.endswith("\n") else "\n")
+    if cp.stderr:
+        print(cp.stderr,end="" if cp.stderr.endswith("\n") else "\n",file=sys.stderr)
+
+    pi_records=[]
+    for line in (cp.stdout or "").splitlines():
+        try: pi_records.append(json.loads(line))
+        except Exception: pass
+    pi_abort=False
+    for rec in pi_records:
+        if rec.get("type") not in {"message_start","message_end","turn_end"}:
+            continue
+        msg=rec.get("message")
+        if not isinstance(msg,dict) or msg.get("role")!="assistant":
+            continue
+        err=str(msg.get("errorMessage") or "")
+        if msg.get("stopReason")=="error" and "aborted" in err.lower():
+            pi_abort=True
+            break
+    if not pi_abort:
+        raise SystemExit(
+            f"FAIL: Pi did not report the expected structured abort "
+            f"(exit={cp.returncode}); provider safety is unproven"
+        )
+
+    events=run(["kubectl","-n","pi-agent","exec","deploy/pi-agent","--","bash","-lc",
+                f"tail -n +{start_line+1} /home/pi/.pi/agent/model-call-events.jsonl 2>/dev/null || true"],capture=True,check=False)
+    text=events.stdout or ""
+    print(text,end="")
+    parsed=[]
+    for line in text.splitlines():
+        try: parsed.append(json.loads(line))
+        except Exception: pass
+
+    breaker=[
+        x for x in parsed
+        if x.get("event")=="circuit_breaker"
+        and int(x.get("max_model_calls",-1))==0
+        and x.get("breaker_terminated") is True
+    ]
+    if not breaker:
+        raise SystemExit("FAIL: no max_calls=0 circuit_breaker event recorded")
+    breaker_ids={str(x.get("request_id")) for x in breaker if x.get("request_id")}
+    provider=[
+        x for x in parsed
+        if x.get("event")=="provider_request"
+        and str(x.get("request_id")) in breaker_ids
+    ]
+    if provider:
+        raise SystemExit(
+            "FAIL: provider_request was recorded for the breaker test request: "
+            + ",".join(sorted(breaker_ids))
+        )
+    print(
+        "PASS: Pi circuit breaker terminated before provider HTTP dispatch "
+        f"request_id={','.join(sorted(breaker_ids))}"
+    )
+
+    # Independently prove the router's correlation-ID counter rejects call 4 before
+    # any GPU backend is selected. Use a deliberately unknown model: calls 1-3
+    # should fail as unknown-model 503s, while call 4 must be the WatooM 429.
+    probe_id = "breaker-probe-" + uuid.uuid4().hex
+    code = r"""
+import json,sys,urllib.error,urllib.request
+url=sys.argv[1]
+request_id=sys.argv[2]
+call_no=sys.argv[3]
+payload=json.dumps({"model":"__watoom_breaker_probe_no_backend__","messages":[{"role":"user","content":"router breaker probe"}],"stream":False,"max_tokens":1}).encode()
+req=urllib.request.Request(url,data=payload,method="POST",headers={"Content-Type":"application/json","X-Watoom-Request-Id":request_id,"X-Watoom-Model-Call":call_no})
+try:
+    with urllib.request.urlopen(req,timeout=10) as r:
+        print(r.status)
+        print(r.read().decode())
+except urllib.error.HTTPError as e:
+    print(e.code)
+    print(e.read().decode())
+"""
+    statuses=[]
+    bodies=[]
+    for n in range(1,5):
+        cp=run([
+            "kubectl","-n",reg["namespace"],"exec","deploy/llm-router","--",
+            "python3","-c",code,
+            reg["router_service"]+"/v1/chat/completions",probe_id,str(n)
+        ],capture=True,check=False)
+        if cp.returncode:
+            raise SystemExit(f"FAIL: router breaker probe command failed on call {n}: {cp.stderr}")
+        lines=(cp.stdout or "").splitlines()
+        try: status=int(lines[0])
+        except Exception: raise SystemExit(f"FAIL: could not parse router breaker probe call {n}: {cp.stdout!r}")
+        statuses.append(status)
+        bodies.append("\n".join(lines[1:]))
+
+    if statuses[:3] != [503,503,503] or statuses[3] != 429:
+        raise SystemExit(f"FAIL: router breaker statuses were {statuses}; expected [503, 503, 503, 429]")
+
+    try:
+        final_body=json.loads(bodies[3])
+    except Exception:
+        raise SystemExit(f"FAIL: router call 4 returned non-JSON body: {bodies[3]!r}")
+    err=final_body.get("error") if isinstance(final_body,dict) else None
+    if not isinstance(err,dict):
+        raise SystemExit(f"FAIL: router call 4 missing error object: {final_body!r}")
+    if err.get("type")!="watoom_model_call_limit":
+        raise SystemExit(f"FAIL: router call 4 was 429 but not WatooM guard: {final_body!r}")
+    if str(err.get("request_id"))!=probe_id or int(err.get("router_call",-1))!=4:
+        raise SystemExit(f"FAIL: router guard correlation/count mismatch: {final_body!r}")
+    if int(err.get("max_calls",-1))!=int(reg.get("model_max_calls",3)):
+        raise SystemExit(f"FAIL: router guard max-call mismatch: {final_body!r}")
+
+    print(
+        "PASS: router independently rejected correlated call 4 before backend selection "
+        f"request_id={probe_id}"
+    )
+
+
+def cmd_status(args,reg):
+    ensure_dirs(reg)
+    print("Model files:"); cmd_list(args,reg)
+    print("\nKnown active deployments:")
+    for item in active_deployments(reg): print(" ",item)
+    print("\nPi safety:")
+    try: safety_check(reg)
+    except SystemExit as e: print(str(e))
+    print("\nGPU:")
+    run(["nvidia-smi","--query-gpu=name,memory.used,memory.total,power.draw,temperature.gpu,utilization.gpu","--format=csv,noheader"],check=False)
+
+
+def cmd_deploy(args,reg):
+    run(["ansible-playbook","-i",str(INVENTORY),str(PLAYBOOK)])
+
+
+def main():
+    ap=argparse.ArgumentParser(description="WatooM LLM model-lab manager")
+    sub=ap.add_subparsers(dest="cmd",required=True)
+    for name in ["list","status","deploy","rollback","test-breaker"]: sub.add_parser(name)
+    for name in ["download","verify","activate"]:
+        p=sub.add_parser(name); p.add_argument("model"); p.add_argument("--fallback",action="store_true")
+    for name in ["test","test-pi"]:
+        p=sub.add_parser(name); p.add_argument("model")
+    args=ap.parse_args(); reg=load_registry()
+    globals()[f"cmd_{args.cmd.replace('-','_')}"](args,reg)
+
+if __name__=="__main__": main()

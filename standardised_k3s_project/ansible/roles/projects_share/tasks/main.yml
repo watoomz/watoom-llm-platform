@@ -1,0 +1,52 @@
+---
+- name: Projects share | Samba present
+  ansible.builtin.package:
+    name: [samba, samba-common-tools]
+    state: present
+
+- name: Projects share | SMB-only login account (no shell, no home)
+  ansible.builtin.user:
+    name: "{{ projects_share_user }}"
+    system: true
+    shell: /usr/sbin/nologin
+    create_home: false
+    comment: "SMB login for the rig projects share"
+
+- name: Projects share | Keep the distribution smb.conf once for reference
+  ansible.builtin.copy:
+    src: /etc/samba/smb.conf
+    dest: /etc/samba/smb.conf.distribution
+    remote_src: true
+    force: false
+    mode: "0644"
+
+- name: Projects share | Configuration (validated with testparm before it replaces the live file)
+  ansible.builtin.template:
+    src: smb.conf.j2
+    dest: /etc/samba/smb.conf
+    owner: root
+    group: root
+    mode: "0644"
+    validate: "testparm -s %s"
+  notify: Restart smbd
+
+- name: Projects share | SELinux lets smbd read exported paths (read-only export only)
+  ansible.posix.seboolean:
+    name: samba_export_all_ro
+    state: true
+    persistent: true
+
+- name: Projects share | Firewall - SMB reachable from the allowed rig address only
+  ansible.posix.firewalld:
+    zone: "{{ projects_share_firewall_zone }}"
+    rich_rule: 'rule family="ipv4" source address="{{ item }}" service name="samba" accept'
+    permanent: true
+    immediate: true
+    state: enabled
+  loop: "{{ projects_share_allowed_hosts }}"
+
+- name: Projects share | smbd enabled and running
+  ansible.builtin.service:
+    name: smb
+    state: started
+    enabled: true

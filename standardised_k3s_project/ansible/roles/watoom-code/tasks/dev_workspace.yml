@@ -1,0 +1,312 @@
+---
+- name: Require the separately verified production and dev baseline
+  ansible.builtin.assert:
+    that:
+      - watoom_code_dev_approved | default(false) | bool
+      - watoom_code_dev_baseline is match('^[a-f0-9]{40}$')
+      - watoom_code_dev_remote | length > 0
+      - watoom_code_dev_host | length > 0
+      - watoom_code_dev_package_sha is match('^[a-f0-9]{64}$')
+
+- name: Describe the authorized development-only changes
+  ansible.builtin.debug:
+    msg: >-
+      RISK: creates dedicated restricted identities, immutable SSH entry points,
+      a persistent dev clone and receipt recovery. No production deployment,
+      inference, network or GPU settings are changed.
+
+- name: Refuse reuse of unrelated or privileged existing identities
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/python3
+      - -I
+      - -c
+      - |
+        import pwd,grp
+        for name in ['watoom-dev-run','watoom-dev-git']:
+            try: account=pwd.getpwnam(name)
+            except KeyError: continue
+            assert account.pw_uid != 0
+            assert account.pw_dir in ['/data/ai/helper-scripts/dev-workspace/homes/'+name, '/home/'+name]
+            assert not [g.gr_name for g in grp.getgrall() if name in g.gr_mem and g.gr_gid != account.pw_gid]
+  changed_when: false
+
+- name: Create isolated development identities without privileged groups
+  ansible.builtin.user:
+    name: "{{ item }}"
+    system: true
+    create_home: false
+    home: "/home/{{ item }}"
+    shell: /bin/bash
+    password_lock: true
+  loop: [watoom-dev-run, watoom-dev-git]
+
+- name: Create root-owned development runtime directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - /data/ai/helper-scripts/dev-workspace
+    - /data/ai/helper-scripts/dev-workspace/homes
+    - /data/ai/helper-scripts/dev-workspace/keys
+    - /data/ai/git
+
+- name: Keep forced-command account homes immutable to those accounts
+  ansible.builtin.file:
+    path: "/home/{{ item }}/.ssh"
+    state: directory
+    owner: root
+    group: "{{ item }}"
+    mode: '0750'
+  loop: [watoom-dev-run, watoom-dev-git]
+
+- name: Keep the account home parent immutable
+  ansible.builtin.file:
+    path: "/home/{{ item }}"
+    state: directory
+    owner: root
+    group: "{{ item }}"
+    mode: '0750'
+  loop: [watoom-dev-run, watoom-dev-git]
+
+- name: Install the constrained runtime and preparation commands
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../tools/watoom-code/dev_workspace/{{ item }}"
+    dest: "/data/ai/helper-scripts/dev-workspace/{{ item }}"
+    owner: root
+    group: root
+    mode: '0755'
+  loop: [runtime.py, prepare.py]
+
+- name: Create recipient-specific private key directories
+  ansible.builtin.file:
+    path: "/data/ai/helper-scripts/dev-workspace/keys/{{ item.name }}"
+    state: directory
+    owner: root
+    group: "{{ item.group }}"
+    mode: '0750'
+  loop:
+    - {name: app, group: '1001'}
+    - {name: git, group: watoom-dev-run}
+
+- name: Generate dedicated forced-command keys only when absent
+  ansible.builtin.command:
+    argv: [ssh-keygen, -q, -t, ed25519, -N, '', -C, 'watoom-dev-only', -f, '/data/ai/helper-scripts/dev-workspace/keys/{{ item }}/key']
+    creates: '/data/ai/helper-scripts/dev-workspace/keys/{{ item }}/key'
+  loop: [app, git]
+  no_log: true
+
+- name: Protect each private key for its single consumer
+  ansible.builtin.file:
+    path: "/data/ai/helper-scripts/dev-workspace/keys/{{ item.name }}/key"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: '0400'
+  loop:
+    - {name: app, owner: '1001', group: '1001'}
+    - {name: git, owner: watoom-dev-run, group: watoom-dev-run}
+  no_log: true
+
+- name: Read only the dedicated public keys
+  ansible.builtin.slurp:
+    src: '/data/ai/helper-scripts/dev-workspace/keys/{{ item }}/key.pub'
+  loop: [app, git]
+  register: watoom_dev_public_keys
+
+- name: Permit only structured constrained requests for the runner key
+  ansible.builtin.copy:
+    dest: /home/watoom-dev-run/.ssh/authorized_keys
+    content: >
+      restrict,command="/usr/bin/sudo -n /usr/bin/python3 -I /data/ai/helper-scripts/dev-workspace/runtime.py --request"
+      {{ watoom_dev_public_keys.results[0].content | b64decode | trim }}
+    owner: root
+    group: watoom-dev-run
+    mode: '0640'
+
+- name: Permit only Git protocol for the separate development repository
+  ansible.builtin.copy:
+    dest: /home/watoom-dev-git/.ssh/authorized_keys
+    content: >
+      restrict,command="/usr/bin/python3 -I /data/ai/helper-scripts/dev-workspace/runtime.py --git-transport"
+      {{ watoom_dev_public_keys.results[1].content | b64decode | trim }}
+    owner: root
+    group: watoom-dev-git
+    mode: '0640'
+
+- name: Restore standard SSH labels only on the new dev account homes
+  ansible.builtin.command:
+    argv: [restorecon, -R, '/home/{{ item }}']
+  loop: [watoom-dev-run, watoom-dev-git]
+  changed_when: false
+
+- name: Allow only the fixed root-owned JSON entry point
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/watoom-dev-workspace
+    content: "watoom-dev-run ALL=(root) NOPASSWD: /usr/bin/python3 -I /data/ai/helper-scripts/dev-workspace/runtime.py --request\n"
+    owner: root
+    group: root
+    mode: '0440'
+    validate: /usr/sbin/visudo -cf %s
+
+- name: Initialize or verify the exact baseline without resetting existing work
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/python3
+      - -I
+      - /data/ai/helper-scripts/dev-workspace/prepare.py
+      - --i-approve
+      - --baseline
+      - '{{ watoom_code_dev_baseline }}'
+      - --remote
+      - '{{ watoom_code_dev_remote }}'
+      - --host
+      - '{{ watoom_code_dev_host }}'
+  register: watoom_dev_prepare
+  changed_when: false
+
+- name: Persist the new development clone container label
+  community.general.sefcontext:
+    target: '/data/github/watoom-homelab-dev(/.*)?'
+    setype: container_file_t
+    state: present
+
+- name: Restore only the dedicated development clone label
+  ansible.builtin.command:
+    argv: [restorecon, -R, -v, /data/github/watoom-homelab-dev]
+  register: watoom_dev_clone_labels
+  changed_when: "'Relabeled' in watoom_dev_clone_labels.stdout"
+
+- name: Create the protected application transport directory
+  ansible.builtin.file:
+    path: '{{ watoom_code_root }}/config/watoom-tools/dev-workspace-credentials'
+    state: directory
+    owner: root
+    group: '{{ watoom_code_gid }}'
+    mode: '0750'
+
+- name: Install only the restricted application transport key
+  ansible.builtin.copy:
+    remote_src: true
+    src: /data/ai/helper-scripts/dev-workspace/keys/app/key
+    dest: '{{ watoom_code_root }}/config/watoom-tools/dev-workspace-credentials/key'
+    owner: '{{ watoom_code_uid }}'
+    group: '{{ watoom_code_gid }}'
+    mode: '0400'
+  no_log: true
+
+- name: Pin the existing host identity for the restricted transport
+  ansible.builtin.copy:
+    remote_src: true
+    src: /data/ai/helper-scripts/dev-workspace/known_hosts
+    dest: '{{ watoom_code_root }}/config/watoom-tools/dev-workspace-credentials/known_hosts'
+    owner: root
+    group: '{{ watoom_code_gid }}'
+    mode: '0440'
+
+- name: Preserve container readability for restricted transport files
+  ansible.builtin.command:
+    argv: [restorecon, -R, '{{ watoom_code_root }}/config/watoom-tools/dev-workspace-credentials']
+  changed_when: false
+
+- name: Compute the current content hash of the dev workspace package (same formula as tools/watoom-code/dev_release.py)
+  ansible.builtin.set_fact:
+    watoom_code_dev_package_live_sha: >-
+      {{ (
+        lookup('ansible.builtin.file', role_path + '/../../../tools/watoom-code/dev_workspace/index.js', rstrip=false) +
+        lookup('ansible.builtin.file', role_path + '/../../../tools/watoom-code/dev_workspace/package.json', rstrip=false) +
+        lookup('ansible.builtin.file', role_path + '/../../../tools/watoom-code/dev_workspace/agent.md', rstrip=false)
+      ) | hash('sha256') }}
+
+- name: Refuse to stage dev workspace content that drifted from the approved, hash-pinned baseline
+  ansible.builtin.assert:
+    that:
+      - watoom_code_dev_package_live_sha == watoom_code_dev_package_sha
+    fail_msg: >-
+      tools/watoom-code/dev_workspace/{index.js,package.json,agent.md} now hash to
+      {{ watoom_code_dev_package_live_sha }}, not the approved pin {{ watoom_code_dev_package_sha }}.
+      This directory name is meant to be an immutable, reviewed version: re-run dev_release.py to
+      get a fresh approval and pin instead of letting this task silently stage the new bytes under
+      the old hash's name.
+
+- name: Create the versioned native package directory
+  ansible.builtin.file:
+    path: '{{ watoom_code_root }}/config/watoom-tools/dev-workspace-{{ watoom_code_dev_package_sha }}'
+    state: directory
+    owner: root
+    group: '{{ watoom_code_gid }}'
+    mode: '0750'
+
+- name: Stage the maintained native package without activating it
+  ansible.builtin.copy:
+    src: '{{ role_path }}/../../../tools/watoom-code/dev_workspace/{{ item }}'
+    dest: '{{ watoom_code_root }}/config/watoom-tools/dev-workspace-{{ watoom_code_dev_package_sha }}/{{ item }}'
+    owner: root
+    group: '{{ watoom_code_gid }}'
+    mode: '0440'
+  loop: [index.js, package.json]
+
+- name: Stage the isolated agent definition for guarded activation
+  ansible.builtin.copy:
+    src: '{{ role_path }}/../../../tools/watoom-code/dev_workspace/agent.md'
+    dest: /data/ai/helper-scripts/dev-workspace/staged-agent.md
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Preserve container readability for staged native package
+  ansible.builtin.command:
+    argv: [restorecon, -R, '{{ watoom_code_root }}/config/watoom-tools/dev-workspace-{{ watoom_code_dev_package_sha }}']
+  changed_when: false
+
+- name: Install the independently recoverable native activation helper
+  ansible.builtin.copy:
+    src: '{{ role_path }}/../../../tools/watoom-code/{{ item.source }}'
+    dest: '/data/ai/helper-scripts/dev-workspace/{{ item.name }}'
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - {source: dev_workspace/activation.py, name: activation.py}
+    - {source: maintenance_guard.py, name: maintenance_guard.py}
+    - {source: release_guard.py, name: release_guard.py}
+
+- name: Install independent development receipt recovery
+  ansible.builtin.copy:
+    dest: '/etc/systemd/system/{{ item.name }}'
+    content: '{{ item.content }}'
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - name: watoom-dev-recovery.service
+      content: |
+        [Unit]
+        Description=Reconcile only owned isolated development receipts
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/bin/python3 -I /data/ai/helper-scripts/dev-workspace/runtime.py --recover-all
+        ExecStart=/usr/bin/python3 -I /data/ai/helper-scripts/dev-workspace/activation.py --recover-if-idle
+        CPUQuota=10%
+        MemoryMax=64M
+        RuntimeMaxSec=30
+    - name: watoom-dev-recovery.timer
+      content: |
+        [Unit]
+        Description=Independent recovery for interrupted isolated development tasks
+        [Timer]
+        OnBootSec=60
+        OnUnitActiveSec=60
+        Unit=watoom-dev-recovery.service
+        [Install]
+        WantedBy=timers.target
+  register: watoom_dev_recovery_units
+
+- name: Start only the dedicated development recovery timer
+  ansible.builtin.systemd_service:
+    name: watoom-dev-recovery.timer
+    enabled: true
+    state: started
+    daemon_reload: '{{ watoom_dev_recovery_units.changed }}'

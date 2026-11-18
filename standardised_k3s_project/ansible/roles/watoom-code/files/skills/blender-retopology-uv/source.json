@@ -1,0 +1,12 @@
+{
+  "upstream_commit": "71d031dab8bc6729504d11a78cbe91945401045f",
+  "original_skill_sha256": "fc3cbc91a3d2de13b3dbf8ed261b348a9cd05a2576849d83029d93388c34deed",
+  "files": {
+    "SKILL.md": "fcec15bddcc4e8402f46d6c7c7d6ba3bcef637920697f6e36b05036134ec5b3d",
+    "scripts/uv_pack.py": "38746beb008b1f5324a9851b522308933d77bbf4ad660134d2cd7e360a95489f",
+    "scripts/auto_retopo.py": "d4e53e2a754f6d6675bc03b04410b7e41e147521cf4e9ba0c87e419deea01662",
+    "scripts/texel_density.py": "9fd15366aa20aa3005163745b12aae216c0b23a5fdafa0bbec98c1786f0c3cd6",
+    "scripts/_bpyx.py": "a3339ba8a678469e8ed29510e32a7331e0235202191ca4edb977af4720819b4b",
+    "references/upstream-SKILL.md": "fc3cbc91a3d2de13b3dbf8ed261b348a9cd05a2576849d83029d93388c34deed"
+  }
+}

@@ -1,0 +1,12 @@
+---
+# Built from /data/github/artex (FailSafe ARTEX v0.3.15 plus pinned BaaRai English frontend)
+# with Dockerfile.safe as 127.0.0.1:5000/artex:v0.3.15-safe-english. The role only rebuilds when this digest is absent
+# from the registry, and then fails loudly if the fresh build's digest differs from the pin below (a rebuild
+# is never deployed silently). To update: review the source, set artex_image_source_commit to the reviewed
+# commit, run the playbook once (it builds, pushes and reports the new digest), then pin that digest here.
+artex_image: "127.0.0.1:5000/artex@sha256:51ed365f0cd736d0c564e14f4ced91e02a9497f19deb8fd1ce7c2b9ed081f62f"
+artex_image_source_commit: b06c261974f3892cdef01569cc6d9c8b5c6e3c2b
+
+# English-only frontend from BaaRai/ARTEX; backend remains the reviewed FailSafe commit.
+artex_frontend_source_commit: e233c02314a113f50a1d4571bc6d0bce31d2825e
+artex_image_build_tag: "127.0.0.1:5000/artex:v0.3.15-safe-english"

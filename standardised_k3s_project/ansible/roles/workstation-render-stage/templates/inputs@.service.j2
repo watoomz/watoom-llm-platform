@@ -1,0 +1,16 @@
+[Unit]
+Description=Scoped workstation asset snapshot reader
+[Service]
+ExecStart=/usr/bin/python3 -I {{ workstation_stage_home }}/source/input_snapshot.py
+StandardInput=socket
+User=root
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths={{ workstation_stage_state }}/blobs {{ workstation_transfer_root }}/inputs
+CapabilityBoundingSet=CAP_DAC_OVERRIDE CAP_CHOWN
+RestrictAddressFamilies=AF_UNIX
+MemoryMax=512M
+RuntimeMaxSec=180
+UMask=0022

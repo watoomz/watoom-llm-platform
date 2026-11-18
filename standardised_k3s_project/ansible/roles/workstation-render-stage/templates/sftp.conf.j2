@@ -1,0 +1,11 @@
+# Dedicated worker file transport only; existing users are unaffected.
+Match User {{ workstation_transfer_user }}
+    ChrootDirectory {{ workstation_transfer_jail }}
+    ForceCommand internal-sftp -d /payloads -u 0007
+    AuthorizedKeysFile /etc/ssh/authorized_keys/{{ workstation_transfer_user }}
+    AuthenticationMethods publickey
+    PasswordAuthentication no
+    KbdInteractiveAuthentication no
+    DisableForwarding yes
+    PermitTTY no
+Match all

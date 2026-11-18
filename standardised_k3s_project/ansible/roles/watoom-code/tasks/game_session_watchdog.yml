@@ -1,0 +1,50 @@
+---
+# Resends a one-time follow-up resume prompt when a game project's worker job finished (pass or fail) and
+# the coordinator session never got the bridge's own single-shot notification -- see
+# tools/watoom-code/game_session_watchdog.py for why that notification can go unanswered. Report-only beyond
+# that one safe, idempotent action; never runs fenced recovery, never switches a model lease.
+- name: Install the game session watchdog script to a root-owned path
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../tools/watoom-code/game_session_watchdog.py"
+    dest: /data/ai/helper-scripts/watoom-code/game_session_watchdog.py
+    owner: root
+    group: root
+    mode: '0755'
+- name: Install game session watchdog timer
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/watoom-game-session-watchdog.service
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Resend a lost game-worker resume notification, report on a stuck request
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/bin/python3 /data/ai/helper-scripts/watoom-code/game_session_watchdog.py --report /data/ai/helper-scripts/reports/game-session-watchdog
+      Nice=15
+      CPUQuota=50%
+      MemoryMax=256M
+      MemorySwapMax=0
+      RuntimeMaxSec=120
+      TimeoutStopSec=10
+      KillMode=control-group
+  register: watoom_game_session_watchdog_service_unit
+- name: Install game session watchdog schedule
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/watoom-game-session-watchdog.timer
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Check every game project's most recent worker job every 20 minutes
+      [Timer]
+      OnBootSec=5min
+      OnUnitActiveSec=20min
+      Unit=watoom-game-session-watchdog.service
+      [Install]
+      WantedBy=timers.target
+  register: watoom_game_session_watchdog_timer_unit
+- name: Enable game session watchdog
+  ansible.builtin.systemd_service:
+    name: watoom-game-session-watchdog.timer
+    state: "{{ 'restarted' if watoom_game_session_watchdog_timer_unit is changed else 'started' }}"
+    enabled: true
+    daemon_reload: "{{ watoom_game_session_watchdog_service_unit.changed or watoom_game_session_watchdog_timer_unit.changed }}"

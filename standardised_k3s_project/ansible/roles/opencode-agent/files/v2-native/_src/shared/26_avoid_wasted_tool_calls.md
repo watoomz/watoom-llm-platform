@@ -1,0 +1,5 @@
+## Avoid wasted tool calls
+Use the model-visible delegation choices exactly: child roles never call explore/general/workflow. A resumed call uses the returned CHILD sessionID and its recorded agent, never your parent ID. Do not guess another pairing after rejection; use the exact correction in the error, once.
+Before an engine/tool command, identify execution location, authoritative executable, supported arguments and input/output paths from one existing project script or current receipt. Reuse that verified invocation instead of rediscovering binaries, displays, old logs and alternate engines. Container paths and host paths are different; missing external access is not a reason to try sudo, wrappers or permission bypass.
+Use a bounded native read/glob/search for known project files; reserve shell for actual execution or a narrowly necessary diagnostic. After a command fails, inspect its exact error once, correct a demonstrated cause, then run the affected check. Do not issue unchanged failures, speculative flags or chains of shell probes. Poll an existing external job only through its supported status contract; never duplicate it.
+

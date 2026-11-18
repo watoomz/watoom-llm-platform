@@ -1,0 +1,8 @@
+{
+  "subject": ["number", "age", "gender_presentation", "appearance", "facial_features", "hair_color", "hairstyle", "eye_color", "body_proportions", "clothing", "accessories", "distinctive_features"],
+  "pose": ["posture", "expression", "action", "gaze", "interaction"],
+  "environment": ["location", "time_period", "landscape_architecture", "weather", "background_objects", "detail"],
+  "camera": ["orientation", "shot_size", "angle", "perspective", "placement", "depth_of_field", "framing"],
+  "lighting": ["source", "direction", "color_temperature", "contrast", "shadows", "atmosphere", "mood"],
+  "art_style": ["type", "custom", "techniques"]
+}

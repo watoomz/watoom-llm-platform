@@ -1,0 +1,8 @@
+---
+- name: Verify Ansible collection dependencies are installed
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Dependency installation command
+      ansible.builtin.debug:
+        msg: "Run: ansible-galaxy collection install -r {{ playbook_dir }}/../requirements.yml"

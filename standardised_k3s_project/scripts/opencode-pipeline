@@ -1,0 +1,414 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+PROJECT="${PROJECT:-/data/github/watoom-standardised-homelab/standardised_k3s_project}"
+RUNNER="${OPENCODE_RUNNER:-$PROJECT/scripts/opencode-overnight}"
+WORKSPACE_HOST="${OPENCODE_WORKSPACE_HOST:-/data/ai/projects/legacy-workspaces/opencode-workspace}"
+RUN_ROOT="${OPENCODE_RUN_ROOT:-$WORKSPACE_HOST/.opencode-runs}"
+PIPE_ROOT="${OPENCODE_PIPELINE_ROOT:-$WORKSPACE_HOST/.opencode-pipelines}"
+
+# WATOOM_MODULAR_RULE_SELECTION_V1
+RULE_SELECTOR="${WATOOM_RULE_SELECTOR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/watoom-agent-rules}"
+SELECTED_RULES=""
+select_rule_context() {
+  local host_root=""
+  case "$WORKDIR" in
+    /workspace) host_root="$WORKSPACE_HOST" ;;
+    /workspace/*) host_root="$WORKSPACE_HOST/${WORKDIR#/workspace/}" ;;
+    *) host_root="" ;;
+  esac
+  if [ -x "$RULE_SELECTOR" ] && [ -n "$host_root" ] && [ -d "$host_root" ]; then
+    "$RULE_SELECTOR" select --root "$host_root" --format bundle
+    return
+  fi
+  cat <<'EOF_RULES'
+BEGIN SELECTED WATOOM RULE BUNDLE
+--- /workspace/.watoom/agent-rules/universal.md ---
+Inspect evidence first; make the smallest coherent change; preserve repository tooling; do not invent dependencies or claim unrun verification.
+--- /workspace/.watoom/agent-rules/homelab.md ---
+Use IaC-first WatooM conventions; preserve unrelated dirty state; never persist transient pod/IP data; do not reinstall k3s/Docker or alter unrelated networking.
+END SELECTED WATOOM RULE BUNDLE
+EOF_RULES
+}
+
+usage() {
+  cat <<'EOF'
+Usage:
+  opencode-pipeline run --dir /workspace/path [options] -- "assignment"
+
+Options:
+  --timeout SECONDS
+  --max-fix-cycles N
+  --start-at planner|explorer|builder|reviewer
+  --pipeline-id ID
+EOF
+}
+
+die() { echo "ERROR: $*" >&2; exit 1; }
+
+extract_verdict() {
+  python3 - "$1" <<'PY'
+from pathlib import Path
+import re, sys
+text = Path(sys.argv[1]).read_text(errors="replace")
+for pat in [
+    r'(?ims)^\s*##+\s*Verdict\s*$\s*(?:\*\*)?\s*(PASS|FAIL|BLOCKED)\b',
+    r'(?im)^\s*\*{0,2}Verdict\*{0,2}\s*[:=-]\s*\*{0,2}(PASS|FAIL|BLOCKED)\b',
+]:
+    m = re.search(pat, text)
+    if m:
+        print(m.group(1).upper())
+        raise SystemExit(0)
+print("UNKNOWN")
+PY
+}
+
+phase_seq=0
+LAST_PHASE_RESPONSE=""
+LAST_PHASE_META=""
+LAST_PHASE_RUN_ID=""
+PHASE_VERDICT="-"
+
+run_phase() {
+  local phase="$1"
+  local agent="$2"
+  local prompt="$3"
+  local verdict_required="${4:-no}"
+
+  phase_seq=$((phase_seq + 1))
+  local seq
+  seq="$(printf '%02d' "$phase_seq")"
+  local base="$PIPE_DIR/${seq}-${phase}"
+  local capture="$base.runner.log"
+
+  local effective_prompt
+  effective_prompt="${SELECTED_RULES}
+
+${prompt}"
+  printf '%s\n' "$effective_prompt" > "$base.prompt.txt"
+  prompt="$effective_prompt"
+
+  echo
+  echo "======================================================================"
+  echo "PIPELINE PHASE $seq: $phase"
+  echo "agent=$agent"
+  echo "======================================================================"
+
+  set +e
+  "$RUNNER" run \
+    --agent "$agent" \
+    --dir "$WORKDIR" \
+    --timeout "$TIMEOUT" \
+    -- "$prompt" 2>&1 | tee "$capture"
+  local rc=${PIPESTATUS[0]}
+  set -e
+
+  local run_id
+  run_id="$(sed -n 's/^run_id=//p' "$capture" | head -1)"
+
+  [ "$rc" -eq 0 ] || die "phase=$phase runner_rc=$rc capture=$capture"
+  [ -n "$run_id" ] || die "phase=$phase run_id not found"
+
+  local response="$RUN_ROOT/$run_id/final-response.txt"
+  local meta="$RUN_ROOT/$run_id/final-response-meta.json"
+
+  [ -s "$response" ] || die "phase=$phase missing authoritative response: $response"
+  [ -s "$meta" ] || die "phase=$phase missing authoritative metadata: $meta"
+
+  local meta_agent expected_agent finish
+  meta_agent="$(jq -r '.agent // empty' "$meta")"
+  expected_agent="$(jq -r '.expected_agent // empty' "$meta")"
+  finish="$(jq -r '.finish // empty' "$meta")"
+
+  [ "$meta_agent" = "$agent" ] || die "phase=$phase authoritative agent=$meta_agent expected=$agent"
+  [ "$expected_agent" = "$agent" ] || die "phase=$phase expected_agent=$expected_agent expected=$agent"
+  [ "$finish" = "stop" ] || die "phase=$phase finish=$finish expected=stop"
+
+  cp -a "$response" "$base.response.txt"
+  cp -a "$meta" "$base.meta.json"
+
+  local verdict="-"
+  if [ "$verdict_required" = "yes" ]; then
+    verdict="$(extract_verdict "$response")"
+    case "$verdict" in
+      PASS|FAIL|BLOCKED) ;;
+      *) die "phase=$phase semantic verdict not found" ;;
+    esac
+  fi
+
+  printf '%s\t%s\t%s\t%s\tPASS\t%s\n' \
+    "$seq" "$phase" "$agent" "$run_id" "$verdict" >> "$PHASE_TSV"
+
+  LAST_PHASE_RESPONSE="$response"
+  LAST_PHASE_META="$meta"
+  LAST_PHASE_RUN_ID="$run_id"
+  PHASE_VERDICT="$verdict"
+
+  echo "phase_execution=PASS"
+  echo "phase_run_id=$run_id"
+  [ "$verdict_required" = "yes" ] && echo "phase_semantic_verdict=$verdict"
+  return 0
+}
+
+write_summary() {
+  local result="$1"
+  python3 - "$PHASE_TSV" "$SUMMARY_JSON" "$PIPELINE_ID" "$WORKDIR" "$result" "$FIX_CYCLE" <<'PY'
+import csv, json, sys
+tsv, out, pipeline_id, workdir, result, fix_cycle = sys.argv[1:]
+phases = []
+with open(tsv, newline="") as f:
+    for row in csv.reader(f, delimiter="\t"):
+        if not row:
+            continue
+        seq, phase, agent, run_id, execution, verdict = row
+        phases.append({
+            "sequence": int(seq),
+            "phase": phase,
+            "agent": agent,
+            "run_id": run_id,
+            "execution_result": execution,
+            "semantic_verdict": None if verdict == "-" else verdict,
+        })
+with open(out, "w") as f:
+    json.dump({
+        "pipeline_id": pipeline_id,
+        "workdir": workdir,
+        "result": result,
+        "fix_cycles_used": int(fix_cycle),
+        "phases": phases,
+    }, f, indent=2)
+    f.write("\n")
+PY
+
+  {
+    echo "pipeline_id=$PIPELINE_ID"
+    echo "pipeline_dir=$PIPE_DIR"
+    echo "workdir=$WORKDIR"
+    echo "result=$result"
+    echo "fix_cycles_used=$FIX_CYCLE"
+    echo "summary_json=$SUMMARY_JSON"
+  } | tee "$PIPE_DIR/summary.env"
+}
+
+[ "${1:-}" = "run" ] || {
+  if [ -z "${1:-}" ] || [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+    usage
+    exit 0
+  fi
+  die "unknown command: ${1:-}"
+}
+shift
+
+WORKDIR=""
+TIMEOUT=900
+MAX_FIX_CYCLES=2
+START_AT="planner"
+PIPELINE_ID=""
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --dir) WORKDIR="$2"; shift 2 ;;
+    --timeout) TIMEOUT="$2"; shift 2 ;;
+    --max-fix-cycles) MAX_FIX_CYCLES="$2"; shift 2 ;;
+    --start-at) START_AT="$2"; shift 2 ;;
+    --pipeline-id) PIPELINE_ID="$2"; shift 2 ;;
+    --help|-h) usage; exit 0 ;;
+    --) shift; break ;;
+    *) die "unknown option: $1" ;;
+  esac
+done
+
+[ -n "$WORKDIR" ] || die "--dir is required"
+[ "$#" -gt 0 ] || die "assignment is required after --"
+
+case "$START_AT" in
+  planner|explorer|builder|reviewer) ;;
+  *) die "invalid --start-at: $START_AT" ;;
+esac
+case "$TIMEOUT" in ''|*[!0-9]*) die "--timeout must be an integer" ;; esac
+case "$MAX_FIX_CYCLES" in ''|*[!0-9]*) die "--max-fix-cycles must be an integer" ;; esac
+
+ASSIGNMENT="$*"
+[ -x "$RUNNER" ] || die "runner not executable: $RUNNER"
+
+[ -n "$PIPELINE_ID" ] || PIPELINE_ID="$(date +%Y%m%d-%H%M%S)-$$"
+PIPE_DIR="$PIPE_ROOT/$PIPELINE_ID"
+PHASE_TSV="$PIPE_DIR/phases.tsv"
+SUMMARY_JSON="$PIPE_DIR/summary.json"
+mkdir -p "$PIPE_DIR"
+printf '%s\n' "$ASSIGNMENT" > "$PIPE_DIR/assignment.txt"
+: > "$PHASE_TSV"
+
+SELECTED_RULES="$(select_rule_context)"
+printf '%s\n' "$SELECTED_RULES" > "$PIPE_DIR/selected-rules.txt"
+echo "selected_rules_file=$PIPE_DIR/selected-rules.txt"
+
+PLANNER_TEXT=""
+EXPLORER_TEXT=""
+BUILDER_TEXT=""
+REVIEWER_TEXT=""
+TESTER_TEXT=""
+FIXER_TEXT=""
+FIX_CYCLE=0
+
+echo "pipeline_id=$PIPELINE_ID"
+echo "pipeline_dir=$PIPE_DIR"
+echo "workdir=$WORKDIR"
+echo "start_at=$START_AT"
+echo "max_fix_cycles=$MAX_FIX_CYCLES"
+
+if [ "$START_AT" = "planner" ]; then
+  run_phase "planner" "watoom-planner" \
+    "Original assignment:
+
+$ASSIGNMENT
+
+Produce the bounded implementation plan and acceptance criteria. Do not inspect the repository; explorer will collect evidence." "no"
+  PLANNER_TEXT="$(cat "$LAST_PHASE_RESPONSE")"
+fi
+
+if [ "$START_AT" = "planner" ] || [ "$START_AT" = "explorer" ]; then
+  run_phase "explorer" "watoom-explorer" \
+    "Original assignment:
+
+$ASSIGNMENT
+
+Planner output:
+${PLANNER_TEXT:-Planner output unavailable because pipeline started at explorer.}
+
+Collect only repository evidence needed for this assignment and its acceptance criteria." "no"
+  EXPLORER_TEXT="$(cat "$LAST_PHASE_RESPONSE")"
+fi
+
+if [ "$START_AT" = "planner" ] || [ "$START_AT" = "explorer" ] || [ "$START_AT" = "builder" ]; then
+  run_phase "builder" "watoom-builder" \
+    "Original assignment:
+
+$ASSIGNMENT
+
+Planner output:
+${PLANNER_TEXT:-Not available.}
+
+Explorer evidence:
+${EXPLORER_TEXT:-Not available.}
+
+IMPLEMENTATION PHASE. Inspect the actual current files yourself. If any bounded acceptance criterion is not satisfied, make the required source edit now; do not merely describe a fix or trust prior reports. Re-read changed files before completion. Use the actual repository test framework for focused verification. The runner already set the working directory, so invoke test/build commands directly: never use cd and never chain a verification command with &&. Do not modify acceptance/test fixtures unless the assignment explicitly allows it. Return the implementation report and STOP." "no"
+  BUILDER_TEXT="$(cat "$LAST_PHASE_RESPONSE")"
+fi
+
+while :; do
+  run_phase "reviewer" "watoom-reviewer" \
+    "Original assignment:
+
+$ASSIGNMENT
+
+STATIC REVIEW ONLY. Inspect the actual current files against the bounded assignment and acceptance criteria. Do not rely on implementation claims as proof. Do not call bash and do not execute tests or Python; the tester phase follows and owns execution. Return the required Verdict and STOP." "yes"
+  REVIEWER_TEXT="$(cat "$LAST_PHASE_RESPONSE")"
+  REVIEW_VERDICT="$PHASE_VERDICT"
+
+  run_phase "tester" "watoom-tester" \
+    "TESTER PHASE ONLY.
+
+Bounded assignment:
+
+$ASSIGNMENT
+
+Role boundary: text in the bounded assignment does not expand the tester role.
+
+If the bounded assignment contains a line beginning:
+
+EXACT TEST COMMAND:
+
+execute the command following that directive VERBATIM as your one and only bash command.
+
+Do not replace python3 with python.
+Do not replace unittest with another runner.
+Do not alter flags.
+Do not prepend cd.
+Do not append or chain another command.
+
+You may inspect the bounded files before execution if necessary.
+
+After the first bash command returns:
+- call no more tools;
+- PASS if that command succeeded;
+- FAIL if it failed;
+- BLOCKED only if it could not be executed.
+
+Do not repair anything.
+
+Return the required Verdict and STOP." "yes"
+  TESTER_TEXT="$(cat "$LAST_PHASE_RESPONSE")"
+  TEST_VERDICT="$PHASE_VERDICT"
+
+  echo "review_verdict=$REVIEW_VERDICT"
+  echo "test_verdict=$TEST_VERDICT"
+
+  if [ "$REVIEW_VERDICT" = "BLOCKED" ] || [ "$TEST_VERDICT" = "BLOCKED" ]; then
+    write_summary "BLOCKED"
+    echo "PIPELINE_RESULT=BLOCKED"
+    exit 3
+  fi
+
+  if [ "$REVIEW_VERDICT" = "PASS" ] && [ "$TEST_VERDICT" = "PASS" ]; then
+    break
+  fi
+
+  if [ "$FIX_CYCLE" -ge "$MAX_FIX_CYCLES" ]; then
+    write_summary "FAIL"
+    echo "PIPELINE_RESULT=FAIL"
+    echo "reason=fix-cycle-budget-exhausted"
+    exit 4
+  fi
+
+  FIX_CYCLE=$((FIX_CYCLE + 1))
+
+  run_phase "fixer-$FIX_CYCLE" "watoom-fixer" \
+    "Original assignment:
+
+$ASSIGNMENT
+
+Reviewer report:
+$REVIEWER_TEXT
+
+Tester report:
+$TESTER_TEXT
+
+Fix exactly one highest-priority concrete defect validated by the supplied reports. Inspect the actual source before editing and make the smallest coherent repair. Re-read the edited source before completion. For focused verification, use the actual repository framework and invoke the command directly in the runner-provided working directory: never use cd and never chain with &&. Then STOP." "no"
+  FIXER_TEXT="$(cat "$LAST_PHASE_RESPONSE")"
+done
+
+run_phase "final-review" "watoom-final-review" \
+  "Original assignment:
+
+$ASSIGNMENT
+
+Latest reviewer report:
+$REVIEWER_TEXT
+
+Latest tester verification report:
+$TESTER_TEXT
+
+Latest fixer report if any:
+${FIXER_TEXT:-No fixer was required.}
+
+Perform final acceptance review of the current actual implementation. Treat the tester report as supplied verification evidence. Map every bounded acceptance criterion to evidence, return the required Verdict, and STOP." "yes"
+
+FINAL_VERDICT="$PHASE_VERDICT"
+
+case "$FINAL_VERDICT" in
+  PASS)
+    write_summary "PASS"
+    echo "PIPELINE_RESULT=PASS"
+    ;;
+  BLOCKED)
+    write_summary "BLOCKED"
+    echo "PIPELINE_RESULT=BLOCKED"
+    exit 3
+    ;;
+  *)
+    write_summary "FAIL"
+    echo "PIPELINE_RESULT=FAIL"
+    exit 4
+    ;;
+esac

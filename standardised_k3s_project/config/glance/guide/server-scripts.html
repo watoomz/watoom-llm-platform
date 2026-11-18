@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Operator script reference · Agent Export</title><meta name="description" content="Source-backed purpose and interfaces for each tracked component; inspect gates and configuration before running."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link active" aria-current="page" href="/guide/server-scripts.html">Scripts</a><div class="toc"><a class="toc-link" href="#invocation-and-inputs">Invocation and inputs</a><a class="toc-link" href="#scripts-agents-md">scripts/AGENTS.md</a><a class="toc-link" href="#scripts-apply-all-sh">scripts/apply-all.sh</a><a class="toc-link" href="#scripts-audit-host-stability-before-ai-deploy-sh">scripts/audit-host-stability-before-ai-deploy.sh</a><a class="toc-link" href="#scripts-check-image-pinning-sh">scripts/check-image-pinning.sh</a><a class="toc-link" href="#scripts-check-required-secrets-sh">scripts/check-required-secrets.sh</a><a class="toc-link" href="#scripts-create-hostpaths-sh">scripts/create-hostpaths.sh</a><a class="toc-link" href="#scripts-cutover-watoom-code-rename-sh">scripts/cutover-watoom-code-rename.sh</a><a class="toc-link" href="#scripts-deploy-watoom-ai-redesign-after-host-stable-sh">scripts/deploy-watoom-ai-redesign-after-host-stable.sh</a><a class="toc-link" href="#scripts-export-live-image-lock-sh">scripts/export-live-image-lock.sh</a><a class="toc-link" href="#scripts-gpu-controller-repin-primary-py">scripts/gpu-controller-repin-primary.py</a><a class="toc-link" href="#scripts-install-browser-trusted-tls-sh">scripts/install-browser-trusted-tls.sh</a><a class="toc-link" href="#scripts-kali-tools">scripts/kali-tools</a><a class="toc-link" href="#scripts-llama-mesh">scripts/llama-mesh</a><a class="toc-link" href="#scripts-llm-models">scripts/llm-models</a><a class="toc-link" href="#scripts-lotce-tools">scripts/lotce-tools</a><a class="toc-link" href="#scripts-monitor-opencode-overnight-sh">scripts/monitor-opencode-overnight.sh</a><a class="toc-link" href="#scripts-move-state-to-ssd-sh">scripts/move-state-to-ssd.sh</a><a class="toc-link" href="#scripts-opencode-kali">scripts/opencode-kali</a><a class="toc-link" href="#scripts-opencode-overnight">scripts/opencode-overnight</a><a class="toc-link" href="#scripts-opencode-pipeline">scripts/opencode-pipeline</a><a class="toc-link" href="#scripts-post-reboot-health-check-sh">scripts/post-reboot-health-check.sh</a><a class="toc-link" href="#scripts-probe-model-tool-compat-py">scripts/probe-model-tool-compat.py</a><a class="toc-link" href="#scripts-project-groups-py">scripts/project_groups.py</a><a class="toc-link" href="#scripts-rebuild-homelab-sh">scripts/rebuild-homelab.sh</a><a class="toc-link" href="#scripts-render-glance-configmaps-py">scripts/render-glance-configmaps.py</a><a class="toc-link" href="#scripts-render-glance-guide-py">scripts/render-glance-guide.py</a><a class="toc-link" href="#scripts-render-glance-knowledge-py">scripts/render-glance-knowledge.py</a><a class="toc-link" href="#scripts-render-job-reference-py">scripts/render-job-reference.py</a><a class="toc-link" href="#scripts-render-native-agents-py">scripts/render-native-agents.py</a><a class="toc-link" href="#scripts-render-pipeline-prompts-py">scripts/render-pipeline-prompts.py</a><a class="toc-link" href="#scripts-render-secrets-sh">scripts/render-secrets.sh</a><a class="toc-link" href="#scripts-render-server-catalogue-py">scripts/render-server-catalogue.py</a><a class="toc-link" href="#scripts-repair-project-perms-sh">scripts/repair-project-perms.sh</a><a class="toc-link" href="#scripts-requirements-docs-txt">scripts/requirements-docs.txt</a><a class="toc-link" href="#scripts-restore-vault-secrets-sh">scripts/restore-vault-secrets.sh</a><a class="toc-link" href="#scripts-set-change-approval-pin-sh">scripts/set-change-approval-pin.sh</a><a class="toc-link" href="#scripts-test-pipeline-prompts-cjs">scripts/test-pipeline-prompts.cjs</a><a class="toc-link" href="#scripts-tool-knowledge">scripts/tool-knowledge</a><a class="toc-link" href="#scripts-validate-yaml-py">scripts/validate-yaml.py</a><a class="toc-link" href="#scripts-verify-homelab-documentation-py">scripts/verify-homelab-documentation.py</a><a class="toc-link" href="#scripts-watoom-agent-rules">scripts/watoom-agent-rules</a><a class="toc-link" href="#scripts-watoom-ansible-validate-sh">scripts/watoom-ansible-validate.sh</a><a class="toc-link" href="#scripts-watoom-kali-rules">scripts/watoom-kali-rules</a><a class="toc-link" href="#scripts-watoom-node-textfile-sh">scripts/watoom-node-textfile.sh</a><a class="toc-link" href="#scripts-watoom-platform-alerts-py">scripts/watoom-platform-alerts.py</a><a class="toc-link" href="#scripts-watoom-qwen-maintenance-py">scripts/watoom-qwen-maintenance.py</a></div><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">Scripts</p><h1>Operator script reference</h1><p class="lede">Source-backed purpose and interfaces for each tracked component; inspect gates and configuration before running.</p></header>
+<div class="content">
+<p>This catalogue is generated from tracked source and untracked code candidates by <code>scripts/render-server-catalogue.py</code>. It does not run programs or certify their deployment. Source links use the configured WatooM source repository; the separate LLM repository retains the same <code>standardised_k3s_project/</code> paths. Descriptions name their evidence basis; a filename summary is not a verified operational contract.</p>
+<p>Read <a href="/guide/operations.html">Operations</a>, <a href="/guide/llm-project.html">installation and configuration</a>, and <a href="/guide/software-design.html">the software design</a> before executing deployment or recovery helpers. Run no bulk scripts from this list.</p>
+<h2 id="invocation-and-inputs">Invocation and inputs</h2>
+<p>Python helpers use <code>python3 scripts/&lt;name&gt;.py</code>; Bash helpers use <code>bash scripts/&lt;name&gt;.sh</code>. Documentation rendering uses <code>/data/ai/toolchains/docs-render/bin/python</code>. Extensionless wrappers must be inspected for their shebang. Even <code>--help</code> is not assumed safe for an arbitrary operational script. Listed options are static argparse declarations, not defaults or permission to mutate.</p>
+<h2 id="scripts-agents-md">scripts/AGENTS.md</h2>
+<p>Source component: AGENTS. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/AGENTS.md" rel="noopener"><code>scripts/AGENTS.md</code></a>. Description basis: filename summary.</p>
+<h2 id="scripts-apply-all-sh">scripts/apply-all.sh</h2>
+<p># Apply ONLY manifests explicitly registered in k3s_manifest_groups.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/apply-all.sh" rel="noopener"><code>scripts/apply-all.sh</code></a>. Description basis: Purpose comment.</p>
+<h2 id="scripts-audit-host-stability-before-ai-deploy-sh">scripts/audit-host-stability-before-ai-deploy.sh</h2>
+<p>Source component: audit host stability before ai deploy. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/audit-host-stability-before-ai-deploy.sh" rel="noopener"><code>scripts/audit-host-stability-before-ai-deploy.sh</code></a>. Description basis: filename summary.</p>
+<h2 id="scripts-check-image-pinning-sh">scripts/check-image-pinning.sh</h2>
+<p>Audits manifests for floating image tags. Prefer digest-pinned images for repeatable rebuilds, and keep fallback tag comments beside digests for humans.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/check-image-pinning.sh" rel="noopener"><code>scripts/check-image-pinning.sh</code></a>. Description basis: Purpose comment.</p>
+<h2 id="scripts-check-required-secrets-sh">scripts/check-required-secrets.sh</h2>
+<p>Checks whether required generated Kubernetes secret files exist before deploying workloads that depend on private tokens or passwords.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/check-required-secrets.sh" rel="noopener"><code>scripts/check-required-secrets.sh</code></a>. Description basis: Purpose comment.</p>
+<h2 id="scripts-create-hostpaths-sh">scripts/create-hostpaths.sh</h2>
+<p>Creates host directories used by hostPath-backed workloads. Run before first deploy or after rebuilding a node so pods can mount expected paths.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/create-hostpaths.sh" rel="noopener"><code>scripts/create-hostpaths.sh</code></a>. Description basis: Purpose comment.</p>
+<h2 id="scripts-cutover-watoom-code-rename-sh">scripts/cutover-watoom-code-rename.sh</h2>
+<p>Source component: cutover watoom code rename. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/cutover-watoom-code-rename.sh" rel="noopener"><code>scripts/cutover-watoom-code-rename.sh</code></a>. Description basis: filename summary.</p>
+<h2 id="scripts-deploy-watoom-ai-redesign-after-host-stable-sh">scripts/deploy-watoom-ai-redesign-after-host-stable.sh</h2>
+<p>Source component: deploy watoom ai redesign after host stable. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/deploy-watoom-ai-redesign-after-host-stable.sh" rel="noopener"><code>scripts/deploy-watoom-ai-redesign-after-host-stable.sh</code></a>. Description basis: filename summary.</p>
+<h2 id="scripts-export-live-image-lock-sh">scripts/export-live-image-lock.sh</h2>
+<p>Reads live workload images and exports a lock-style reference for reproducible future rebuilds.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/export-live-image-lock.sh" rel="noopener"><code>scripts/export-live-image-lock.sh</code></a>. Description basis: Purpose comment.</p>
+<h2 id="scripts-gpu-controller-repin-primary-py">scripts/gpu-controller-repin-primary.py</h2>
+<p>Re-pin the GPU controller's approved spec digest for the primary model Deployment.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/gpu-controller-repin-primary.py" rel="noopener"><code>scripts/gpu-controller-repin-primary.py</code></a>. Description basis: module docstring.</p>
+<p>Declared CLI options: <code>--apply</code>, <code>--config</code>, <code>--state</code>.</p>
+<h2 id="scripts-install-browser-trusted-tls-sh">scripts/install-browser-trusted-tls.sh</h2>
+<p>Replace the temporary self-signed internal wildcard cert with a</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/install-browser-trusted-tls.sh" rel="noopener"><code>scripts/install-browser-trusted-tls.sh</code></a>. Description basis: Purpose comment.</p>
+<h2 id="scripts-kali-tools">scripts/kali-tools</h2>
+<p>Source component: kali tools. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/kali-tools" rel="noopener"><code>scripts/kali-tools</code></a>. Description basis: filename summary.</p>
+<p>Declared CLI options: <code>--json</code>, <code>--limit</code>, <code>--task</code>.</p>
+<h2 id="scripts-llama-mesh">scripts/llama-mesh</h2>
+<p>Source component: llama mesh. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/llama-mesh" rel="noopener"><code>scripts/llama-mesh</code></a>. Description basis: filename summary.</p>
+<h2 id="scripts-llm-models">scripts/llm-models</h2>
+<p>Source component: llm models. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/llm-models" rel="noopener"><code>scripts/llm-models</code></a>. Description basis: filename summary.</p>
+<p>Declared CLI options: <code>--fallback</code>.</p>
+<h2 id="scripts-lotce-tools">scripts/lotce-tools</h2>
+<p>Source component: lotce tools. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/lotce-tools" rel="noopener"><code>scripts/lotce-tools</code></a>. Description basis: filename summary.</p>
+<h2 id="scripts-monitor-opencode-overnight-sh">scripts/monitor-opencode-overnight.sh</h2>
+<p>Source component: monitor opencode overnight. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/monitor-opencode-overnight.sh" rel="noopener"><code>scripts/monitor-opencode-overnight.sh</code></a>. Description basis: filename summary.</p>
+<h2 id="scripts-move-state-to-ssd-sh">scripts/move-state-to-ssd.sh</h2>
+<p>Source component: move state to ssd. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/move-state-to-ssd.sh" rel="noopener"><code>scripts/move-state-to-ssd.sh</code></a>. Description basis: filename summary.</p>
+<h2 id="scripts-opencode-kali">scripts/opencode-kali</h2>
+<p>Source component: opencode kali. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/opencode-kali" rel="noopener"><code>scripts/opencode-kali</code></a>. Description basis: filename summary.</p>
+<h2 id="scripts-opencode-overnight">scripts/opencode-overnight</h2>
+<p>Source component: opencode overnight. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/opencode-overnight" rel="noopener"><code>scripts/opencode-overnight</code></a>. Description basis: filename summary.</p>
+<h2 id="scripts-opencode-pipeline">scripts/opencode-pipeline</h2>
+<p>Source component: opencode pipeline. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/opencode-pipeline" rel="noopener"><code>scripts/opencode-pipeline</code></a>. Description basis: filename summary.</p>
+<h2 id="scripts-post-reboot-health-check-sh">scripts/post-reboot-health-check.sh</h2>
+<p>Runs the standard after-reboot health checks for DNS, HTTPS routes, pods, and key services.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/post-reboot-health-check.sh" rel="noopener"><code>scripts/post-reboot-health-check.sh</code></a>. Description basis: Purpose comment.</p>
+<h2 id="scripts-probe-model-tool-compat-py">scripts/probe-model-tool-compat.py</h2>
+<p>Source component: probe model tool compat. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/probe-model-tool-compat.py" rel="noopener"><code>scripts/probe-model-tool-compat.py</code></a>. Description basis: filename summary.</p>
+<p>Declared CLI options: <code>--json-out</code>, <code>--marker</code>, <code>--model</code>, <code>--url</code>.</p>
+<h2 id="scripts-project-groups-py">scripts/project_groups.py</h2>
+<p>Owner project groups, read from the watoom-code role defaults (the mounted source of truth).</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/project_groups.py" rel="noopener"><code>scripts/project_groups.py</code></a>. Description basis: module docstring.</p>
+<h2 id="scripts-rebuild-homelab-sh">scripts/rebuild-homelab.sh</h2>
+<p>Recovery inventory, coverage checks and ordered replacement-host phases.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/rebuild-homelab.sh" rel="noopener"><code>scripts/rebuild-homelab.sh</code></a>. Description basis: Purpose comment.</p>
+<h2 id="scripts-render-glance-configmaps-py">scripts/render-glance-configmaps.py</h2>
+<p>Source component: render glance configmaps. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/render-glance-configmaps.py" rel="noopener"><code>scripts/render-glance-configmaps.py</code></a>. Description basis: filename summary.</p>
+<h2 id="scripts-render-glance-guide-py">scripts/render-glance-guide.py</h2>
+<p>Render docs/guide/*.md into the multi-page Glance operations guide.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/render-glance-guide.py" rel="noopener"><code>scripts/render-glance-guide.py</code></a>. Description basis: module docstring.</p>
+<p>Declared CLI options: <code>--check</code>.</p>
+<h2 id="scripts-render-glance-knowledge-py">scripts/render-glance-knowledge.py</h2>
+<p>Project existing reference metadata into a dedicated Glance bookmarks page; no scraping or execution.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/render-glance-knowledge.py" rel="noopener"><code>scripts/render-glance-knowledge.py</code></a>. Description basis: module docstring.</p>
+<p>Declared CLI options: <code>--catalog</code>, <code>--check</code>.</p>
+<h2 id="scripts-render-job-reference-py">scripts/render-job-reference.py</h2>
+<p>Render the reviewed job catalogue as static, searchable documentation; never execute jobs.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/render-job-reference.py" rel="noopener"><code>scripts/render-job-reference.py</code></a>. Description basis: module docstring.</p>
+<p>Declared CLI options: <code>--check</code>.</p>
+<h2 id="scripts-render-native-agents-py">scripts/render-native-agents.py</h2>
+<p>Assemble the watoom-code native agent definitions from single-source fragments.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/render-native-agents.py" rel="noopener"><code>scripts/render-native-agents.py</code></a>. Description basis: module docstring.</p>
+<h2 id="scripts-render-pipeline-prompts-py">scripts/render-pipeline-prompts.py</h2>
+<p>Render copyable pipeline prompts; no execution, credentials, inference or deployment.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/render-pipeline-prompts.py" rel="noopener"><code>scripts/render-pipeline-prompts.py</code></a>. Description basis: module docstring.</p>
+<p>Declared CLI options: <code>--check</code>.</p>
+<h2 id="scripts-render-secrets-sh">scripts/render-secrets.sh</h2>
+<p>Renders generated secret manifests from local secret material. Generated files should not be treated as templates.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/render-secrets.sh" rel="noopener"><code>scripts/render-secrets.sh</code></a>. Description basis: Purpose comment.</p>
+<h2 id="scripts-render-server-catalogue-py">scripts/render-server-catalogue.py</h2>
+<p>Build the server source catalogue from tracked files; --check detects drift.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/render-server-catalogue.py" rel="noopener"><code>scripts/render-server-catalogue.py</code></a>. Description basis: module docstring.</p>
+<p>Declared CLI options: <code>--check</code>.</p>
+<h2 id="scripts-repair-project-perms-sh">scripts/repair-project-perms.sh</h2>
+<p>Source component: repair project perms. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/repair-project-perms.sh" rel="noopener"><code>scripts/repair-project-perms.sh</code></a>. Description basis: filename summary.</p>
+<h2 id="scripts-requirements-docs-txt">scripts/requirements-docs.txt</h2>
+<p>Source component: requirements docs. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/requirements-docs.txt" rel="noopener"><code>scripts/requirements-docs.txt</code></a>. Description basis: filename summary.</p>
+<h2 id="scripts-restore-vault-secrets-sh">scripts/restore-vault-secrets.sh</h2>
+<p>Restores Vaultwarden-related secrets into Kubernetes from saved local material.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/restore-vault-secrets.sh" rel="noopener"><code>scripts/restore-vault-secrets.sh</code></a>. Description basis: Purpose comment.</p>
+<h2 id="scripts-set-change-approval-pin-sh">scripts/set-change-approval-pin.sh</h2>
+<p>Creates or rotates the operator PIN for approving model change requests in Glance and stores it in the encrypted vault.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/set-change-approval-pin.sh" rel="noopener"><code>scripts/set-change-approval-pin.sh</code></a>. Description basis: Purpose comment.</p>
+<h2 id="scripts-test-pipeline-prompts-cjs">scripts/test-pipeline-prompts.cjs</h2>
+<p>Test fixture/check: test pipeline prompts. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/test-pipeline-prompts.cjs" rel="noopener"><code>scripts/test-pipeline-prompts.cjs</code></a>. Description basis: filename summary.</p>
+<h2 id="scripts-tool-knowledge">scripts/tool-knowledge</h2>
+<p>Source component: tool knowledge. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/tool-knowledge" rel="noopener"><code>scripts/tool-knowledge</code></a>. Description basis: filename summary.</p>
+<h2 id="scripts-validate-yaml-py">scripts/validate-yaml.py</h2>
+<p>Source component: validate yaml. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/validate-yaml.py" rel="noopener"><code>scripts/validate-yaml.py</code></a>. Description basis: filename summary.</p>
+<h2 id="scripts-verify-homelab-documentation-py">scripts/verify-homelab-documentation.py</h2>
+<p>Check maintained documentation links and Glance anchors without network access.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/verify-homelab-documentation.py" rel="noopener"><code>scripts/verify-homelab-documentation.py</code></a>. Description basis: module docstring.</p>
+<h2 id="scripts-watoom-agent-rules">scripts/watoom-agent-rules</h2>
+<p>Source component: watoom agent rules. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/watoom-agent-rules" rel="noopener"><code>scripts/watoom-agent-rules</code></a>. Description basis: filename summary.</p>
+<p>Declared CLI options: <code>--format</code>, <code>--root</code>.</p>
+<h2 id="scripts-watoom-ansible-validate-sh">scripts/watoom-ansible-validate.sh</h2>
+<p>Source component: watoom ansible validate. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/watoom-ansible-validate.sh" rel="noopener"><code>scripts/watoom-ansible-validate.sh</code></a>. Description basis: filename summary.</p>
+<h2 id="scripts-watoom-kali-rules">scripts/watoom-kali-rules</h2>
+<p>Source component: watoom kali rules. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/watoom-kali-rules" rel="noopener"><code>scripts/watoom-kali-rules</code></a>. Description basis: filename summary.</p>
+<p>Declared CLI options: <code>--capability</code>, <code>--format</code>.</p>
+<h2 id="scripts-watoom-node-textfile-sh">scripts/watoom-node-textfile.sh</h2>
+<p>Source component: watoom node textfile. Inspect the source before use.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/watoom-node-textfile.sh" rel="noopener"><code>scripts/watoom-node-textfile.sh</code></a>. Description basis: filename summary.</p>
+<h2 id="scripts-watoom-platform-alerts-py">scripts/watoom-platform-alerts.py</h2>
+<p>Snapshot-first reconcile of the Grafana route that forwards Prometheus alerts to Discord.</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/watoom-platform-alerts.py" rel="noopener"><code>scripts/watoom-platform-alerts.py</code></a>. Description basis: module docstring.</p>
+<p>Declared CLI options: <code>--dry-run</code>, <code>--evidence</code>, <code>--helpers</code>, <code>--spec</code>, <code>--webhook-file</code>.</p>
+<h2 id="scripts-watoom-qwen-maintenance-py">scripts/watoom-qwen-maintenance.py</h2>
+<p>Guarded host-side single-model reasoning upgrade; no inference-agent dependency. Usage: --check (read only), --apply --approve-downtime (explicit maintenance). Resumption is a durable outbox, never a fabricated/unauthorized OpenCode API cal</p>
+<p>Source: <a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/watoom-qwen-maintenance.py" rel="noopener"><code>scripts/watoom-qwen-maintenance.py</code></a>. Description basis: module docstring.</p>
+<p>Declared CLI options: <code>--apply</code>, <code>--approve-downtime</code>, <code>--check</code>, <code>--session-id</code>, <code>--timeout</code>.</p>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/server-scripts.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

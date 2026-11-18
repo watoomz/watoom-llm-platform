@@ -1,0 +1,9 @@
+---
+- name: Prepare isolated development access without replacing production services
+  hosts: homelab
+  become: true
+  tasks:
+    - name: Reconcile only the dedicated development workspace components
+      ansible.builtin.include_role:
+        name: watoom-code
+        tasks_from: dev_workspace

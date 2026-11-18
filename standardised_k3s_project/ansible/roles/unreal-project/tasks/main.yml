@@ -1,0 +1,103 @@
+---
+- name: Require explicit project and network selection
+  ansible.builtin.assert:
+    that:
+      - unreal_project_create | bool
+      - unreal_project_source | length > 0
+      - unreal_project_destination | length > 0
+      - unreal_project_network == 'offline'
+    fail_msg: "Opt in with create=true, source and destination. Online providers require separate validated configuration."
+
+- name: Validate source and fresh destination without following destination symlinks
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - |
+        import pathlib,sys,json,shutil
+        source=pathlib.Path(sys.argv[1]); dest=pathlib.Path(sys.argv[2])
+        library=pathlib.Path('/data/ai/assets').resolve()
+        projects=pathlib.Path('/data/ai/projects').resolve()
+        assert source.is_dir() and source.resolve().is_relative_to(library), 'source must be in shared assets'
+        assert dest.is_absolute() and dest.resolve().is_relative_to(projects) and dest.resolve()!=projects, 'destination must be a project'
+        assert not any(p.is_symlink() for p in [dest,*dest.parents]), 'destination symlinks forbidden'
+        assert not dest.exists(), 'existing projects are preserved; select a new destination'
+        descriptors=list(source.glob('*.uproject'))
+        assert len(descriptors)==1 and not descriptors[0].is_symlink(), 'one complete-project descriptor required'
+        assert (source/'Content').is_dir() and (source/'Config/DefaultEngine.ini').is_file(), 'missing project content/config'
+        assert not (source/'Plugins').exists() and not (source/'Source').exists(), 'code/plugin starters require separate acceptance'
+        size=0
+        for p in source.rglob('*'):
+          assert not p.is_symlink(), 'source symlinks forbidden'
+          if p.is_file(): size+=p.stat().st_size
+        assert shutil.disk_usage(dest.parent).free > size+300*1024**3, 'preserve 300GiB storage floor'
+        print(json.dumps({'descriptor':descriptors[0].name}))
+      - "{{ unreal_project_source }}"
+      - "{{ unreal_project_destination }}"
+  register: unreal_project_preflight
+  changed_when: false
+
+- name: Atomically reserve a fresh project directory
+  ansible.builtin.command:
+    argv: [mkdir, "--", "{{ unreal_project_destination }}"]
+  changed_when: true
+
+- name: Copy complete authored content and configuration using CoW when available
+  ansible.builtin.command:
+    argv:
+      - cp
+      - --archive
+      - --reflink=auto
+      - --
+      - "{{ unreal_project_source }}/{{ item }}"
+      - "{{ unreal_project_destination }}/"
+  loop:
+    - Content
+    - Config
+    - "{{ (unreal_project_preflight.stdout | from_json).descriptor }}"
+  async: 3600
+  poll: 5
+  changed_when: true
+
+- name: Select the accepted offline GameInstance without replacing other project settings
+  ansible.builtin.replace:
+    path: "{{ unreal_project_destination }}/Config/DefaultEngine.ini"
+    regexp: '^GameInstanceClass=.*$'
+    replace: 'GameInstanceClass=/Script/Engine.GameInstance'
+
+- name: Remove inherited renderer selection before adding the accepted Linux profile
+  ansible.builtin.replace:
+    path: "{{ unreal_project_destination }}/Config/DefaultEngine.ini"
+    regexp: '^[+!-]?TargetedRHIs=.*\n?'
+    replace: ''
+
+- name: Discover host CPU count for bounded shader workers
+  ansible.builtin.command: getconf _NPROCESSORS_ONLN
+  register: unreal_project_cpu
+  changed_when: false
+
+- name: Add the accepted Linux SM6 and two-worker shader profile
+  ansible.builtin.blockinfile:
+    path: "{{ unreal_project_destination }}/Config/DefaultEngine.ini"
+    marker: "; {mark} WATOOM LINUX PROFILE"
+    block: |
+      [/Script/LinuxTargetPlatform.LinuxTargetSettings]
+      !TargetedRHIs=ClearArray
+      +TargetedRHIs=SF_VULKAN_SM6
+      [DevOptions.Shaders]
+      NumUnusedShaderCompilingThreads={{ [unreal_project_cpu.stdout | int - 2, 1] | max }}
+      NumUnusedShaderCompilingThreadsDuringGame={{ [unreal_project_cpu.stdout | int - 2, 1] | max }}
+      ShaderCompilerCoreCountThreshold=100000
+
+- name: Record starter scope without claiming new-project runtime acceptance
+  ansible.builtin.copy:
+    dest: "{{ unreal_project_destination }}/watoom-project.json"
+    mode: "0644"
+    content: "{{ {'schema':'watoom-unreal-project/v1','source':unreal_project_source,'network':unreal_project_network,'gameinstance':'/Script/Engine.GameInstance','runtime_acceptance':'REQUIRED_FOR_PROJECT_CHANGES','godot_logic_conversion':false} | to_nice_json }}"
+
+- name: Assign only the newly created project to its workspace owner
+  ansible.builtin.file:
+    path: "{{ unreal_project_destination }}"
+    owner: "{{ unreal_project_owner }}"
+    group: "{{ unreal_project_group }}"
+    recurse: true

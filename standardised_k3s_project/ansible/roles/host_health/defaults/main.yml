@@ -1,0 +1,11 @@
+---
+homelab_lan_interface: enp34s0.20
+homelab_dmz_interface: enp35s0
+homelab_lan_address: 10.99.20.225
+homelab_dmz_address: 192.168.250.225
+homelab_gateway: 10.99.20.1
+
+homelab_required_services:
+  - NetworkManager
+  - docker
+  - k3s

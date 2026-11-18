@@ -1,0 +1,20 @@
+---
+unreal_engine_version: "5.8.3"
+unreal_engine_revision: "396c9f059903aed5fec78ecd3d437a40c6415368"
+unreal_engine_repository: "git@github.com:EpicGames/UnrealEngine.git"
+unreal_engine_user: watoom
+unreal_engine_root: "/data/ai/toolchains/unreal/{{ unreal_engine_version }}"
+unreal_engine_source: "{{ unreal_engine_root }}/source"
+unreal_engine_project: "{{ unreal_engine_root }}/RuntimeBuild/RuntimeBuild.uproject"
+unreal_engine_parallel_actions: 7
+unreal_engine_memory_limit: 12G
+unreal_engine_cpu_quota: "800%"
+unreal_engine_build_seconds: 86400
+unreal_engine_build: false
+unreal_engine_shader_workers: 2
+
+# Publication copies normal build outputs into a self-contained versioned runtime.
+unreal_engine_publish: false
+unreal_engine_publish_source: "{{ unreal_engine_source }}"
+unreal_engine_publish_sha256: ""
+unreal_engine_runtime: "{{ unreal_engine_root }}/runtime-{{ unreal_engine_publish_sha256[:12] }}"

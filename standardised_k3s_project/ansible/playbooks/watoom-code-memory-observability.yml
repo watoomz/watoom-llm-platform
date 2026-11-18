@@ -1,0 +1,67 @@
+---
+- name: Install read-only GPU observations without changing models or routing
+  hosts: homelab
+  become: true
+  gather_facts: false
+  vars:
+    observation_root: /data/ai/helper-scripts/state/gpu-controller-observability
+  tasks:
+    - name: Require verified idle release boundary
+      ansible.builtin.assert:
+        that:
+          - watoom_memory_observability_release_verified | default(false) | bool
+        fail_msg: Verify the native deployment fence, idle controller and runtime/source hashes before scoped activation.
+    - name: Create root-owned observation directory
+      ansible.builtin.file:
+        path: "{{ observation_root }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+    - name: Install observation-aware controller modules
+      ansible.builtin.copy:
+        src: "../../tools/llm/watoom-gpu-controller/{{ item }}"
+        dest: "/data/ai/helper-scripts/gpu-controller/{{ item }}"
+        owner: root
+        group: root
+        mode: '0600'
+        validate: /usr/bin/python3 -m py_compile %s
+      loop: [g3h_service.py, observability.py]
+      register: observation_modules
+    - name: Read current controller configuration
+      ansible.builtin.slurp:
+        src: /data/ai/helper-scripts/config/gpu-controller.json
+      register: observation_config
+      no_log: true
+    - name: Preserve configuration and add observation destination
+      ansible.builtin.copy:
+        content: "{{ (observation_config.content | b64decode | from_json) | combine({'observability_path': observation_root + '/status.json'}) | to_nice_json }}"
+        dest: /data/ai/helper-scripts/config/gpu-controller.json
+        owner: root
+        group: root
+        mode: '0600'
+      register: observation_setting
+      no_log: true
+    - name: Install existing controller unit with the observation write directory
+      ansible.builtin.template:
+        src: ../roles/llm-model-lab/templates/watoom-gpu-controller.service.j2
+        dest: /etc/systemd/system/watoom-gpu-controller.service
+        mode: '0644'
+      register: observation_unit
+    - name: Label the observation directory for read-only container access
+      community.general.sefcontext:
+        target: /data/ai/helper-scripts/state/gpu-controller-observability(/.*)?
+        setype: container_file_t
+        state: present
+    - name: Apply observation labels
+      ansible.builtin.command: restorecon -RF /data/ai/helper-scripts/state/gpu-controller-observability
+      changed_when: false
+    - name: Activate the existing controller at the verified idle boundary
+      ansible.builtin.systemd_service:
+        name: watoom-gpu-controller.service
+        daemon_reload: "{{ observation_unit.changed }}"
+        state: "{{ 'restarted' if observation_modules.changed or observation_setting.changed or observation_unit.changed else 'started' }}"
+    - name: Wait for the first root-owned observation
+      ansible.builtin.wait_for:
+        path: "{{ observation_root }}/status.json"
+        timeout: 20

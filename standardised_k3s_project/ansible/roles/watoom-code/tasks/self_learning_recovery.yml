@@ -1,0 +1,52 @@
+---
+- name: Install the learning recovery script to a root-owned path
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../tools/watoom-code/self_learning/recover.py"
+    dest: /data/ai/helper-scripts/watoom-code/recover.py
+    owner: root
+    group: root
+    mode: '0755'
+- name: Install the independent learning recovery service
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/watoom-learning-recovery.service
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Reconcile the explicitly owned WatooM learning release checkpoint
+      StartLimitIntervalSec=0
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/bin/python3 -I \
+        {{ watoom_learning_controller_script | default('/data/ai/helper-scripts/watoom-code/recover.py') }} \
+        --state {{ watoom_learning_recovery_checkpoint | default(watoom_learning_root + '/recovery-state.json') }}
+      CPUQuota=25%
+      MemoryMax=256M
+      RuntimeMaxSec=90
+      TimeoutStopSec=5
+      Restart=on-failure
+      RestartSec=15
+  register: watoom_learning_recovery_service
+- name: Install the learning recovery timer
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/watoom-learning-recovery.timer
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Independently check only the owned learning release checkpoint
+      [Timer]
+      OnBootSec=30
+      OnUnitActiveSec=60
+      Unit=watoom-learning-recovery.service
+      [Install]
+      WantedBy=timers.target
+  register: watoom_learning_recovery_timer
+- name: Enable independent checkpoint recovery
+  ansible.builtin.systemd:
+    name: watoom-learning-recovery.timer
+    enabled: true
+    state: started
+    daemon_reload: '{{ watoom_learning_recovery_service.changed or watoom_learning_recovery_timer.changed }}'

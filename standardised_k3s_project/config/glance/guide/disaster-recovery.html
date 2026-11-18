@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Disaster recovery — environment and projects · Agent Export</title><meta name="description" content="Recovery scope, private capture, off-host verification, isolated restore tests and ordered replacement-host rebuild phases."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link active" aria-current="page" href="/guide/disaster-recovery.html">Disaster recovery</a><div class="toc"><a class="toc-link" href="#recovery-contract">Recovery contract</a><a class="toc-link" href="#tools-and-entrypoint">Tools and entrypoint</a><a class="toc-link" href="#what-a-private-capture-contains">What a private capture contains</a><a class="toc-link" href="#inventory-and-inspect-readiness">Inventory and inspect readiness</a><a class="toc-link" href="#capture-and-publish-off-host">Capture and publish off-host</a><a class="toc-link" href="#test-restoration-before-relying-on-a-backup">Test restoration before relying on a backup</a><a class="toc-link" href="#ordered-replacement-host-phases">Ordered replacement-host phases</a><a class="toc-link" href="#current-qualification-boundary">Current qualification boundary</a></div><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">Disaster recovery</p><h1>Disaster recovery — environment and projects</h1><p class="lede">Recovery scope, private capture, off-host verification, isolated restore tests and ordered replacement-host rebuild phases.</p></header>
+<div class="content">
+<h2 id="recovery-contract">Recovery contract</h2>
+<p>Recover the environment, authored projects and persistent service state. Downloaded media, model weights, toolchains and purchased asset libraries may be reacquired. Preserve their exact version, image, filename and acquisition requirements. Personal photo originals are conservatively retained rather than assumed downloadable.</p>
+<p>Git is only one recovery input. It does not contain live credentials, private databases, model files or a backup of every service volume. The existing daily off-host job protects WatooM-Code state; it is not a whole-environment backup. A successful SQLite restore test does not qualify a live MariaDB/AgentMemory file archive or a replacement-host deployment.</p>
+<p>The current source inventory covers Kubernetes workloads/PVs, host paths, Docker mounts, image references, required secret names, identities and host units. It records zero replicas without treating them as retirement. Secret values, environment values and session contents are deliberately absent from the published inventory.</p>
+<h2 id="tools-and-entrypoint">Tools and entrypoint</h2>
+<p><code>scripts/rebuild-homelab.sh</code> in this distribution delegates to <code>tools/recovery/recovery.py</code>:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Behaviour</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>inventory</code></td>
+<td>Read-only live inventory; output contains names/paths/pins, not secret values</td>
+</tr>
+<tr>
+<td><code>plan</code></td>
+<td>Ordered rebuild phases and explicit missing recovery evidence</td>
+</tr>
+<tr>
+<td><code>audit</code></td>
+<td>Check storage classification plus actual evidence-file presence and SHA-256; missing inputs return exit 2</td>
+</tr>
+<tr>
+<td><code>capture</code></td>
+<td>Write a new private environment bundle; no services are stopped or restarted</td>
+</tr>
+<tr>
+<td><code>verify-backup</code></td>
+<td>Check every file against a backup manifest; reject unsafe paths and links</td>
+</tr>
+<tr>
+<td><code>restore-test</code></td>
+<td>Restore SQLite snapshots into a new isolated directory and check integrity; read archives without extracting credentials</td>
+</tr>
+<tr>
+<td><code>restore-bundle</code></td>
+<td>Extract a full bundle into a new isolated target and overlay consistent SQLite snapshots; never activate it</td>
+</tr>
+<tr>
+<td><code>run-phase</code></td>
+<td>Invoke only the selected owning playbooks on a prepared replacement host; refuse the inventoried production machine</td>
+</tr>
+</tbody>
+</table></div>
+<p>The supported rebuild interface is the recovery export and restore procedure below; runtime installers and network-changing shortcuts are not part of it. Shared OpenCode agents, skills and native-plugin source remain in place.</p>
+<h2 id="what-a-private-capture-contains">What a private capture contains</h2>
+<p><code>config/recovery/policy.json</code> is the scope and phase source. Storage classification uses the longest matching prefix, so a model-cache exclusion overrides a broader environment root. Unknown storage blocks readiness instead of disappearing from the plan.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Material</th>
+<th>Recovery treatment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reviewed source and uncommitted operator work</td>
+<td>GitHub source plus a private source-tree snapshot; do not rely on a dirty working tree surviving</td>
+</tr>
+<tr>
+<td><code>/etc</code>, account/group identities, host units, TLS and private configuration</td>
+<td>Private archive; review ownership and enablement before restoration</td>
+</tr>
+<tr>
+<td>Kubernetes Secret/ConfigMap values and resource specs</td>
+<td>Private reference exports; never commit or replay all old resources blindly</td>
+</tr>
+<tr>
+<td>WatooM-Code databases/configuration</td>
+<td>Existing consistent SQLite backup implementation plus isolated restoration</td>
+</tr>
+<tr>
+<td>Other discovered SQLite service databases</td>
+<td>Online SQLite snapshots with integrity checks, mapped to their original paths</td>
+</tr>
+<tr>
+<td>Non-SQLite service databases and live files</td>
+<td>Best-effort live capture; require a cold or application-native backup/restore qualification</td>
+</tr>
+<tr>
+<td>Controller state, private grants, model ledger, worker journals and knowledge cards</td>
+<td>Private environment state; reconcile identities and every in-flight job after recovery</td>
+</tr>
+<tr>
+<td>Projects and service/PV/Docker volume state</td>
+<td>Included by default; caches and explicitly reacquirable data are excluded</td>
+</tr>
+<tr>
+<td>Local image registry and running Docker images</td>
+<td>Registry mount plus a portable Docker image archive; verify reference/ID agreement before capture and required digests after restoration</td>
+</tr>
+<tr>
+<td>Downloaded media, model weights, toolchains, purchased libraries</td>
+<td>Reacquire from exact recorded profiles/versions and authorised sources</td>
+</tr>
+<tr>
+<td>Symlinks</td>
+<td>Recorded separately; recreate only reviewed targets through the owning installer</td>
+</tr>
+<tr>
+<td>Bazzite and workstation workers</td>
+<td>Re-stage/reinstall from their maintained source, preserve private transfer credentials and reconcile journals; no automatic replay</td>
+</tr>
+</tbody>
+</table></div>
+<p>Capture is a private operator action. Its archives contain credentials and personal data. Keep them outside Git, in an owner-controlled directory and the approved off-host destination. The tool sets a private umask, refuses an existing output, avoids recursive capture of backups and enforces storage budgets. It preserves partial evidence on failure and writes no success manifest for an incomplete run.</p>
+<h2 id="inventory-and-inspect-readiness">Inventory and inspect readiness</h2>
+<p>From <code>standardised_k3s_project/</code>:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">sudo ./scripts/rebuild-homelab.sh inventory --output /secure/environment.json
+./scripts/rebuild-homelab.sh plan --inventory /secure/environment.json
+./scripts/rebuild-homelab.sh audit --inventory /secure/environment.json --evidence /secure/recovery-evidence.json
+</code></pre></div>
+<p>Create the evidence file from <code>config/recovery/evidence.example.json</code>. Every required record needs a real locally available evidence file and matching SHA-256; setting <code>verified=true</code> alone cannot pass. Evidence covers source, private state, off-host projects, images, secret/vault recovery, model/toolchain acquisition, host bootstrap, service-consistent data and controller admission/reprovisioning.</p>
+<p>An audit verdict of <code>READY_FOR_ISOLATED_DRILL</code> means prerequisites are available for a drill, not that a full disaster recovery already passed. A missing archive, image, credential source or restore qualification remains a blocker.</p>
+<h2 id="capture-and-publish-off-host">Capture and publish off-host</h2>
+<p>Use an unused UTC run stamp. Capture uses the current source policy and defaults to environment plus projects:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">sudo ionice -c3 nice -n 19 ./scripts/rebuild-homelab.sh capture --output /data/backups/recovery/20261107T120000Z
+sudo ./scripts/rebuild-homelab.sh verify-backup --backup /data/backups/recovery/20261107T120000Z
+</code></pre></div>
+<p>The timestamp is an example, not an existing recovery run. <code>--scope environment-only</code> intentionally omits projects and must not be represented as complete project protection. SQLite snapshots are transaction-consistent; live non-SQLite stores require their native dump or a separately planned quiesced backup. This tool does not interrupt work to obtain one.</p>
+<p>Publish completed runs into a separate <code>environment</code> subdirectory of the existing jailed export using <code>ansible/playbooks/watoom-recovery-export.yml</code>. It does not change SSH, accounts or ports. This keeps the existing daily application backup/export intact.</p>
+<p>On the workstation, provision a private <code>F:\data\homelab_recovery</code> directory, then use <code>tools/recovery/pull-environment-recovery.ps1 -Run &lt;stamp&gt;</code>. It uses the existing key-only SFTP account, verifies every file, uploads a receipt to the separate environment receipt directory, and never prunes or overwrites existing runs. The script refuses a broadly readable destination. The existing <code>F:\data\homelab_backups</code> remains the daily application-backup destination.</p>
+<h2 id="test-restoration-before-relying-on-a-backup">Test restoration before relying on a backup</h2>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">sudo ./scripts/rebuild-homelab.sh restore-test --backup /private/offhost-copy/&lt;stamp&gt; --target /private/drill/new-sqlite-directory
+sudo ./scripts/rebuild-homelab.sh restore-bundle --backup /private/offhost-copy/&lt;stamp&gt; --target /mnt/watoom-recovery/new-root
+</code></pre></div>
+<p>Both targets must be new. Verify the restored files, project source, databases, registry images and private configuration in isolation. Restore account/UID/GID mappings and apply the owning SELinux labels before starting consumers. Keep the replacement host's unique <code>/etc/machine-id</code>; do not copy the source machine's marker onto it. The apply guard deliberately rejects the source identity. On the replacement host, load the private Docker image archive and restore the registry before pulling pinned workloads; neither action is performed automatically on the live machine. Do not copy a raw SQLite WAL snapshot over the consistent database extracted from its snapshot map.</p>
+<p>The verified application-backup test restores three SQLite databases and checks archive readability. It does not recover lost media, prove AgentMemory engine consistency, or validate a complete replacement host. The sanitised result is stored with publication evidence; private restored databases stay outside Git.</p>
+<p>The current SQLite-backed k3s datastore is captured separately as <code>private/k3s-state.sqlite.gz</code>, with its token/TLS material in the private bundle. Choose an offline datastore restore matched to the original k3s identity/version or a freshly qualified IaC rebuild; never overwrite a running datastore. Embedded-etcd deployments require their own supported snapshot and qualification, not a live directory copy.</p>
+<h2 id="ordered-replacement-host-phases">Ordered replacement-host phases</h2>
+<p>The exact playbook list lives in policy; <code>plan</code> prints it rather than relying on this summary:</p>
+<ol>
+<li>Provision the replacement OS, mounted storage, matching identities, k3s/Docker and GPU support through existing approved procedures. Place the reviewed source at the canonical path expected by role/helper configuration, or explicitly review every alternate-root mapping in the private vars file; setting the wrapper ROOT alone does not relocate all runtime paths. No installer is run on the current host.</li>
+<li>Restore verified private state, projects, image registry and secret sources before stateful consumers start.</li>
+<li>Reconcile foundation paths and secrets through their existing owners.</li>
+<li>Reconcile the platform and Docker services; preserve intentionally stopped workloads.</li>
+<li>Re-provision the GPU controller/model lab through its existing guards. New cluster UIDs and admission identities require fresh qualification; old cutover booleans/proofs are not reusable evidence.</li>
+<li>Restore independently pinned WatooM-Code, AgentMemory and Toolkit; install current agents, native plugins and skills.</li>
+<li>Reconcile the selected worker, memory, monitoring and backup integrations. Reinstall/re-pin the RIG Unreal lane and Bazzite runtime where necessary; do not rerun completed one-off migrations.</li>
+<li>Verify API readiness, exact image digests, mounts/secrets, enabled units, memory, project data, controller refusal behaviour, a harmless bounded worker request and a new off-host backup/restore test.</li>
+</ol>
+<p><code>run-phase</code> requires a reviewed private vars file and complete evidence, and refuses a machine whose identity matches the source inventory. It runs existing owner playbooks; it does not fabricate safety flags or declare runtime acceptance after an Ansible exit code. Use a fresh private evidence directory for each phase and reconcile partial results before retrying.</p>
+<p>Do not automatically re-enable captured unit files for one-off guards, rollbacks or migration runners. Do not seize GPU ownership, clear durable guards, or replay an uncertain remote job. The source machine inventory and recovery policy preserve these review requirements.</p>
+<h2 id="current-qualification-boundary">Current qualification boundary</h2>
+<p>The source package and current recovery inventory can be validated without deployment. The existing off-host application snapshot has an isolated SQLite restore test. A complete new environment/project bundle, its independent off-host verification, service-consistent non-SQLite restore and replacement-host drill are separate required evidence. Until those pass, full disaster-recovery readiness is explicitly blocked.</p>
+<p>For source ownership and current extensions see <a href="/guide/software-design.html">Software design</a>, <a href="/guide/llm-extensions.html">Custom extensions</a>, <a href="/guide/operations.html">Operations</a> and <a href="/guide/recovery.html">Recovery</a>.</p>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/disaster-recovery.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

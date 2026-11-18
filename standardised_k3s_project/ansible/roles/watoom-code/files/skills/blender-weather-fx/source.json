@@ -1,0 +1,14 @@
+{
+  "upstream_commit": "71d031dab8bc6729504d11a78cbe91945401045f",
+  "original_skill_sha256": "e3137eb02f4b2c2d7d9a5cc4d0abbf1324c835f7454baf97a963e4aebde2465e",
+  "files": {
+    "SKILL.md": "e21838d2bdfe33f42381338d45d81b3873a8fe8089203e7b7f2a35ab68f00702",
+    "scripts/surface_weather.py": "55518bcef35360a4f9340a74826e4fbacce6a1ac7795629c457d3a5a195873f6",
+    "scripts/precipitation.py": "105c4323307153be6d36f6c46098cb7e16c45d5b1ff815ea0bb3d0ccd0e2b628",
+    "scripts/_bpyx.py": "a3339ba8a678469e8ed29510e32a7331e0235202191ca4edb977af4720819b4b",
+    "scripts/lightning.py": "867924fbe9b7b72d4065dac66e8b9fbf72916828134ce1573c6fd715cc493a40",
+    "references/realtime-engines.md": "c7584f496ba56c115ab809034cbabee41afa008236553c9436f814c7341d78ec",
+    "references/upstream-SKILL.md": "e3137eb02f4b2c2d7d9a5cc4d0abbf1324c835f7454baf97a963e4aebde2465e",
+    "references/weather-values.md": "c8be7c985f3d28833b075e71257dd5130d8487ce0b63716a9f237f76592295c3"
+  }
+}

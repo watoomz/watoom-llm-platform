@@ -1,0 +1,30 @@
+---
+- name: Label the separately installed Blender 5.2 compatibility runtime
+  hosts: watoom-homelab
+  become: true
+  gather_facts: false
+  vars:
+    blender_compatibility_root: /data/ai/toolchains/blender
+    blender_compatibility_release: /data/ai/toolchains/blender/5.2.1
+  tasks:
+    - name: Persist runtime directory label
+      community.general.sefcontext:
+        target: '{{ blender_compatibility_root }}'
+        setype: usr_t
+        state: present
+    - name: Persist executable release labels
+      community.general.sefcontext:
+        target: '{{ blender_compatibility_release }}(/.*)?'
+        setype: bin_t
+        state: present
+    # -F also resets customizable types such as container_file_t left by a :z volume mount.
+    - name: Apply labels only to the new release
+      ansible.builtin.command:
+        argv: [restorecon, -R, -F, -v, '{{ blender_compatibility_release }}']
+      register: blender_compat_labels
+      changed_when: "'Relabeled' in blender_compat_labels.stdout"
+    - name: Apply parent directory label
+      ansible.builtin.command:
+        argv: [restorecon, -v, '{{ blender_compatibility_root }}']
+      register: blender_compat_parent
+      changed_when: "'Relabeled' in blender_compat_parent.stdout"

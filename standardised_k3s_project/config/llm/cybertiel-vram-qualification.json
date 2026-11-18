@@ -1,0 +1,31 @@
+{
+  "status": "VERIFIED_Q4_KV_RUNTIME_TEXT_INFERENCE",
+  "model_file": "Cyber-Tiel-Coder-35B-A3B-MTP-UD-IQ4_XS.gguf",
+  "bytes": 18119934272,
+  "sha256": "33492edef3744830f3f45d8b1e1be2444c54c82945c6875df055e9440a44b4fc",
+  "published_sha256_match": true,
+  "download_gib": 16.875503838062286,
+  "projector_bytes": 902822016,
+  "mtp": "draft-mtp active, draft max 1; live draft acceptance observed",
+  "context": 131072,
+  "kv_key": "q4_0",
+  "kv_value": "q4_0",
+  "current_cpu_moe_layers": 8,
+  "observed_gpu_total_mib": 17643,
+  "first_8_expert_tensor_bytes": 2986344448,
+  "estimated_full_gpu_total_mib": 20491,
+  "gpu_capacity_mib": 20480,
+  "full_gpu_runtime_test": "NOT_PERFORMED; estimate leaves no safe headroom",
+  "default_preference": "full GPU when capacity-qualified; CPU offload is a fallback",
+  "runtime_changes": "K/V q8_0 to q4_0; context/model/CPU offload/MTP/vision unchanged",
+  "previous_q8_profile": {
+    "kv_key": "q8_0",
+    "kv_value": "q8_0",
+    "observed_gpu_total_mib": 18362,
+    "observed_model_process_mib": 17844,
+    "estimated_full_gpu_total_mib": 21210
+  },
+  "text_inference": "PASS",
+  "model_process_mib": "NOT_REMEASURED",
+  "controller_uncertain": false
+}

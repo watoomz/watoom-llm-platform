@@ -1,0 +1,25 @@
+---
+# Host-level ansible-lint API used by Open WebUI Ansible tool calls.
+ansible_lint_api_service_name: watoom-ansible-lint-api
+ansible_lint_api_install_dir: /opt/watoom/ansible-lint-api
+ansible_lint_api_python_bin: /usr/bin/python3
+ansible_lint_api_ansible_lint_bin: /usr/bin/ansible-lint
+ansible_lint_api_ansible_playbook_bin: /usr/bin/ansible-playbook
+
+# Open WebUI runs in Kubernetes and calls the host service via the host gateway
+# at 10.242.0.1:8765; localhost-only binding would break tool calls from the pod.
+ansible_lint_api_host: 0.0.0.0
+ansible_lint_api_port: 8765
+ansible_lint_api_health_url: "http://127.0.0.1:{{ ansible_lint_api_port }}/health"
+
+ansible_lint_api_repair_llm_url: http://10.243.133.2:8000/v1/chat/completions
+ansible_lint_api_repair_llm_model: swift-qwen38-coder
+
+ansible_lint_api_service_enabled: true
+ansible_lint_api_service_state: started
+
+
+# Modular semantic/security policy engine.
+ansible_lint_api_policy_engine_enabled: true
+ansible_lint_api_policy_engine_path: "{{ ansible_lint_api_install_dir }}/policy_engine.py"
+ansible_lint_api_policy_runner_path: "{{ ansible_lint_api_install_dir }}/watoom_ansible_validate.py"

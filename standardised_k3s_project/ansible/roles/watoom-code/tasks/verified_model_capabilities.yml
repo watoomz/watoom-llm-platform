@@ -1,0 +1,14 @@
+---
+- name: Install explicitly qualified model capability metadata
+  ansible.builtin.copy:
+    src: verified-model-capabilities.json
+    dest: "{{ watoom_code_root }}/config/verified-model-capabilities.json"
+    owner: '1001'
+    group: '1001'
+    mode: '0644'
+- name: Apply verified capabilities without changing budgets, selection or inference
+  ansible.builtin.script:
+    cmd: enable-verified-model-capabilities.py {{ watoom_code_root }}/config/opencode.json {{ watoom_code_root }}/config/verified-model-capabilities.json
+    executable: /usr/bin/python3
+  register: watoom_verified_capabilities
+  changed_when: "'UPDATED' in watoom_verified_capabilities.stdout"

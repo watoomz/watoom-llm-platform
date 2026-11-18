@@ -1,0 +1,16 @@
+---
+- name: Maintain narrowly verified asset-reader access without changing ownership
+  hosts: homelab
+  become: true
+  tasks:
+    - name: Allow existing creative executor group to read verified legacy generated assets
+      ansible.posix.acl:
+        path: "{{ item }}"
+        etype: group
+        entity: '1009'
+        permissions: rX
+        recursive: true
+        state: present
+      loop:
+        - /data/ai/assets/generated/llama-mesh/20261004T120537Z-synthetic-cube-1362530e
+        - /data/ai/assets/generated/mesh-recovery/candidate-a-20261012T011628224863Z

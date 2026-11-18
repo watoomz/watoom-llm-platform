@@ -1,0 +1,8 @@
+FROM pytorch/pytorch:2.8.0-cuda12.8-cudnn9-runtime@sha256:417bd75df6365104c283ea4c1651fb3530d9eb5a4c2fafa51943cff2a94e6385
+WORKDIR /app/model-manager
+COPY requirements-sdxl.txt requirements-sdxl.constraints.txt ./
+RUN python -m pip install --no-cache-dir -r requirements-sdxl.txt -c requirements-sdxl.constraints.txt
+COPY sdxl_backend.py settings.py ./
+ENV HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+USER 1009:1009
+ENTRYPOINT ["python","/app/model-manager/sdxl_backend.py"]

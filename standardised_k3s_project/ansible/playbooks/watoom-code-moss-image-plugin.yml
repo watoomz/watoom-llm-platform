@@ -1,0 +1,14 @@
+---
+# Install or remove only the MOSS Image tool plugin (copy-only; WatooM Code needs a fresh session to load it).
+# Remove: -e watoom_code_moss_image_enabled=false
+- name: Update only the MOSS Image plugin (versioned dir + selection)
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: true
+  vars:
+    watoom_code_moss_image_enabled: true
+  tasks:
+    - ansible.builtin.import_role:
+        name: watoom-code
+        tasks_from: moss_image_plugin

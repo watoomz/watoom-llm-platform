@@ -1,0 +1,34 @@
+---
+model_manager_enabled: false
+model_manager_stage_only: true
+model_manager_runtime: "{{ lookup('ansible.builtin.file', role_path + '/../../../config/llm/model-manager/runtime.json') | from_json }}"
+model_manager_image: "{{ model_manager_runtime.cpu_image.image }}"
+model_manager_release: "{{ model_manager_runtime.source_commit }}"
+model_manager_uid: 1009
+model_manager_gid: 1009
+model_manager_namespace: glance
+model_manager_origin: https://glance.internal.homelab.example
+model_manager_state: /data/ai/model-manager
+model_manager_models: /data/ai/models
+model_manager_password_file: /data/ai/private/model-manager/password
+model_manager_broker_root: /data/ai/helper-scripts/state/model-manager-broker
+model_manager_router_view: /data/ai/helper-scripts/state/model-manager-router/catalog.json
+model_manager_controller_state: /data/ai/helper-scripts/state/gpu-controller
+model_manager_controller_socket: /data/ai/helper-scripts/state/gpu-controller-private/worker.sock
+model_manager_llama_image: ghcr.io/ggml-org/llama.cpp@sha256:150b59966fb5b2cb1a8fa9d226267c56ebd22c520c7b3640331cde87f3c4fb01
+model_manager_sdxl_image: "{{ model_manager_runtime.sdxl_image.image }}"
+
+model_manager_service_name: watoom-model-manager-broker
+
+model_manager_publish_route: false
+model_manager_controller_verified: false
+
+model_manager_repository_root: /data/github/watoom-standardised-homelab/standardised_k3s_project
+
+model_manager_sdxl_runtime: "{{ model_manager_runtime.sdxl_runtime | default(none) }}"
+
+# Generation-only API; independent of the administrative login. Disabled in isolated staging.
+model_manager_image_mcp_enabled: "{{ not (model_manager_stage_only | bool) }}"
+model_manager_image_mcp_token_file: /data/ai/private/model-manager/image-mcp-token
+model_manager_image_output_root: /data/ai/projects/images/generated
+model_manager_image_output_gid: 1001

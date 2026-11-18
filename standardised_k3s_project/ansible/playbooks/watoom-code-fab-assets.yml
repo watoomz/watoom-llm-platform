@@ -1,0 +1,14 @@
+---
+- name: Maintain Fab acquisition instructions
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Install maintained agent instructions
+      ansible.builtin.include_role:
+        name: watoom-code
+        tasks_from: native_agents.yml
+    - name: Install owner-answer approval worker
+      ansible.builtin.include_role:
+        name: watoom-code
+        tasks_from: fab_catalog.yml

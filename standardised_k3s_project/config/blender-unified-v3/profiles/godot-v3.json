@@ -1,0 +1,9 @@
+{
+  "schema": 3,
+  "target": "godot",
+  "format": "glb",
+  "up": "Y",
+  "skin": true,
+  "animation": "NLA",
+  "runtime_physics": "Godot native constraints; authored manifest adapter"
+}

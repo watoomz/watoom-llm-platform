@@ -1,0 +1,24 @@
+---
+- name: "Kubeconfig source | Verify {{ user_kubeconfig_source }}"
+  ansible.builtin.stat:
+    path: "{{ user_kubeconfig_source }}"
+  register: user_kubeconfig_source_stat
+
+- name: "Kubeconfig source | Assert {{ user_kubeconfig_source }} exists"
+  ansible.builtin.assert:
+    that:
+      - user_kubeconfig_source_stat.stat.exists
+      - user_kubeconfig_source_stat.stat.isreg
+    fail_msg: "Missing k3s kubeconfig: {{ user_kubeconfig_source }}"
+
+- name: "Kubeconfig users | Query passwd database"
+  ansible.builtin.getent:
+    database: passwd
+
+- name: "Kubeconfig users | Reconcile configured user"
+  ansible.builtin.include_tasks: user.yml
+  loop: "{{ user_kubeconfig_users }}"
+  loop_control:
+    loop_var: kubeconfig_user
+    label: "{{ kubeconfig_user.name }}"
+  when: kubeconfig_user.name in ansible_facts.getent_passwd

@@ -1,0 +1,6 @@
+[Unit]
+Description=Post the open tickets to Discord
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/watoom-ticket digest

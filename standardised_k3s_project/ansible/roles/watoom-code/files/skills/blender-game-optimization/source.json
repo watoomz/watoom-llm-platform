@@ -1,0 +1,11 @@
+{
+  "upstream_commit": "71d031dab8bc6729504d11a78cbe91945401045f",
+  "original_skill_sha256": "2c8e6c6cf1676ee300cac12e6c2fda27c973c787375e1b720358d34c78315fd5",
+  "files": {
+    "SKILL.md": "91ad7d4a4fd26bf2873f999ffb7c9828f0ac6b1caeeaeeb882e559c6f54ecafe",
+    "scripts/make_lods.py": "61076e02df93cfa8126a54466540db5a87d763a9910c9e650d441608678c15de",
+    "scripts/_bpyx.py": "a3339ba8a678469e8ed29510e32a7331e0235202191ca4edb977af4720819b4b",
+    "scripts/mesh_stats.py": "6f48790b87b90cd15d4c20e6884dcfedf9aa65292f4afcc7fad9fcf7eb8216bc",
+    "references/upstream-SKILL.md": "2c8e6c6cf1676ee300cac12e6c2fda27c973c787375e1b720358d34c78315fd5"
+  }
+}

@@ -1,0 +1,67 @@
+---
+- name: Create private Fab approval state
+  ansible.builtin.file:
+    path: /data/ai/private/fab-acquisition
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+- name: Install native Fab approval worker service
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/watoom-fab-approvals.service
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Process owner-approved Fab acquisition requests
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/bin/python3 {{ role_path }}/../../../tools/fab/approval_worker.py
+      Nice=15
+      CPUQuota=100%
+      MemoryMax=2G
+      MemorySwapMax=0
+      TimeoutStartSec=6h
+      KillMode=control-group
+- name: Install project Fab approval poll timer
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/watoom-fab-approvals.timer
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Check completed native Fab approval questions
+      [Timer]
+      OnBootSec=2min
+      OnUnitInactiveSec=60s
+      Unit=watoom-fab-approvals.service
+      [Install]
+      WantedBy=timers.target
+- name: Enable explicit owner approval processing
+  ansible.builtin.systemd_service:
+    name: watoom-fab-approvals.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+- name: Install maintained Fab native skill and request helper
+  ansible.builtin.copy:
+    src: skills/watoom-fab-owned-assets/
+    dest: '{{ watoom_code_root }}/config/skills/watoom-fab-owned-assets/'
+    owner: '{{ watoom_code_uid }}'
+    group: '{{ watoom_code_gid }}'
+    mode: '0644'
+    directory_mode: '0750'
+- name: Install qualified landscape tool instructions
+  ansible.builtin.copy:
+    src: skills/watoom-landscape-mesh-builder/
+    dest: '{{ watoom_code_root }}/config/skills/watoom-landscape-mesh-builder/'
+    owner: '{{ watoom_code_uid }}'
+    group: '{{ watoom_code_gid }}'
+    mode: '0644'
+    directory_mode: '0750'
+- name: Install owned Poo VFX preparation instructions
+  ansible.builtin.copy:
+    src: skills/watoom-poo-vfx/
+    dest: '{{ watoom_code_root }}/config/skills/watoom-poo-vfx/'
+    owner: '{{ watoom_code_uid }}'
+    group: '{{ watoom_code_gid }}'
+    mode: '0644'
+    directory_mode: '0750'

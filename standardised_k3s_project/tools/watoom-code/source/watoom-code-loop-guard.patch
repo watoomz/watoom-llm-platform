@@ -1,0 +1,206 @@
+diff --git a/packages/core/src/session/runner/llm.ts b/packages/core/src/session/runner/llm.ts
+index 8283932..2d58ad8 100644
+--- a/packages/core/src/session/runner/llm.ts
++++ b/packages/core/src/session/runner/llm.ts
+@@ -30,6 +30,7 @@ import { SessionStep } from "./step.js"
+ import { ToolOutput } from "../../tool-output.js"
+ import { Plugin } from "../../plugin.js"
+ import { MAX_STEPS_PROMPT } from "./max-steps.js"
++import { SessionLoop } from "./loop.js"
+ 
+ const CONTINUE_AFTER_INCOMPLETE_STREAM =
+   "The previous response was interrupted. Continue from where you left off without repeating completed content."
+@@ -224,7 +225,9 @@ const layer = Layer.effect(
+           assistantMessageID = SessionMessage.ID.create()
+           continue
+         }
+-        const stepLimitReached = loaded.agent.info.steps !== undefined && step >= loaded.agent.info.steps
++        const loop = SessionLoop.reason(loaded.messages)
++        const stepLimitReached =
++          loop !== undefined || (loaded.agent.info.steps !== undefined && step >= loaded.agent.info.steps)
+         const transcript = SessionModelRequest.baseTranscript({
+           agent: loaded.agent.info,
+           model: loaded.model,
+@@ -239,7 +242,7 @@ const layer = Layer.effect(
+           tools: loaded.tools,
+           system: transcript.system,
+           messages: stepLimitReached
+-            ? [...transcript.messages, Message.assistant(MAX_STEPS_PROMPT)]
++            ? [...transcript.messages, Message.assistant(loop ?? MAX_STEPS_PROMPT)]
+             : transcript.messages,
+           // Keep tool definitions on the final Step to preserve the provider's cached prefix.
+           toolChoice: stepLimitReached ? "none" : undefined,
+diff --git a/packages/core/src/session/runner/loop.ts b/packages/core/src/session/runner/loop.ts
+new file mode 100644
+index 0000000..01d0299
+--- /dev/null
++++ b/packages/core/src/session/runner/loop.ts
+@@ -0,0 +1,72 @@
++export * as SessionLoop from "./loop.js"
++
++import { SessionMessage } from "../message.js"
++
++const canonical = (value: unknown): string => {
++  if (Array.isArray(value)) return "[" + value.map(canonical).join(",") + "]"
++  if (value !== null && typeof value === "object")
++    return (
++      "{" +
++      Object.entries(value)
++        .toSorted(([a], [b]) => a.localeCompare(b))
++        .map(([key, item]) => JSON.stringify(key) + ":" + canonical(item))
++        .join(",") +
++      "}"
++    )
++  return JSON.stringify(value) ?? "undefined"
++}
++
++/** Uses the existing durable transcript, so restart cannot reset a stalled cycle.
++ * A fresh user request resets the boundary; changing results constitute progress.
++ * Live asynchronous jobs are a progress barrier, not a reason to cancel work.
++ */
++export const reason = (messages: ReadonlyArray<SessionMessage.Info>) => {
++  const boundary = messages.findLastIndex((message) => message.type === "user")
++  const calls = messages.slice(boundary + 1).flatMap((message) =>
++    message.type === "assistant"
++      ? message.content.flatMap((part) => {
++          if (part.type !== "tool" || (part.state.status !== "completed" && part.state.status !== "error")) return []
++          if (
++            part.name === "shell" &&
++            typeof part.state.input.command === "string" &&
++            /^\s*sleep\s+\d+(?:\.\d+)?\s*;?\s*$/.test(part.state.input.command)
++          )
++            return []
++          const running = part.state.content?.some((item) => {
++            if (item.type !== "text") return false
++            try {
++              const value: unknown = JSON.parse(item.text)
++              return (
++                value !== null &&
++                typeof value === "object" &&
++                "job_id" in value &&
++                "status" in value &&
++                (value.status === "running" || value.status === "starting")
++              )
++            } catch {
++              return false
++            }
++          })
++          if (running) return [null]
++          return [
++            canonical({
++              name: part.name,
++              input: part.state.input,
++              status: part.state.status,
++              result: part.state.status === "error" ? part.state.error : part.state.content,
++            }),
++          ]
++        })
++      : [],
++  )
++  const recent = calls.slice(calls.lastIndexOf(null) + 1).slice(-12)
++  for (const period of [1, 2, 3]) {
++    const tail = recent.slice(-period * 3)
++    if (tail.length === period * 3 && tail.every((value, index) => value === tail[index % period]))
++      return (
++        "Repeated tool cycle produced no new evidence across three attempts. Tools are disabled for this turn. " +
++        "Report the last verified result, any outstanding job IDs, and the exact blocker or changed hypothesis needed. " +
++        "Do not claim completion or restart existing work. Continue only after new user input."
++      )
++  }
++}
+diff --git a/packages/core/test/session-loop.test.ts b/packages/core/test/session-loop.test.ts
+new file mode 100644
+index 0000000..6d53959
+--- /dev/null
++++ b/packages/core/test/session-loop.test.ts
+@@ -0,0 +1,61 @@
++import { describe, expect, test } from "bun:test"
++import { Schema } from "effect"
++import { SessionLoop } from "../src/session/runner/loop"
++import { SessionMessage } from "../src/session/message"
++
++const decode = Schema.decodeUnknownSync(SessionMessage.Info)
++const tool = (name = "execute", input: Record<string, string> = { code: "probe()" }, result = "unchanged") =>
++  decode({
++    id: "msg_test",
++    sessionID: "ses_test",
++    type: "assistant",
++    time: { created: 1 },
++    agent: "watoom-workflow",
++    model: { providerID: "test", id: "test" },
++    content: [
++      {
++        type: "tool",
++        id: "call_test",
++        name,
++        time: { created: 1 },
++        state: { status: "completed", input, content: [{ type: "text", text: result }] },
++      },
++    ],
++  })
++describe("durable no-progress loop boundary", () => {
++  test("stops identical results after three calls, not two", () => {
++    expect(SessionLoop.reason([tool(), tool()])).toBeUndefined()
++    expect(SessionLoop.reason([tool(), tool(), tool()])).toContain("three attempts")
++  })
++  test("detects alternating cycles and ignores sleeps", () => {
++    const a = tool("execute", { code: "a()" })
++    const b = tool("execute", { code: "b()" })
++    const sleep = tool("shell", { command: "sleep 60" })
++    expect(SessionLoop.reason([a, sleep, b, a, sleep, b, a, sleep, b])).toBeDefined()
++  })
++  test("changed results and changed arguments allow work", () => {
++    expect(SessionLoop.reason([tool(), tool(), tool("execute", { code: "probe()" }, "new evidence")])).toBeUndefined()
++    expect(SessionLoop.reason([tool(), tool(), tool("execute", { code: "repair()" })])).toBeUndefined()
++  })
++  test("running jobs are not false loop failures", () => {
++    const poll = tool("execute", { code: "status()" }, JSON.stringify({ job_id: "owned", status: "running" }))
++    expect(SessionLoop.reason([poll, poll, poll, poll])).toBeUndefined()
++    expect(SessionLoop.reason([tool(), tool(), poll, tool()])).toBeUndefined()
++  })
++  test("new user input resets the boundary", () => {
++    const user = decode({
++      id: "msg_user",
++      sessionID: "ses_test",
++      type: "user",
++      time: { created: 1 },
++      text: "Try the repaired route",
++    })
++    expect(SessionLoop.reason([tool(), tool(), user, tool()])).toBeUndefined()
++  })
++  test("serialized restart history retains protection", () => {
++    const saved = JSON.parse(
++      JSON.stringify([tool(), tool(), tool()].map((value) => Schema.encodeSync(SessionMessage.Info)(value))),
++    ).map(decode)
++    expect(SessionLoop.reason(saved)).toBeDefined()
++  })
++})
+diff --git a/packages/core/test/session-runner.test.ts b/packages/core/test/session-runner.test.ts
+index f41f61e..c63e31d 100644
+--- a/packages/core/test/session-runner.test.ts
++++ b/packages/core/test/session-runner.test.ts
+@@ -4862,6 +4862,24 @@ describe("SessionRunnerLLM", () => {
+     expect(s.requests).toHaveLength(1)
+   })
+ 
++  scenario("stops a durable repeated tool cycle before another execution", function* (s) {
++    yield* s.admit("Investigate without repeating stale evidence")
++    yield* s.llm.push(
++      TestLLM.tool("loop-one", "echo", { text: "unchanged" }),
++      TestLLM.tool("loop-two", "echo", { text: "unchanged" }),
++      TestLLM.tool("loop-three", "echo", { text: "unchanged" }),
++      TestLLM.tool("loop-refused", "echo", { text: "unchanged" }),
++    )
++    yield* s.resume
++    expect(s.executions).toEqual(["unchanged", "unchanged", "unchanged"])
++    expect(s.requests).toHaveLength(4)
++    expect(s.requests[3].toolChoice).toMatchObject({ type: "none" })
++    expect(JSON.stringify(s.requests[3].messages)).toContain("Repeated tool cycle")
++    yield* s.llm.push(TestLLM.tool("loop-new-input", "echo", { text: "repaired" }), TestLLM.stop())
++    yield* s.runPrompt("The source is repaired; retry once")
++    expect(s.executions).toEqual(["unchanged", "unchanged", "unchanged", "repaired"])
++  })
++
+   scenario("forces a text response on an agent's configured final step", function* (s) {
+     const agents = yield* Agent.Service
+     yield* agents.transform((editor) =>

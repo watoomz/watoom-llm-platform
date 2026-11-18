@@ -1,0 +1,2 @@
+# Owned Landscape Mesh Builder
+Source is downloaded and checksum-verified under `/data/ai/assets/fab/landscape-mesh-builder-48364dff`. Owned ID48364dff3c874aa5b75903ba9d77bc5a. Nine files,3614630 bytes, UE5.4 project and GeometryScripting dependency. Shared status and qualification live at `/data/ai/assets/catalog/landscape-mesh-builder.json`. Native skill gives scope and resource-safe workflow. Qualification is isolated, source Content read-only and preserved by hashes; it is not generated-terrain acceptance. No unsupported generic Toolkit operation is invented.

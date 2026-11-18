@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WatooM · Command Center</title>
+<link rel="stylesheet" href="/command-center/cc.css">
+</head>
+<body>
+  <header class="cc-head">
+    <div>
+      <div class="cc-title"><b>WatooM</b> Command Center</div>
+      <div class="cc-sub">unified homelab telemetry · k3s · gpu · wan · edge threat map</div>
+      <div class="cc-sub"><a href="/command-center/change-requests.html">Change requests</a> · <a href="/command-center/break-glass.html">Break glass</a></div>
+    </div>
+    <div class="cc-sub cc-live">
+      <span id="live-dot" class="cc-dot"></span>
+      <span id="live-txt">connecting…</span>
+    </div>
+  </header>
+
+  <section class="cc-strip" id="strip" aria-label="Status summary"></section>
+
+  <main class="cc-main">
+    <section class="panel cc-flow">
+      <h2>Dataflow &amp; service health <span class="hint" id="flow-ts"></span></h2>
+      <svg id="flow" viewBox="0 0 1060 520" preserveAspectRatio="xMidYMid meet" role="img"
+           aria-label="Live service dataflow topology"></svg>
+    </section>
+
+    <aside class="panel cc-rail">
+      <h2>Server instruments</h2>
+      <div class="cc-groups" id="tiles"></div>
+    </aside>
+
+    <section class="panel cc-llm">
+      <h2>LLM serving <span class="hint" id="llm-ts"></span></h2>
+      <div class="cc-llm-head" id="llm-head"></div>
+      <div class="cc-llm-table" id="llm-table"></div>
+    </section>
+
+    <section class="panel cc-llm-performance">
+      <h2>LLM performance by reasoning effort <span class="hint" id="llm-perf-ts">24 h window</span></h2>
+      <div class="cc-llm-performance-table" id="llm-performance" aria-live="polite"></div>
+    </section>
+
+    <section class="panel cc-workers">
+      <h2>Worker output <span class="hint" id="wk-ts"></span></h2>
+      <div class="cc-wk-cards" id="wk-cards"></div>
+      <div class="cc-wk-filter" id="wk-filter" role="group" aria-label="Filter jobs by worker"></div>
+      <div class="cc-wk-table" id="wk-table" aria-live="polite"></div>
+    </section>
+
+    <section class="panel cc-map">
+      <h2>Inbound scan origins <span class="hint" id="atk-ts"></span></h2>
+      <svg id="map" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet" role="img"
+           aria-label="World map of firewall-drop source countries"></svg>
+      <div class="cc-legend">
+        <span><i class="home" style="background:var(--accent)"></i> public IP</span>
+        <span><i style="background:var(--serious)"></i> scan source (size = count)</span>
+        <span><i style="background:var(--critical)"></i> top offender</span>
+        <span class="cc-mono" id="atk-sum"></span>
+      </div>
+      <div class="cc-top" id="atk-top"></div>
+    </section>
+  </main>
+
+  <div class="cc-foot" id="foot"></div>
+  <div id="cc-tip"></div>
+
+  <script src="/command-center/cc.js" defer></script>
+</body>
+</html>

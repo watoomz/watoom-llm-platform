@@ -1,0 +1,38 @@
+---
+# Pins for the GPU-resident BGE embedding service used by AgentMemory.
+# The GGUF is a third-party conversion proven tensor-for-tensor against the official
+# revision by tools/llm/bge/verify_gguf.py on every install.
+bge_model_dir: /data/ai/models/embeddings/bge-small-en-v1.5
+bge_hf_repo: BAAI/bge-small-en-v1.5
+bge_hf_revision: 5c38ec7c405ec4b44b94cc5a9bb96e735b38267a
+bge_hf_files:
+  config.json: 094f8e891b932f2000c92cfc663bac4c62069f5d8af5b5278c4306aef3084750
+  model.safetensors: 3c9f31665447c8911517620762200d2245a2518d6e7208acc78cd9db317e21ad
+  vocab.txt: 07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3
+  tokenizer.json: d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66
+  tokenizer_config.json: 9261e7d79b44c8195c1cada2b453e55b00aeb81e907a6664974b4d7776172ab3
+  special_tokens_map.json: b6d346be366a7d1d48332dbc9fdf3bf8960b5d879522b7799ddba59e76237ee3
+  1_Pooling/config.json: d1caf60c96f5fba2157c0c26b76d80818fad6cf0b8eb5e73ec372ff9818eba5c
+bge_gguf_repo: CompendiumLabs/bge-small-en-v1.5-gguf
+bge_gguf_revision: d32f8c040ea3b516330eeb75b72bcc2d3a780ab7
+bge_gguf_file: bge-small-en-v1.5-f16.gguf
+bge_gguf_sha256: f0b2fef971e8366438bfd2d9aefea1b0115919389448806d290237f638bae999
+# Same llama.cpp build as the Swift/Qwen server (b10666, commit 4e97ac86e).
+bge_llama_image: ghcr.io/ggml-org/llama.cpp@sha256:150b59966fb5b2cb1a8fa9d226267c56ebd22c520c7b3640331cde87f3c4fb01
+bge_namespace: llama-cpp
+bge_name: bge-embeddings
+bge_model_name: bge-small-en-v1.5
+# Measured 2026-10-29 beside Swift: +307 MiB idle, +329 MiB peak (artifacts/bge-agentmemory).
+# Keeps the controller's released_gpu_max_mib (1500) satisfied: baseline ~520 + 329 MiB.
+bge_vram_budget_mib: 400   # only used when bge_gpu_layers > 0
+# 2026-11-11 owner choice: run on the CPU. The CUDA context cost ~0.4 GiB host RAM and 324 MiB VRAM (VRAM was 18.4/20 GiB).
+# 0 = CPU only (CUDA devices hidden from the container); 99 = the previous GPU-resident layout. Measured throughput:
+# see docs/16 or the commit message for GPU 16.8 windows/s vs CPU.
+bge_gpu_layers: 0
+bge_cpu_threads: 2
+# Bulk re-embedding pace (windows/s). Saturating batches (~330/s) cost Swift ~12% prompt and
+# ~19% generation speed (wp8-swift-interference-20261029.json); 100/s caps that duty to ~30%.
+bge_batch_windows_per_second: 100
+# While the GPU controller reports an active chat request, bulk batches drop to this rate.
+bge_busy_windows_per_second: 25
+bge_gpu_observation_dir: /data/ai/helper-scripts/state/gpu-controller-observability

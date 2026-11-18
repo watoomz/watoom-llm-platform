@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<class name="HTTPThing" experimental="Preview class" deprecated="Replaced">
+  <brief_description/>
+  <description>[b]Fallback[/b] description with [code]x &lt; y[/code] and [lb]literal[rb].</description>
+  <methods>
+    <method name="get_HTTP_value" qualifiers="const">
+      <return type="String"/>
+    </method>
+  </methods>
+  <constants>
+    <constant name="VALUE" value="-1"/>
+  </constants>
+</class>

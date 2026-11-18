@@ -1,0 +1,116 @@
+{
+  "folder": {
+    "uid": "watoom-platform-alerts",
+    "title": "WatooM Platform Alerts"
+  },
+  "group": {
+    "name": "WatooM Platform",
+    "interval": 60
+  },
+  "contact": {
+    "uid": "watoom-platform-discord",
+    "name": "WatooM Platform Discord",
+    "type": "discord",
+    "disableResolveMessage": false,
+    "settings": {
+      "title": "WatooM platform alert",
+      "message": "{{ range .Alerts }}{{ .Status | toUpper }}: {{ .Annotations.summary }}\n{{ end }}Source: Prometheus rules (monitoring namespace)."
+    }
+  },
+  "route": {
+    "receiver": "WatooM Platform Discord",
+    "object_matchers": [
+      [
+        "platform",
+        "=",
+        "true"
+      ],
+      [
+        "team",
+        "=",
+        "watoom"
+      ]
+    ],
+    "group_by": [
+      "prom_alert"
+    ],
+    "group_wait": "1m",
+    "group_interval": "5m",
+    "repeat_interval": "6h"
+  },
+  "rule": {
+    "uid": "watoom-platform-forward",
+    "title": "WatooM: Prometheus platform alert",
+    "orgID": 1,
+    "folderUID": "watoom-platform-alerts",
+    "ruleGroup": "WatooM Platform",
+    "condition": "C",
+    "for": "0s",
+    "noDataState": "OK",
+    "execErrState": "Error",
+    "labels": {
+      "team": "watoom",
+      "platform": "true"
+    },
+    "annotations": {
+      "summary": "{{ index $labels \"prom_alert\" }} [{{ index $labels \"severity\" }}] {{ index $labels \"namespace\" }} {{ index $labels \"pod\" }}{{ index $labels \"service\" }}{{ index $labels \"unit\" }}"
+    },
+    "data": [
+      {
+        "refId": "A",
+        "relativeTimeRange": {
+          "from": 300,
+          "to": 0
+        },
+        "datasourceUid": "prometheus",
+        "model": {
+          "refId": "A",
+          "expr": "label_replace(ALERTS{alertstate=\"firing\"}, \"prom_alert\", \"$1\", \"alertname\", \"(.*)\")",
+          "instant": true,
+          "range": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      },
+      {
+        "refId": "B",
+        "datasourceUid": "__expr__",
+        "model": {
+          "refId": "B",
+          "type": "reduce",
+          "expression": "A",
+          "reducer": "last",
+          "datasource": {
+            "type": "__expr__",
+            "uid": "__expr__"
+          }
+        }
+      },
+      {
+        "refId": "C",
+        "datasourceUid": "__expr__",
+        "model": {
+          "refId": "C",
+          "type": "threshold",
+          "expression": "B",
+          "conditions": [
+            {
+              "evaluator": {
+                "type": "gt",
+                "params": [
+                  0
+                ]
+              }
+            }
+          ],
+          "datasource": {
+            "type": "__expr__",
+            "uid": "__expr__"
+          }
+        }
+      }
+    ]
+  }
+}

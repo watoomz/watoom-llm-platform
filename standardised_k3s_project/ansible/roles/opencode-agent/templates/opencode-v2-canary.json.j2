@@ -1,0 +1,641 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "{{ opencode_agent_provider_id }}/{{ opencode_agent_model_id }}",
+  "default_agent": "watoom-workflow",
+  "providers": {
+    "{{ opencode_agent_provider_id }}": {
+      "name": "WatooM Local LLM Router",
+      "package": "@opencode/ai/providers/openai-compatible",
+      "settings": {
+        "baseURL": "{{ opencode_agent_router_base_url }}"
+      },
+      "models": {
+        "llama-mesh": {
+          "modelID": "llama-mesh",
+          "name": "LLaMA-Mesh 8B Q8_0 / Text-to-3D",
+          "capabilities": {"tools": false, "input": ["text"], "output": ["text"]},
+          "limit": {"context": 8192, "output": 4096}
+        },
+        "active-model": {
+          "modelID": "active-model",
+          "name": "Active Homelab Model / Loaded Backend",
+          "capabilities": {
+            "tools": true,
+            "input": ["text"],
+            "output": ["text"]
+          },
+          "limit": {
+            "context": {{ opencode_agent_context_limit }},
+            "output": {{ opencode_agent_output_limit }}
+          }
+        },
+        "swift-qwen38-coder": {
+          "modelID": "swift-qwen38-coder",
+          "name": "Swift Qwen3.8 27B Coder / 32K Stable",
+          "capabilities": {
+            "tools": true,
+            "input": ["text", "image"],
+            "output": ["text"]
+          },
+          "limit": {"context": 63488, "output": 4096}
+        },
+        "gemma-4-e4b": {
+          "modelID": "gemma-4-e4b",
+          "name": "Gemma 4 E4B Uncensored HauhauCS Aggressive",
+          "capabilities": {
+            "tools": true,
+            "input": ["text"],
+            "output": ["text"]
+          },
+          "limit": {
+            "context": 63488,
+            "output": 4096
+          }
+        },
+        "tiel-coder-35b-a3b-mtp": {
+          "modelID": "tiel-coder-35b-a3b-mtp",
+          "name": "Tiel Coder 35B-A3B MTP IQ3_XXS",
+          "capabilities": {
+            "tools": true,
+            "input": ["text"],
+            "output": ["text"]
+          },
+          "limit": {
+            "context": 63488,
+            "output": 4096
+          }
+        },
+        "qwen35-defiant-fable-9b": {
+          "modelID": "qwen35-defiant-fable-9b",
+          "name": "Qwen3.5 9B Defiant Fable plusIQ-TOOLS",
+          "capabilities": {
+            "tools": true,
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "limit": {
+            "context": 63488,
+            "output": 4096
+          }
+        },
+        "qwen38-uncensored-mtp": {
+          "modelID": "qwen38-uncensored-mtp",
+          "name": "Qwen3.8 Uncensored MTP IQ4_XS",
+          "capabilities": {
+            "tools": true,
+            "input": ["text"],
+            "output": ["text"]
+          },
+          "limit": {
+            "context": 63488,
+            "output": 4096
+          }
+        },
+        "ornith-1.5-9b": {
+          "modelID": "ornith-1.5-9b",
+          "name": "Ornith 1.5 9B Uncensored",
+          "capabilities": {
+            "tools": true,
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "limit": {
+            "context": 63488,
+            "output": 4096
+          }
+        }
+      }
+    }
+  },
+
+  "mcp": {
+    "servers": {
+      "watoom-llama-mesh": {
+        "type": "local",
+        "command": ["/usr/bin/python3", "/home/opencode/.config/opencode/watoom-tools/watoom-llama-mesh.py", "mcp"],
+        "disabled": false,
+        "codemode": true,
+        "timeout": {"startup": 30000, "catalog": 30000, "execution": 3600000}
+      }
+    },
+    "agentmemory": {
+      "type": "local",
+      "command": ["npx", "-y", "@agentmemory/mcp@0.9.29"],
+      "enabled": true
+    },
+    "watoom-kali": {
+      "type": "remote",
+      "url": "http://watoom-kali-workbench-mcp.kali-agent.svc.cluster.local:8088/mcp",
+      "enabled": true
+    }
+  },
+  "compaction": {
+    "auto": true,
+    "keep": {
+      "tokens": {{ opencode_agent_v2_canary_compaction_keep_tokens }}
+    },
+    "buffer": {{ opencode_agent_v2_canary_compaction_buffer }}
+  },
+
+  "permissions": [
+    {
+      "action": "external_directory",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "webfetch",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "websearch",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "watoom_toolkit_*",
+      "resource": "*",
+      "effect": "deny"
+    }
+  ],
+
+  "experimental": {
+    "policies": [
+      {
+        "action": "provider.use",
+        "resource": "*",
+        "effect": "deny"
+      },
+      {
+        "action": "provider.use",
+        "resource": "watoom",
+        "effect": "allow"
+      },
+      {
+        "action": "permission",
+        "resource": "external_directory:*",
+        "effect": "deny"
+      },
+      {
+        "action": "permission",
+        "resource": "external_directory:/assets/*",
+        "effect": "allow"
+      },
+      {
+        "action": "permission",
+        "resource": "external_directory:/unreal-engine/*",
+        "effect": "allow"
+      },
+      {
+        "action": "permission",
+        "resource": "shell:git push *",
+        "effect": "deny"
+      },
+      {
+        "action": "permission",
+        "resource": "shell:git reset *",
+        "effect": "deny"
+      },
+      {
+        "action": "permission",
+        "resource": "shell:git clean *",
+        "effect": "deny"
+      },
+      {
+        "action": "permission",
+        "resource": "shell:git checkout *",
+        "effect": "deny"
+      },
+      {
+        "action": "permission",
+        "resource": "shell:git restore *",
+        "effect": "deny"
+      },
+      {
+        "action": "permission",
+        "resource": "shell:sudo *",
+        "effect": "deny"
+      },
+      {
+        "action": "permission",
+        "resource": "shell:su *",
+        "effect": "deny"
+      }
+    ]
+  },
+
+  "agents": {
+    "title": {
+      "model": "watoom/active-model",
+      "permissions": [
+        {
+          "action": "watoom-kali_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_kali_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_catalog",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_probe",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_godotImport",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_blenderRender",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    },
+    "plan": {
+      "disabled": true,
+      "permissions": [
+        {
+          "action": "watoom_toolkit_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_catalog",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_probe",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_godotImport",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_blenderRender",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    },
+    "general": {
+      "disabled": true,
+      "permissions": [
+        {
+          "action": "watoom_toolkit_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_catalog",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_probe",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_godotImport",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_blenderRender",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    },
+    "explore": {
+      "disabled": true,
+      "permissions": [
+        {
+          "action": "watoom_toolkit_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_catalog",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_probe",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_godotImport",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_blenderRender",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    },
+    "build": {
+      "permissions": [
+        {
+          "action": "watoom-kali_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_kali_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_catalog",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_probe",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_godotImport",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_blenderRender",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    },
+    "compaction": {
+      "permissions": [
+        {
+          "action": "watoom-kali_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_kali_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_catalog",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_probe",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_godotImport",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_blenderRender",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    },
+    "summary": {
+      "permissions": [
+        {
+          "action": "watoom-kali_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_kali_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_catalog",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_probe",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_godotImport",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_blenderRender",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    },
+    "watoom-builder": {
+      "permissions": [
+        {
+          "action": "watoom-kali_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_kali_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_catalog",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "watoom_toolkit_probe",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "watoom_toolkit_godotImport",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "watoom_toolkit_blenderRender",
+          "resource": "*",
+          "effect": "allow"
+        }
+      ]
+    },
+    "watoom-investigator": {
+      "permissions": [
+        {
+          "action": "watoom-kali_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_kali_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_catalog",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "watoom_toolkit_probe",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_godotImport",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_blenderRender",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    },
+    "watoom-reviewer": {
+      "permissions": [
+        {
+          "action": "watoom-kali_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_kali_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_catalog",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "watoom_toolkit_probe",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_godotImport",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_blenderRender",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    },
+    "watoom-workflow": {
+      "permissions": [
+        {
+          "action": "watoom-kali_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_kali_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_catalog",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "watoom_toolkit_probe",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_godotImport",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "watoom_toolkit_blenderRender",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    }
+  }
+}

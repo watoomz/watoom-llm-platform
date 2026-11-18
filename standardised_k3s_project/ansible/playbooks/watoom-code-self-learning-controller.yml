@@ -1,0 +1,14 @@
+---
+- name: Arm only the reviewed learning recovery checkpoint
+  hosts: watoom-homelab
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Require an owned checkpoint root
+      ansible.builtin.assert:
+        that:
+          - watoom_learning_root is match('^/data/ai/helper-scripts/watoom-self-learning-[0-9TZ]+/(staging|production)$')
+    - name: Install the independently scheduled controller
+      ansible.builtin.import_tasks: ../roles/watoom-code/tasks/self_learning_recovery.yml
+    - name: Install the nightly memory curator (off unless watoom_learning_curator_enabled)
+      ansible.builtin.import_tasks: ../roles/watoom-code/tasks/self_learning_curator.yml

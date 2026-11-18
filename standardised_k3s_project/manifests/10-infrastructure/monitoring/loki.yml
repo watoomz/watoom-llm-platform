@@ -1,0 +1,406 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loki-config
+  namespace: monitoring
+data:
+  loki.yml: |
+    auth_enabled: false
+    server:
+      http_listen_port: 3100
+    common:
+      path_prefix: /loki
+      replication_factor: 1
+      ring:
+        instance_addr: 127.0.0.1
+        kvstore:
+          store: inmemory
+    schema_config:
+      configs:
+      - from: 2024-01-01
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
+    storage_config:
+      filesystem:
+        directory: /loki/chunks
+    compactor:
+      working_directory: /loki/compactor
+      retention_enabled: true
+      delete_request_store: filesystem
+    limits_config:
+      retention_period: 14d
+      allow_structured_metadata: false
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vector-router-syslog-config
+  namespace: monitoring
+data:
+  vector.yml: |
+    data_dir: /var/lib/vector
+    api:
+      enabled: true
+      address: 0.0.0.0:8686
+    sources:
+      internal_metrics:
+        type: internal_metrics
+      router_udp:
+        type: socket
+        mode: udp
+        address: 0.0.0.0:1514
+        decoding:
+          codec: bytes
+    transforms:
+      router_message:
+        type: remap
+        inputs:
+        - router_udp
+        source: |-
+          .message = string!(.message)
+          .router_ip = .host
+      router_only:
+        type: filter
+        inputs:
+        - router_message
+        condition: .router_ip == "10.99.20.1" && starts_with(string!(.message), "firewall,")
+      host_ssh_only:
+        type: filter
+        inputs:
+        - router_message
+        condition: .router_ip == "127.0.0.1" && match(string!(.message), r'sshd(-session)?')
+      http_only:
+        type: filter
+        inputs:
+        - router_message
+        condition: .router_ip == "172.19.0.3" && contains(string!(.message), "watoom_security:")
+      traefik_only:
+        type: filter
+        inputs:
+        - router_message
+        condition: .router_ip == "127.0.0.1" && contains(string!(.message), "watoom_traefik")
+      ssh_normalize:
+        type: remap
+        inputs:
+        - host_ssh_only
+        drop_on_abort: true
+        drop_on_error: true
+        source: |
+          sys = parse_syslog!(string!(.message))
+          m = string!(sys.message)
+          fields, err = parse_regex(m, r'(?P<result>Failed|Accepted) (?P<mechanism>password|publickey|keyboard-interactive/pam) for (?:invalid user )?[^ ]+ from (?P<source_ip>[^ ]+) port (?P<source_port>[0-9]+)')
+          if err != null {
+            fields, err = parse_regex(m, r'(?P<result>Invalid) user [^ ]+ from (?P<source_ip>[^ ]+) port (?P<source_port>[0-9]+)')
+          }
+          if err != null { abort }
+          sip = string!(fields.source_ip)
+          public_v4 = ip_cidr_contains("0.0.0.0/0", sip) ?? false
+          private = (ip_cidr_contains("10.0.0.0/8", sip) ?? false) || (ip_cidr_contains("172.16.0.0/12", sip) ?? false) || (ip_cidr_contains("192.168.0.0/16", sip) ?? false) || (ip_cidr_contains("127.0.0.0/8", sip) ?? false) || (ip_cidr_contains("169.254.0.0/16", sip) ?? false) || (ip_cidr_contains("100.64.0.0/10", sip) ?? false)
+          origin = if public_v4 && !private { "external IPv4" } else { "internal or unknown" }
+          failure = fields.result != "Accepted"
+          event_time = sys.timestamp
+          kind = if failure { "auth_failure" } else { "auth_success" }
+          act = if failure { "rejected" } else { "allowed" }
+          sev = if failure { "medium" } else { "informational" }
+          attack = if failure { "Authentication failure" } else { "Authentication success" }
+          sample = if failure { "SSH authentication rejected; username and key material discarded" } else { "SSH authentication accepted; username and key material discarded" }
+          . = {
+           "schema": "watoom-security-v1", "timestamp": event_time,
+           "source_system": "Host SSH", "event_kind": kind,
+           "source_ip": sip, "source_port": fields.source_port,
+           "destination_ip": "10.99.20.225", "destination_port": "22", "transport": "SSH",
+           "target_service": "host SSH", "action": act,
+           "severity": sev,
+           "attack_type": attack,
+           "confidence": "direct authentication log", "internet_origin": origin,
+           "firewall_rule": "NOT CAPTURED", "event_count": 1,
+           "data_sample": sample,
+           "http_method": "NOT CAPTURED", "http_path": "NOT CAPTURED", "http_status": "NOT CAPTURED"
+          }
+      http_normalize:
+        type: remap
+        inputs:
+        - http_only
+        drop_on_abort: true
+        drop_on_error: true
+        source: |
+          outer = parse_syslog!(string!(.message))
+          p = parse_json!(string!(outer.message))
+          assert!(p.schema == "watoom-security-v1")
+          sip = string!(p.source_ip)
+          public_v4 = ip_cidr_contains("0.0.0.0/0", sip) ?? false
+          private = (ip_cidr_contains("10.0.0.0/8", sip) ?? false) || (ip_cidr_contains("172.16.0.0/12", sip) ?? false) || (ip_cidr_contains("192.168.0.0/16", sip) ?? false) || (ip_cidr_contains("127.0.0.0/8", sip) ?? false) || (ip_cidr_contains("169.254.0.0/16", sip) ?? false) || (ip_cidr_contains("100.64.0.0/10", sip) ?? false)
+          origin = if public_v4 && !private { "external IPv4" } else { "internal or unknown" }
+          pattern = string!(p.pattern)
+          assert!(includes(["none","path_traversal_pattern","sql_injection_pattern","sensitive_path_probe","common_admin_path_probe"],pattern))
+          assert!(includes(["[path redacted]","/","/login","/login/","/api/session","/admin","/admin/","/robots.txt","/favicon.ico","/.env","/wp-login.php"],p.http_path))
+          method = if includes(["GET","POST","PUT","PATCH","DELETE","HEAD","OPTIONS","CONNECT","TRACE"],p.http_method) { string!(p.http_method) } else { "UNKNOWN" }
+          status = to_string!(p.http_status)
+          kind = if pattern != "none" { "http_pattern_suspected" } else if status == "401" || status == "403" { "http_auth_rejection_response" } else { "http_observation" }
+          sev = if pattern != "none" { "medium" } else { "informational" }
+          attack = if pattern != "none" { pattern + " (heuristic)" } else if kind == "http_auth_rejection_response" { "HTTP access rejected; not proof of failed login" } else { "Observed HTTP request" }
+          confidence = if pattern != "none" { "URI pattern heuristic; not exploit confirmation" } else { "direct HTTP access metadata" }
+          . = {
+           "schema": "watoom-security-v1", "timestamp": parse_timestamp!(string!(p.event_time),format:"%+"),
+           "source_system": "AzuraCast Nginx", "event_kind": kind,
+           "source_ip": sip, "source_port": p.source_port,
+           "destination_ip": p.destination_ip, "destination_port": p.destination_port, "transport": "HTTP",
+           "target_service": "AzuraCast public web", "action": "HTTP " + status,
+           "severity": sev,
+           "attack_type": attack,
+           "confidence": confidence,
+           "internet_origin": origin, "firewall_rule": "NOT CAPTURED", "event_count": 1,
+           "data_sample": "HTTP " + method + " " + string!(p.http_path) + " status=" + status + " evidence=" + pattern + "; full URI, query and headers discarded",
+           "http_method": method, "http_path": p.http_path, "http_status": status
+          }
+      traefik_normalize:
+        type: remap
+        inputs:
+        - traefik_only
+        drop_on_abort: true
+        drop_on_error: true
+        source: |
+          outer = parse_syslog!(string!(.message))
+          cri = parse_regex!(string!(outer.message),r'^[^ ]+ stdout F (?P<json>\{.*\})$')
+          p = parse_json!(cri.json)
+          if !exists(p.DownstreamStatus) || !exists(p.ClientHost) { abort }
+          sip = string!(p.ClientHost)
+          public_v4 = ip_cidr_contains("0.0.0.0/0", sip) ?? false
+          private = (ip_cidr_contains("10.0.0.0/8", sip) ?? false) || (ip_cidr_contains("172.16.0.0/12", sip) ?? false) || (ip_cidr_contains("192.168.0.0/16", sip) ?? false) || (ip_cidr_contains("127.0.0.0/8", sip) ?? false) || (ip_cidr_contains("169.254.0.0/16", sip) ?? false)
+          origin = if public_v4 && !private { "external IPv4" } else { "internal or unknown" }
+          status = to_string!(p.DownstreamStatus)
+          . = {
+           "schema": "watoom-security-v1", "timestamp": parse_timestamp!(string!(p.StartUTC),format:"%+"),
+           "source_system": "Traefik", "event_kind": "http_observation",
+           "source_ip": sip, "source_port": p.ClientPort,
+           "destination_ip": "10.99.20.225", "destination_port": "NOT CAPTURED", "transport": "HTTP",
+           "target_service": string(p.ServiceName) ?? "unmatched Traefik route", "action": "HTTP " + status,
+           "severity": "informational", "attack_type": "Observed HTTP request",
+           "confidence": "direct access metadata; path intentionally not captured", "internet_origin": origin,
+           "firewall_rule": "NOT CAPTURED", "event_count": 1,
+           "data_sample": "HTTP " + string!(p.RequestMethod) + " status=" + status + "; path, query and all headers excluded at source",
+           "http_method": p.RequestMethod, "http_path": "NOT CAPTURED by privacy policy", "http_status": status
+          }
+    sinks:
+      prometheus_exporter:
+        type: prometheus_exporter
+        inputs:
+        - internal_metrics
+        address: 0.0.0.0:9598
+      loki:
+        type: loki
+        inputs:
+        - router_only
+        endpoint: http://loki.monitoring.svc.cluster.local:3100
+        encoding:
+          codec: text
+        labels:
+          job: router-firewall
+          source: routeros
+          router_ip: '{{ router_ip }}'
+          protocol: udp
+      security_loki:
+        type: loki
+        inputs:
+        - ssh_normalize
+        - http_normalize
+        - traefik_normalize
+        endpoint: http://loki.monitoring.svc.cluster.local:3100
+        encoding:
+          codec: json
+        labels:
+          job: watoom-security-events
+          source_system: '{{ source_system }}'
+          event_kind: '{{ event_kind }}'
+        buffer:
+          type: memory
+          max_events: 1000
+          when_full: block
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: loki
+    app.kubernetes.io/name: loki
+    app.kubernetes.io/part-of: monitoring
+    app.kubernetes.io/managed-by: kubectl
+  name: loki
+  namespace: monitoring
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: loki
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: loki
+        app.kubernetes.io/name: loki
+        app.kubernetes.io/part-of: monitoring
+    spec:
+      automountServiceAccountToken: false
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - chown -R 10001:10001 /loki
+        image: docker.io/library/busybox@sha256:9db7b59979c38555a39def84a31fb98b5296952f9e3afd4f6f11f05b07adfab0
+        imagePullPolicy: IfNotPresent
+        name: loki-data-permissions
+        securityContext:
+          runAsUser: 0
+        volumeMounts:
+        - mountPath: /loki
+          name: loki-data
+      containers:
+      - args:
+        - -config.file=/etc/loki/loki.yml
+        image: docker.io/grafana/loki@sha256:3165cecce301ce5b9b6e3530284b080934a05cd5cafac3d3d82edcb887b45ecd
+        imagePullPolicy: Always
+        name: loki
+        ports:
+        - containerPort: 3100
+          protocol: TCP
+        resources:
+          limits:
+            cpu: '1'
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        volumeMounts:
+        - mountPath: /etc/loki
+          name: loki-config
+        - mountPath: /loki
+          name: loki-data
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: loki-config
+        name: loki-config
+      - hostPath:
+          path: /app/loki/data
+          type: DirectoryOrCreate
+        name: loki-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: vector-router-syslog
+    app.kubernetes.io/name: vector-router-syslog
+    app.kubernetes.io/part-of: monitoring
+    app.kubernetes.io/managed-by: kubectl
+  name: vector-router-syslog
+  namespace: monitoring
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: vector-router-syslog
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: vector-router-syslog
+        app.kubernetes.io/name: vector-router-syslog
+        app.kubernetes.io/part-of: monitoring
+    spec:
+      automountServiceAccountToken: false
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      containers:
+      - args:
+        - --config
+        - /etc/vector/vector.yml
+        image: docker.io/timberio/vector@sha256:93761c26fa3a3793f5f200de0f4cfc6102b5e9803ab33b4830d0873ba8dbdc4f
+        imagePullPolicy: Always
+        name: vector
+        ports:
+        - containerPort: 1514
+          hostPort: 1514
+          protocol: UDP
+        - containerPort: 8686
+          protocol: TCP
+        - containerPort: 9598
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+        volumeMounts:
+        - mountPath: /etc/vector
+          name: vector-config
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: vector-router-syslog-config
+        name: vector-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: loki
+    app.kubernetes.io/name: loki
+    app.kubernetes.io/part-of: monitoring
+  name: loki
+  namespace: monitoring
+spec:
+  ports:
+  - port: 3100
+    protocol: TCP
+    targetPort: 3100
+  selector:
+    app: loki
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: vector-router-syslog
+    app.kubernetes.io/name: vector-router-syslog
+    app.kubernetes.io/part-of: monitoring
+  name: vector-router-syslog
+  namespace: monitoring
+spec:
+  ports:
+  - name: syslog-udp
+    port: 1514
+    protocol: UDP
+    targetPort: 1514
+  - name: http
+    port: 8686
+    protocol: TCP
+    targetPort: 8686
+  - name: metrics
+    port: 9598
+    protocol: TCP
+    targetPort: 9598
+  selector:
+    app: vector-router-syslog
+  type: ClusterIP

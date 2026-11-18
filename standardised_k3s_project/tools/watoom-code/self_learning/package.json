@@ -1,0 +1,1 @@
+{"name":"watoom-self-learning","version":"0.1.0-staging","private":true,"type":"module","main":"./index.mjs","exports":{".":"./index.mjs","./server":"./index.mjs"}}

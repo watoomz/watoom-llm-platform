@@ -1,0 +1,15 @@
+[Unit]
+Description=WatooM tickets board broker (kanban writes through ticket.py)
+After=network.target
+[Service]
+User=root
+ExecStart=/usr/bin/python3 {{ tickets_board_app_root }}/broker.py --config {{ tickets_board_state }}/config.json
+Restart=on-failure
+RestartSec=10
+MemoryMax=256M
+CPUQuota=50%
+NoNewPrivileges=yes
+PrivateTmp=yes
+UMask=0022
+[Install]
+WantedBy=multi-user.target

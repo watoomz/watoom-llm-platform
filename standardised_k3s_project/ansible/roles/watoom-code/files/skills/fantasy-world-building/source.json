@@ -1,0 +1,16 @@
+{
+  "listing": "https://mcpmarket.com/tools/skills/fantasy-world-building-2",
+  "primary_repository": "https://github.com/wordflowlab/novel-writer-skills",
+  "commit": "5bc9b373ff609e8910e0e8d179e4a697bf2b1268",
+  "path": "templates/skills/genre-knowledge/fantasy/SKILL.md",
+  "listing_repository": "https://github.com/Microck/ordinary-claude-skills",
+  "listing_commit": "1056d293d41a3a3b86518d8ab6ec0a79091ccedb",
+  "listing_bytes_identical_to_primary": true,
+  "license": "MIT",
+  "skill_sha256": "ec3da9d3d8a3a45fce004a8c1d98df1692de48a28e2b22036f55056c686f045f",
+  "upstream_language": "Chinese",
+  "installed_commands": false,
+  "upstream_skill_sha256": "afaa802c1bc9611a9d072e12cb18ce600251687b4d53d494da008bbae784da9e",
+  "installed_language": "English",
+  "local_changes": "English translation preserving guidance, example, checklist and permissions; upstream slash-command names are conceptual, not installed commands."
+}

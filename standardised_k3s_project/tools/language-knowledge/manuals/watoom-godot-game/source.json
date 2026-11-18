@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "product": "watoom-godot-game",
+  "version": "snapshot-2026-11-19",
+  "language": "internal operational guidance",
+  "license": "proprietary",
+  "trust_tier": "internal_doc",
+  "note": "First-party WatooM guidance for building Godot 4.7.2 games with the watoom-godot-game skill, copied byte-for-byte from ansible/roles/watoom-code/files/skills/watoom-godot-game/ (SKILL.md and references/gg-*.md) by scripts/sync_manual.py. Engine facts were measured on the lab with Godot 4.7.2 (GPU, xvfb) and are recorded with their method in the references.",
+  "pages": [
+    {
+      "file": "SKILL.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-godot-game/SKILL.md"
+    },
+    {
+      "file": "gg-assets.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-godot-game/references/gg-assets.md"
+    },
+    {
+      "file": "gg-catalog.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-godot-game/references/gg-catalog.md"
+    },
+    {
+      "file": "gg-combat.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-godot-game/references/gg-combat.md"
+    },
+    {
+      "file": "gg-export.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-godot-game/references/gg-export.md"
+    },
+    {
+      "file": "gg-light.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-godot-game/references/gg-light.md"
+    },
+    {
+      "file": "gg-player.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-godot-game/references/gg-player.md"
+    },
+    {
+      "file": "gg-project-style.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-godot-game/references/gg-project-style.md"
+    },
+    {
+      "file": "gg-terrain.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-godot-game/references/gg-terrain.md"
+    },
+    {
+      "file": "gg-ui.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-godot-game/references/gg-ui.md"
+    },
+    {
+      "file": "gg-verify-loop.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-godot-game/references/gg-verify-loop.md"
+    },
+    {
+      "file": "gg-water.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-godot-game/references/gg-water.md"
+    }
+  ]
+}

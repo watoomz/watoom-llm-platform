@@ -1,0 +1,13 @@
+---
+# Learning memory curator (sidecar lessons only; owner-reversible). Kept here, not passed with -e,
+# so the controller playbook run by optimise.py/deploy.py does not remove the units. Reverse with:
+# flag false + re-apply, `touch <watoom_learning_root>/curator-disabled`, or memory_curator.py rollback --txn <id>.
+watoom_learning_curator_enabled: true
+watoom_learning_curator_repo: /data/github/watoom-standardised-homelab
+# A chat line that starts with this marker ("+ never do X") is submitted as a lesson. "+" never starts a line in the
+# owner's chat history ("#", "-", "*" are markdown). Runs every interval minutes; the run is idempotent.
+watoom_learning_curator_lesson_marker: "+"
+watoom_learning_curator_interval_minutes: 15
+# Engine API facts and "+" lessons are exported here for the coordinator guard, which reads ../learned-lessons.json
+# relative to its own package, i.e. this file must sit in the same watoom-tools directory as coordinator-guard-<sha>/.
+watoom_learning_curator_recall_export: /data/ai/watoom-code/config/watoom-tools/learned-lessons.json

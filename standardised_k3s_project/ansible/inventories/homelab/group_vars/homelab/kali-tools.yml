@@ -1,0 +1,56 @@
+---
+# Additional Kali packages selected by the local operator.
+# Manage this file with: scripts/kali-tools
+
+kali_extra_tool_packages:
+- amass
+- arjun
+- arp-scan
+- assetfinder
+- autorecon
+- binwalk
+- bloodyad
+- certipy-ad
+- curl
+- dirsearch
+- dnstwist
+- dnsx
+- enum4linux-ng
+- ethtool
+- feroxbuster
+- finalrecon
+- foremost
+- hping3
+- httpx-toolkit
+- iproute2
+- iputils-ping
+- jq
+- ldap-utils
+- lsof
+- mariadb-client
+- mtr-tiny
+- nbtscan
+- net-tools
+- netexec
+- nfs-common
+- onesixtyone
+- openssl
+- postgresql-client
+- python3-impacket
+- python3-scapy
+- redis-tools
+- seclists
+- sleuthkit
+- smbclient
+- snmp
+- snmpcheck
+- snmpenum
+- socat
+- sqlite3
+- strace
+- subfinder
+- tcpdump
+- traceroute
+- tshark
+- yara
+kali_tool_metapackages: []

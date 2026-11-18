@@ -1,0 +1,13 @@
+{
+  "sourceCommit": "c1fe575eb504e603d274504eee46a4d33944932c",
+  "baseCommit": "a1d4b713f3629c12cf7c515f36625e5530b1a416",
+  "image": "127.0.0.1:5000/watoom-code@sha256:1c1c6155012045f6ac9455d7c4f91fdc8c055b91bd525b3cd47c04a57dd49aa6",
+  "supersedes": "127.0.0.1:5000/watoom-code@sha256:8ca2d0af5ae4c7e27f7894c17f1eb3d0fb5591128aa13dab6e1fe953c6d8640d",
+  "applicationOnly": true,
+  "change": "Profile availability (skills page capability statuses) no longer checks only five executables on PATH. available(root) also counts configured watoom_specialists (3d.inspect -> vision-3d-adapter, 3d.generate -> procedural-adapter, any entry -> specialist-adapter) and deployment-declared routes in config/watoom-routes.json restricted to known dependency names. So specialist-registry, vision-3d-inspector and procedural-generators show READY via the local-toolkit specialist, and unreal and avian show READY via the game-worker unreal-export route and the toolkit Avian generator declared in IaC.",
+  "routesFile": "{{ watoom_code_root }}/config/watoom-routes.json installed by coordinator_guard.yml from watoom_code_declared_routes (unreal-editor, avian-approved-compatible-runtime, blender)",
+  "checks": {
+    "unitTests": "core watoom-profiles 4/4 (new case: specialists + declared routes -> READY, unknown route ignored, missing config root -> no specialist-adapter)",
+    "typecheck": "core, server, cli clean"
+  }
+}

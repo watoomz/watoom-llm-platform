@@ -1,0 +1,7 @@
+---
+- name: Build the pinned Unreal toolchain from source through maintained IaC
+  hosts: all
+  become: true
+  gather_facts: false
+  roles:
+    - unreal-engine

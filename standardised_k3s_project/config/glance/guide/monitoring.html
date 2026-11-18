@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Monitoring and alerting · Agent Export</title><meta name="description" content="Metrics, logs and alert rules — what is collected, where it is visible and what each alert means."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link active" aria-current="page" href="/guide/monitoring.html">Monitoring</a><div class="toc"><a class="toc-link" href="#stack">Stack</a><a class="toc-link" href="#alert-rules">Alert rules</a><a class="toc-link" href="#gpu-and-model-signals">GPU and model signals</a><a class="toc-link" href="#post-change-health">Post-change health</a></div><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">Monitoring</p><h1>Monitoring and alerting</h1><p class="lede">Metrics, logs and alert rules — what is collected, where it is visible and what each alert means.</p></header>
+<div class="content">
+<h2 id="stack">Stack</h2>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-text">node-exporter ─┐ (+ WatooM textfile metrics every 2 min)
+kube-state-metrics ─┤
+DCGM exporter (GPU) ─┤
+SNMP exporter / MKTXP (router) ─┼──► Prometheus :9090 ──► Grafana :3000
+WatooM observability :9108 ─┤            │ alert rules
+llama.cpp /metrics ─┘            ▼
+                             Prometheus Alerts page, Grafana, Glance
+
+RouterOS syslog ──UDP 1514──► Vector ──► Loki :3100 ──► Grafana Explore
+</code></pre></div>
+<p>All components run in namespace <code>monitoring</code>. There is no Alertmanager: alerts are visible in Prometheus, Grafana and Glance, and are not pushed to a notification channel.</p>
+<h2 id="alert-rules">Alert rules</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Alert</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>watoom-node-health</code></td>
+<td><code>WatoomNodeExporterDown</code></td>
+<td>Host metrics missing</td>
+</tr>
+<tr>
+<td></td>
+<td><code>WatoomRootDiskHigh</code>, <code>WatoomAppDiskHigh</code>, <code>WatoomDataDiskHigh</code></td>
+<td>Filesystem pressure on <code>/</code>, <code>/app</code>, <code>/data</code></td>
+</tr>
+<tr>
+<td></td>
+<td><code>WatoomNodeLoadHigh</code>, <code>WatoomMemoryLow</code></td>
+<td>Sustained CPU load or low available memory</td>
+</tr>
+<tr>
+<td><code>watoom-platform</code></td>
+<td><code>WatoomRootDiskAbove80</code>, <code>WatoomDataVolumeAbove90</code></td>
+<td>Capacity thresholds (90% for 30 min on <code>/data</code>, <code>/app</code>)</td>
+</tr>
+<tr>
+<td></td>
+<td><code>WatoomPodEvicted</code></td>
+<td>Kubelet evicted a pod (usually disk or memory pressure)</td>
+</tr>
+<tr>
+<td></td>
+<td><code>WatoomSystemdUnitFailed</code></td>
+<td>A host unit is in <code>failed</code> state</td>
+</tr>
+<tr>
+<td></td>
+<td><code>WatoomBackupStale</code>, <code>WatoomOffhostBackupStale</code></td>
+<td>WatooM Code backup or its off-host pull is overdue</td>
+</tr>
+<tr>
+<td></td>
+<td><code>WatoomNodeTextfileStale</code></td>
+<td>The textfile metrics publisher stopped</td>
+</tr>
+<tr>
+<td><code>watoom-opencode-local-llm</code></td>
+<td><code>WatoomQwenCoderUnavailable</code></td>
+<td>Primary model not serving</td>
+</tr>
+<tr>
+<td></td>
+<td><code>WatoomGpuMemoryCritical</code></td>
+<td>VRAM near exhaustion</td>
+</tr>
+<tr>
+<td></td>
+<td><code>WatoomLlmRouterRepeatedFailures</code></td>
+<td>Router errors over the window</td>
+</tr>
+<tr>
+<td></td>
+<td><code>WatoomQwenTruncationObserved</code></td>
+<td>Responses hit the output limit</td>
+</tr>
+<tr>
+<td></td>
+<td><code>WatoomOpenCodeWatchdogActivated</code>, <code>WatoomOpenCodeCompactionFrequencyHigh</code></td>
+<td>Agent runtime stalled, or context compacting unusually often</td>
+</tr>
+<tr>
+<td></td>
+<td><code>WatoomOpenCodeObservabilityExporterDown</code></td>
+<td>The WatooM exporter is down</td>
+</tr>
+</tbody>
+</table></div>
+<p>Rules are defined in <code>manifests/10-infrastructure/monitoring/</code>. Query live state:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">kubectl -n monitoring exec deploy/prometheus -- wget -qO- http://127.0.0.1:9090/api/v1/alerts \
+  | jq -r &#x27;.data.alerts[] | select(.state==&quot;firing&quot;) | .labels.alertname&#x27;
+</code></pre></div>
+<h2 id="gpu-and-model-signals">GPU and model signals</h2>
+<p>DCGM provides utilisation, VRAM, power and temperature. llama.cpp exposes <code>/metrics</code> (tokens per second, KV usage, slot state). The WatooM exporter adds controller phase and owner, router failures and agent watchdog metrics.</p>
+<p>The controller's normal idle snapshot is <code>phase=qwen-ready</code>, <code>owner=null</code>, <code>uncertain=false</code>. A non-null owner during a Mesh job or model switch is expected, not an outage.</p>
+<h2 id="post-change-health">Post-change health</h2>
+<p>After any change, confirm:</p>
+<ul>
+<li>node <code>Ready</code>, no unexpected <code>Pending</code>/<code>Failed</code> pods</li>
+<li><code>/</code>, <code>/app</code>, <code>/data</code> below alert thresholds</li>
+<li>Pi-hole resolving, Traefik routes answering</li>
+<li>Grafana and Prometheus reachable, no new firing alerts</li>
+<li>Compose stacks running</li>
+<li>GPU visible and the primary model serving when inference is expected</li>
+</ul>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">kubectl get pods -A --field-selector=status.phase!=Running,status.phase!=Succeeded
+systemctl --failed --no-pager
+docker compose ls
+nvidia-smi --query-gpu=memory.used,memory.total,utilization.gpu --format=csv
+</code></pre></div>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/monitoring.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

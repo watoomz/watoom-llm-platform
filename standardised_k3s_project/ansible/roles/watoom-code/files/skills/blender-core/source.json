@@ -1,0 +1,13 @@
+{
+  "upstream_commit": "71d031dab8bc6729504d11a78cbe91945401045f",
+  "original_skill_sha256": "92ab591e713d8b4cdd3ed591c813ad29df9f7ce3f90f6e84971719a6b1bdc51d",
+  "files": {
+    "SKILL.md": "021bd3f03d36c567e11a24a671a2921a299b3c43b2eafce443f32f23588826ca",
+    "scripts/env_report.py": "e628feed806dd265e0c1ce803d92591aac208a9f463d8c47cbb939476d3b347a",
+    "scripts/_bpyx.py": "a3339ba8a678469e8ed29510e32a7331e0235202191ca4edb977af4720819b4b",
+    "scripts/run_in_blender.py": "e97e078c1b52475d386af2b8f9d27c7578a55c250ccd43ff50bed9c33d380355",
+    "references/api-changes-5x.md": "ccf0b52a1d9fd836eb689abcec6a878b0ac57fb32ac600476b5070b9c8d22307",
+    "references/bpy-patterns.md": "41517d363202a0de9dddef4154374747873883ad6bb7e3b8b971bd5d6c207a9a",
+    "references/upstream-SKILL.md": "92ab591e713d8b4cdd3ed591c813ad29df9f7ce3f90f6e84971719a6b1bdc51d"
+  }
+}

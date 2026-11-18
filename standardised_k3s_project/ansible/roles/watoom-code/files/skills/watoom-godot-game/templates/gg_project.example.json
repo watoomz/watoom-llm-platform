@@ -1,0 +1,18 @@
+{
+ "_comment": "Copy to <project>/gg_project.json (gg_project.py init writes one for you). Style is data: change style.preset or style.overrides, then run gg_style.py apply.",
+ "schema": 1,
+ "name": "castaway_cove",
+ "title": "Castaway Cove",
+ "godot_version": "4.7.2",
+ "dimension": "3d",
+ "view": "third_person",
+ "style": {"preset": "low-poly", "overrides": {}},
+ "units": {"pixels_per_meter": 16, "tile_px": 16},
+ "world": {"size_m": [400, 400], "cell_m": 4.0, "sea_level_m": 0.0, "height_range_m": [-20, 60], "seed": 1, "origin": "corner"},
+ "level": "main",
+ "capture": {"size": [1280, 720], "frames": 8, "views": [
+   {"name": "hero", "kind": "3d", "position": [200, 3, 212], "look_at": [200, 1, 200], "fov": 60},
+   {"name": "overview", "kind": "3d", "position": [220, 160, 420], "look_at": [200, 0, 200], "fov": 50}]},
+ "input": {"scheme": "wasd_mouse"},
+ "export": {"presets": ["pck"]}
+}

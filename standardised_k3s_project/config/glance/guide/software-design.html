@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Software design — cross-project integration · Agent Export</title><meta name="description" content="How the separate WatooM projects — homelab IaC, the LLM/agent platform, games, images and media — are wired into one system, with the real code at each seam."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link active" aria-current="page" href="/guide/software-design.html">Software design</a><div class="toc"><a class="toc-link" href="#what-this-document-is">What this document is</a><a class="toc-link" href="#the-shared-substrate">The shared substrate</a><a class="toc-link" href="#a-inference-routing-and-gpu-ownership">A · Inference routing and GPU ownership</a><a class="toc-link" href="#b-the-coordinator-guard-worker-output-trusted-evidence">B · The coordinator guard: worker output → trusted evidence</a><a class="toc-link" href="#c-the-observability-spine">C · The observability spine</a><a class="toc-link" href="#d-the-change-control-spine">D · The change-control spine</a><a class="toc-link" href="#e-the-asset-build-pipeline-images-and-games">E · The asset build pipeline (images and games)</a><a class="toc-link" href="#invariants-that-hold-across-every-seam">Invariants that hold across every seam</a><a class="toc-link" href="#f-source-automation-and-distribution">F · Source, automation and distribution</a><a class="toc-link" href="#g-new-creative-and-reference-flows">G · New creative and reference flows</a><a class="toc-link" href="#environment-disaster-recovery">Environment disaster recovery</a></div><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">Software design</p><h1>Software design — cross-project integration</h1><p class="lede">How the separate WatooM projects — homelab IaC, the LLM/agent platform, games, images and media — are wired into one system, with the real code at each seam.</p></header>
+<div class="content">
+<h2 id="what-this-document-is">What this document is</h2>
+<p>The WatooM projects are developed separately — <code>homelab/</code> (this IaC repository), <code>llm/</code>
+(WatooM Code, native agents and model serving), <code>games/</code>, <code>images/</code> and the media stack — but
+they run on <strong>one host, one GPU and one k3s cluster</strong>, and they share a small set of spines that
+make them a single system. This page documents those seams with the actual code at each one, so a
+reviewer can trace a request from an agent turn through to a GPU, a rendered frame, a Prometheus
+series or a published artifact. It complements the component-level pages (<a href="/guide/platform.html">Platform</a>,
+<a href="/guide/ai.html">AI platform</a>, <a href="/guide/watoom-code.html">WatooM Code</a>, <a href="/guide/monitoring.html">Monitoring</a>); here the subject
+is the <strong>integration</strong>, not any one component.</p>
+<p>Authority order is unchanged from the rest of the guide: live inspected state and acceptance
+evidence first, then the owning IaC/source and immutable pins, then this document. Paths are relative
+to <code>standardised_k3s_project/</code> unless noted.</p>
+<h2 id="the-shared-substrate">The shared substrate</h2>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-text">                         one Fedora host · GPU (20 GiB) · single-node k3s
+   ┌──────────────┬───────────────┬───────────────┬──────────────┬───────────────┐
+   │  homelab IaC │  LLM platform │     games     │    images    │     media     │
+   │  (this repo) │ watoom-code + │  Godot/Unreal │  Blender +    │  *arr, Jelly- │
+   │  ansible +   │ agents + llm- │  capture +    │  render +     │  fin, downloa-│
+   │  manifests   │ router + GPU  │  review       │  owned assets │  ders         │
+   └──────┬───────┴───────┬───────┴───────┬───────┴──────┬───────┴───────┬───────┘
+          │               │               │              │               │
+          │        ┌──────┴──────────────────────────────┴──────┐        │
+          │        │  A. OpenCode agents + native workers        │        │
+          │        │  B. coordinator-guard (evidence/receipts)   │        │
+          │        │  C. llm-router + GPU-ownership controller   │        │
+          │        └──────┬──────────────────────────────┬──────┘        │
+          │               │                              │               │
+   ┌──────┴───────────────┴──────────────────────────────┴───────────────┴──────┐
+   │  D. Glance observability spine (helper-api ← Prometheus · Loki · dcgm · mktxp)│
+   └──────────────────────────────────────────────────────────────────────────────┘
+</code></pre></div>
+<p>Five seams carry all the cross-project traffic: <strong>(A)</strong> agents dispatching bounded native workers,
+<strong>(B)</strong> the coordinator guard that turns worker output into trusted evidence, <strong>(C)</strong> the inference
+router and GPU-ownership controller that every model call shares, <strong>(D)</strong> the Glance observability
+spine, and <strong>(E)</strong> the change-control spine (graders + the publishing split). The rest of this page
+is one section per seam.</p>
+<h2 id="a-inference-routing-and-gpu-ownership">A · Inference routing and GPU ownership</h2>
+<p>Every model call from every project — an agent coding turn, a game asset's pixel review, an image
+caption — resolves through the <strong><code>watoom</code> OpenCode provider</strong> to one service, <code>llm-router</code>
+(<code>llm-router.llama-cpp.svc:8000</code>), which fronts many llama.cpp backends that cannot all be resident
+on the single 20 GiB GPU at once. The router arbitrates with <strong>leases</strong>: a request for a model that
+is not the current GPU owner triggers a switch, held for the duration of the call.</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-python"># ansible/roles/llm-model-lab/files/gpu-controller-router.py  (production router)
+canonical = MODEL_ALIASES.get(model_id, model_id)
+lease = request_account.call(&#x27;begin-inference&#x27;,
+                             deployment=MODELS[canonical][&#x27;deployment&#x27;],
+                             allow_switch=allow_request_switch)[&#x27;lease&#x27;]
+# ... proxy the OpenAI-compatible call to the owning llama-server ...
+finally:
+    if lease:
+        try: request_account.call(&#x27;end-inference&#x27;, lease=lease)
+        # Durable lease intentionally survives uncertain cancellation.
+</code></pre></div>
+<p>A model is usable for vision only when the OpenCode config marks it so; the capability is applied
+after config render by a narrow, schema-checked step, never inferred from a model name:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-python"># ansible/roles/watoom-code/files/enable-verified-model-capabilities.py
+models = document.get(&#x27;providers&#x27;, {}).get(&#x27;watoom&#x27;, {}).get(&#x27;models&#x27;, {})
+# accepts only input in ([&#x27;text&#x27;], [&#x27;text&#x27;,&#x27;image&#x27;]) and output [&#x27;text&#x27;]
+models[name][&#x27;capabilities&#x27;] = capabilities   # e.g. input: [&#x27;text&#x27;,&#x27;image&#x27;]
+</code></pre></div>
+<p><strong>Design consequence that bites in practice:</strong> because the GPU is shared, a vision request can
+return <code>model=null</code> <em>transiently</em> when a text coder owns the GPU at that instant — not a broken
+route. The backend itself must have its multimodal projector loaded on the GPU
+(<code>LLAMA_ARG_MMPROJ=/models/mmproj-BF16.gguf</code>, <code>LLAMA_ARG_MMPROJ_OFFLOAD=false</code> in
+<code>manifests/10-infrastructure/llm/llama-cpp-swift-qwen38.yml</code>), which fits within the 20 GiB cap and
+is the preferred full-residency placement. Operator reconciliation of a vision block is therefore a
+<em>verification</em> of this path, not a config rewrite.</p>
+<h2 id="b-the-coordinator-guard-worker-output-trusted-evidence">B · The coordinator guard: worker output → trusted evidence</h2>
+<p>Games, images and any visual work converge on one rule: <strong>a rendered frame is only accepted after a
+verified, independent, pixel-only review</strong> — geometry, filenames and author claims never establish
+visual acceptance. The policy lives in the agent contract and the enforcement in the guard.</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-text">watoom-builder ──capture-scene request──▶ native Godot/Unreal worker
+     │                                          │ renders ground_close.png (+sha256)
+     │   .opencode/worker-requests/&lt;id&gt;.json     ▼
+     │   status: CAPTURED_VISUAL_REVIEW_PENDING
+     ▼
+coordinator-guard intercepts the next model turn that carries the image
+     │   rewrites it into an ISOLATED pixel-only review (strict JSON schema)
+     ▼
+verified vision model (via seam A) ──▶ visual-review.json {verdict, observations, defects}
+     │   validated against the pending image&#x27;s exact sha256 + model identity
+     ▼
+reconcileCompletedVisualReview records it; a hard-stopped child needs a recoveryGrant nonce
+</code></pre></div>
+<p>The guard does not trust the agent to review its own work honestly; it <strong>constructs</strong> the review
+turn so scene history is excluded and the model can only emit a schema-shaped receipt:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-javascript">// ansible/roles/watoom-code/files/coordinator-guard/index.js  (isolatedReviewBody)
+const next = {...body, messages:[
+  {role:&quot;system&quot;, content:&quot;Independent pixel-only visual inspection. &quot;
+     +&quot;Task history and author claims are intentionally excluded.&quot;},
+  {role:&quot;user&quot;, content:[{type:&quot;text&quot;, text:instruction}, image]}],
+  temperature:0, parallel_tool_calls:false};
+next.response_format = {type:&quot;json_schema&quot;,
+  json_schema:{name:&quot;isolated_pixel_review&quot;, strict:true, schema}};  // from reviewSchema()
+</code></pre></div>
+<p><code>reviewSchema()</code> pins <code>image_path</code>, <code>image_sha256</code> and <code>model</code> to the exact pending values and makes
+PASS reachable only with a usable frame and zero defects — the guard <strong>never rewrites a verdict</strong> to
+turn a rejection into a pass. When a child reviewer is hard-stopped, only an explicit, single-use
+operator grant (bound to the parent/child session and the image hash) can release it:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-javascript">// recoveryGrant: a nonce-bound, one-time release for the exact blocked child
+return (options?.visualRecoveryGrants || []).find(g =&gt;
+  g.parentSessionID===sessionID &amp;&amp; g.childSessionID===state.child &amp;&amp;
+  g.image_sha256===v.sha256 &amp;&amp; /^[a-f0-9]{64}$/.test(g.nonce) &amp;&amp;
+  !(state.consumedRecoveryGrants || []).includes(g.nonce));
+</code></pre></div>
+<p>Accepted images flow into the images project for curation via <code>archiveViewedImage(... root= &quot;/data/ai/projects/images/review&quot;)</code>, which is the seam from <strong>games → images</strong>.</p>
+<h2 id="c-the-observability-spine">C · The observability spine</h2>
+<p>Glance is where every project becomes visible. The <code>helper-api</code> container composes read-only
+telemetry from the cluster and serves both the guide's live cards and the
+<a href="/command-center/">command center</a>. It talks to <strong>Prometheus</strong> (host, kube-state, dcgm GPU, mktxp
+router) and <strong>Loki</strong> (firewall and security logs); nothing in the page path writes to the cluster. The command center's <strong>Worker output</strong> section shows Bazzite and RIG jobs, MOSS Image jobs (with the generated image) and LLaMA-Mesh jobs shown as Meshy (with the GLB model). Previews can be collapsed per job or hidden for all jobs with the Previews button; hidden previews are not loaded, and the choice is remembered in the browser. A performance panel reports the router's last 24 hours by reasoning level: requests, latency p50/p95, time to first output, errors and 503s (held in router memory, cleared when the router restarts; token rates show no data). A root timer (<code>watoom-worker-status</code>, <code>tools/watoom-code/worker_status.py</code>, installed by <code>playbooks/worker-status.yml</code>) reads the job receipts, the RIG transfer jail and SSH journal, asks Bazzite one status question over the existing worker access, and reads MOSS Studio's JSON sidecars and matching PNGs from <code>/data/ai/projects/images/moss-image/output/</code>. It writes one sanitised snapshot (project folder names and clipped failure reasons only) that the helper-api mounts read-only and serves as <code>/cc/workers</code>. Meshy is not an active local producer and has no local job record source; the local Toolkit excludes its paid provider route. The LLM performance by reasoning effort panel uses the router's in-memory rolling 24-hour request observations for request counts, HTTP errors/503s, end-to-end latency percentiles, and streaming first-event latency. Prompt and generation token rates remain “no data” because the current router response path has no reliable per-request token timing source; observations reset when the router restarts. The snapshot includes per-source collector health, Bazzite's last success/failure streak, RIG quiet time, and structured failure stage/code fields. A <code>RUNNING</code> receipt is labelled <code>stale_running</code> in the display after its prepared deadline (default 1800 seconds) plus 180 seconds when evidence is missing or its declared unit is not active; the collector does not change receipt status or replay work. The lab accepts old RIG workers, while updated Unreal-lane workers optionally upload <code>uploads/ue-&lt;job&gt;/progress.json</code> with <code>FETCHING</code>, <code>RUNNING</code> or <code>UPLOADING</code>. The collector also writes atomic host textfile metrics for worker health, busy state, 24-hour outcomes, stuck-job age/deadline and collector freshness. Four staged Prometheus alerts cover a stale snapshot, sustained Bazzite outage, a job beyond twice its deadline and a high failure ratio. These source rules are not active until the monitoring manifest is reviewed and applied. Each recent job also lists what it produced: capture and texture images appear as thumbnails that open a viewable copy, and GLB models get a <strong>View 3D</strong> tile that opens <code>/command-center/viewer.html</code> in a new tab (orbit, zoom, animation picker, dimensions, download). For this the collector re-encodes up to 8 images per job (a 360 px thumbnail and a 1600 px copy) and copies up to 3 GLBs of at most 40 MB under <code>worker-status/media/&lt;job&gt;/</code>; only the newest 30 jobs keep media, files are read only from allowed project, report and artifact folders without following symlinks, and the helper serves them read-only (<code>/cc/workers/media/...</code>, validated names, image/video/GLB types only). Other output files such as <code>.dna</code> are listed by name and size. The viewer is Google's model-viewer 4.4.0, vendored under <code>config/glance/command-center/vendor/</code> with its license and hash (no CDN); it shows self-contained GLB only, so FBX or Blender files are not previewed.</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-python"># config/glance/helper.py — one source, many back ends, fail-soft
+def cc_metrics():
+    ...  # stats() + node_load1 + cc_gpu() + cc_wan()
+def cc_gpu():   return {&quot;util_pct&quot;: first_prom_value(&#x27;max(DCGM_FI_DEV_GPU_UTIL)&#x27;,0), ...}
+def cc_wan():   return {&quot;rx_bps&quot;: first_prom_value(
+                   &#x27;sum(rate(mktxp_interface_rx_byte_total{name=&quot;wan-uplink&quot;}[5m]))*8&#x27;, 0), ...}
+def cc_attacks():   # Loki: firewall drops -&gt; offline GeoIP -&gt; country counts for the world map
+    data = loki_range(&#x27;{job=&quot;router-firewall&quot;}&#x27;, limit=1500, hours=6)
+</code></pre></div>
+<p>Two delivery paths meet here and are worth distinguishing: the <strong>guide</strong> is served from a <code>hostPath</code>
+onto the operator checkout, so a committed doc change is live without a redeploy; <code>glance.yml</code> and
+<code>helper.py</code> are the <strong>source of truth</strong> rendered into configmaps by
+<code>scripts/render-glance-configmaps.py</code> and need an apply + pod restart (configmaps do not hot-reload).
+The command-center assets (and the vendored offline GeoIP table) ride their own <code>hostPath</code>, so page
+iterations are live on commit after the first apply.</p>
+<h2 id="d-the-change-control-spine">D · The change-control spine</h2>
+<p>Across all projects, &quot;it works&quot; is a grader's verdict, not a model's claim, and <em>where</em> a validated
+change lands depends on who made it.</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-python"># tools/watoom-code/verification_loop.py — deterministic, read-only, never touches the cluster
+def run(args, cwd=None):
+    proc = subprocess.run(args, stdout=PIPE, stderr=STDOUT, timeout=TIMEOUT)
+    return proc.returncode, proc.stdout.decode(...)   # the grader&#x27;s exit code is the verdict
+# graders: yamllint, ansible-lint, ansible-playbook --syntax-check, bash -n, py_compile, JSON parse
+</code></pre></div>
+<p>The <strong>publishing split</strong> is the integration contract between the autonomous agents and the owner:
+WatooM-Code/OpenCode models commit to their agent branch and integrate only into <code>dev</code> after
+validation — they never touch <code>main</code>. The owner's operator assistant publishes explicitly reviewed
+paths to <code>main</code>. The project-space picker (<code>watoom-spaces.json</code>, rendered by the <code>watoom-code</code> role
+from <code>watoom_code_project_spaces</code>) is what lets one agent GUI group work from every project directory
+without any project leaking into another's scope.</p>
+<h2 id="e-the-asset-build-pipeline-images-and-games">E · The asset build pipeline (images and games)</h2>
+<p>Heavy Blender/Unreal work is dispatched through the <code>watoom-fab-owned-assets</code> skill and its
+<code>request_pipeline</code>, and the genuinely heavy exports are offloaded to the Bazzite workstation via the
+skill's <code>remote.py</code> rather than run on the homelab host (which owns production inference). The output
+is a published artifact with a hash, which re-enters seam B for visual review before anything is
+accepted as a playable/usable asset — the same gate that games renders pass through. This keeps a
+single acceptance standard across projects: <strong>a hash in a filename is never a verified result.</strong></p>
+<h2 id="invariants-that-hold-across-every-seam">Invariants that hold across every seam</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Invariant</th>
+<th>Where it is enforced</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>One authoritative source per fact; docs never override live state</td>
+<td>authority order, this guide; the <a href="/guide/llm-api.html">source map</a></td>
+</tr>
+<tr>
+<td>The GPU has one owner at a time; vision weights stay resident when they fit</td>
+<td>seam A, <code>gpu-controller-router.py</code>, llama.cpp manifests</td>
+</tr>
+<tr>
+<td>Visual acceptance needs an independent, verified, pixel-only review</td>
+<td>seam B, <code>coordinator-guard/index.js</code></td>
+</tr>
+<tr>
+<td>Evidence is never fabricated; a blocked child needs an explicit grant</td>
+<td>seam B, <code>recoveryGrant</code>, <code>receiptMismatch</code></td>
+</tr>
+<tr>
+<td>Observability is read-only and fails soft, never 500s the page</td>
+<td>seam C, <code>config/glance/helper.py</code></td>
+</tr>
+<tr>
+<td>Agents publish to <code>dev</code>; the operator publishes reviewed paths to <code>main</code></td>
+<td>seam D, <code>verification_loop.py</code>, branch policy</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="f-source-automation-and-distribution">F · Source, automation and distribution</h2>
+<p>The platform has two source roots: the homelab IaC project and a separately pinned
+WatooM-Code application checkout. Application/UI/native-plugin interface changes belong
+to the latter; custom plugin payloads, agents, skills, host workers and installation
+contracts are maintained in the owning IaC roles and tools. The <a href="/guide/llm-extensions.html">custom extensions
+map</a> traces these layers and their privilege/lifecycle boundaries.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Input</th>
+<th>Output and owner</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Desired state</td>
+<td>Playbooks, role defaults/tasks/templates, manifests and source config</td>
+<td>Reviewed component change in the operator checkout</td>
+</tr>
+<tr>
+<td>Installed runtime</td>
+<td>Owning Ansible entrypoint plus independent image/source pins</td>
+<td>Host helper copies, services/timers, configuration and workloads</td>
+</tr>
+<tr>
+<td>Documentation</td>
+<td>Maintained guide source plus tracked automation inventory</td>
+<td>Glance HTML/search/downloads from the existing renderer</td>
+</tr>
+<tr>
+<td>Distribution</td>
+<td>Reviewed application source and filtered platform snapshot</td>
+<td>Separate private GitHub repository without source history or runtime data</td>
+</tr>
+</tbody>
+</table></div>
+<p>The <a href="/guide/server-catalogue.html">server automation reference</a> inventories all tracked scripts,
+playbooks, roles and tools, with per-file hashes and purpose evidence. It is generated
+by static source inspection, never by executing operational scripts. Defaults, task
+includes and helper source remain authoritative; catalogue inclusion does not establish
+live installation, current support or permission to execute a migration.</p>
+<p>The <a href="/guide/llm-project.html">project guide</a> documents requirements, configuration, installation
+boundaries, smoke checks, development and recovery. <a href="/guide/llm-publication.html">GitHub publication</a>
+defines source provenance, private exclusions, upstream attribution and distribution
+validation. Both application and platform source are required to reproduce custom
+behaviour; a private image digest alone is not reproducible source. Model weights,
+engine source, purchased assets, credentials, session state and recovery grants remain
+external. Source publication does not change production ownership or activate a release.</p>
+<h2 id="g-new-creative-and-reference-flows">G · New creative and reference flows</h2>
+<p>The Nov 3–7 additions keep planning, reference, execution and acceptance separate:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-text">user request
+  ├─ game-template / game-blueprint prompt ──▶ scoped project plan
+  ├─ place or coordinates ──▶ open DEM ──▶ terrain skill ──▶ Godot scene + EXR
+  ├─ uncertain API or engine error ──▶ language-knowledge lookup ──▶ inert source note
+  └─ owned MetaHuman ──▶ inspect/verify package ──▶ Bazzite geometry export
+                                                  └─▶ RIG GPU skin job (optional)
+                                                       └─▶ Godot import + separate visual review
+
+heavy worker request ──▶ Bazzite queue ──[unavailable 600s]──▶ agent may submit RIG job
+                       └─ local server route disabled by default (would reserve GPU)
+</code></pre></div>
+<p>The language-knowledge plugin inserts bounded data from versioned cards; the note is not executable authority. Heavy jobs carry stable request identity and return receipts. The Bazzite bridge reports RIG eligibility but cannot itself submit a RIG job. The outbound Unreal lane accepts only the fixed <code>probe</code> and <code>metahuman-skin</code> operations, verifies inputs/outputs and does not share the guarded Blender/Godot broker. This design keeps code selection, worker admission and asset acceptance at separate trust boundaries. Maintained sources are <code>tools/language-knowledge/</code>, <code>tools/watoom-code/</code>, <code>tools/rig-async-stage/unreal-lane/</code>, and the installed skill sources described in <a href="/guide/llm-extensions.html">Custom extensions</a>.</p>
+<p>The other new user-facing paths are project-local: game template selection copies a licensed pinned source without modifying the catalogue; the Fab advisor proposes a pipeline but per-asset approval still gates acquisition; native Unreal pack export produces a receipt but does not prove gameplay or visual correctness. The learning curator writes candidate lessons to its separate journalled store and remains opt-in. Glance's new command-center panels are read-only observations, not lifecycle controls.</p>
+<h2 id="environment-disaster-recovery">Environment disaster recovery</h2>
+<p>The <a href="/guide/disaster-recovery.html">disaster recovery guide</a> defines the environment/project/service-state scope, private capture, off-host verification, isolated restoration and guarded replacement-host phases. Git alone is not a full backup; readiness remains blocked until the required recovery evidence exists. Media and purchased libraries may be reacquired, while private state and authored projects need independent protection.</p>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/software-design.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

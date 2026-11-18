@@ -1,0 +1,637 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-workers-vector
+  namespace: platform-workers
+data:
+  vector.yaml: |
+    data_dir: /vector-data
+
+    sources:
+      llama_logs:
+        type: file
+        include:
+          - /host/var/log/pods/llama-cpp_llama-cpp-*/llama-server/*.log
+        # WATOOM_VECTOR_PERSISTENCE_V1_BEGIN
+        # Existing files resume from persistent checkpoints. When no
+        # checkpoint exists, start at EOF so historical llama logs are not
+        # replayed as current slot state.
+        read_from: end
+        ignore_checkpoints: false
+        oldest_first: true
+        glob_minimum_cooldown_ms: 1000
+
+    transforms:
+      parse_llama:
+        type: remap
+        inputs:
+          - llama_logs
+        source: |
+          path = parse_regex!(
+            .file,
+            r'^/host/var/log/pods/llama-cpp_llama-cpp-(?P<model>.+)-[a-z0-9]{8,10}-[a-z0-9]{5}_[^/]+/llama-server/[0-9]+\.log$'
+          )
+
+          .model = path.model
+
+          cri = parse_regex!(
+            .message,
+            r'^(?P<cri_timestamp>\S+)\s+(?P<stream>stdout|stderr)\s+[FP]\s+(?P<body>.*)$'
+          )
+
+          .body = cri.body
+          .event_type = "other"
+
+          # WATOOM_LLAMA_PER_SLOT_V1_BEGIN
+          #
+          # Native llama.cpp /metrics is aggregate. Parse the native log slot
+          # id so Grafana can distinguish slot 0 from slot 1.
+          #
+          slot_match, slot_err = parse_regex(
+            .body,
+            r'slot\s+\S+:\s+id\s+(?P<slot>[0-9]+)\s+\|\s+task\s+(?P<task>-?[0-9]+)\s+\|'
+          )
+
+          if slot_err == null {
+            .slot = slot_match.slot
+            .task = slot_match.task
+            .slot_event_unixtime = to_unix_timestamp(
+              parse_timestamp!(cri.cri_timestamp, format: "%+")
+            )
+          }
+
+          if exists(.slot) && contains(.body, "slot launch_slot_:") && contains(.body, "processing task") {
+            .slot_active = 1
+            .slot_prompt_tokens_current = 0
+            .slot_prompt_tokens_per_second_current = 0.0
+            .slot_generated_tokens_current = 0
+            .slot_generated_tokens_per_second_current = 0.0
+            .slot_generated_tokens_per_second_3s = 0.0
+            .event_type = "slot_runtime"
+
+          } else if exists(.slot) && contains(.body, "release:") && contains(.body, "stop processing") {
+            .slot_active = 0
+            .slot_prompt_tokens_current = 0
+            .slot_prompt_tokens_per_second_current = 0.0
+            .slot_generated_tokens_current = 0
+            .slot_generated_tokens_per_second_current = 0.0
+            .slot_generated_tokens_per_second_3s = 0.0
+            .event_type = "slot_runtime"
+
+          } else if exists(.slot) && contains(.body, "prompt processing, n_tokens =") {
+            m = parse_regex!(
+              .body,
+              r'prompt processing,\s+n_tokens =\s+(?P<tokens>[0-9]+),\s+progress =\s+(?P<progress>[0-9.]+),\s+t =\s+(?P<seconds>[0-9.]+) s /\s+(?P<tps>[0-9.]+) tokens per second'
+            )
+
+            .slot_active = 1
+            .slot_prompt_tokens_current = to_int!(m.tokens)
+            .slot_prompt_tokens_per_second_current = to_float!(m.tps)
+            .slot_generated_tokens_current = 0
+            .slot_generated_tokens_per_second_current = 0.0
+            .slot_generated_tokens_per_second_3s = 0.0
+            .event_type = "slot_runtime"
+
+          } else if exists(.slot) && contains(.body, "n_gen =") && contains(.body, "tg =") && contains(.body, "tg_3s =") {
+            m = parse_regex!(
+              .body,
+              r'n_gen =\s+(?P<tokens>[0-9]+),\s+tg =\s+(?P<tps>[0-9.]+) t/s,\s+tg_3s =\s+(?P<tps3>[0-9.]+) t/s'
+            )
+
+            .slot_active = 1
+            .slot_prompt_tokens_current = 0
+            .slot_prompt_tokens_per_second_current = 0.0
+            .slot_generated_tokens_current = to_int!(m.tokens)
+            .slot_generated_tokens_per_second_current = to_float!(m.tps)
+            .slot_generated_tokens_per_second_3s = to_float!(m.tps3)
+            .event_type = "slot_runtime"
+
+          } else if exists(.slot) && contains(.body, "draft acceptance =") {
+            m = parse_regex!(
+              .body,
+              r'draft acceptance =\s+(?P<ratio>[0-9.]+)\s+\(\s*(?P<accepted>[0-9]+) accepted /\s*(?P<generated>[0-9]+) generated\)'
+            )
+
+            .slot_last_mtp_acceptance_ratio = to_float!(m.ratio)
+            .slot_last_mtp_accepted_tokens = to_int!(m.accepted)
+            .slot_last_mtp_draft_tokens = to_int!(m.generated)
+            .event_type = "slot_draft"
+
+          } else if contains(.body, "prompt eval time =") {
+            m = parse_regex!(
+              .body,
+              r'prompt eval time =\s+(?P<ms>[0-9.]+) ms /\s+(?P<tokens>[0-9]+) tokens \(\s+(?P<mspt>[0-9.]+) ms per token,\s+(?P<tps>[0-9.]+) tokens per second\)'
+            )
+
+            .prompt_eval_milliseconds = to_float!(m.ms)
+            .prompt_tokens = to_int!(m.tokens)
+            .prompt_milliseconds_per_token = to_float!(m.mspt)
+            .prompt_tokens_per_second = to_float!(m.tps)
+
+            if exists(.slot) {
+              .slot_last_prompt_tokens = to_int!(m.tokens)
+              .slot_last_prompt_tokens_per_second = to_float!(m.tps)
+            }
+
+            .event_type = "prompt"
+
+          } else if contains(.body, "eval time =") {
+            m = parse_regex!(
+              .body,
+              r'eval time =\s+(?P<ms>[0-9.]+) ms /\s+(?P<tokens>[0-9]+) tokens \(\s+(?P<mspt>[0-9.]+) ms per token,\s+(?P<tps>[0-9.]+) tokens per second\)'
+            )
+
+            .eval_milliseconds = to_float!(m.ms)
+            .generated_tokens = to_int!(m.tokens)
+            .eval_milliseconds_per_token = to_float!(m.mspt)
+            .generated_tokens_per_second = to_float!(m.tps)
+
+            if exists(.slot) {
+              .slot_last_generated_tokens = to_int!(m.tokens)
+              .slot_last_generated_tokens_per_second = to_float!(m.tps)
+            }
+
+            .event_type = "eval"
+
+          } else if contains(.body, "total time =") {
+            m = parse_regex!(
+              .body,
+              r'total time =\s+(?P<ms>[0-9.]+) ms /\s+(?P<tokens>[0-9]+) tokens'
+            )
+
+            .total_milliseconds = to_float!(m.ms)
+            .total_tokens = to_int!(m.tokens)
+            .event_type = "total"
+
+          } else if contains(.body, "graphs reused =") {
+            m = parse_regex!(
+              .body,
+              r'graphs reused =\s+(?P<graphs>[0-9]+)'
+            )
+
+            .graphs_reused = to_int!(m.graphs)
+            .event_type = "graphs"
+
+          } else if contains(.body, "load_model: loading model") {
+            t = parse_regex!(
+              .body,
+              r'^(?P<minutes>[0-9]+)\.(?P<seconds>[0-9]+)\.(?P<millis>[0-9]+)\.(?P<micros>[0-9]+)'
+            )
+
+            .model_load_start_elapsed_seconds =
+              to_float!(t.minutes) * 60.0 +
+              to_float!(t.seconds) +
+              to_float!(t.millis) / 1000.0 +
+              to_float!(t.micros) / 1000000.0
+
+            .event_type = "load_start"
+
+          } else if contains(.body, "llama_server: model loaded") {
+            t = parse_regex!(
+              .body,
+              r'^(?P<minutes>[0-9]+)\.(?P<seconds>[0-9]+)\.(?P<millis>[0-9]+)\.(?P<micros>[0-9]+)'
+            )
+
+            .model_loaded_elapsed_seconds =
+              to_float!(t.minutes) * 60.0 +
+              to_float!(t.seconds) +
+              to_float!(t.millis) / 1000.0 +
+              to_float!(t.micros) / 1000000.0
+
+            .event_type = "load_done"
+          }
+
+      prompt_events:
+        type: filter
+        inputs:
+          - parse_llama
+        condition: '.event_type == "prompt"'
+
+      eval_events:
+        type: filter
+        inputs:
+          - parse_llama
+        condition: '.event_type == "eval"'
+
+      total_events:
+        type: filter
+        inputs:
+          - parse_llama
+        condition: '.event_type == "total"'
+
+      graph_events:
+        type: filter
+        inputs:
+          - parse_llama
+        condition: '.event_type == "graphs"'
+
+      load_start_events:
+        type: filter
+        inputs:
+          - parse_llama
+        condition: '.event_type == "load_start"'
+
+      load_done_events:
+        type: filter
+        inputs:
+          - parse_llama
+        condition: '.event_type == "load_done"'
+
+      slot_runtime_events:
+        type: filter
+        inputs:
+          - parse_llama
+        condition: '.event_type == "slot_runtime" && exists(.slot)'
+
+      slot_prompt_final_events:
+        type: filter
+        inputs:
+          - parse_llama
+        condition: '.event_type == "prompt" && exists(.slot)'
+
+      slot_eval_final_events:
+        type: filter
+        inputs:
+          - parse_llama
+        condition: '.event_type == "eval" && exists(.slot)'
+
+      slot_draft_events:
+        type: filter
+        inputs:
+          - parse_llama
+        condition: '.event_type == "slot_draft" && exists(.slot)'
+
+      slot_runtime_metrics:
+        type: log_to_metric
+        inputs:
+          - slot_runtime_events
+        metrics:
+          - type: gauge
+            field: slot_active
+            name: watoom_llama_slot_active
+            tags:
+              model: '{{model}}'
+              slot: '{{slot}}'
+
+          - type: gauge
+            field: slot_event_unixtime
+            name: watoom_llama_slot_last_event_unixtime
+            tags:
+              model: '{{model}}'
+              slot: '{{slot}}'
+
+          - type: gauge
+            field: slot_prompt_tokens_current
+            name: watoom_llama_slot_prompt_tokens_current
+            tags:
+              model: '{{model}}'
+              slot: '{{slot}}'
+
+          - type: gauge
+            field: slot_prompt_tokens_per_second_current
+            name: watoom_llama_slot_prompt_tokens_per_second_current
+            tags:
+              model: '{{model}}'
+              slot: '{{slot}}'
+
+          - type: gauge
+            field: slot_generated_tokens_current
+            name: watoom_llama_slot_generated_tokens_current
+            tags:
+              model: '{{model}}'
+              slot: '{{slot}}'
+
+          - type: gauge
+            field: slot_generated_tokens_per_second_current
+            name: watoom_llama_slot_generated_tokens_per_second_current
+            tags:
+              model: '{{model}}'
+              slot: '{{slot}}'
+
+          - type: gauge
+            field: slot_generated_tokens_per_second_3s
+            name: watoom_llama_slot_generated_tokens_per_second_3s
+            tags:
+              model: '{{model}}'
+              slot: '{{slot}}'
+
+      slot_prompt_final_metrics:
+        type: log_to_metric
+        inputs:
+          - slot_prompt_final_events
+        metrics:
+          - type: gauge
+            field: slot_last_prompt_tokens
+            name: watoom_llama_slot_last_prompt_tokens
+            tags:
+              model: '{{model}}'
+              slot: '{{slot}}'
+
+          - type: gauge
+            field: slot_last_prompt_tokens_per_second
+            name: watoom_llama_slot_last_prompt_tokens_per_second
+            tags:
+              model: '{{model}}'
+              slot: '{{slot}}'
+
+      slot_eval_final_metrics:
+        type: log_to_metric
+        inputs:
+          - slot_eval_final_events
+        metrics:
+          - type: gauge
+            field: slot_last_generated_tokens
+            name: watoom_llama_slot_last_generated_tokens
+            tags:
+              model: '{{model}}'
+              slot: '{{slot}}'
+
+          - type: gauge
+            field: slot_last_generated_tokens_per_second
+            name: watoom_llama_slot_last_generated_tokens_per_second
+            tags:
+              model: '{{model}}'
+              slot: '{{slot}}'
+
+      slot_draft_metrics:
+        type: log_to_metric
+        inputs:
+          - slot_draft_events
+        metrics:
+          - type: gauge
+            field: slot_last_mtp_acceptance_ratio
+            name: watoom_llama_slot_last_mtp_acceptance_ratio
+            tags:
+              model: '{{model}}'
+              slot: '{{slot}}'
+
+          - type: gauge
+            field: slot_last_mtp_accepted_tokens
+            name: watoom_llama_slot_last_mtp_accepted_tokens
+            tags:
+              model: '{{model}}'
+              slot: '{{slot}}'
+
+          - type: gauge
+            field: slot_last_mtp_draft_tokens
+            name: watoom_llama_slot_last_mtp_draft_tokens
+            tags:
+              model: '{{model}}'
+              slot: '{{slot}}'
+
+      prompt_metrics:
+        type: log_to_metric
+        inputs:
+          - prompt_events
+        metrics:
+          - type: gauge
+            field: prompt_eval_milliseconds
+            name: llama_perf_prompt_eval_milliseconds
+            tags:
+              model: '{{model}}'
+
+          - type: gauge
+            field: prompt_tokens
+            name: llama_perf_prompt_tokens
+            tags:
+              model: '{{model}}'
+
+          - type: gauge
+            field: prompt_milliseconds_per_token
+            name: llama_perf_prompt_milliseconds_per_token
+            tags:
+              model: '{{model}}'
+
+          - type: gauge
+            field: prompt_tokens_per_second
+            name: llama_perf_prompt_tokens_per_second
+            tags:
+              model: '{{model}}'
+
+      eval_metrics:
+        type: log_to_metric
+        inputs:
+          - eval_events
+        metrics:
+          - type: gauge
+            field: eval_milliseconds
+            name: llama_perf_eval_milliseconds
+            tags:
+              model: '{{model}}'
+
+          - type: gauge
+            field: generated_tokens
+            name: llama_perf_generated_tokens
+            tags:
+              model: '{{model}}'
+
+          - type: gauge
+            field: eval_milliseconds_per_token
+            name: llama_perf_eval_milliseconds_per_token
+            tags:
+              model: '{{model}}'
+
+          - type: gauge
+            field: generated_tokens_per_second
+            name: llama_perf_generated_tokens_per_second
+            tags:
+              model: '{{model}}'
+
+      total_metrics:
+        type: log_to_metric
+        inputs:
+          - total_events
+        metrics:
+          - type: gauge
+            field: total_milliseconds
+            name: llama_perf_total_milliseconds
+            tags:
+              model: '{{model}}'
+
+          - type: gauge
+            field: total_tokens
+            name: llama_perf_total_tokens
+            tags:
+              model: '{{model}}'
+
+      graph_metrics:
+        type: log_to_metric
+        inputs:
+          - graph_events
+        metrics:
+          - type: gauge
+            field: graphs_reused
+            name: llama_perf_graphs_reused
+            tags:
+              model: '{{model}}'
+
+      load_start_metrics:
+        type: log_to_metric
+        inputs:
+          - load_start_events
+        metrics:
+          - type: gauge
+            field: model_load_start_elapsed_seconds
+            name: llama_perf_model_load_start_elapsed_seconds
+            tags:
+              model: '{{model}}'
+
+      load_done_metrics:
+        type: log_to_metric
+        inputs:
+          - load_done_events
+        metrics:
+          - type: gauge
+            field: model_loaded_elapsed_seconds
+            name: llama_perf_model_loaded_elapsed_seconds
+            tags:
+              model: '{{model}}'
+
+    sinks:
+      prometheus:
+        type: prometheus_exporter
+        inputs:
+          - prompt_metrics
+          - eval_metrics
+          - total_metrics
+          - graph_metrics
+          - load_start_metrics
+          - load_done_metrics
+          - slot_runtime_metrics
+          - slot_prompt_final_metrics
+          - slot_eval_final_metrics
+          - slot_draft_metrics
+        address: 0.0.0.0:9599
+        # WATOOM_LLAMA_PER_SLOT_V1_END
+        flush_period_secs: 2592000
+        suppress_timestamp: true
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-workers
+  namespace: platform-workers
+  labels:
+    app: platform-workers
+    app.kubernetes.io/name: platform-workers
+    app.kubernetes.io/part-of: watoom-homelab
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: platform-workers
+  template:
+    metadata:
+      labels:
+        app: platform-workers
+        app.kubernetes.io/name: platform-workers
+        app.kubernetes.io/part-of: watoom-homelab
+    spec:
+      automountServiceAccountToken: false
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - mkdir -p /vector-data && chmod 0770 /vector-data
+        image: docker.io/timberio/vector@sha256:93761c26fa3a3793f5f200de0f4cfc6102b5e9803ab33b4830d0873ba8dbdc4f
+        imagePullPolicy: IfNotPresent
+        name: initialise-vector-data
+        resources: {}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsGroup: 0
+          runAsNonRoot: false
+          runAsUser: 0
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /vector-data
+          name: vector-data
+      containers:
+      - name: llama-perf
+        image: docker.io/timberio/vector@sha256:93761c26fa3a3793f5f200de0f4cfc6102b5e9803ab33b4830d0873ba8dbdc4f
+        imagePullPolicy: IfNotPresent
+        args:
+        - --config
+        - /etc/vector/vector.yaml
+        ports:
+        - name: llama-metrics
+          containerPort: 9599
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 20m
+            memory: 32Mi
+          limits:
+            cpu: 250m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65534
+          runAsGroup: 0
+          capabilities:
+            drop:
+            - ALL
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9599
+          initialDelaySeconds: 2
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9599
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        volumeMounts:
+        - name: vector-config
+          mountPath: /etc/vector/vector.yaml
+          subPath: vector.yaml
+          readOnly: true
+        - name: pod-logs
+          mountPath: /host/var/log/pods
+          readOnly: true
+        - name: vector-data
+          mountPath: /vector-data
+        - name: vector-tmp
+          mountPath: /tmp
+      volumes:
+      - name: vector-config
+        configMap:
+          name: platform-workers-vector
+      - name: pod-logs
+        hostPath:
+          path: /var/log/pods
+          type: Directory
+      - name: vector-data
+        hostPath:
+          path: /app/platform-workers/vector-data
+          type: DirectoryOrCreate
+      - name: vector-tmp
+        emptyDir: {}
+      - name: stats-logs
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-workers
+  namespace: platform-workers
+spec:
+  selector:
+    app: platform-workers
+  ports:
+  - name: llama-perf
+    port: 9599
+    targetPort: 9599
+    protocol: TCP

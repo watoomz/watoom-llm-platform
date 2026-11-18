@@ -1,0 +1,82 @@
+{
+  "namespace": "llama-cpp",
+  "primary": "llama-cpp-swift-qwen38-coder",
+  "mesh": "llama-cpp-llama-mesh",
+  "startup_timeout": 600,
+  "stop_timeout": 180,
+  "released_gpu_max_mib": 1500,
+  "state_root": "/data/ai/helper-scripts/state/gpu-controller",
+  "router_socket": "/data/ai/helper-scripts/state/gpu-controller-router/router.sock",
+  "worker_socket": "/data/ai/helper-scripts/state/gpu-controller-private/worker.sock",
+  "token_file": "/data/ai/helper-scripts/state/gpu-controller-credentials/token",
+  "ca_file": "/data/ai/helper-scripts/state/gpu-controller-credentials/ca.crt",
+  "kubeconfig": "/data/ai/helper-scripts/state/gpu-controller-credentials/kubeconfig",
+  "api_url": "https://127.0.0.1:6443",
+  "urls": {
+    "llama-cpp-swift-qwen38-coder": "http://10.243.62.171:8000",
+    "llama-cpp-llama-mesh": "http://10.243.160.201:8000",
+    "llama-cpp-qwen38-atomic": "http://10.243.73.24:8000",
+    "llama-cpp-qwen38-uncensored-mtp": "http://10.243.17.184:8000",
+    "llama-cpp-ornith-15-9b": "http://10.243.251.255:8000",
+    "llama-cpp-qwen35-defiant-fable-9b": "http://10.243.192.220:8000",
+    "llama-cpp-gemma-4-e4b": "http://10.243.63.207:8000",
+    "llama-cpp-tiel-coder-35b-a3b-mtp": "http://10.243.225.28:8000"
+  },
+  "aliases": {
+    "llama-cpp-swift-qwen38-coder": "swift-qwen38-coder",
+    "llama-cpp-llama-mesh": "llama-mesh-q8",
+    "llama-cpp-qwen38-atomic": "qwen38-27b-ad-iq4-xs",
+    "llama-cpp-qwen38-uncensored-mtp": "qwen38-uncensored-mtp-iq4-xs",
+    "llama-cpp-ornith-15-9b": "ornith-1.5-9b-q8",
+    "llama-cpp-qwen35-defiant-fable-9b": "qwen35-defiant-fable-9b-q8",
+    "llama-cpp-gemma-4-e4b": "gemma-4-e4b-q8-k-p",
+    "llama-cpp-tiel-coder-35b-a3b-mtp": "tiel-coder-35b-a3b-mtp"
+  },
+  "deployment_identity": {
+    "llama-cpp-swift-qwen38-coder": {
+      "uid": "39fea07a-a271-4899-b8c1-ccb7dfe6f740",
+      "spec_sha256": "cd898fc822bca6a5940615edc8dfc9d8080955bcac4deb3f3a48831f1ad28538"
+    },
+    "llama-cpp-llama-mesh": {
+      "uid": "db86c806-3d5b-403a-8f83-1ed6e0be6525",
+      "spec_sha256": "0b559ad10992458231eadc16d2ba1bd0427e7edba33300775c5118369e7738ee"
+    },
+    "llama-cpp-qwen38-atomic": {
+      "uid": "4afe5080-0de6-465f-9101-c4d5128ff9d9",
+      "spec_sha256": "8059d2e096f870d5a42f7974ed08ef6dd6472c564c482e9bb3b59a2bf795a5da"
+    },
+    "llama-cpp-qwen38-uncensored-mtp": {
+      "uid": "e2887c0b-ed64-41f8-8805-8552c8ea006d",
+      "spec_sha256": "c1f41e8d19760031888ff906b6e865c1e8c88cf05892fd9652317fe612d848d5"
+    },
+    "llama-cpp-ornith-15-9b": {
+      "uid": "6f030cec-6c65-4d37-9d05-547de4a52b5b",
+      "spec_sha256": "d6c85e4d64b20c301d53f54a6e85b24418edef4d6398273106e0093241e390cd"
+    },
+    "llama-cpp-qwen35-defiant-fable-9b": {
+      "uid": "66e134bd-07e2-445c-898f-eefe07188601",
+      "spec_sha256": "574a3f910717590b1b1cecfa83fb70646525e06f1447c129c013308a081bc6a9"
+    },
+    "llama-cpp-gemma-4-e4b": {
+      "uid": "25942184-e403-4a5f-9bbe-4795869f8027",
+      "spec_sha256": "c73aad7cf8963fc36b38b018fa65f8007e6986c23938c80f397c093bed13b3eb"
+    },
+    "llama-cpp-tiel-coder-35b-a3b-mtp": {
+      "uid": "8821eabd-e369-402c-86f6-0420b81c51d4",
+      "spec_sha256": "94662c140faac1f10889854f4daa0bf7bddba029ab8b891f02d9f3b3fa34a73e"
+    }
+  },
+  "cutover_required": true,
+  "models": {
+    "llama-cpp-swift-qwen38-coder": "swift-qwen38-coder",
+    "llama-cpp-qwen38-atomic": "qwen38-27b-ad-iq4-xs",
+    "llama-cpp-qwen38-uncensored-mtp": "qwen38-uncensored-mtp-iq4-xs",
+    "llama-cpp-ornith-15-9b": "ornith-1.5-9b-q8",
+    "llama-cpp-qwen35-defiant-fable-9b": "qwen35-defiant-fable-9b-q8",
+    "llama-cpp-gemma-4-e4b": "gemma-4-e4b-q8-k-p",
+    "llama-cpp-tiel-coder-35b-a3b-mtp": "tiel-coder-35b-a3b-mtp",
+    "llama-cpp-llama-mesh": "llama-mesh-q8"
+  },
+  "managed_auth_file": "/data/ai/private/model-manager/backend-key",
+  "observability_path": "/data/ai/helper-scripts/state/gpu-controller-observability/status.json"
+}

@@ -1,0 +1,16 @@
+{
+  "revision": "fa19d4f33561dc0d107c2a2f8943f1ca2e288109",
+  "file": {
+    "rfilename": "Cyber-Tiel-Coder-35B-A3B-MTP-UD-IQ4_XS.gguf",
+    "blobId": "7d5b223d90f91f1f52e271e5aaf5b413dde81f63",
+    "size": 18119934272,
+    "lfs": {
+      "sha256": "33492edef3744830f3f45d8b1e1be2444c54c82945c6875df055e9440a44b4fc",
+      "size": 18119934272,
+      "pointerSize": 136
+    }
+  },
+  "compatibility_alias": "tiel-coder-35b-a3b-mtp",
+  "cpu_moe_layers": 8,
+  "reason": "4-bit quality with headroom on 20GiB GPU; retain existing session route"
+}

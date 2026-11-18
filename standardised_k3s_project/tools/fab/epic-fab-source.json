@@ -1,0 +1,11 @@
+{
+  "base_commit": "d9721b9a178df161f42d876881ef0fe75444ec0b",
+  "patch": "epic-fab-json-sha1.patch",
+  "patch_sha256": "8710ecae44fd30e546de2299f3803175a84388cd31d3d720c4d1a102a7e5d929",
+  "source": "/data/ai/tools/epic-fab",
+  "test": "EPIC_FAB_SOURCE=/data/ai/tools/epic-fab bun tools/fab/test-manifest-hash.ts",
+  "root_cause": "Canonical JSON SHA1 bytes were incorrectly reversed; observed got is exact byte-reversal of expected. Binary parser already used canonical byte order. File verification remains mandatory.",
+  "original_file_sha256": "eefcd02f345abe815a74d44f8a1afe1c04ffa2e0fa74ca8cb71317f20489d7f4",
+  "patched_file_sha256": "63c285d766d8b21dbaf0142c612a838e87ef6ea5bc78efcac51063bed96a100d",
+  "installed_commit": "865c95108c84a4e3fd8ec86475bf783a86cd1e0d"
+}

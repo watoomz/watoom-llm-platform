@@ -1,0 +1,21 @@
+---
+- name: Create native SearXNG plugin directory
+  ansible.builtin.file:
+    path: "{{ watoom_code_root }}/config/plugins/searxng-search"
+    state: directory
+    owner: '1001'
+    group: '1001'
+    mode: '0750'
+- name: Install native SearXNG web search provider
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../opencode-agent/files/v2-native/plugins/searxng-search/"
+    dest: "{{ watoom_code_root }}/config/plugins/searxng-search/"
+    owner: '1001'
+    group: '1001'
+    mode: '0644'
+- name: Select existing SearXNG through native websearch without replacing user state
+  ansible.builtin.script:
+    cmd: enable-searxng.py {{ watoom_code_root }}/config/opencode.json
+    executable: /usr/bin/python3
+  register: watoom_code_searxng
+  changed_when: "'CHANGED' == watoom_code_searxng.stdout | trim"

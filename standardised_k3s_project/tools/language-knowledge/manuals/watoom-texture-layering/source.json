@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "product": "watoom-texture-layering",
+  "version": "snapshot-2026-11-16",
+  "language": "internal operational guidance",
+  "license": "proprietary",
+  "trust_tier": "internal_doc",
+  "note": "First-party WatooM guidance for layered texturing, copied byte-for-byte from ansible/roles/watoom-code/files/skills/watoom-texture-layering/ (SKILL.md, references/layering-rules.md, references/unreal-scene.md and references/asset-placement.md), refreshed 2026-11-16. The scripts behind it are covered by unit tests on the lab (mask maths, Blender 5.2 material build and render, Godot 4.7.2 shader parse); GPU look, Terrain3D control-map import and Unreal landscape material, creek carve, water ribbons and foliage scatter were verified on UE 5.8.4 on 2026-11-14 (references/unreal-scene.md).",
+  "pages": [
+    {
+      "file": "SKILL.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-texture-layering/SKILL.md"
+    },
+    {
+      "file": "layering-rules.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-texture-layering/references/layering-rules.md"
+    },
+    {
+      "file": "unreal-scene.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-texture-layering/references/unreal-scene.md"
+    },
+    {
+      "file": "asset-placement.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-texture-layering/references/asset-placement.md"
+    }
+  ]
+}

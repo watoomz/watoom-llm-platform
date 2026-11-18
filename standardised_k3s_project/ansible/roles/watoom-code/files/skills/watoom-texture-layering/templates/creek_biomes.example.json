@@ -1,0 +1,162 @@
+{
+ "_comment": "Merge into the scatter recipe as the creek_biomes key (unreal_scene_scatter.py). Meshes are the plant packs in the WatooM_UEMCP_Test project (2026-11-16); scales and per_site are first guesses: place one phase, capture at eye level, then tune. Megaplant_Library bamboo/beach rose are branch pieces, not whole plants: do not scatter them as foliage.",
+ "creek_biomes": {
+  "section_m": 150,
+  "band_px": 8,
+  "gap_px": 1,
+  "count": 600,
+  "sep_px": 2,
+  "radius_cm": 800,
+  "mix": 0.2,
+  "biomes": [
+   {
+    "name": "palm_fern",
+    "meshes": [
+     "/Game/PN_tropicalGroundPlants/Meshes/tropicalPlant_01_01",
+     "/Game/PN_tropicalGroundPlants/Meshes/tropicalPlant_01_02",
+     "/Game/PN_tropicalGroundPlants/Meshes/tropicalPlant_01_03",
+     "/Game/PN_tropicalGroundPlants/Meshes/tropicalPlant_01_04",
+     "/Game/PN_tropicalGroundPlants/Meshes/tropicalPlant_02_01",
+     "/Game/PN_tropicalGroundPlants/Meshes/tropicalPlant_02_02",
+     "/Game/PN_tropicalGroundPlants/Meshes/tropicalPlant_02_03",
+     "/Game/PN_tropicalGroundPlants/Meshes/tropicalPlant_02_04",
+     "/Game/PN_tropicalGroundPlants/Meshes/tropicalPlant_03_01",
+     "/Game/PN_tropicalGroundPlants/Meshes/tropicalPlant_03_02",
+     "/Game/PN_tropicalGroundPlants/Meshes/tropicalPlant_03_03",
+     "/Game/PN_tropicalGroundPlants/Meshes/tropicalPlant_03_04",
+     "/Game/PN_tropicalGroundPlants/Meshes/tropicalPlant_04_01",
+     "/Game/PN_tropicalGroundPlants/Meshes/tropicalPlant_04_02",
+     "/Game/PN_tropicalGroundPlants/Meshes/tropicalPlant_04_03",
+     "/Game/PN_tropicalGroundPlants/Meshes/tropicalPlant_04_04",
+     "/Game/PN_tropicalGroundPlants/Meshes/tropicalPlant_05_01",
+     "/Game/PN_tropicalGroundPlants/Meshes/tropicalPlant_05_02",
+     "/Game/PN_tropicalGroundPlants/Meshes/tropicalPlant_05_03",
+     "/Game/PN_tropicalGroundPlants/Meshes/tropicalPlant_05_04"
+    ],
+    "scale": [
+     0.7,
+     1.2
+    ],
+    "per_site": 5
+   },
+   {
+    "name": "reedy",
+    "meshes": [
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Cyperus_eragrostis_01_01",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Cyperus_eragrostis_01_02",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Cyperus_eragrostis_01_03",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Cyperus_eragrostis_01_04",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Cyperus_eragrostis_01_05",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Cyperus_eragrostis_01_06"
+    ],
+    "scale": [
+     0.8,
+     1.4
+    ],
+    "per_site": 8
+   },
+   {
+    "name": "banana",
+    "meshes": [
+     "/Game/PN_Banana/Meshes/plants/banana_01_01",
+     "/Game/PN_Banana/Meshes/plants/banana_01_02",
+     "/Game/PN_Banana/Meshes/plants/banana_01_03",
+     "/Game/PN_Banana/Meshes/plants/banana_01_04",
+     "/Game/PN_Banana/Meshes/plants/banana_01_05",
+     "/Game/PN_Banana/Meshes/plants/banana_01_06",
+     "/Game/PN_Banana/Meshes/plants/banana_01_07",
+     "/Game/PN_Banana/Meshes/plants/banana_02_01",
+     "/Game/PN_Banana/Meshes/plants/banana_02_02",
+     "/Game/PN_Banana/Meshes/plants/banana_02_03",
+     "/Game/PN_Banana/Meshes/plants/banana_02_04",
+     "/Game/PN_Banana/Meshes/plants/banana_02_05",
+     "/Game/PN_Banana/Meshes/plants/banana_02_06",
+     "/Game/PN_Banana/Meshes/plants/banana_02_07"
+    ],
+    "scale": [
+     0.7,
+     1.1
+    ],
+    "per_site": 2
+   },
+   {
+    "name": "pandanus",
+    "meshes": [
+     "/Game/PN_Pandanus/Meshes/treeplant/treeplant_01",
+     "/Game/PN_Pandanus/Meshes/treeplant/treeplant_02",
+     "/Game/PN_Pandanus/Meshes/treeplant/treeplant_03",
+     "/Game/PN_Pandanus/Meshes/treeplant/treeplant_04",
+     "/Game/PN_Pandanus/Meshes/treeplant/treeplant_05",
+     "/Game/PN_Pandanus/Meshes/treeplant/treeplant_06",
+     "/Game/PN_Pandanus/Meshes/treeplant/treeplant_07",
+     "/Game/PN_Pandanus/Meshes/treeplant/treeplant_08",
+     "/Game/PN_Pandanus/Meshes/pandanus/big/bigplant_01",
+     "/Game/PN_Pandanus/Meshes/pandanus/big/bigplant_02",
+     "/Game/PN_Pandanus/Meshes/pandanus/big/bigplant_03",
+     "/Game/PN_Pandanus/Meshes/pandanus/big/bigplant_04",
+     "/Game/PN_Pandanus/Meshes/pandanus/big/bigplant_05",
+     "/Game/PN_Pandanus/Meshes/pandanus/big/bigplant_06",
+     "/Game/PN_Pandanus/Meshes/pandanus/big/bigplant_07",
+     "/Game/PN_Pandanus/Meshes/pandanus/small/groundPlant_01",
+     "/Game/PN_Pandanus/Meshes/pandanus/small/groundPlant_02",
+     "/Game/PN_Pandanus/Meshes/pandanus/small/groundPlant_03"
+    ],
+    "scale": [
+     0.7,
+     1.2
+    ],
+    "per_site": 2
+   },
+   {
+    "name": "dry_rocky",
+    "meshes": [
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Agave_sisalana_01_01",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Agave_sisalana_01_02",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Agave_sisalana_01_03",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Agave_sisalana_01_04",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Agave_sisalana_01_05",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Agave_sisalana_01_06",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Cistus_albidus_01_01",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Cistus_albidus_01_02",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Cistus_albidus_01_03",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Cistus_albidus_01_04",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Cistus_albidus_01_05",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Cistus_albidus_01_06",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Ammophila_arenaria_01_01",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Ammophila_arenaria_01_02",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Ammophila_arenaria_01_03",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Ammophila_arenaria_01_04",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Ammophila_arenaria_01_05",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Ammophila_arenaria_01_06"
+    ],
+    "scale": [
+     0.6,
+     1.1
+    ],
+    "per_site": 4
+   },
+   {
+    "name": "riparian",
+    "meshes": [
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Alnus_cremastogyne_01_01",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Alnus_cremastogyne_01_02",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Alnus_cremastogyne_01_03",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Alnus_cremastogyne_01_04",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Alnus_cremastogyne_01_05",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Alnus_cremastogyne_01_06",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Abelia_grandiflora_01_01",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Abelia_grandiflora_01_02",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Abelia_grandiflora_01_03",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Abelia_grandiflora_01_04",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Abelia_grandiflora_01_05",
+     "/Game/Maxtree/MT_PM_V060/SM_MT_PM_V60_Abelia_grandiflora_01_06"
+    ],
+    "scale": [
+     0.8,
+     1.3
+    ],
+    "per_site": 1
+   }
+  ]
+ }
+}

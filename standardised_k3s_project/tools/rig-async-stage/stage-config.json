@@ -1,0 +1,24 @@
+{
+  "enabled": true,
+  "stage_only": true,
+  "application": {
+    "namespace": "watoom-code-rig-jobs",
+    "name": "watoom-code",
+    "database": "/data/ai/watoom-code-rig-jobs/application.sqlite"
+  },
+  "projects": [
+    "/data/ai/projects/games/heroquest-quest1-poc",
+    "/data/ai/projects/games/magpie-flight-godot-candidate",
+    "/data/ai/projects/games/moonstone-remake",
+    "/data/ai/projects/games/rig-async-qualification-20261026",
+    "/data/ai/projects/games/zombie-animal-survival"
+  ],
+  "activation_ms": 1792994711685,
+  "operations": [
+    "import",
+    "regression",
+    "capture",
+    "capture-p7",
+    "capture-scene"
+  ]
+}

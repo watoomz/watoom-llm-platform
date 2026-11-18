@@ -1,0 +1,10 @@
+---
+- name: Maintain only the production image MCP integration
+  hosts: homelab
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Install scoped image credentials and merge its MCP entry
+      ansible.builtin.import_role:
+        name: watoom-code
+        tasks_from: image-mcp

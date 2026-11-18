@@ -1,0 +1,8 @@
+---
+- name: "Firewall service | Enable in configured zone"
+  ansible.posix.firewalld:
+    zone: "{{ homelab_firewall_zone }}"
+    service: "{{ firewall_service_target }}"
+    permanent: true
+    immediate: true
+    state: enabled

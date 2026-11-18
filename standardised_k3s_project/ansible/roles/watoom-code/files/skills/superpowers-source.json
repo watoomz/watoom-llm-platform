@@ -1,0 +1,25 @@
+{
+  "upstream": "https://github.com/obra/superpowers",
+  "commit": "22f0b46",
+  "commit_date": "2026-11-03",
+  "license": "MIT (Jesse Vincent, 2025); see superpowers-LICENSE",
+  "ported": [
+    "verification-before-completion",
+    "systematic-debugging",
+    "test-driven-development",
+    "writing-plans",
+    "brainstorming",
+    "requesting-code-review",
+    "receiving-code-review"
+  ],
+  "not_ported": {
+    "subagent-driven-development, dispatching-parallel-agents, executing-plans": "need subagents/delegation, unavailable to WatooM Code",
+    "using-git-worktrees, finishing-a-development-branch": "conflict with the dev-branch/main git guard and operator-only publishing",
+    "using-superpowers, diagnosing-superpowers, writing-skills": "harness bootstrap and skill authoring for other agents"
+  },
+  "adaptation": "Condensed and rewritten for WatooM Code: no shell, no delegation; commands the model cannot run go to the operator (operator-commands skill). No network access, telemetry or runtime install.",
+  "adaptation_notes": {
+    "brainstorming": "browser visual companion and subagent builder-check dropped; design saved under .opencode/work; pipeline prompts with a reviewed spec are not interrupted",
+    "requesting-code-review": "rewritten as self-review (no subagent, no git); read-only diff commands handed to the operator"
+  }
+}

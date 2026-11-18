@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily open-ticket digest to Discord
+
+[Timer]
+OnCalendar=*-*-* 08:30:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,111 @@
+---
+- name: Maintain worker data group
+  ansible.builtin.group:
+    name: "{{ workstation_transfer_group }}"
+- name: Maintain jailed transfer-only account
+  ansible.builtin.user:
+    name: "{{ workstation_transfer_user }}"
+    home: /
+    create_home: false
+    shell: /usr/sbin/nologin
+    password_lock: true
+    groups: "{{ workstation_transfer_group }}"
+    append: true
+- name: Allow the control account to verify returned artifacts
+  ansible.builtin.user:
+    name: "{{ workstation_stage_user }}"
+    groups: "{{ workstation_transfer_group }}"
+    append: true
+- name: Maintain data-volume transfer root
+  ansible.builtin.file:
+    path: "{{ workstation_transfer_root }}"
+    state: directory
+    owner: root
+    group: "{{ workstation_transfer_group }}"
+    mode: '0750'
+- name: Maintain read-only input snapshots
+  ansible.builtin.file:
+    path: "{{ workstation_transfer_root }}/inputs"
+    state: directory
+    owner: root
+    group: "{{ workstation_transfer_group }}"
+    mode: '0750'
+- name: Maintain group-verifiable uploads
+  ansible.builtin.file:
+    path: "{{ workstation_transfer_root }}/uploads"
+    state: directory
+    owner: "{{ workstation_transfer_user }}"
+    group: "{{ workstation_transfer_group }}"
+    mode: '2770'
+- name: Remove inherited ACLs from the new private transfer directories
+  ansible.builtin.command:
+    argv: [setfacl, -b, -k, "{{ item }}"]
+  loop:
+    - "{{ workstation_transfer_root }}"
+    - "{{ workstation_transfer_root }}/inputs"
+    - "{{ workstation_transfer_root }}/uploads"
+  changed_when: false
+- name: Enforce private transfer directory permissions after ACL normalization
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: "{{ item.owner }}"
+    group: "{{ workstation_transfer_group }}"
+    mode: "{{ item.mode }}"
+    state: directory
+  loop:
+    - {path: "{{ workstation_transfer_root }}", owner: root, mode: '0750'}
+    - {path: "{{ workstation_transfer_root }}/inputs", owner: root, mode: '0750'}
+    - {path: "{{ workstation_transfer_root }}/uploads", owner: "{{ workstation_transfer_user }}", mode: '2770'}
+- name: Maintain root-owned SFTP jail
+  ansible.builtin.file:
+    path: "{{ workstation_transfer_jail }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+- name: Bind only worker payloads into the jail
+  ansible.posix.mount:
+    path: "{{ workstation_transfer_jail }}/payloads"
+    src: "{{ workstation_transfer_root }}"
+    fstype: none
+    opts: bind,nodev,nosuid,noexec
+    state: mounted
+- name: Label only the SFTP payload tree for SSH access
+  community.general.sefcontext:
+    target: "{{ workstation_transfer_root }}(/.*)?"
+    setype: ssh_home_t
+    state: present
+- name: Apply the narrow SFTP payload labels
+  ansible.builtin.command:
+    argv: [restorecon, -RF, "{{ workstation_transfer_root }}"]
+  changed_when: false
+- name: Maintain root-owned public-key directory
+  ansible.builtin.file:
+    path: /etc/ssh/authorized_keys
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+- name: Install only the dedicated transfer public key
+  ansible.builtin.copy:
+    content: "restrict {{ lookup('ansible.builtin.file', playbook_dir + '/../../tools/rig-async-stage/worker-source/rig-transfer.pub') | trim }}\n"
+    dest: "/etc/ssh/authorized_keys/{{ workstation_transfer_user }}"
+    owner: root
+    group: root
+    mode: '0644'
+- name: Maintain the narrow per-user SFTP configuration
+  ansible.builtin.template:
+    src: sftp.conf.j2
+    dest: /etc/ssh/sshd_config.d/60-watoom-render-transfer.conf
+    owner: root
+    group: root
+    mode: '0600'
+  register: workstation_sftp_config
+- name: Validate SSH configuration before reload
+  ansible.builtin.command: /usr/sbin/sshd -t
+  changed_when: false
+- name: Reload SSH configuration without disconnecting sessions
+  ansible.builtin.systemd_service:
+    name: sshd
+    state: reloaded
+  when: workstation_sftp_config.changed

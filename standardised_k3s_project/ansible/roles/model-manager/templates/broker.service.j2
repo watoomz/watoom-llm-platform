@@ -1,0 +1,15 @@
+[Unit]
+Description=WatooM model manager scoped lifecycle broker
+After=watoom-gpu-controller.service
+[Service]
+User=root
+ExecStart=/usr/bin/python3 /app/model-manager/releases/{{ model_manager_release }}/broker_service.py --config {{ model_manager_broker_root }}/config.json
+Restart=on-failure
+RestartSec=10
+MemoryMax=512M
+CPUQuota=100%
+NoNewPrivileges=yes
+PrivateTmp=yes
+UMask=0027
+[Install]
+WantedBy=multi-user.target

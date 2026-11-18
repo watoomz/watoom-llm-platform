@@ -1,0 +1,191 @@
+{
+ "_comment": "T-0023 creatures around the beaches and creeks of L_ZAS_Terrain. Import first: tools/rig-ue-mcp/rig_import_fbx_character.py per creature (see references/combat.md 'Creatures'); bodies from ue_mesh_body.py into bodies.creatures.zas.json. Spots: shore pixels 1-4 m above sea level next to water in the live heights, >= 400 m apart. Creatures roam (Wander, never into ground below the sea surface 4849 cm) and can be killed (WatooMCombatCharacter, team 3). Spinosaurus: the owned theme-park statue (static FBX, no rig/clips; imported with asset.import_static_mesh from Saved/Import/Spinosaurus) x8 (~15 m) on the flat north shore of Lake_1 (the big lake, 4.7 ha), long side along the shore. T-Rex: same pack type, static too; a ROAMING T-Rex needs a rigged model (not owned locally).",
+ "content_root": "/Game/ZAS/Creatures",
+ "anim_sets": {
+  "SwampMonster": {
+   "skeleton": "/Game/ZAS/Creatures/Animated/SwampMonster/SK_SwampMonster_Skeleton",
+   "speed": 200,
+   "default_stance": "Walk",
+   "air": "/Game/ZAS/Creatures/Animated/SwampMonster/A_SwampMonster_Walk",
+   "stances": {
+    "Walk": {
+     "idle": "/Game/ZAS/Creatures/Animated/SwampMonster/A_SwampMonster_Walk",
+     "fwd": "/Game/ZAS/Creatures/Animated/SwampMonster/A_SwampMonster_Walk"
+    }
+   }
+  },
+  "SnakeWarrior": {
+   "skeleton": "/Game/ZAS/Creatures/Animated/SnakeWarrior/SK_SnakeWarrior_Skeleton",
+   "speed": 200,
+   "default_stance": "Walk",
+   "air": "/Game/ZAS/Creatures/Animated/SnakeWarrior/A_SnakeWarrior_Walk",
+   "stances": {
+    "Walk": {
+     "idle": "/Game/ZAS/Creatures/Animated/SnakeWarrior/A_SnakeWarrior_Walk",
+     "fwd": "/Game/ZAS/Creatures/Animated/SnakeWarrior/A_SnakeWarrior_Walk"
+    }
+   }
+  },
+  "AbyssalLeviathan": {
+   "skeleton": "/Game/ZAS/Creatures/Animated/AbyssalLeviathan/SK_AbyssalLeviathan_Skeleton",
+   "speed": 200,
+   "default_stance": "Walk",
+   "air": "/Game/ZAS/Creatures/Animated/AbyssalLeviathan/A_AbyssalLeviathan_Walk",
+   "stances": {
+    "Walk": {
+     "idle": "/Game/ZAS/Creatures/Animated/AbyssalLeviathan/A_AbyssalLeviathan_Walk",
+     "fwd": "/Game/ZAS/Creatures/Animated/AbyssalLeviathan/A_AbyssalLeviathan_Walk"
+    }
+   }
+  }
+ },
+ "characters": {
+  "BP_ZAS_SwampMonster": {
+   "defaults": {
+    "TeamId": 3,
+    "Mesh.SkeletalMeshAsset": "/Game/ZAS/Creatures/Animated/SwampMonster/SK_SwampMonster",
+    "CharacterMovement.MaxWalkSpeed": 200,
+    "Wander.bEnabled": true,
+    "Wander.Radius": 3000,
+    "Wander.SpeedScale": 1.0,
+    "Wander.WaitMin": 0,
+    "Wander.WaitMax": 0,
+    "Wander.MinGroundZ": 4849.26
+   },
+   "anim_set": "SwampMonster"
+  },
+  "BP_ZAS_SnakeWarrior": {
+   "defaults": {
+    "TeamId": 3,
+    "Mesh.SkeletalMeshAsset": "/Game/ZAS/Creatures/Animated/SnakeWarrior/SK_SnakeWarrior",
+    "CharacterMovement.MaxWalkSpeed": 200,
+    "Wander.bEnabled": true,
+    "Wander.Radius": 3000,
+    "Wander.SpeedScale": 1.0,
+    "Wander.WaitMin": 0,
+    "Wander.WaitMax": 0,
+    "Wander.MinGroundZ": 4849.26
+   },
+   "anim_set": "SnakeWarrior"
+  },
+  "BP_ZAS_AbyssalLeviathan": {
+   "defaults": {
+    "TeamId": 3,
+    "Mesh.SkeletalMeshAsset": "/Game/ZAS/Creatures/Animated/AbyssalLeviathan/SK_AbyssalLeviathan",
+    "CharacterMovement.MaxWalkSpeed": 200,
+    "Wander.bEnabled": true,
+    "Wander.Radius": 3000,
+    "Wander.SpeedScale": 1.0,
+    "Wander.WaitMin": 0,
+    "Wander.WaitMax": 0,
+    "Wander.MinGroundZ": 4849.26
+   },
+   "anim_set": "AbyssalLeviathan"
+  }
+ },
+ "bodies_file": "bodies.creatures.zas.json",
+ "map": {
+  "path": "/Game/Maps/L_ZAS_Terrain"
+ },
+ "place": [
+  {
+   "character": "BP_ZAS_SwampMonster",
+   "label": "ZAS_SwampMonster_1",
+   "location": [
+    254762,
+    255556,
+    5407
+   ],
+   "rotation": [
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "character": "BP_ZAS_SwampMonster",
+   "label": "ZAS_SwampMonster_2",
+   "location": [
+    135714,
+    265079,
+    5190
+   ],
+   "rotation": [
+    0,
+    137,
+    0
+   ]
+  },
+  {
+   "character": "BP_ZAS_SnakeWarrior",
+   "label": "ZAS_SnakeWarrior_1",
+   "location": [
+    221429,
+    331746,
+    5283
+   ],
+   "rotation": [
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "character": "BP_ZAS_SnakeWarrior",
+   "label": "ZAS_SnakeWarrior_2",
+   "location": [
+    264286,
+    339683,
+    5233
+   ],
+   "rotation": [
+    0,
+    137,
+    0
+   ]
+  },
+  {
+   "character": "BP_ZAS_AbyssalLeviathan",
+   "label": "ZAS_AbyssalLeviathan_1",
+   "location": [
+    252381,
+    91270,
+    5176
+   ],
+   "rotation": [
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "character": "BP_ZAS_AbyssalLeviathan",
+   "label": "ZAS_AbyssalLeviathan_2",
+   "location": [
+    114286,
+    85714,
+    5388
+   ],
+   "rotation": [
+    0,
+    137,
+    0
+   ]
+  },
+  {
+   "static_mesh": "/Game/ZAS/Creatures/Statues/SM_Spinosaurus_Statue",
+   "label": "ZAS_Spinosaurus_Statue",
+   "location": [
+    174959,
+    181633,
+    8940
+   ],
+   "rotation": [
+    0,
+    -79,
+    0
+   ],
+   "scale": 8
+  }
+ ]
+}

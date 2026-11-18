@@ -1,0 +1,84 @@
+# Egress isolation for the WatooM-Code agent pod (audit S6).
+# The agent runs model-directed shell commands, so it may reach only the in-cluster
+# services its configuration names (opencode.json, AGENTMEMORY_URL) plus DNS and the
+# public internet. LAN, router, node and every other cluster service are denied.
+# Destinations were taken from the stage config and a conntrack sample of live flows.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: watoom-code-egress
+  namespace: watoom-code
+spec:
+  podSelector:
+    matchLabels:
+      app: watoom-code
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - {protocol: UDP, port: 53}
+        - {protocol: TCP, port: 53}
+    - to:
+        - podSelector:
+            matchLabels:
+              app: agentmemory
+      ports:
+        - {protocol: TCP, port: 3111}
+    - to:
+        - podSelector:
+            matchLabels:
+              app: watoom-toolkit
+      ports:
+        - {protocol: TCP, port: 8879}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: llama-cpp
+          podSelector:
+            matchLabels:
+              app: llm-router
+      ports:
+        - {protocol: TCP, port: 8000}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: glance
+          podSelector:
+            matchLabels:
+              app: model-manager
+      ports:
+        - {protocol: TCP, port: 8787}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kali-agent
+          podSelector:
+            matchLabels:
+              app: watoom-kali-workbench-mcp
+      ports:
+        - {protocol: TCP, port: 8088}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: searxng
+          podSelector:
+            matchLabels:
+              app: searxng
+      ports:
+        - {protocol: TCP, port: 8080}
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 100.64.0.0/10
+              - 169.254.0.0/16

@@ -1,0 +1,203 @@
+{
+  "schema": 1,
+  "product": "rhel-admin",
+  "version": "rhel-8-9-10 via linux-system-roles",
+  "language": "yaml",
+  "license": "per linux-system-roles repository (GPL-3.0/MIT, see each role)",
+  "trust_tier": "vendor_doc",
+  "note": "Raw README bytes of the linux-system-roles (Red Hat's RHEL 8/9/10 automation roles) from each repository's main branch, fetched 2026-11-10; commit SHAs recorded in `commits`. Each README's own supported-distribution and 'RHEL 8/9/10' statements are carried as version-note cards. Red Hat's RHEL product docs (docs.redhat.com) return HTTP 403 to automated clients and were not used, so this pack does NOT contain the full RHEL admin guides; it covers what these roles manage (firewall, SELinux, network, storage, timesync, ssh, logging, kdump, crypto-policies, podman, cockpit, systemd, subscription, clustering). Verify version-specific behaviour on the target host.",
+  "commits": {
+    "firewall": "4a74f2158b60b42dfb934ee1ba800396c1708f47",
+    "selinux": "4e8b4708c4a62d4e5220d5af987643bb8fefb6ba",
+    "network": "cd35767b6b5bd9a5254413914f171ca234903133",
+    "storage": "919b19330f83b385bd67430d0e288e3e59962857",
+    "timesync": "5523983031bce775dda55d0f4633a29f05175541",
+    "ssh": "a3ea0149a1a6701f6318517c847f187008d347b2",
+    "sshd": "?",
+    "logging": "4e27ab6038ed9f526dce52c47c06801faddcbc1f",
+    "kdump": "3346e59c0f54b8b44bd60e367ba67b47c1c7d72e",
+    "crypto_policies": "36146a6431b26c09d73e6a148f2602bbeb6a63a4",
+    "podman": "c2d4a2c3d6781c3c539f2a2b26949a89eca0c5cf",
+    "cockpit": "abf5171b6f4e282205dcd3105082f3776697d464",
+    "systemd": "b5938b6721975a7a7f16c447090d58a8df956277",
+    "journald": "c0f852b93020f9e4dde9826382af52136aa11c03",
+    "certificate": "85617a6996378b2259492750f025cb15e38cee90",
+    "rhc": "37351dade5f053063401ee31dd0118bb0fe5a218",
+    "ha_cluster": "aa241c3e7254d566cbce263ea59655bd69940af6",
+    "sudo": "792cb801937d7f60373b36fb6fcfd0ccb9223ac5",
+    "metrics": "6b7d9a80e281934230f69d9b44ef189a3acbfce4",
+    "postfix": "ba977b2c9491bccccaebc89e1930f7d41891cf5b",
+    "nbde_client": "6f242b80c05e8a6208cf9f312a0cc1ca21d457c7",
+    "tlog": "870210de33075434e766890bbd0cef9f5530db15"
+  },
+  "pages": [
+    {
+      "title": "system-role-certificate.md",
+      "uri": "https://github.com/linux-system-roles/certificate/blob/85617a6996378b2259492750f025cb15e38cee90/README.md",
+      "file": "system-role-certificate.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "8c6ee753c7a20c7ef2634e7f6caf28308054d5e9db72a62f076cf414186f54c9"
+    },
+    {
+      "title": "system-role-cockpit.md",
+      "uri": "https://github.com/linux-system-roles/cockpit/blob/abf5171b6f4e282205dcd3105082f3776697d464/README.md",
+      "file": "system-role-cockpit.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "cf1d588691b9cebd1df8b2e12b441c7d07f3fd472a11fa4c30f9056a1f7862ea"
+    },
+    {
+      "title": "system-role-crypto_policies.md",
+      "uri": "https://github.com/linux-system-roles/crypto_policies/blob/36146a6431b26c09d73e6a148f2602bbeb6a63a4/README.md",
+      "file": "system-role-crypto_policies.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "5d32f4561009fd3804a988d528d1121a79d3a5f64e14c3f6a1c39f6954a576c0"
+    },
+    {
+      "title": "system-role-firewall.md",
+      "uri": "https://github.com/linux-system-roles/firewall/blob/4a74f2158b60b42dfb934ee1ba800396c1708f47/README.md",
+      "file": "system-role-firewall.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "8c94947d213e731fb71e8b3c820a09cc3d121bc6e1c58e379710ae5be1b92c0f"
+    },
+    {
+      "title": "system-role-ha_cluster.md",
+      "uri": "https://github.com/linux-system-roles/ha_cluster/blob/aa241c3e7254d566cbce263ea59655bd69940af6/README.md",
+      "file": "system-role-ha_cluster.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "ff1795376d3485128af41bf015688acaa5060902faad71c9ff81e84706128ada"
+    },
+    {
+      "title": "system-role-journald.md",
+      "uri": "https://github.com/linux-system-roles/journald/blob/c0f852b93020f9e4dde9826382af52136aa11c03/README.md",
+      "file": "system-role-journald.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "51da8b5ed9b365e5516adedcb59bad437c173c4e0e7b1484d1b51c2bbae1a792"
+    },
+    {
+      "title": "system-role-kdump.md",
+      "uri": "https://github.com/linux-system-roles/kdump/blob/3346e59c0f54b8b44bd60e367ba67b47c1c7d72e/README.md",
+      "file": "system-role-kdump.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "ab40ae05b53d63075f9650dee845f934b6ce4a03c4661098b2db5df00c22f831"
+    },
+    {
+      "title": "system-role-logging.md",
+      "uri": "https://github.com/linux-system-roles/logging/blob/4e27ab6038ed9f526dce52c47c06801faddcbc1f/README.md",
+      "file": "system-role-logging.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "e1daa4f37bb6018870a1cdc30e5153246fa9ee68c44363e71095a7311fbdc413"
+    },
+    {
+      "title": "system-role-metrics.md",
+      "uri": "https://github.com/linux-system-roles/metrics/blob/6b7d9a80e281934230f69d9b44ef189a3acbfce4/README.md",
+      "file": "system-role-metrics.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "3d763f71650629f8e91d724d5789fb8134beda4edbed2ed887fc5098e342c625"
+    },
+    {
+      "title": "system-role-nbde_client.md",
+      "uri": "https://github.com/linux-system-roles/nbde_client/blob/6f242b80c05e8a6208cf9f312a0cc1ca21d457c7/README.md",
+      "file": "system-role-nbde_client.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "8818898229dc8bcd8ad3d51d0402033bd1c12a3a053c718b75093261c54c7376"
+    },
+    {
+      "title": "system-role-network.md",
+      "uri": "https://github.com/linux-system-roles/network/blob/cd35767b6b5bd9a5254413914f171ca234903133/README.md",
+      "file": "system-role-network.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "13139e1b4a552af8a05a28e708c2baae4bbb354ce35763d19252ffcbbadab1aa"
+    },
+    {
+      "title": "system-role-podman.md",
+      "uri": "https://github.com/linux-system-roles/podman/blob/c2d4a2c3d6781c3c539f2a2b26949a89eca0c5cf/README.md",
+      "file": "system-role-podman.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "8f63c857a80bd879b321653fc78f9eeab420ebc8d20671502cc1aeaeb5ce038b"
+    },
+    {
+      "title": "system-role-postfix.md",
+      "uri": "https://github.com/linux-system-roles/postfix/blob/ba977b2c9491bccccaebc89e1930f7d41891cf5b/README.md",
+      "file": "system-role-postfix.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "1a6e885f8e74c32f91d1d72299ef0a52b0f228a84e5284046356c93b049100b9"
+    },
+    {
+      "title": "system-role-rhc.md",
+      "uri": "https://github.com/linux-system-roles/rhc/blob/37351dade5f053063401ee31dd0118bb0fe5a218/README.md",
+      "file": "system-role-rhc.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "ed13b63ce766c69a3c46a333ab531c0b97e23a81bef08325b4db1aaa13e091b4"
+    },
+    {
+      "title": "system-role-selinux.md",
+      "uri": "https://github.com/linux-system-roles/selinux/blob/4e8b4708c4a62d4e5220d5af987643bb8fefb6ba/README.md",
+      "file": "system-role-selinux.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "8b901a3a4ec22acac1de4942c207a25004950b1852e6a26f33b1cf2c5a4e5211"
+    },
+    {
+      "title": "system-role-ssh.md",
+      "uri": "https://github.com/linux-system-roles/ssh/blob/a3ea0149a1a6701f6318517c847f187008d347b2/README.md",
+      "file": "system-role-ssh.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "9b72eeba5a9fced07e2db580318c4eaea9da4a4bf97ae68aa25ed66bfb1a48c8"
+    },
+    {
+      "title": "system-role-storage.md",
+      "uri": "https://github.com/linux-system-roles/storage/blob/919b19330f83b385bd67430d0e288e3e59962857/README.md",
+      "file": "system-role-storage.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "cdd0bcc58a521c105e39d77d333e507ffde905afc4231511cae1d8b4a702a089"
+    },
+    {
+      "title": "system-role-sudo.md",
+      "uri": "https://github.com/linux-system-roles/sudo/blob/792cb801937d7f60373b36fb6fcfd0ccb9223ac5/README.md",
+      "file": "system-role-sudo.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "f48dbc2b3645758be14df91d0c1b66191435605a1fc5599f6fb32ab161fc6385"
+    },
+    {
+      "title": "system-role-systemd.md",
+      "uri": "https://github.com/linux-system-roles/systemd/blob/b5938b6721975a7a7f16c447090d58a8df956277/README.md",
+      "file": "system-role-systemd.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "1e8e526b815c4a18f4edac88e6ba794cfd552b0be3cdf2e293a082636e0773e0"
+    },
+    {
+      "title": "system-role-timesync.md",
+      "uri": "https://github.com/linux-system-roles/timesync/blob/5523983031bce775dda55d0f4633a29f05175541/README.md",
+      "file": "system-role-timesync.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "bad7cc4739eb8509345e090ea59c59bbfd353625febf3b1763c60520da089755"
+    },
+    {
+      "title": "system-role-tlog.md",
+      "uri": "https://github.com/linux-system-roles/tlog/blob/870210de33075434e766890bbd0cef9f5530db15/README.md",
+      "file": "system-role-tlog.md",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "f63c2eef6809ba980d21ea4f6ed170bab5cc945e60b2d3044c626416b429bfe3"
+    }
+  ]
+}

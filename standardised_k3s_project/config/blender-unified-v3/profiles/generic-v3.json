@@ -1,0 +1,8 @@
+{
+  "schema": 3,
+  "target": "generic",
+  "format": "glb",
+  "up": "Y",
+  "animation": "NLA",
+  "source_immutable": true
+}

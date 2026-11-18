@@ -1,0 +1,12 @@
+---
+- name: Install bounded Unreal inspection guidance
+  ansible.builtin.copy:
+    src: skills/watoom-poo-vfx/
+    dest: '{{ watoom_code_root }}/config/skills/watoom-poo-vfx/'
+    owner: '{{ watoom_code_uid }}'
+    group: '{{ watoom_code_gid }}'
+    mode: '0644'
+- name: Maintain versioned native queue operations
+  ansible.builtin.include_tasks: coordinator_guard.yml
+- name: Maintain container-aware worker roles
+  ansible.builtin.include_tasks: native_agents.yml

@@ -1,0 +1,13 @@
+---
+workstation_stage_user: watoom-render-stage
+workstation_stage_account_home: /home/watoom-render-stage
+workstation_stage_home: /data/ai/helper-scripts/workstation-render-stage
+workstation_stage_state: /data/ai/helper-scripts/state/workstation-render-stage
+workstation_stage_project: /data/ai/projects/images/workstation-render-stage
+workstation_stage_worker: rig-stage
+workstation_stage_public_key: ""
+workstation_stage_catalogue_path: /data/ai/watoom-code/config/skills/workstation-render-stage
+workstation_transfer_user: watoom-render-transfer
+workstation_transfer_group: watoom-render-data
+workstation_transfer_root: /data/ai/helper-scripts/workstation-transfer
+workstation_transfer_jail: /var/lib/watoom-workstation-transfer

@@ -1,0 +1,18 @@
+---
+- name: "Systemd daemon | Reload configuration"
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: "Service systemd-journald | Restart"
+  ansible.builtin.systemd:
+    name: systemd-journald
+    state: restarted
+
+- name: "Service systemd-resolved | Restart"
+  ansible.builtin.systemd:
+    name: systemd-resolved
+    state: restarted
+
+- name: "Firewall firewalld | Reload configuration"
+  ansible.builtin.command: firewall-cmd --reload
+  changed_when: true

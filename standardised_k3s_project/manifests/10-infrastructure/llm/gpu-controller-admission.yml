@@ -1,0 +1,38 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: watoom-gpu-exclusive-writer
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - apps
+      apiVersions:
+      - v1
+      operations:
+      - UPDATE
+      resources:
+      - deployments
+      - deployments/scale
+      scope: '*'
+  matchConditions:
+  - name: gpu-models
+    expression: request.namespace == 'llama-cpp' && request.name.startsWith('llama-cpp-')
+  validations:
+  - expression: '!has(request.subResource) || request.subResource != ''scale'''
+    message: GPU scale subresource is retired; use the GPU controller
+  - expression: object.spec.replicas == oldObject.spec.replicas || (request.userInfo.username == 'system:serviceaccount:llama-cpp:watoom-gpu-controller'
+      && has(object.metadata.annotations) && 'watoom.io/gpu-controller-intent' in object.metadata.annotations && (!has(oldObject.metadata.annotations)
+      || !('watoom.io/gpu-controller-intent' in oldObject.metadata.annotations) || object.metadata.annotations['watoom.io/gpu-controller-intent']
+      != oldObject.metadata.annotations['watoom.io/gpu-controller-intent']))
+    message: Only the GPU controller may change GPU replicas with a new durable intent
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: watoom-gpu-exclusive-writer
+spec:
+  policyName: watoom-gpu-exclusive-writer
+  validationActions:
+  - Deny

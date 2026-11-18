@@ -1,0 +1,5 @@
+# Human pose runtime regression
+
+Run `test_runtime.py` inside the pinned Blender5.2.1 CPU worker with `-- --scripts <installed human-pose-agent/scripts> --output <fresh evidence directory>`. Use the existing bounded operator test pattern: two CPU threads,4GiB,zero swap,private devices/network,read-only system and one writable evidence directory. It creates only synthetic fixtures, not user assets. Tests must not run in an image-project app shell.
+
+Eight regression groups cover chain/constraint rejection, non-aligned bone rolls and armature transforms, endpoint/orientation solving, missing/invalid/exceeded joint limits, missing ground/balance warnings, same-mesh intersections versus shared-vertex neighbors, evaluated world/environment intersections, no-save failures, source hash preservation and saved pose re-evaluation. Multi-limb shared-parent solving, calibrated pelvis translation, complete containment, real-character control rigs and engine import remain unqualified. Actual source scope is retained under the installed skill references. No test result proves aesthetic or biomechanical correctness.

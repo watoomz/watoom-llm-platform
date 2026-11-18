@@ -1,0 +1,49 @@
+---
+# Owner policy (2026-11-09): any job may use the rig if it needs to, and projects should be enrolled there
+# automatically rather than by hand. sync_rig_projects.py only ever edits the rig stage's (unpinned) JSON
+# config, additively -- it never touches the hash-pinned rig-async-stage release bundle or its own project
+# list entries, and is a no-op if the rig stage is not provisioned on this host.
+- name: Install the rig project sync script to a root-owned path
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../tools/watoom-code/sync_rig_projects.py"
+    dest: /data/ai/helper-scripts/watoom-code/sync_rig_projects.py
+    owner: root
+    group: root
+    mode: '0755'
+- name: Install rig project sync timer
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/watoom-rig-project-sync.service
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Keep the rig stage's project enrollment in sync with the main game worker's project list
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/bin/python3 /data/ai/helper-scripts/watoom-code/sync_rig_projects.py
+      Nice=15
+      CPUQuota=25%
+      MemoryMax=128M
+      RuntimeMaxSec=30
+      TimeoutStopSec=5
+      KillMode=control-group
+  register: watoom_rig_project_sync_service_unit
+- name: Install rig project sync schedule
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/watoom-rig-project-sync.timer
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Check for newly-enrolled main projects and mirror them onto the rig
+      [Timer]
+      OnBootSec=3min
+      OnUnitActiveSec=10min
+      Unit=watoom-rig-project-sync.service
+      [Install]
+      WantedBy=timers.target
+  register: watoom_rig_project_sync_timer_unit
+- name: Enable rig project sync
+  ansible.builtin.systemd_service:
+    name: watoom-rig-project-sync.timer
+    state: "{{ 'restarted' if watoom_rig_project_sync_timer_unit is changed else 'started' }}"
+    enabled: true
+    daemon_reload: "{{ watoom_rig_project_sync_service_unit.changed or watoom_rig_project_sync_timer_unit.changed }}"

@@ -1,0 +1,14 @@
+---
+# Merge (or, when disabled, remove) only the watoom-ue MCP entry in the existing user configuration.
+# The opencode.json template is seed-only (force: false), so enabling this integration needs this task.
+# Credentials are staged separately by playbooks/ue-mcp-ssh.yml; see tools/rig-ue-mcp/README.md.
+- name: Maintain the maintained ue-mcp entry in existing native configuration
+  ansible.builtin.script:
+    cmd: >-
+      enable-ue-mcp.py {{ watoom_code_root }}/config/opencode.json
+      {{ (watoom_code_ue_mcp_host ~ ' ' ~ watoom_code_ue_mcp_port ~ ' ' ~ watoom_code_ue_mcp_user)
+         if (watoom_code_ue_mcp_enabled | bool) else '-' }}
+    executable: /usr/bin/python3
+  register: watoom_code_ue_mcp
+  changed_when: "watoom_code_ue_mcp.stdout | trim == 'CHANGED'"
+  tags: [ue_mcp]

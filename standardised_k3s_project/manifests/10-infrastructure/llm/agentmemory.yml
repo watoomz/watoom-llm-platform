@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentmemory
+  namespace: opencode
+  labels:
+    app: agentmemory
+    app.kubernetes.io/name: agentmemory
+    app.kubernetes.io/part-of: opencode
+    app.kubernetes.io/managed-by: watoom-iac
+spec:
+  # Retired 2026-10-29 (audit R06): records migrated to watoom-code with skip and
+  # archived in /data/ai/artifacts/audit-retirement-20261029; the store at /data/ai/agentmemory is kept.
+  replicas: 0
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: agentmemory
+  template:
+    metadata:
+      labels:
+        app: agentmemory
+        app.kubernetes.io/name: agentmemory
+        app.kubernetes.io/part-of: opencode
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: agentmemory
+          image: 127.0.0.1:5000/watoom-agentmemory:0.9.29-iii0.11.2
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: AGENTMEMORY_DATA_DIR
+              value: /data
+            - name: AGENTMEMORY_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: agentmemory-auth
+                  key: AGENTMEMORY_SECRET
+            - name: AGENTMEMORY_INJECT_CONTEXT
+              value: "false"
+            - name: AGENTMEMORY_AUTO_COMPRESS
+              value: "false"
+            - name: TOKEN_BUDGET
+              value: "2000"
+          ports:
+            - name: http
+              containerPort: 3111
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /agentmemory/livez
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 24
+          livenessProbe:
+            httpGet:
+              path: /agentmemory/livez
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          hostPath:
+            path: /data/ai/agentmemory
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agentmemory
+  namespace: opencode
+  labels:
+    app: agentmemory
+    app.kubernetes.io/name: agentmemory
+    app.kubernetes.io/part-of: opencode
+spec:
+  type: ClusterIP
+  selector:
+    app: agentmemory
+  ports:
+    - name: http
+      port: 3111
+      targetPort: http
+      protocol: TCP

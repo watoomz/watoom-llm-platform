@@ -1,0 +1,169 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ opencode_agent_v2_canary_deployment }}
+  namespace: {{ opencode_agent_v2_canary_namespace }}
+  labels:
+    app: {{ opencode_agent_v2_canary_deployment }}
+    app.kubernetes.io/name: {{ opencode_agent_v2_canary_deployment }}
+    app.kubernetes.io/part-of: opencode-v2-canary
+    app.kubernetes.io/managed-by: ansible
+spec:
+  replicas: {{ opencode_agent_replicas | int }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: {{ opencode_agent_v2_canary_deployment }}
+  template:
+    metadata:
+      labels:
+        app: {{ opencode_agent_v2_canary_deployment }}
+        app.kubernetes.io/name: {{ opencode_agent_v2_canary_deployment }}
+        app.kubernetes.io/part-of: opencode-v2-canary
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: {{ opencode_agent_run_uid }}
+        runAsGroup: {{ opencode_agent_run_gid }}
+        fsGroup: {{ opencode_agent_run_gid }}
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: opencode
+          image: {{ opencode_agent_v2_canary_image }}
+          imagePullPolicy: IfNotPresent
+          args:
+            - serve
+            - --hostname
+            - 0.0.0.0
+            - --port
+            - "{{ opencode_agent_v2_canary_port }}"
+          workingDir: {{ opencode_agent_v2_canary_workspace_mount }}
+          env:
+            - name: HOME
+              value: /home/opencode
+            - name: XDG_CONFIG_HOME
+              value: /home/opencode/.config
+            - name: XDG_DATA_HOME
+              value: /home/opencode/.local/share
+            - name: XDG_CACHE_HOME
+              value: /home/opencode/.cache
+            - name: WATOOM_UNREAL_ENGINE_ROOT
+              value: {{ opencode_agent_v2_canary_unreal_engine_mount | quote }}
+            - name: WATOOM_UNREAL_CACHE_ROOT
+              value: /home/opencode/.cache/UnrealEngine
+            - name: WATOOM_UNREAL_ARTIFACT_ROOT
+              value: /home/opencode/.cache/watoom-unreal/artifacts
+            - name: OPENCODE_CONFIG
+              value: /etc/opencode/opencode.json
+            - name: OPENCODE_SERVER_USERNAME
+              value: {{ opencode_agent_server_username | quote }}
+            - name: OPENCODE_SERVER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: opencode-server-auth
+                  key: password
+            - name: OPENCODE_LOG_LEVEL
+              value: INFO
+            # WATOOM-AGENTMEMORY-ENV-BEGIN
+            - name: AGENTMEMORY_URL
+              value: "http://agentmemory.opencode.svc.cluster.local:3111"
+            - name: AGENTMEMORY_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: agentmemory-auth
+                  key: AGENTMEMORY_SECRET
+            - name: AGENTMEMORY_INJECT_CONTEXT
+              value: "false"
+            # WATOOM-AGENTMEMORY-ENV-END
+{% if opencode_agent_v2_canary_toolkit_bridge_enabled | default(false) | bool %}
+            - name: WATOOM_TOOLKIT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ opencode_agent_v2_canary_toolkit_secret_name }}
+                  key: token
+{% endif %}
+          ports:
+            - name: http
+              containerPort: {{ opencode_agent_v2_canary_port }}
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 24
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: {{ opencode_agent_v2_canary_cpu_request | quote }}
+              memory: {{ opencode_agent_v2_canary_memory_request | quote }}
+            limits:
+              cpu: {{ opencode_agent_v2_canary_cpu_limit | quote }}
+              memory: {{ opencode_agent_v2_canary_memory_limit | quote }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: workspace
+              mountPath: {{ opencode_agent_v2_canary_workspace_mount }}
+            - name: unreal-engine
+              mountPath: {{ opencode_agent_v2_canary_unreal_engine_mount }}
+              readOnly: false
+            - name: unreal-build-cache
+              mountPath: /home/opencode/.epic/UnrealBuildAccelerator
+            - name: home
+              mountPath: /home/opencode
+            - name: config
+              mountPath: /etc/opencode/opencode.json
+              subPath: opencode.json
+              readOnly: true
+      volumes:
+        - name: workspace
+          hostPath:
+            path: {{ opencode_agent_v2_canary_workspace_host }}
+            type: Directory
+        - name: unreal-engine
+          hostPath:
+            path: {{ opencode_agent_v2_canary_unreal_engine_host }}
+            type: Directory
+        - name: unreal-build-cache
+          hostPath:
+            path: {{ opencode_agent_v2_canary_build_cache_host }}
+            type: Directory
+        - name: home
+          hostPath:
+            path: {{ opencode_agent_v2_canary_home_path }}
+            type: Directory
+        - name: config
+          configMap:
+            name: opencode-v2-canary-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ opencode_agent_v2_canary_service }}
+  namespace: {{ opencode_agent_v2_canary_namespace }}
+  labels:
+    app.kubernetes.io/name: {{ opencode_agent_v2_canary_service }}
+    app.kubernetes.io/part-of: opencode-v2-canary
+    app.kubernetes.io/managed-by: ansible
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ opencode_agent_v2_canary_deployment }}
+  ports:
+    - name: http
+      port: {{ opencode_agent_v2_canary_port }}
+      targetPort: http
+      protocol: TCP

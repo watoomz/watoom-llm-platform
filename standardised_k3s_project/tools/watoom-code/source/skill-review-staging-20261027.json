@@ -1,0 +1,16 @@
+{
+  "sourceCommit": "dc51ee2277af8e85cf84acf1a2ae51a361d4fa8b",
+  "baseCommit": "35552bba66c647e49dd2b776e7c430b8b5ca863e",
+  "image": "127.0.0.1:5000/watoom-code@sha256:ccaba2580a3acfaaa931b372ac583c1c03765888d5cd63425118ac890b05a59d",
+  "bundle": "watoom-code-skill-review-staging-20261027.bundle",
+  "bundleSha256": "5d4983ff6ea8039b9efca472e0378eeac16bf093f4b95cd4de5bcb433ec0628c",
+  "applicationOnly": true,
+  "updatesCapabilities": false,
+  "stageWorkerSkill": true,
+  "checks": {
+    "skillManagerTests": 10,
+    "assertions": 48,
+    "frontendModelTests": 5,
+    "applicationBuild": "PASS"
+  }
+}

@@ -1,0 +1,1019 @@
+{
+  "schema": 1,
+  "product": "ansible",
+  "version": "ansible-core-2.20",
+  "language": "yaml",
+  "license": "GPL-3.0-or-later (ansible-core, collections); docs: see ansible-documentation repository",
+  "trust_tier": "vendor_doc",
+  "note": "Raw upstream bytes fetched 2026-11-10: ansible-core module sources at tag v2.20.7; ansible.posix 0f4453f8, community.general 6f22759f, kubernetes.core 408802cb (main); docs from ansible-documentation stable-2.20 @06ea6cf0 and ansible-builder @983c4495 (execution environments, the Automation Platform build tool). Module cards quote the module's own EXAMPLES block (cut at a task boundary when over 60 lines) and list option names from its DOCUMENTATION. Red Hat Automation Platform product docs on docs.redhat.com refuse automated clients (HTTP 403) and were not fetched; no AAP-specific claims beyond ansible-builder/collections are made here. AAP layer added 2026-11-13: Controller concepts sourced from the AWX upstream project (github.com/ansible/awx docs/ -- AWX releases are paused but it remains the real open-source basis for Controller RBAC/workflow/scheduling/notifications/execution-environment/container-group concepts; Red Hat's own AAP product docs on docs.redhat.com are a client-rendered JS app and could not be fetched as verbatim text with the tools available). Event-Driven Ansible / rulebook syntax from github.com/ansible/ansible-rulebook docs/ and github.com/ansible/event-driven-ansible README. Automation mesh from github.com/ansible/receptor README. Ansible Navigator from github.com/ansible/ansible-navigator README. All stored verbatim.",
+  "pages": [
+    {
+      "title": "docs/ansible-builder-collection_metadata.rst",
+      "uri": "https://github.com/ansible/ansible-builder/blob/983c449562c6ba139ae69af787f0fe5d5bbce124/docs/collection_metadata.rst",
+      "file": "docs/ansible-builder-collection_metadata.rst",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "9b064bd5213ac6c839138f9285331cd8b1d71462b534666e01f4bdf905d378ed"
+    },
+    {
+      "title": "docs/ansible-builder-definition.rst",
+      "uri": "https://github.com/ansible/ansible-builder/blob/983c449562c6ba139ae69af787f0fe5d5bbce124/docs/definition.rst",
+      "file": "docs/ansible-builder-definition.rst",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "7fa656a19d35ab29ec5fec3e97f2662c514df3104c2eb37adf1637e73fb1f2a8"
+    },
+    {
+      "title": "docs/ansible-builder-usage.rst",
+      "uri": "https://github.com/ansible/ansible-builder/blob/983c449562c6ba139ae69af787f0fe5d5bbce124/docs/usage.rst",
+      "file": "docs/ansible-builder-usage.rst",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "9883af96c454b1792933999dd89dd16c91afef81116ac9eb1bc64d1f2b99d26c"
+    },
+    {
+      "title": "docs/complex_data_manipulation.rst",
+      "uri": "https://github.com/ansible/ansible-documentation/blob/06ea6cf03e532c8d9eaf59d6378a5375ca4e798a/docs/docsite/rst/ (complex_data_manipulation.rst)",
+      "file": "docs/complex_data_manipulation.rst",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "d4fb5f085d88818d6244a2d3d68d11a9d7b2de110b4c0f1d95b0fdf8c8e05788"
+    },
+    {
+      "title": "docs/dev_guide.rst",
+      "uri": "https://github.com/ansible/ansible-documentation/blob/06ea6cf03e532c8d9eaf59d6378a5375ca4e798a/docs/docsite/rst/ (dev_guide.rst)",
+      "file": "docs/dev_guide.rst",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "820bd41b307c8770512e4a25cfdefec55dd0a5b99b1a006462f1769e3dd10f0e"
+    },
+    {
+      "title": "docs/intro_inventory.rst",
+      "uri": "https://github.com/ansible/ansible-documentation/blob/06ea6cf03e532c8d9eaf59d6378a5375ca4e798a/docs/docsite/rst/ (intro_inventory.rst)",
+      "file": "docs/intro_inventory.rst",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "e429a118a648b49b43f90fcd44c779232d5f32e7ac4d5be9c9df36705f87365f"
+    },
+    {
+      "title": "docs/playbooks_blocks.rst",
+      "uri": "https://github.com/ansible/ansible-documentation/blob/06ea6cf03e532c8d9eaf59d6378a5375ca4e798a/docs/docsite/rst/ (playbooks_blocks.rst)",
+      "file": "docs/playbooks_blocks.rst",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "1312f077169f70cb1cf9da8b6b3f6df6269ace656b84fa337e31f09c6b7d34dd"
+    },
+    {
+      "title": "docs/playbooks_conditionals.rst",
+      "uri": "https://github.com/ansible/ansible-documentation/blob/06ea6cf03e532c8d9eaf59d6378a5375ca4e798a/docs/docsite/rst/ (playbooks_conditionals.rst)",
+      "file": "docs/playbooks_conditionals.rst",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "909701c006c71d9c6fa5d5dca0d0b4e2cc25ed54ce2aa3f1ab4a82313ecab9c5"
+    },
+    {
+      "title": "docs/playbooks_delegation.rst",
+      "uri": "https://github.com/ansible/ansible-documentation/blob/06ea6cf03e532c8d9eaf59d6378a5375ca4e798a/docs/docsite/rst/ (playbooks_delegation.rst)",
+      "file": "docs/playbooks_delegation.rst",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "7911f7e86b18105fd067dd864a9a65fac0a9e5c99717b487ec49473c1de7cd59"
+    },
+    {
+      "title": "docs/playbooks_error_handling.rst",
+      "uri": "https://github.com/ansible/ansible-documentation/blob/06ea6cf03e532c8d9eaf59d6378a5375ca4e798a/docs/docsite/rst/ (playbooks_error_handling.rst)",
+      "file": "docs/playbooks_error_handling.rst",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "66e9143ad534359464b7755d2410c6cdd6b93c99c07a1b485b0705d06d3cd44e"
+    },
+    {
+      "title": "docs/playbooks_handlers.rst",
+      "uri": "https://github.com/ansible/ansible-documentation/blob/06ea6cf03e532c8d9eaf59d6378a5375ca4e798a/docs/docsite/rst/ (playbooks_handlers.rst)",
+      "file": "docs/playbooks_handlers.rst",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "9a1f2634e1f60634c0c5ec52d636864bbc936c9309ca246f341a88cdb52c7bc3"
+    },
+    {
+      "title": "docs/playbooks_loops.rst",
+      "uri": "https://github.com/ansible/ansible-documentation/blob/06ea6cf03e532c8d9eaf59d6378a5375ca4e798a/docs/docsite/rst/ (playbooks_loops.rst)",
+      "file": "docs/playbooks_loops.rst",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "28d34d06c54aab1a1f3262a71ed0b19dd7008eaac47c44a1b579664d975f5c21"
+    },
+    {
+      "title": "docs/playbooks_privilege_escalation.rst",
+      "uri": "https://github.com/ansible/ansible-documentation/blob/06ea6cf03e532c8d9eaf59d6378a5375ca4e798a/docs/docsite/rst/ (playbooks_privilege_escalation.rst)",
+      "file": "docs/playbooks_privilege_escalation.rst",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "fd724cf8e12a004cd52ec6aa942a2104e9f54185a04419bf47dd07148a62ce2c"
+    },
+    {
+      "title": "docs/playbooks_reuse_roles.rst",
+      "uri": "https://github.com/ansible/ansible-documentation/blob/06ea6cf03e532c8d9eaf59d6378a5375ca4e798a/docs/docsite/rst/ (playbooks_reuse_roles.rst)",
+      "file": "docs/playbooks_reuse_roles.rst",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "c4d2de33d16bb3f9d5d9b9d7e2c2b9149dbaecfe033a7abb87affdec56cd5255"
+    },
+    {
+      "title": "docs/playbooks_strategies.rst",
+      "uri": "https://github.com/ansible/ansible-documentation/blob/06ea6cf03e532c8d9eaf59d6378a5375ca4e798a/docs/docsite/rst/ (playbooks_strategies.rst)",
+      "file": "docs/playbooks_strategies.rst",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "cfe336343f0a6cc5b0beade99b6ee2f2621acb95534ea9d673e8241ab5e37813"
+    },
+    {
+      "title": "docs/playbooks_tags.rst",
+      "uri": "https://github.com/ansible/ansible-documentation/blob/06ea6cf03e532c8d9eaf59d6378a5375ca4e798a/docs/docsite/rst/ (playbooks_tags.rst)",
+      "file": "docs/playbooks_tags.rst",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "5ae790025a5de7bd464b2c5687f0242af8d51932963351d5c1356cef3a596117"
+    },
+    {
+      "title": "docs/playbooks_templating.rst",
+      "uri": "https://github.com/ansible/ansible-documentation/blob/06ea6cf03e532c8d9eaf59d6378a5375ca4e798a/docs/docsite/rst/ (playbooks_templating.rst)",
+      "file": "docs/playbooks_templating.rst",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "01de9119d031a0b7db6467fbc607609b932dd551e5afdaf5044abfd3e7eac569"
+    },
+    {
+      "title": "docs/playbooks_variables.rst",
+      "uri": "https://github.com/ansible/ansible-documentation/blob/06ea6cf03e532c8d9eaf59d6378a5375ca4e798a/docs/docsite/rst/ (playbooks_variables.rst)",
+      "file": "docs/playbooks_variables.rst",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "e1399e90cd15e3006a10262abbc98acc5447fc865c51394b9242b5b45e6c466a"
+    },
+    {
+      "title": "docs/playbooks_vault.rst",
+      "uri": "https://github.com/ansible/ansible-documentation/blob/06ea6cf03e532c8d9eaf59d6378a5375ca4e798a/docs/docsite/rst/ (playbooks_vault.rst)",
+      "file": "docs/playbooks_vault.rst",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "cd995251d0175386f88866c8ae90b31ac66c5e38430a51372b615370612057c0"
+    },
+    {
+      "title": "modules/ansible.builtin.add_host.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/add_host.py",
+      "file": "modules/ansible.builtin.add_host.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "559de073ea616399b2cc68a3a3a008075a260fdca47d6a68a91bf395e669dc35"
+    },
+    {
+      "title": "modules/ansible.builtin.assert.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/assert.py",
+      "file": "modules/ansible.builtin.assert.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "078d465c074143a5db623f46f04371dbd7e1025727c815e6f330ea6ddd539cc5"
+    },
+    {
+      "title": "modules/ansible.builtin.async_status.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/async_status.py",
+      "file": "modules/ansible.builtin.async_status.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "127138f8a6d476e0949b8b1586998d94011b0a8e9f03c7d5e0af4c58d9ef1b6d"
+    },
+    {
+      "title": "modules/ansible.builtin.blockinfile.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/blockinfile.py",
+      "file": "modules/ansible.builtin.blockinfile.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "424cffee617d13fe71819049031121fcff54f74d3f0306ecc6eb9a56673d9e42"
+    },
+    {
+      "title": "modules/ansible.builtin.command.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/command.py",
+      "file": "modules/ansible.builtin.command.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "7cb4a507f6610cb3776448ba4708f157a2c8ea8ba3f4e0db5cc286c512070f2d"
+    },
+    {
+      "title": "modules/ansible.builtin.copy.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/copy.py",
+      "file": "modules/ansible.builtin.copy.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "a9d2af2fd684e3de57fcdc96a8154449bfbd8c1f2801ab5085d92d3de0cd714f"
+    },
+    {
+      "title": "modules/ansible.builtin.cron.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/cron.py",
+      "file": "modules/ansible.builtin.cron.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "bad1a93e4352fc64b614185c6fff9ed48a08204df54e31214b77b0501dec45fd"
+    },
+    {
+      "title": "modules/ansible.builtin.debug.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/debug.py",
+      "file": "modules/ansible.builtin.debug.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "1365000c5187812efc2b10a239d5e8a235f91b8a4000ccf7d9518781a3ce6cdb"
+    },
+    {
+      "title": "modules/ansible.builtin.dnf.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/dnf.py",
+      "file": "modules/ansible.builtin.dnf.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "8025cba105dd8e0efa79724624b20f8cd08786e1aa4294fcede27d8ba2fe5d3e"
+    },
+    {
+      "title": "modules/ansible.builtin.expect.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/expect.py",
+      "file": "modules/ansible.builtin.expect.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "58a6cfb428d6b6b7e626252744212f39e56d5407c74d4546cec965c520842847"
+    },
+    {
+      "title": "modules/ansible.builtin.fail.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/fail.py",
+      "file": "modules/ansible.builtin.fail.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "929a5a9bf71a06595c17921c28461df9773efa891200e58d1bd7556e99f60b03"
+    },
+    {
+      "title": "modules/ansible.builtin.fetch.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/fetch.py",
+      "file": "modules/ansible.builtin.fetch.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "9447fce1d116d6a7cd246718851056c837093f0ccdd12be833968c8f729ea732"
+    },
+    {
+      "title": "modules/ansible.builtin.file.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/file.py",
+      "file": "modules/ansible.builtin.file.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "82a5a3e97e88d0acdf1c2fc2ab7beb2a8be91549dac19cc54d82389b0d7ad079"
+    },
+    {
+      "title": "modules/ansible.builtin.find.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/find.py",
+      "file": "modules/ansible.builtin.find.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "5090914457e7eaad64ba780d92608c8641bb145124f3c24d537cac8dd5dfa6fc"
+    },
+    {
+      "title": "modules/ansible.builtin.get_url.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/get_url.py",
+      "file": "modules/ansible.builtin.get_url.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "14f3d586fc612c04bc1a38d0d55fea2513745ce4c3f4c4ab04c09eada0f1527d"
+    },
+    {
+      "title": "modules/ansible.builtin.git.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/git.py",
+      "file": "modules/ansible.builtin.git.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "2fc1351464b553fd9b4a9d7b0d7d85718d558a58aa12b4d0fa086fcfa801816b"
+    },
+    {
+      "title": "modules/ansible.builtin.group.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/group.py",
+      "file": "modules/ansible.builtin.group.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "50a6d7cf0b200055963258055bc4770b2ced8495d7bb92479c79e3ec896a39a7"
+    },
+    {
+      "title": "modules/ansible.builtin.group_by.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/group_by.py",
+      "file": "modules/ansible.builtin.group_by.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "fd10d86cd252dbb7a8b1e7efc2704233ce86ca86da63e8776625a4774e2a53af"
+    },
+    {
+      "title": "modules/ansible.builtin.hostname.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/hostname.py",
+      "file": "modules/ansible.builtin.hostname.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "ccc0a9b684ac28b49f28affadb2c4531b839f50879036458bdd9e9a81f402920"
+    },
+    {
+      "title": "modules/ansible.builtin.import_role.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/import_role.py",
+      "file": "modules/ansible.builtin.import_role.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "2e419058346f5361142486a69fd39c7697297d53e9b3084b8a575c1def6ead2e"
+    },
+    {
+      "title": "modules/ansible.builtin.import_tasks.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/import_tasks.py",
+      "file": "modules/ansible.builtin.import_tasks.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "66194969f43711333d3e2dd0b7681f79d048faaef71da7898a004a851f1cf9e2"
+    },
+    {
+      "title": "modules/ansible.builtin.include_role.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/include_role.py",
+      "file": "modules/ansible.builtin.include_role.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "f45584c24d3d0d3d2e703e8e38c3ce4b58ba8e496524e9fb824cc991183cbf61"
+    },
+    {
+      "title": "modules/ansible.builtin.include_tasks.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/include_tasks.py",
+      "file": "modules/ansible.builtin.include_tasks.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "4ab108933bfba34d465e646c5e658785a3497078aa37da9765e0ec340847ba8e"
+    },
+    {
+      "title": "modules/ansible.builtin.known_hosts.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/known_hosts.py",
+      "file": "modules/ansible.builtin.known_hosts.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "e2664550ab4dbaf4d3eb471ffd757b3fa0e3c97f8ae483b9461287684f13a9cd"
+    },
+    {
+      "title": "modules/ansible.builtin.lineinfile.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/lineinfile.py",
+      "file": "modules/ansible.builtin.lineinfile.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "c749d1eee279076f0291aa7f628ff7ccc69b73be368d78f9f4393da85eb5e9d4"
+    },
+    {
+      "title": "modules/ansible.builtin.meta.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/meta.py",
+      "file": "modules/ansible.builtin.meta.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "d282dfbf275c8fc5de66c451f32a11ce04c835a3ec11f977fa3c69d53fa5cc33"
+    },
+    {
+      "title": "modules/ansible.builtin.mount_facts.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/mount_facts.py",
+      "file": "modules/ansible.builtin.mount_facts.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "bf2f447aed7bfc432c25bc60736de96bb0c35f053cae0d75585253a9c2e3317a"
+    },
+    {
+      "title": "modules/ansible.builtin.package.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/package.py",
+      "file": "modules/ansible.builtin.package.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "c70884d120e8cf50ebae1fd48ec462ee768063d5e9e21a4efd36e62e2a361058"
+    },
+    {
+      "title": "modules/ansible.builtin.package_facts.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/package_facts.py",
+      "file": "modules/ansible.builtin.package_facts.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "2e6c041db2b03a8ad1cc51b154c5cc870ab6a6314fbc688361488985616b517d"
+    },
+    {
+      "title": "modules/ansible.builtin.pause.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/pause.py",
+      "file": "modules/ansible.builtin.pause.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "57337f032f784d8bc13d34111b4b346139d726431387c084cb62a8b2d4b69d56"
+    },
+    {
+      "title": "modules/ansible.builtin.pip.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/pip.py",
+      "file": "modules/ansible.builtin.pip.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "377bc8f96716aa1c64f2580f442622620ee2c4aa0c590e8df30fff957c430ec2"
+    },
+    {
+      "title": "modules/ansible.builtin.reboot.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/reboot.py",
+      "file": "modules/ansible.builtin.reboot.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "3f999b6838bf93e2128d1e4cd1a756eb27b2b2c6a1c3842f5d8a9237b7a5ca99"
+    },
+    {
+      "title": "modules/ansible.builtin.replace.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/replace.py",
+      "file": "modules/ansible.builtin.replace.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "0813f93f7d81d1332eb5c41cecb2324aea7467e1acfa16ba259803e8127e25d9"
+    },
+    {
+      "title": "modules/ansible.builtin.rpm_key.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/rpm_key.py",
+      "file": "modules/ansible.builtin.rpm_key.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "0ce97aca246b9e8cf2856fc0a3c4b181263106f8411ddc57f49e25bda8ba310b"
+    },
+    {
+      "title": "modules/ansible.builtin.script.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/script.py",
+      "file": "modules/ansible.builtin.script.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "5a6748363d4cc6971c5fd32ca6f5a0e9a3f93191a57e6d0a48fa6a358ee1d1f9"
+    },
+    {
+      "title": "modules/ansible.builtin.service.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/service.py",
+      "file": "modules/ansible.builtin.service.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "1fa8dff6c5a1713fe85323e01f1f5f6ee8a19344537fb1b8da5c44001bcb3ce2"
+    },
+    {
+      "title": "modules/ansible.builtin.service_facts.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/service_facts.py",
+      "file": "modules/ansible.builtin.service_facts.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "8a66ce4508888b79946a53c165b41992b0616847af4b3a7f2f8bd5ec8fd0b3cb"
+    },
+    {
+      "title": "modules/ansible.builtin.set_fact.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/set_fact.py",
+      "file": "modules/ansible.builtin.set_fact.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "dcccac3f86f1d179d87afbb92fb88024f2eeabbca4a7a962c5e6ae5382ca1107"
+    },
+    {
+      "title": "modules/ansible.builtin.setup.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/setup.py",
+      "file": "modules/ansible.builtin.setup.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "9474ae81ae7680df668270fe45bb3ab9fab392dec6be9cec4256f93ed7c8d9b6"
+    },
+    {
+      "title": "modules/ansible.builtin.shell.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/shell.py",
+      "file": "modules/ansible.builtin.shell.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "5abfcadb3ac7aa74f7030e08e3614fffeedd071340534e0e9cacc4b71572413e"
+    },
+    {
+      "title": "modules/ansible.builtin.slurp.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/slurp.py",
+      "file": "modules/ansible.builtin.slurp.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "5f03ba9311667a3a1dd95f8e1aa9369668672bb3829241612c498c71f182849d"
+    },
+    {
+      "title": "modules/ansible.builtin.stat.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/stat.py",
+      "file": "modules/ansible.builtin.stat.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "9d26dff96011094f447110dac92640fc03cca6ea45832cb4b0f2879541396269"
+    },
+    {
+      "title": "modules/ansible.builtin.systemd_service.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/systemd_service.py",
+      "file": "modules/ansible.builtin.systemd_service.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "c7b1d29d15849d8f3444e8d9d441d35d320b7dff9f8b1e48b842b0bea81dfede"
+    },
+    {
+      "title": "modules/ansible.builtin.tempfile.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/tempfile.py",
+      "file": "modules/ansible.builtin.tempfile.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "dd99635cd3aed3a4f939b4c0cf92ad9bf58a16b240087c0b7fed3517b8ac7f90"
+    },
+    {
+      "title": "modules/ansible.builtin.template.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/template.py",
+      "file": "modules/ansible.builtin.template.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "cb5ceef996743fe0a9c6375dce4e55e4656940d35f40bf04e6c55e01bda9951d"
+    },
+    {
+      "title": "modules/ansible.builtin.unarchive.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/unarchive.py",
+      "file": "modules/ansible.builtin.unarchive.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "f19cb3314b2743f7a362dda93421243efbc4adb9b68555ad0d59715f98dd3353"
+    },
+    {
+      "title": "modules/ansible.builtin.uri.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/uri.py",
+      "file": "modules/ansible.builtin.uri.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "41ed8aff0b508a1c741d68a14f72f602c27f16b845b99dc23c86396d5fea685c"
+    },
+    {
+      "title": "modules/ansible.builtin.user.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/user.py",
+      "file": "modules/ansible.builtin.user.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "092fc1a6ff5501448046463a47e77322539975d6565cca9a053f82fe1109fbac"
+    },
+    {
+      "title": "modules/ansible.builtin.wait_for.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/wait_for.py",
+      "file": "modules/ansible.builtin.wait_for.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "95b2e503d7744c47e480971ff50e662f4ad4f891107991920fcf8438e5bdbe7a"
+    },
+    {
+      "title": "modules/ansible.builtin.wait_for_connection.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/wait_for_connection.py",
+      "file": "modules/ansible.builtin.wait_for_connection.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "53bc90117c969eb4c6a5a0407cc1752854298376615f842365d882381ad947e5"
+    },
+    {
+      "title": "modules/ansible.builtin.yum_repository.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/yum_repository.py",
+      "file": "modules/ansible.builtin.yum_repository.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "de4579cfb9d374b5ae60f293dbdd9a8fea7c678517c1a48ac5c5f3424b545245"
+    },
+    {
+      "title": "modules/ansible.posix.at.py",
+      "uri": "https://github.com/ansible-collections/ansible.posix/blob/0f4453f85ee993687a4cab860e3b55438144f920/plugins/modules/at.py",
+      "file": "modules/ansible.posix.at.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "ba503c3934415842b615c9a262ec8d675b5f592041bc518077164359c7e2212f"
+    },
+    {
+      "title": "modules/ansible.posix.authorized_key.py",
+      "uri": "https://github.com/ansible-collections/ansible.posix/blob/0f4453f85ee993687a4cab860e3b55438144f920/plugins/modules/authorized_key.py",
+      "file": "modules/ansible.posix.authorized_key.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "e3a0fe6a00d666903c4d1b6465eb8eac15b7816befff8369da7fd9db38b4b38f"
+    },
+    {
+      "title": "modules/ansible.posix.firewalld.py",
+      "uri": "https://github.com/ansible-collections/ansible.posix/blob/0f4453f85ee993687a4cab860e3b55438144f920/plugins/modules/firewalld.py",
+      "file": "modules/ansible.posix.firewalld.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "4ea011ccee838aefdf70e66ff364614cfdc2882ec87e0f1e125d38def6836396"
+    },
+    {
+      "title": "modules/ansible.posix.mount.py",
+      "uri": "https://github.com/ansible-collections/ansible.posix/blob/0f4453f85ee993687a4cab860e3b55438144f920/plugins/modules/mount.py",
+      "file": "modules/ansible.posix.mount.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "04177ed451b4404787abea77a3ef76c96c1a91f4925b6b909bed5d75ec8b3f4d"
+    },
+    {
+      "title": "modules/ansible.posix.seboolean.py",
+      "uri": "https://github.com/ansible-collections/ansible.posix/blob/0f4453f85ee993687a4cab860e3b55438144f920/plugins/modules/seboolean.py",
+      "file": "modules/ansible.posix.seboolean.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "c145863324742e240208727bdaf1df606860e8c3c676db5fac5205f96acfbaf1"
+    },
+    {
+      "title": "modules/ansible.posix.selinux.py",
+      "uri": "https://github.com/ansible-collections/ansible.posix/blob/0f4453f85ee993687a4cab860e3b55438144f920/plugins/modules/selinux.py",
+      "file": "modules/ansible.posix.selinux.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "56dbe8e2125f08ee13f484efc2ab0801686b1f42683098e5f981f19afe27f731"
+    },
+    {
+      "title": "modules/ansible.posix.synchronize.py",
+      "uri": "https://github.com/ansible-collections/ansible.posix/blob/0f4453f85ee993687a4cab860e3b55438144f920/plugins/modules/synchronize.py",
+      "file": "modules/ansible.posix.synchronize.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "8820af751560bff2e8a28be2c8796a8d3724ffb233d088232f6e8d208d83ea13"
+    },
+    {
+      "title": "modules/ansible.posix.sysctl.py",
+      "uri": "https://github.com/ansible-collections/ansible.posix/blob/0f4453f85ee993687a4cab860e3b55438144f920/plugins/modules/sysctl.py",
+      "file": "modules/ansible.posix.sysctl.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "eaa1fe989f4f0b1b239124a606d009888d5118d72471d7d6081f9f81fa04ca9e"
+    },
+    {
+      "title": "modules/community.general.filesystem.py",
+      "uri": "https://github.com/ansible-collections/community.general/blob/6f22759fbf24778ca27ba7e9a1815cce43d15176/plugins/modules/filesystem.py",
+      "file": "modules/community.general.filesystem.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "1d19c17f8feb72c42ad37a1c621140f8112cb00ffc047f2dc5ac159885b771d0"
+    },
+    {
+      "title": "modules/community.general.ini_file.py",
+      "uri": "https://github.com/ansible-collections/community.general/blob/6f22759fbf24778ca27ba7e9a1815cce43d15176/plugins/modules/ini_file.py",
+      "file": "modules/community.general.ini_file.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "e7955e4b57750744599ddecdf7359fda8c757fd6718c104fb1b5dd475ba74946"
+    },
+    {
+      "title": "modules/community.general.lvg.py",
+      "uri": "https://github.com/ansible-collections/community.general/blob/6f22759fbf24778ca27ba7e9a1815cce43d15176/plugins/modules/lvg.py",
+      "file": "modules/community.general.lvg.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "d939d359c5ef61c3f47fc813c595c06aa69250bd7cb595ed437213e1ed33561e"
+    },
+    {
+      "title": "modules/community.general.lvol.py",
+      "uri": "https://github.com/ansible-collections/community.general/blob/6f22759fbf24778ca27ba7e9a1815cce43d15176/plugins/modules/lvol.py",
+      "file": "modules/community.general.lvol.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "52fe87c0f6ec41fbdb6fe43219808c38b59123802436bd87a7007f24b7686f47"
+    },
+    {
+      "title": "modules/community.general.modprobe.py",
+      "uri": "https://github.com/ansible-collections/community.general/blob/6f22759fbf24778ca27ba7e9a1815cce43d15176/plugins/modules/modprobe.py",
+      "file": "modules/community.general.modprobe.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "1108db5c154a4add4717323dd748eee8eed509fa24120e8e671d1c5d47ff6427"
+    },
+    {
+      "title": "modules/community.general.nmcli.py",
+      "uri": "https://github.com/ansible-collections/community.general/blob/6f22759fbf24778ca27ba7e9a1815cce43d15176/plugins/modules/nmcli.py",
+      "file": "modules/community.general.nmcli.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "6001da7628f47e1b827c9f6631633adfefd1074f852e21547b447b7a99225a09"
+    },
+    {
+      "title": "modules/community.general.parted.py",
+      "uri": "https://github.com/ansible-collections/community.general/blob/6f22759fbf24778ca27ba7e9a1815cce43d15176/plugins/modules/parted.py",
+      "file": "modules/community.general.parted.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "e07dea6ae8b282fc6c41e6a0eb358b181c8ecd63125dea4fca32bb9e23044029"
+    },
+    {
+      "title": "modules/community.general.sefcontext.py",
+      "uri": "https://github.com/ansible-collections/community.general/blob/6f22759fbf24778ca27ba7e9a1815cce43d15176/plugins/modules/sefcontext.py",
+      "file": "modules/community.general.sefcontext.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "eea73b2200901c253a453294c5e59da95ecc8982134acdbfb4bc17f4e1de59fd"
+    },
+    {
+      "title": "modules/community.general.timezone.py",
+      "uri": "https://github.com/ansible-collections/community.general/blob/6f22759fbf24778ca27ba7e9a1815cce43d15176/plugins/modules/timezone.py",
+      "file": "modules/community.general.timezone.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "9633a01031310672caf2fab246b3f87d51daffa132beb7e3ec8b5f901c11e32c"
+    },
+    {
+      "title": "modules/kubernetes.core.helm.py",
+      "uri": "https://github.com/ansible-collections/kubernetes.core/blob/408802cb674b53dc133ca82a4a581a4a9bf37259/plugins/modules/helm.py",
+      "file": "modules/kubernetes.core.helm.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "8b555c289e320e79fc807f4b72347b9b8dae9460905f8223da94068d86179f24"
+    },
+    {
+      "title": "modules/kubernetes.core.helm_info.py",
+      "uri": "https://github.com/ansible-collections/kubernetes.core/blob/408802cb674b53dc133ca82a4a581a4a9bf37259/plugins/modules/helm_info.py",
+      "file": "modules/kubernetes.core.helm_info.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "5de6b503da34f10ba1f2f6fcfee2636fe035b4307a4cbaf069ba2cc7d3117112"
+    },
+    {
+      "title": "modules/kubernetes.core.k8s.py",
+      "uri": "https://github.com/ansible-collections/kubernetes.core/blob/408802cb674b53dc133ca82a4a581a4a9bf37259/plugins/modules/k8s.py",
+      "file": "modules/kubernetes.core.k8s.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "0a4a96cd8ade43ed48e56dec6f2203555186c7bf8a9f2a79d95a7521d21d1473"
+    },
+    {
+      "title": "modules/kubernetes.core.k8s_drain.py",
+      "uri": "https://github.com/ansible-collections/kubernetes.core/blob/408802cb674b53dc133ca82a4a581a4a9bf37259/plugins/modules/k8s_drain.py",
+      "file": "modules/kubernetes.core.k8s_drain.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "e6b5922dde9868f1c35ba699b8d05478b6f014e108e9ca852da77bc8ab1c2853"
+    },
+    {
+      "title": "modules/kubernetes.core.k8s_exec.py",
+      "uri": "https://github.com/ansible-collections/kubernetes.core/blob/408802cb674b53dc133ca82a4a581a4a9bf37259/plugins/modules/k8s_exec.py",
+      "file": "modules/kubernetes.core.k8s_exec.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "8dd709e422754fe3eb99520e20ead80e3dfc50c52e67d12176ec162b81f9a0ce"
+    },
+    {
+      "title": "modules/kubernetes.core.k8s_info.py",
+      "uri": "https://github.com/ansible-collections/kubernetes.core/blob/408802cb674b53dc133ca82a4a581a4a9bf37259/plugins/modules/k8s_info.py",
+      "file": "modules/kubernetes.core.k8s_info.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "a05ac24e3cc2b382a59823c3d49423cf9c3988187b8bc92970f7cdf8897a23a5"
+    },
+    {
+      "title": "modules/kubernetes.core.k8s_scale.py",
+      "uri": "https://github.com/ansible-collections/kubernetes.core/blob/408802cb674b53dc133ca82a4a581a4a9bf37259/plugins/modules/k8s_scale.py",
+      "file": "modules/kubernetes.core.k8s_scale.py",
+      "retrieved_utc": "2026-11-10T00:00:00Z",
+      "verbatim": true,
+      "sha256": "001e5658019f941defeedb7b876205f98605100d84e2cb8b0f61992a13332502"
+    },
+    {
+      "title": "aap/rulebook-rulebooks.rst",
+      "uri": "https://raw.githubusercontent.com/ansible/ansible-rulebook/main/docs/rulebooks.rst",
+      "file": "aap/rulebook-rulebooks.rst",
+      "retrieved_utc": "2026-11-12T22:13:09Z",
+      "verbatim": true,
+      "sha256": "641596a3b1ef31b7f96a355e4ef6404de39e618f1d08a14e65845c30e1942fa1"
+    },
+    {
+      "title": "aap/rulebook-rules.rst",
+      "uri": "https://raw.githubusercontent.com/ansible/ansible-rulebook/main/docs/rules.rst",
+      "file": "aap/rulebook-rules.rst",
+      "retrieved_utc": "2026-11-12T22:13:09Z",
+      "verbatim": true,
+      "sha256": "b5c3c8815ad5e26e8fab83add3289a3313ac0aef3730af70ca1fc65ff3bcaec4"
+    },
+    {
+      "title": "aap/rulebook-conditions.rst",
+      "uri": "https://raw.githubusercontent.com/ansible/ansible-rulebook/main/docs/conditions.rst",
+      "file": "aap/rulebook-conditions.rst",
+      "retrieved_utc": "2026-11-12T22:13:09Z",
+      "verbatim": true,
+      "sha256": "b6f04523a0b5602c9663657e9148dff30362e24799ea88fcd8c9529851205800"
+    },
+    {
+      "title": "aap/rulebook-actions.rst",
+      "uri": "https://raw.githubusercontent.com/ansible/ansible-rulebook/main/docs/actions.rst",
+      "file": "aap/rulebook-actions.rst",
+      "retrieved_utc": "2026-11-12T22:13:09Z",
+      "verbatim": true,
+      "sha256": "9c14641375bbfc4339259548b38d96792c4ea5ad7d0cad7ad3498ec1d1069818"
+    },
+    {
+      "title": "aap/rulebook-events_and_facts.rst",
+      "uri": "https://raw.githubusercontent.com/ansible/ansible-rulebook/main/docs/events_and_facts.rst",
+      "file": "aap/rulebook-events_and_facts.rst",
+      "retrieved_utc": "2026-11-12T22:13:09Z",
+      "verbatim": true,
+      "sha256": "ebd8be36e1c8a09a8ccc0c315b8ee40efcdb4797b7dce100c7c3127c7433e356"
+    },
+    {
+      "title": "aap/rulebook-sources.rst",
+      "uri": "https://raw.githubusercontent.com/ansible/ansible-rulebook/main/docs/sources.rst",
+      "file": "aap/rulebook-sources.rst",
+      "retrieved_utc": "2026-11-12T22:13:09Z",
+      "verbatim": true,
+      "sha256": "1a8af49f1e556794466ebc1e0fb9959fa5669f05a3d1c18690bbaed5da5c6ce4"
+    },
+    {
+      "title": "aap/rulebook-host_limit.rst",
+      "uri": "https://raw.githubusercontent.com/ansible/ansible-rulebook/main/docs/host_limit.rst",
+      "file": "aap/rulebook-host_limit.rst",
+      "retrieved_utc": "2026-11-12T22:13:09Z",
+      "verbatim": true,
+      "sha256": "9fd865e7aba0db382f9c4a7c405200fb8842476077c4641dec724bdd86d52924"
+    },
+    {
+      "title": "aap/rulebook-variables.rst",
+      "uri": "https://raw.githubusercontent.com/ansible/ansible-rulebook/main/docs/variables.rst",
+      "file": "aap/rulebook-variables.rst",
+      "retrieved_utc": "2026-11-12T22:13:09Z",
+      "verbatim": true,
+      "sha256": "930bbb83846ec72f352f1a8465b51f7682bbe220c4c3a7cea1783a5d84bf0137"
+    },
+    {
+      "title": "aap/rulebook-usage.rst",
+      "uri": "https://raw.githubusercontent.com/ansible/ansible-rulebook/main/docs/usage.rst",
+      "file": "aap/rulebook-usage.rst",
+      "retrieved_utc": "2026-11-12T22:13:09Z",
+      "verbatim": true,
+      "sha256": "6e954f5594990cbc14398c86629e516f1adfb6c4b425c81e75d7c7254f193f42"
+    },
+    {
+      "title": "aap/rbac.md",
+      "uri": "https://raw.githubusercontent.com/ansible/awx/devel/docs/rbac.md",
+      "file": "aap/rbac.md",
+      "retrieved_utc": "2026-11-12T22:13:09Z",
+      "verbatim": true,
+      "sha256": "ceca01cb71c2b255bf7c8eb3d8d01fd70feeeaad08296e96b4576011d574799b"
+    },
+    {
+      "title": "aap/prompting.md",
+      "uri": "https://raw.githubusercontent.com/ansible/awx/devel/docs/prompting.md",
+      "file": "aap/prompting.md",
+      "retrieved_utc": "2026-11-12T22:13:09Z",
+      "verbatim": true,
+      "sha256": "d1fb1921d920da84c312513c4be1b40b142467ab692fe696acf28107085ad785"
+    },
+    {
+      "title": "aap/workflow.md",
+      "uri": "https://raw.githubusercontent.com/ansible/awx/devel/docs/workflow.md",
+      "file": "aap/workflow.md",
+      "retrieved_utc": "2026-11-12T22:13:09Z",
+      "verbatim": true,
+      "sha256": "f551dd0d6dac2177b5b4218afc02658f6b5fb377e809805bb9341866027af0fa"
+    },
+    {
+      "title": "aap/named_url.md",
+      "uri": "https://raw.githubusercontent.com/ansible/awx/devel/docs/named_url.md",
+      "file": "aap/named_url.md",
+      "retrieved_utc": "2026-11-12T22:13:09Z",
+      "verbatim": true,
+      "sha256": "a8559d8b581336b72eae7f8f0e67435ceed46f923581c9a89d4f6ec604c426ad"
+    },
+    {
+      "title": "aap/schedules.md",
+      "uri": "https://raw.githubusercontent.com/ansible/awx/devel/docs/schedules.md",
+      "file": "aap/schedules.md",
+      "retrieved_utc": "2026-11-12T22:13:09Z",
+      "verbatim": true,
+      "sha256": "b8a1d116de4b68a8a8b376a8a80537df1df74d3f207bf1c821846ee4ce23f5de"
+    },
+    {
+      "title": "aap/notification_system.md",
+      "uri": "https://raw.githubusercontent.com/ansible/awx/devel/docs/notification_system.md",
+      "file": "aap/notification_system.md",
+      "retrieved_utc": "2026-11-12T22:13:09Z",
+      "verbatim": true,
+      "sha256": "a0345584df113b3ea5c0a4b60c8d79b83a89bb3c61fa726246c37643f1ce49f8"
+    },
+    {
+      "title": "aap/execution_environments.md",
+      "uri": "https://raw.githubusercontent.com/ansible/awx/devel/docs/execution_environments.md",
+      "file": "aap/execution_environments.md",
+      "retrieved_utc": "2026-11-12T22:13:09Z",
+      "verbatim": true,
+      "sha256": "3e71327bda47f73443d39de6c9c1399ddd36442b3ad13eae747a7bfdcccf7032"
+    },
+    {
+      "title": "aap/container_groups.md",
+      "uri": "https://raw.githubusercontent.com/ansible/awx/devel/docs/container_groups.md",
+      "file": "aap/container_groups.md",
+      "retrieved_utc": "2026-11-12T22:13:09Z",
+      "verbatim": true,
+      "sha256": "d53546fcf635f78830dfec9c43fa3289ad4522902e0e0b0f4c4a8e357244f08d"
+    },
+    {
+      "title": "aap/job_slicing.md",
+      "uri": "https://raw.githubusercontent.com/ansible/awx/devel/docs/job_slicing.md",
+      "file": "aap/job_slicing.md",
+      "retrieved_utc": "2026-11-12T22:13:09Z",
+      "verbatim": true,
+      "sha256": "5c4b019a82742dd9a9605f913ed821f1ae17acabb7bd2e710d412b7975fd3e70"
+    },
+    {
+      "title": "aap/collections.md",
+      "uri": "https://raw.githubusercontent.com/ansible/awx/devel/docs/collections.md",
+      "file": "aap/collections.md",
+      "retrieved_utc": "2026-11-12T22:13:09Z",
+      "verbatim": true,
+      "sha256": "e08dcc4dc08e8e7bd93d857ed727709de05a45ef05df0dfca281a83f8ca1d8fa"
+    },
+    {
+      "title": "aap/eda-readme.md",
+      "uri": "https://raw.githubusercontent.com/ansible/event-driven-ansible/main/README.md",
+      "file": "aap/eda-readme.md",
+      "retrieved_utc": "2026-11-12T22:13:09Z",
+      "verbatim": true,
+      "sha256": "e5294ce669c3053ad9b4fd633fdc71537ab84602e44e0cc7372dab535e188641"
+    },
+    {
+      "title": "aap/navigator-readme.md",
+      "uri": "https://raw.githubusercontent.com/ansible/ansible-navigator/main/README.md",
+      "file": "aap/navigator-readme.md",
+      "retrieved_utc": "2026-11-12T22:13:09Z",
+      "verbatim": true,
+      "sha256": "fbdabfddd2b8631e5a5166e20caff9964ab98e5dffcf915c7f10c50108896723"
+    },
+    {
+      "title": "aap/receptor-readme.md",
+      "uri": "https://raw.githubusercontent.com/ansible/receptor/devel/README.md",
+      "file": "aap/receptor-readme.md",
+      "retrieved_utc": "2026-11-12T22:13:09Z",
+      "verbatim": true,
+      "sha256": "796ecfdd3978ab769d6e44db2c15d2892b7608fe2ea4778064906e02c04f44b7"
+    },
+    {
+      "title": "modules/ansible.builtin.ping.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/ping.py",
+      "file": "modules/ansible.builtin.ping.py",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true,
+      "sha256": "f34a70f1e2c1bd3da9c3c7f4577cf1a84c5085bb0a2a803a61f3c1bdc9dc4e78"
+    },
+    {
+      "title": "modules/ansible.builtin.raw.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/raw.py",
+      "file": "modules/ansible.builtin.raw.py",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true,
+      "sha256": "11f10b1a4f833819b5a3c635d4c7e49f1f81e3539d6eff6c9cdbb703a9fa1514"
+    },
+    {
+      "title": "modules/ansible.builtin.gather_facts.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/gather_facts.py",
+      "file": "modules/ansible.builtin.gather_facts.py",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true,
+      "sha256": "deddbf5cc80ab81f94df9b673be25b184b10fc4df54a7671450f81fc356422ee"
+    },
+    {
+      "title": "modules/ansible.builtin.include_vars.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/include_vars.py",
+      "file": "modules/ansible.builtin.include_vars.py",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true,
+      "sha256": "2699696494fd7789ca3d46ca61294f3a1d7f86ec99b9a4a6a6dfb3e22da8971d"
+    },
+    {
+      "title": "modules/ansible.builtin.getent.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/getent.py",
+      "file": "modules/ansible.builtin.getent.py",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true,
+      "sha256": "b6adf3d12ceafe6da0a780ce800091bcd27387eb645c6cddd84c3c5f1ac64563"
+    },
+    {
+      "title": "modules/ansible.builtin.iptables.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/iptables.py",
+      "file": "modules/ansible.builtin.iptables.py",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true,
+      "sha256": "f7888332e569c7742ae767096945b477164edc513c72fb38a29f2dee7b2f366f"
+    },
+    {
+      "title": "modules/ansible.builtin.systemd.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/systemd.py",
+      "file": "modules/ansible.builtin.systemd.py",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true,
+      "sha256": "c7b1d29d15849d8f3444e8d9d441d35d320b7dff9f8b1e48b842b0bea81dfede"
+    },
+    {
+      "title": "modules/ansible.builtin.assemble.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/assemble.py",
+      "file": "modules/ansible.builtin.assemble.py",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true,
+      "sha256": "23b4620b343d9e5ede42233934dda05e295cec2c6661ba83102fb1d806f6bf5a"
+    },
+    {
+      "title": "modules/ansible.builtin.validate_argument_spec.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/validate_argument_spec.py",
+      "file": "modules/ansible.builtin.validate_argument_spec.py",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true,
+      "sha256": "38c200184d8bd8564b121c95f9512954df303c0b897a8bd08693d5c1799d2f94"
+    },
+    {
+      "title": "modules/ansible.builtin.import_playbook.py",
+      "uri": "https://github.com/ansible/ansible/blob/v2.20.7/lib/ansible/modules/import_playbook.py",
+      "file": "modules/ansible.builtin.import_playbook.py",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true,
+      "sha256": "40fe9c720280e517bc8e6a0b1cadf984a55eb899f34d10e065b128a3fbb21459"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+---
+- name: "Homelab Rebuild Docker | Reconcile selected stack"
+  ansible.builtin.include_role:
+    name: docker_stacks
+  vars:
+    docker_stack_target: "{{ homelab_rebuild_docker_stack_target }}"
+    docker_action: reconcile
+  loop: "{{ homelab_bootstrap_docker_stacks }}"
+  loop_control:
+    loop_var: homelab_rebuild_docker_stack_target
+    label: "{{ homelab_rebuild_docker_stack_target }}"

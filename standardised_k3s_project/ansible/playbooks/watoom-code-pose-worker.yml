@@ -1,0 +1,41 @@
+---
+- name: Activate fixed pose worker integration under native admission guard
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Require existing scoped admission fence
+      ansible.builtin.assert:
+        that: watoom_render_routing_guard_held | default(false) | bool
+    - name: Install immutable native capture mode registration
+      ansible.builtin.import_role:
+        name: watoom-code
+        tasks_from: coordinator_guard
+    - name: Install maintained pose helper skill
+      ansible.builtin.copy:
+        src: ../roles/watoom-code/files/skills/human-pose-agent/
+        dest: /data/ai/watoom-code/config/skills/human-pose-agent/
+        owner: '1001'
+        group: '1001'
+        mode: '0644'
+        directory_mode: '0750'
+    - name: Install matching capture and animation routing
+      ansible.builtin.copy:
+        src: '../roles/watoom-code/files/skills/{{ item }}/SKILL.md'
+        dest: '/data/ai/watoom-code/config/skills/{{ item }}/SKILL.md'
+        owner: '1001'
+        group: '1001'
+        mode: '0644'
+      loop: [asset-image-clip-capture, blender-animation]
+    - name: Install qualified Shadowheart rig routing reference
+      ansible.builtin.copy:
+        src: ../roles/watoom-code/files/skills/asset-image-clip-capture/references/shadowheart-rig.md
+        dest: /data/ai/watoom-code/config/skills/asset-image-clip-capture/references/shadowheart-rig.md
+        owner: '1001'
+        group: '1001'
+        mode: '0644'
+    - name: Restore owned skill labels
+      ansible.builtin.command:
+        argv: [restorecon, -R, '/data/ai/watoom-code/config/skills/{{ item }}']
+      changed_when: false
+      loop: [human-pose-agent, asset-image-clip-capture, blender-animation]

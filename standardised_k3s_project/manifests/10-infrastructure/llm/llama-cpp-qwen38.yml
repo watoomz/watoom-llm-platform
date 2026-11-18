@@ -1,0 +1,319 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: llama-cpp-qwen38-models-pv
+  labels:
+    app.kubernetes.io/name: llama-cpp-qwen38-models-pv
+    app.kubernetes.io/part-of: llama-cpp-qwen38
+    app.kubernetes.io/managed-by: kubectl
+spec:
+  capacity:
+    storage: 40Gi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: llama-cpp-qwen38-hostpath
+  hostPath:
+    path: /data/ai/models/gguf/qwen38
+    type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llama-cpp-qwen38-models-pvc
+  namespace: llama-cpp
+  labels:
+    app.kubernetes.io/name: llama-cpp-qwen38-models-pvc
+    app.kubernetes.io/part-of: llama-cpp-qwen38
+    app.kubernetes.io/managed-by: kubectl
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: llama-cpp-qwen38-hostpath
+  resources:
+    requests:
+      storage: 40Gi
+  volumeName: llama-cpp-qwen38-models-pv
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: llama-cpp-qwen38-download
+  namespace: llama-cpp
+  labels:
+    app: llama-cpp-qwen38-download
+    app.kubernetes.io/name: llama-cpp-qwen38-download
+    app.kubernetes.io/part-of: llama-cpp-qwen38
+    app.kubernetes.io/managed-by: kubectl
+spec:
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        app: llama-cpp-qwen38-download
+        app.kubernetes.io/name: llama-cpp-qwen38-download
+        app.kubernetes.io/part-of: llama-cpp-qwen38
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - command:
+        - python3
+        - -c
+        - "import os\nimport shutil\nimport urllib.request\nfrom pathlib import Path\n\nmodels = {\n    \"qwen38-27b-qat-q2_0.gguf\"\
+          : os.environ[\"TARGET_URL\"],\n    \"Qwen3.8-27B-DFlash2-Q2_K_S-MIX.gguf\": os.environ[\"DRAFT_URL\"],\n}\nmodel_dir\
+          \ = Path(\"/models\")\nmodel_dir.mkdir(parents=True, exist_ok=True)\n\nfor filename, url in models.items():\n  \
+          \  destination = model_dir / filename\n    partial = destination.with_suffix(destination.suffix + \".part\")\n \
+          \   if destination.exists() and destination.stat().st_size > 0:\n        print(f\"{filename} already exists; keeping\
+          \ cached copy\")\n        continue\n    if partial.exists():\n        partial.unlink()\n    print(f\"downloading\
+          \ {filename}\")\n    with urllib.request.urlopen(url, timeout=60) as response, partial.open(\"wb\") as handle:\n\
+          \        shutil.copyfileobj(response, handle, length=1024 * 1024)\n    partial.rename(destination)\n    print(f\"\
+          wrote {destination} ({destination.stat().st_size} bytes)\")\n"
+        env:
+        - name: TARGET_URL
+          value: https://huggingface.co/sdkyuan/qwen3.8-27B-qat-q2_0-gguf/resolve/a5885499d443cbf4a7998001508ddb3b279eeb5f/qwen38-27b-qat-q2_0.gguf
+        - name: DRAFT_URL
+          value: https://huggingface.co/HermiHg/Qwen3.8-27B-DFlash2-Q2_K_S-MIX-GGUF/resolve/3a802866ab98104e56d2c0b33442004b5b39ab08/Qwen3.8-27B-DFlash2-Q2_K_S-MIX.gguf
+        image: docker.io/library/python@sha256:6d43704baacd1bfbe7c295d7f13079d5d8104ed33568873133f8fc69980419df
+        imagePullPolicy: IfNotPresent
+        name: downloader
+        resources:
+          limits:
+            cpu: '2'
+            memory: 1Gi
+          requests:
+            cpu: 250m
+            memory: 256Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /models
+          name: models
+      volumes:
+      - name: models
+        persistentVolumeClaim:
+          claimName: llama-cpp-qwen38-models-pvc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-cpp-qwen38
+  namespace: llama-cpp
+  annotations:
+    homelab.watoom/internal-url: http://llama-cpp-qwen38.llama-cpp.svc.cluster.local:8000
+    homelab.watoom/public-url: https://qwen38.internal.homelab.example
+  labels:
+    app: llama-cpp-qwen38
+    app.kubernetes.io/name: llama-cpp-qwen38
+    app.kubernetes.io/part-of: llama-cpp-qwen38
+    app.kubernetes.io/managed-by: kubectl
+    homelab.watoom/category: Infrastructure
+    homelab.watoom/icon: brain
+spec:
+  replicas: 0
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: llama-cpp-qwen38
+  template:
+    metadata:
+      labels:
+        app: llama-cpp-qwen38
+        app.kubernetes.io/name: llama-cpp-qwen38
+        app.kubernetes.io/part-of: llama-cpp-qwen38
+    spec:
+      runtimeClassName: nvidia
+      initContainers:
+      - command:
+        - python3
+        - -c
+        - "from pathlib import Path\nmissing = [name for name in [\n    \"qwen38-27b-qat-q2_0.gguf\",\n    \"Qwen3.8-27B-DFlash2-Q2_K_S-MIX.gguf\"\
+          ,\n] if not (Path(\"/models\") / name).exists()]\nif missing:\n    raise SystemExit(f\"missing model files: {',\
+          \ '.join(missing)}\")\n"
+        env:
+        - name: LLAMA_ARG_N_GPU_LAYERS
+          value: all
+        - name: LLAMA_ARG_N_PARALLEL
+          value: '1'
+        - name: LLAMA_ARG_FLASH_ATTN
+          value: 'on'
+        - name: LLAMA_ARG_FIT
+          value: 'off'
+        - name: LLAMA_ARG_CTX_SIZE
+          value: '8192'
+        - name: LLAMA_ARG_CACHE_TYPE_K
+          value: q5_0
+        - name: LLAMA_ARG_CACHE_TYPE_V
+          value: q5_0
+        - name: LLAMA_ARG_THREADS
+          value: '8'
+        - name: LLAMA_ARG_MODEL
+          value: /models/Qwen3.8-27B-Q3_K_M.gguf
+        - name: LLAMA_ARG_ALIAS
+          value: qwen38-27b-q3km
+        - name: LLAMA_ARG_REASONING
+          value: 'on'
+        - name: LLAMA_ARG_ENDPOINT_METRICS
+          value: 'true'
+        - name: LLAMA_ARG_CONT_BATCHING
+          value: 'true'
+        image: docker.io/library/python@sha256:6d43704baacd1bfbe7c295d7f13079d5d8104ed33568873133f8fc69980419df
+        imagePullPolicy: IfNotPresent
+        name: wait-for-models
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /models
+          name: models
+          readOnly: true
+      containers:
+      - env:
+        - name: TZ
+          value: Australia/Brisbane
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: all
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          value: compute,utility
+        - name: LLAMA_ARG_HOST
+          value: 0.0.0.0
+        - name: LLAMA_ARG_PORT
+          value: '8000'
+        - name: LLAMA_ARG_MODEL
+          value: /models/Qwen3.8-27B-Q3_K_M.gguf
+        - name: LLAMA_ARG_ALIAS
+          value: qwen38-27b-q3km
+        - name: LLAMA_ARG_REASONING
+          value: 'on'
+        - name: LLAMA_ARG_REASONING_EFFORT
+          value: 'low'
+        - name: LLAMA_ARG_CTX_SIZE
+          value: '8192'
+        - name: LLAMA_ARG_N_GPU_LAYERS
+          value: all
+        - name: LLAMA_ARG_CACHE_TYPE_K
+          value: q5_0
+        - name: LLAMA_ARG_CACHE_TYPE_V
+          value: q5_0
+        - name: LLAMA_ARG_THREADS
+          value: '8'
+        - name: LLAMA_ARG_CONT_BATCHING
+          value: 'true'
+        - name: LLAMA_ARG_ENDPOINT_METRICS
+          value: 'true'
+        - name: LLAMA_ARG_N_PARALLEL
+          value: '1'
+        - name: LLAMA_ARG_FLASH_ATTN
+          value: 'on'
+        - name: LLAMA_ARG_FIT
+          value: 'off'
+        image: ghcr.io/ggml-org/llama.cpp@sha256:150b59966fb5b2cb1a8fa9d226267c56ebd22c520c7b3640331cde87f3c4fb01
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 6
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 90
+          periodSeconds: 30
+          successThreshold: 1
+          timeoutSeconds: 10
+        name: llama-server
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 12
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 20
+          periodSeconds: 15
+          successThreshold: 1
+          timeoutSeconds: 10
+        resources:
+          limits:
+            cpu: '8'
+            memory: 24Gi
+            nvidia.com/gpu: '1'
+          requests:
+            cpu: 500m
+            memory: 8Gi
+            nvidia.com/gpu: '1'
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /models
+          name: models
+          readOnly: true
+      volumes:
+      - name: models
+        persistentVolumeClaim:
+          claimName: llama-cpp-qwen38-models-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llama-cpp-qwen38
+  namespace: llama-cpp
+  labels:
+    app: llama-cpp-qwen38
+    app.kubernetes.io/name: llama-cpp-qwen38
+    app.kubernetes.io/part-of: llama-cpp-qwen38
+    app.kubernetes.io/managed-by: kubectl
+spec:
+  type: ClusterIP
+  selector:
+    app: llama-cpp-qwen38
+  ports:
+  - name: http
+    port: 8000
+    targetPort: http
+    protocol: TCP
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: llama-cpp-qwen38
+  namespace: llama-cpp
+  labels:
+    app.kubernetes.io/name: llama-cpp-qwen38
+    app.kubernetes.io/part-of: llama-cpp-qwen38
+    app.kubernetes.io/managed-by: kubectl
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - kind: Rule
+    match: Host(`qwen38.internal.homelab.example`)
+    services:
+    - name: llama-cpp-qwen38
+      namespace: llama-cpp
+      port: 8000
+      nativeLB: true
+  tls:
+    secretName: watoom-tls
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: llama-cpp-qwen38-http
+  namespace: llama-cpp
+  labels:
+    app.kubernetes.io/name: llama-cpp-qwen38-http
+    app.kubernetes.io/part-of: llama-cpp-qwen38
+    app.kubernetes.io/managed-by: kubectl
+spec:
+  entryPoints:
+  - web
+  routes:
+  - kind: Rule
+    match: Host(`qwen38.internal.homelab.example`)
+    services:
+    - name: llama-cpp-qwen38
+      namespace: llama-cpp
+      port: 8000
+      nativeLB: true

@@ -1,0 +1,11 @@
+# Shadowheart rig evidence: scope-specific
+
+Only use for asset ast_108ed7ad25f386da5f300677 with the matching clothed recipe/prepared hash875a2b4d3b4d0229e29ab261bc91d0395854e85109868eadb527ef9a57bd7d76. Generic assets need their own mapping.
+
+Actual inventory: `/data/ai/projects/images/.opencode/captures/capture-accept-shadowheart-inspect-20261025/inventory.json`. Rig object `Shadowheart`,516bones. The `head` and `neck` constraints target non-deform control `neckhead`; it has no constraints or rotation locks in this source. A clothed head-turn preview (58 evaluated deform bones changed, exact requested channels verified again after render) with `{armature:"Shadowheart",bone:"neckhead",rotation_euler:[0,0.35,0]}` rendered successfully and was visually inspected: head/hair turn while outfit and body remain intact. This is one validated control use, not a whole-body pose library. Receipt: `/data/ai/archive/projects-20261029/pipelines/sims4-mod-studio-staging-20261024T082059Z/implementation/reports/capture-skill-tune-20261025/shadowheart-head-v2/result.json`.
+
+Upper-arm main bones have copy-transform relationships to both `.fk` and `.ik.twist` branches. A name containing FK does not prove its current influence. Inspect the current rig's controls/drivers before rotating. Seated posing, planted hands/feet and IK target translation are not qualified by the head-turn test or A-pose preview. Preserve camp shirt,pants,shoes and the observed pants body MASK; do not repeat a default-pose render as a requested seated result.
+
+## Qualified control adapter
+
+The fixed `shadowheart-mhx-v1` adapter now provides measured hand/foot IK targets, elbow/knee poles, hip translation and observed IK/FK switches through `pose-prepare` on the native 4GiB worker. Read [the adapter contract](../../human-pose-agent/references/shadowheart-mhx-adapter.md) and require a matching `adapter-inventory.json`. Earlier head-turn-only qualification above remains historical evidence. Real saved/reopened tests verified hand placement, planted feet, hip lowering and FK arm deformation. The deep seated sample has severe pants artifacts and is **not visually accepted**. Do not treat the adapter as a collision-free pose library or skip clothing review.

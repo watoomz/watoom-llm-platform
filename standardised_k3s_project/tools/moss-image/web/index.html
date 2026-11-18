@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MOSS Image Studio</title>
+<style>
+:root {
+  --bg: #f6f6f4; --panel: #ffffff; --ink: #1c1d1f; --muted: #6a6d73; --line: #dcdcd8;
+  --accent: #b4491f; --accent-ink: #ffffff; --ok: #2f7d4f; --bad: #b3261e; --chip: #efeee9;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #17181a; --panel: #212326; --ink: #ececea; --muted: #9a9da3; --line: #34363a;
+    --accent: #e0703f; --accent-ink: #1a1a1a; --ok: #62b886; --bad: #f2877f; --chip: #2a2c30;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #17181a; --panel: #212326; --ink: #ececea; --muted: #9a9da3; --line: #34363a;
+  --accent: #e0703f; --accent-ink: #1a1a1a; --ok: #62b886; --bad: #f2877f; --chip: #2a2c30;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { padding: 16px; border-bottom: 1px solid var(--line); display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+h1 { font-size: 18px; margin: 0; }
+header .sub { color: var(--muted); font-size: 13px; }
+main { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 16px; padding: 16px; max-width: 1400px; margin: 0 auto; }
+@media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+section { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 10px; }
+label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+textarea, input, select { width: 100%; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+textarea { min-height: 96px; resize: vertical; }
+details.help { margin-top: 12px; font-size: 13px; color: var(--muted); }
+details.help summary { cursor: pointer; color: var(--ink); }
+details.help dl { margin: 8px 0 0; } details.help dt { color: var(--ink); font-weight: 600; margin-top: 8px; }
+details.help dd { margin: 2px 0 0; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); padding: 8px 14px; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; width: 100%; padding: 11px; margin-top: 14px; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.tab { padding: 4px 10px; font-size: 13px; background: var(--chip); border-radius: 999px; }
+.tab[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; max-height: 280px; overflow: auto; padding: 2px; }
+.preset { text-align: left; padding: 8px 10px; background: var(--bg); line-height: 1.25; }
+.preset[aria-pressed="true"] { outline: 2px solid var(--accent); }
+.preset small { display: block; color: var(--muted); font-size: 11.5px; margin-top: 3px; }
+.preview { font-size: 12.5px; color: var(--muted); background: var(--bg); border: 1px dashed var(--line); border-radius: 8px; padding: 8px 10px; margin-top: 8px; white-space: pre-wrap; word-break: break-word; max-height: 160px; overflow: auto; }
+.bar { height: 10px; background: var(--chip); border-radius: 999px; overflow: hidden; margin: 10px 0 4px; }
+.bar > div { height: 100%; width: 0; background: var(--accent); transition: width .4s; }
+.msg { font-size: 13px; color: var(--muted); min-height: 20px; }
+.msg.err { color: var(--bad); }
+.stage { display: flex; flex-direction: column; gap: 10px; }
+.stage img { max-width: 100%; border-radius: 8px; border: 1px solid var(--line); background: var(--chip); }
+.empty { display: grid; place-items: center; min-height: 240px; color: var(--muted); border: 1px dashed var(--line); border-radius: 8px; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+.gallery button { padding: 0; border-radius: 8px; overflow: hidden; line-height: 0; }
+.gallery img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+.dl { display: inline-block; margin-top: 8px; padding: 7px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); text-decoration: none; font-size: 13px; }
+.dl:hover { border-color: var(--accent); }
+.fpath { margin-top: 6px; font: 11px ui-monospace, monospace; color: var(--muted, #888); word-break: break-all; user-select: all; }
+.gitem { position: relative; }
+.gitem .gx, .gitem .gbar { position: absolute; top: 4px; right: 4px; display: flex; gap: 4px; opacity: 0; }
+.gitem .gbar { top: auto; bottom: 4px; left: 4px; right: 4px; opacity: 1; justify-content: space-between; }
+.gitem .gx button, .gitem .gbar button { line-height: 1.4; padding: 2px 8px; font-size: 11px; border-radius: 10px; background: rgba(0,0,0,.7); color: #fff; border: 0; cursor: pointer; }
+.gitem img.blur { filter: blur(22px); transform: scale(1.15); }
+.gitem:hover .gx, .gitem .gx:focus-within { opacity: 1; }
+@media (hover: none) { .gitem .gx { opacity: .9; } }
+.meta { font-size: 12.5px; color: var(--muted); }
+.status { margin-left: auto; font-size: 12.5px; color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>MOSS Image Studio</h1>
+  <span class="sub">MOSS-Image SFT, INT8 DiT, on the homelab GPU</span>
+  <span class="status" id="status">checking engine…</span>
+</header>
+<main>
+  <div>
+    <section>
+      <h2>Scene</h2>
+      <label for="scene">Describe the picture (people, place, light, pose)</label>
+      <textarea id="scene" maxlength="4000" placeholder="a waist-up portrait of a woman in her mid twenties, standing against a sunlit plaster wall"></textarea>
+
+      <h2 style="margin-top:16px">Camera / film look</h2>
+      <div class="tabs" id="tabs" role="group" aria-label="Preset categories"></div>
+      <div class="presets" id="presets" role="group" aria-label="Presets"></div>
+      <div class="meta" id="presetMeta"></div>
+      <div class="preview" id="preview" aria-live="polite"></div>
+    </section>
+
+    <section style="margin-top:16px">
+      <h2>Settings</h2>
+      <div class="row">
+        <div><label for="size">Size</label><select id="size" title="Picture dimensions in pixels. Bigger takes longer and needs more VRAM."></select></div>
+        <div><label for="sampler">Sampler</label><select id="sampler" title="The noise-removal method. The default is the tested one."></select></div>
+      </div>
+      <div class="row3">
+        <div><label for="steps">Steps</label><input id="steps" title="How many refinement passes. More is slower; returns diminish." type="number" min="1" max="60"></div>
+        <div><label for="cfg">CFG</label><input id="cfg" title="How strictly to follow the prompt. Low is looser and more natural, high is literal but harsher." type="number" min="0" max="10" step="0.1"></div>
+        <div><label for="seed">Seed (blank = random)</label><input id="seed" title="Same seed and settings give the same picture. Blank picks a new one each time." type="number" step="1"></div>
+      </div>
+      <label for="negative">Extra negative prompt (added after the look’s own)</label>
+      <input id="negative" title="Things to avoid, added after the look's own avoid-list." maxlength="4000">
+      <div class="meta" id="sessionBox" hidden>
+        <strong>GPU session:</strong> <span id="sessionText"></span>
+        <button type="button" id="sessionBtn">Start GPU session</button>
+        <div>Starting a session pauses the LLM until you end it (or after the idle timeout). It starts as soon as WatooM Code is not running anything.</div>
+      </div>
+      <details class="help">
+        <summary>What do these settings do?</summary>
+        <dl>
+          <dt>Camera / film look</dt>
+          <dd>Each preset wraps your scene as <em>look, scene, look</em> and adds that look's own avoid-list. Write only what is in the picture; leave the grain, colour and lens to the look. Pick “No look” to use your text as written.</dd>
+          <dt>Size</dt>
+          <dd>Width × height in pixels (multiples of 16, up to about 2.1 megapixels). 1216 × 832 is the tested default. Larger sizes take longer and need more VRAM; pick portrait or landscape to match the subject.</dd>
+          <dt>Steps (1–60)</dt>
+          <dd>How many refinement passes the model makes. Fewer is faster but rougher; more is slower with diminishing gains. The default of 25 is a sound starting point.</dd>
+          <dt>CFG (0–10)</dt>
+          <dd>How strictly the picture follows your text. Low (about 2–3) looks looser and more natural, which suits photo looks. High values follow the text literally but can look harsh or over-processed. Default 2.5.</dd>
+          <dt>Sampler</dt>
+          <dd>The method used to remove noise step by step. Different samplers give different details from the same seed. The default, <code>er_sde</code>, is the one tested here; try others to compare. Methods with “ancestral” or “sde” in the name add fresh randomness each step.</dd>
+          <dt>Seed</dt>
+          <dd>The starting noise. The same seed with the same text and settings repeats the same picture, so keep a seed you like and change one thing at a time. Blank means a new random seed every run.</dd>
+          <dt>Extra negative prompt</dt>
+          <dd>Things to keep out of the picture (for example “text, watermark, extra fingers”). It is added after the avoid-list that comes with the look.</dd>
+          <dt>GPU session</dt>
+          <dd>The image model needs the GPU, which the language model normally holds. <strong>Start GPU session</strong> starts as soon as WatooM Code is not running anything, then pauses the language model. The session ends after 10 idle minutes, when you press End, or after 2 hours, and the language model is restored. Restoring takes a few minutes.</dd>
+        </dl>
+      </details>
+      <button class="primary" id="go">Generate</button>
+      <div class="bar" aria-hidden="true"><div id="barfill"></div></div>
+      <div class="msg" id="msg" role="status" aria-live="polite"></div>
+      <button id="stop" hidden>Cancel</button>
+    </section>
+  </div>
+
+  <div>
+    <section class="stage">
+      <h2>Result</h2>
+      <div id="result"><div class="empty">No image yet</div></div>
+      <div class="meta" id="resultMeta"></div>
+    </section>
+    <section style="margin-top:16px">
+      <h2>Recent</h2>
+      <div class="gallery" id="gallery"></div>
+    </section>
+    <details style="margin-top:16px" id="hiddenPanel">
+      <summary><h2 style="display:inline">Hidden <span class="meta" id="hiddenCount"></span></h2></summary>
+      <div class="meta" id="hiddenMsg">Blurred. Unblur, view or restore needs the code.</div>
+      <div class="gallery" id="hiddenGallery"></div>
+    </details>
+  </div>
+</main>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const SIZES = [["1216 × 832 (landscape, tested)", 1216, 832], ["832 × 1216 (portrait)", 832, 1216], ["1024 × 1024 (square)", 1024, 1024],
+               ["1536 × 1024", 1536, 1024], ["1024 × 1536", 1024, 1536], ["768 × 768", 768, 768]];
+let presets = [], category = "All", selected = null, jobId = null, timer = null;
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error((j.error && j.error.message) || ("HTTP " + r.status));
+  return j;
+}
+function text(el, s) { el.textContent = s; }
+
+function composed() {
+  const scene = $("scene").value.trim();
+  if (!selected) return { prompt: scene, negative: $("negative").value.trim() };
+  const look = selected.prompt_look.trim();
+  return { prompt: look + " " + scene + " " + look,
+           negative: selected.negative_extra + ($("negative").value.trim() ? ", " + $("negative").value.trim() : "") };
+}
+function renderPreview() {
+  const c = composed();
+  text($("preview"), "Prompt: " + (c.prompt || "(write a scene)") + "\n\nNegative (after the usual): " + (c.negative || "—"));
+  text($("presetMeta"), selected ? selected.name + " — " + selected.category + ". The look is said at the start and again at the end." : "No look selected: your scene is used as written.");
+}
+function renderPresets() {
+  const cats = ["All"].concat([...new Set(presets.map((p) => p.category))]);
+  const tabs = $("tabs"); tabs.replaceChildren();
+  for (const c of cats) {
+    const b = document.createElement("button"); b.className = "tab"; b.type = "button"; b.textContent = c;
+    b.setAttribute("aria-pressed", String(c === category)); b.onclick = () => { category = c; renderPresets(); };
+    tabs.appendChild(b);
+  }
+  const box = $("presets"); box.replaceChildren();
+  const none = document.createElement("button"); none.type = "button"; none.className = "preset"; none.textContent = "No look";
+  none.setAttribute("aria-pressed", String(!selected)); none.onclick = () => { selected = null; renderPresets(); renderPreview(); };
+  box.appendChild(none);
+  for (const p of presets.filter((p) => category === "All" || p.category === category)) {
+    const b = document.createElement("button"); b.type = "button"; b.className = "preset";
+    b.setAttribute("aria-pressed", String(!!selected && selected.id === p.id));
+    b.textContent = p.name;
+    const s = document.createElement("small"); s.textContent = p.prompt_look.slice(0, 70) + (p.prompt_look.length > 70 ? "…" : ""); b.appendChild(s);
+    b.onclick = () => { selected = p; renderPresets(); renderPreview(); };
+    box.appendChild(b);
+  }
+}
+let outDir = "";
+function showImage(name, meta) {
+  shownImage = name;
+  const img = document.createElement("img"); img.src = "api/images/" + name; img.alt = meta || "Generated image";
+  const dl = document.createElement("a"); dl.className = "dl"; dl.href = "api/images/" + name; dl.download = name; dl.textContent = "⬇ Download PNG";
+  const path = document.createElement("div"); path.className = "fpath";
+  path.textContent = "File: " + (outDir ? outDir + "/" : "") + name + " (the PNG and its .json sidecar stay on disk even if removed from Recent)";
+  $("result").replaceChildren(img, dl, path); text($("resultMeta"), meta || "");
+}
+const HIDE_CODE = "1337";  // casual privacy screen for explicit images, not access control
+const unblurred = new Set();
+let shownImage = null;
+function askCode(what) {
+  const c = prompt("Enter the code to " + what + ":");
+  if (c === null) return false;
+  if (c.trim() === HIDE_CODE) return true;
+  text($("hiddenMsg"), "Wrong code."); return false;
+}
+async function setHidden(id, hide) {
+  try { await api("api/gallery/" + id + "/" + (hide ? "hide" : "unhide"), { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }); } catch (err) { /* the refresh shows the truth */ }
+  if (hide) unblurred.delete(id);
+  if (hide && shownImage === id + ".png") { $("result").replaceChildren(Object.assign(document.createElement("div"), { className: "empty", textContent: "No image yet" })); text($("resultMeta"), ""); shownImage = null; }
+  refreshGallery();
+}
+function tile(it, hidden) {
+  const cell = document.createElement("div"); cell.className = "gitem";
+  const b = document.createElement("button"); b.type = "button";
+  const i = document.createElement("img"); i.loading = "lazy"; i.src = "api/images/" + it.image; i.alt = hidden ? "hidden image" : (it.scene || "image");
+  if (!hidden) b.title = it.scene || "";
+  const open = () => { shownImage = it.image; showImage(it.image, (it.preset_id || "no look") + " · " + it.width + "×" + it.height + (hidden ? "" : " · " + (it.scene || "").slice(0, 120))); };
+  const lifted = hidden && unblurred.has(it.id);
+  if (hidden && !lifted) i.className = "blur";
+  b.appendChild(i);
+  b.onclick = () => { if (!hidden || lifted) open(); else if (askCode("unblur this image")) { unblurred.add(it.id); refreshGallery(); } };
+  cell.appendChild(b);
+  const bar = document.createElement("div"); bar.className = hidden ? "gbar" : "gx";
+  const btn = (label, title, fn) => { const x = document.createElement("button"); x.type = "button"; x.textContent = label; x.title = title; x.setAttribute("aria-label", title); x.onclick = (e) => { e.stopPropagation(); fn(); }; return x; };
+  if (!hidden) bar.append(btn("Hide", "Move to the blurred Hidden panel (the file is kept)", () => setHidden(it.id, true)));
+  else {
+    bar.append(lifted ? btn("Blur", "Blur this image again", () => { unblurred.delete(it.id); refreshGallery(); })
+                      : btn("Unblur", "Unblur (needs the code)", () => { if (askCode("unblur this image")) { unblurred.add(it.id); refreshGallery(); } }));
+    bar.append(btn("Restore", "Move back to Recent (needs the code)", () => { if (askCode("restore this image to Recent")) setHidden(it.id, false); }));
+  }
+  cell.appendChild(bar);
+  return cell;
+}
+async function refreshGallery() {
+  const [recent, hid] = await Promise.all([api("api/gallery"), api("api/gallery?hidden=1")]);
+  $("gallery").replaceChildren(...recent.items.map((it) => tile(it, false)));
+  $("hiddenGallery").replaceChildren(...hid.items.map((it) => tile(it, true)));
+  text($("hiddenCount"), hid.items.length ? "(" + hid.items.length + ")" : "");
+}
+async function refreshStatus() {
+  try {
+    const s = await api("api/status");
+    let t = s.running_job ? "generating" : s.engine_running ? "engine loaded" : "engine idle";
+    if (s.gpu_free_mib != null) t += " · GPU free " + Math.round(s.gpu_free_mib / 102.4) / 10 + " GiB";
+    text($("status"), t);
+    renderSession(s.session);
+  } catch (e) { text($("status"), "service unreachable"); }
+}
+let sessionState = null;
+function renderSession(se) {
+  const box = $("sessionBox");
+  if (!se) { box.hidden = true; return; }
+  box.hidden = false; sessionState = se.state;
+  const left = se.idle_seconds_left != null ? " · ends in " + Math.ceil(se.idle_seconds_left / 60) + " min if idle" : "";
+  text($("sessionText"), se.state + (se.detail ? " — " + se.detail : "") + left);
+  const btn = $("sessionBtn");
+  const running = ["waiting", "starting", "active"].includes(se.state);
+  btn.textContent = se.state === "active" ? "End GPU session" : se.state === "waiting" ? "Cancel" : "Start GPU session";
+  btn.disabled = ["starting", "ending", "error"].includes(se.state);
+  $("go").disabled = se.state !== "active" || !!jobId;
+}
+async function toggleSession() {
+  try { await api(sessionState === "active" || sessionState === "waiting" ? "api/session/end" : "api/session/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }); }
+  catch (e) { setMsg(e.message, true); }
+  refreshStatus();
+}
+function setBusy(b) { $("go").disabled = b; $("stop").hidden = !b; }
+function setMsg(s, err) { const m = $("msg"); text(m, s); m.className = "msg" + (err ? " err" : ""); }
+
+async function poll() {
+  try {
+    const j = await api("api/jobs/" + jobId);
+    $("barfill").style.width = Math.round(100 * (j.fraction || 0)) + "%";
+    if (j.status === "queued") setMsg("Queued…");
+    else if (j.status === "running") setMsg((j.phase ? j.phase.replace("_", " ") : "starting") + (j.eta_seconds ? " · about " + Math.ceil(j.eta_seconds) + " s left" : "") + " — the first image loads the model and takes longer");
+    else {
+      clearInterval(timer); timer = null; setBusy(false); jobId = null;
+      if (j.status === "done") { $("barfill").style.width = "100%"; setMsg("Done." + (j.warnings.length ? " " + j.warnings.join(" ") : "")); showImage(j.image, (j.request.preset_id || "no look") + " · " + j.request.width + "×" + j.request.height + " · seed " + j.request.seed + " · " + j.request.steps + " steps, CFG " + j.request.cfg); refreshGallery(); }
+      else if (j.status === "cancelled") { setMsg("Cancelled."); $("barfill").style.width = "0"; }
+      else { setMsg((j.error && j.error.message) || "Failed.", true); $("barfill").style.width = "0"; }
+    }
+  } catch (e) { setMsg(e.message, true); }
+  refreshStatus();
+}
+async function generate() {
+  const scene = $("scene").value.trim();
+  if (!scene) { setMsg("Write a scene first.", true); return; }
+  const [, w, h] = SIZES[$("size").selectedIndex];
+  const body = { scene, preset_id: selected ? selected.id : null, width: w, height: h, sampler: $("sampler").value,
+                 steps: Number($("steps").value), cfg: Number($("cfg").value), negative: $("negative").value.trim(),
+                 seed: $("seed").value === "" ? -1 : Number($("seed").value) };
+  setBusy(true); setMsg("Submitting…"); $("barfill").style.width = "0";
+  try {
+    const j = await api("api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    jobId = j.id; timer = setInterval(poll, 800); poll();
+  } catch (e) { setBusy(false); setMsg(e.message, true); }
+}
+$("go").onclick = generate;
+$("sessionBtn").onclick = toggleSession;
+$("stop").onclick = async () => { if (jobId) { try { await api("api/jobs/" + jobId + "/cancel", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }); setMsg("Cancelling…"); } catch (e) { setMsg(e.message, true); } } };
+$("scene").oninput = renderPreview; $("negative").oninput = renderPreview;
+
+(async function init() {
+  const sz = $("size"); for (const s of SIZES) { const o = document.createElement("option"); o.textContent = s[0]; sz.appendChild(o); }
+  try {
+    const [cfg, pr] = await Promise.all([api("api/config"), api("api/presets")]);
+    outDir = cfg.out_dir || "";
+    for (const s of cfg.samplers) { const o = document.createElement("option"); o.value = o.textContent = s; $("sampler").appendChild(o); }
+    $("sampler").value = cfg.defaults.sampler; $("steps").value = cfg.defaults.steps; $("cfg").value = cfg.defaults.cfg;
+    presets = pr.presets;
+  } catch (e) { setMsg("Could not load presets: " + e.message, true); }
+  renderPresets(); renderPreview(); refreshGallery(); refreshStatus(); setInterval(refreshStatus, 4000);
+})();
+</script>
+</body>
+</html>

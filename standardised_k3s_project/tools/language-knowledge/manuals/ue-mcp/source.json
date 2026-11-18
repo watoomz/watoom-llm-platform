@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "product": "ue-mcp",
+  "version": "ue-mcp 1.4.14 (docs tag v1.4.14, fetched 2026-11-19)",
+  "language": "mcp",
+  "license": "MIT (db-lyon/ue-mcp)",
+  "trust_tier": "vendor_doc",
+  "note": "db-lyon/ue-mcp, the Unreal Engine MCP server (npm package ue-mcp plus the UE_MCP_Bridge editor plugin). The three source files are byte-for-byte copies of docs/tool-reference.md, docs/configuration.md and docs/guards.md at tag v1.4.14, downloaded on 2026-11-19 (the version pinned on the rig). effects.json is derived from the published npm package ue-mcp@1.4.14 by extract/ue_mcp_entries.py (static reading of the package source, nothing executed); an action no table names is 'unclassified' and treated as a change. The tool reference is generated, so counts and wording follow upstream. Which actions the WatooM route allows is a separate, internal fact: see the watoom-ue-route product.",
+  "pages": [
+    {
+      "file": "tool-reference.md",
+      "uri": "https://github.com/db-lyon/ue-mcp/blob/main/docs/tool-reference.md"
+    },
+    {
+      "file": "configuration.md",
+      "uri": "https://github.com/db-lyon/ue-mcp/blob/main/docs/configuration.md"
+    },
+    {
+      "file": "guards.md",
+      "uri": "https://github.com/db-lyon/ue-mcp/blob/main/docs/guards.md"
+    }
+  ]
+}

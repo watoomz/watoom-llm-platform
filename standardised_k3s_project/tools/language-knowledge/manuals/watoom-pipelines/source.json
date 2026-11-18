@@ -1,0 +1,94 @@
+{
+  "product": "watoom-pipelines",
+  "version": "snapshot-2026-11-13",
+  "language": "internal operational guidance",
+  "license": "proprietary",
+  "trust_tier": "internal_doc",
+  "note": "First-party internal operational documentation owned by WatooM; this is not third-party vendor material. Each source copy below is byte-for-byte copied from the listed repository path as present in the provided workspace snapshot, read 2026-11-13 Australia/Queensland. Git commit was unavailable because this workspace .git pointer targets an absent /data/ai/projects/llm checkout; no source commit can be honestly named.",
+  "pages": [
+    {
+      "file": "game-worker-bridge.py",
+      "uri": "internal:tools/watoom-code/game_worker_bridge.py"
+    },
+    {
+      "file": "native-game-worker.md",
+      "uri": "internal:docs/NATIVE_GAME_WORKER.md"
+    },
+    {
+      "file": "generic-capture.md",
+      "uri": "internal:tools/watoom-code/GENERIC_CAPTURE.md"
+    },
+    {
+      "file": "blender-export-pipelines.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/blender-export-pipelines/SKILL.md"
+    },
+    {
+      "file": "blender-rendering.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/blender-rendering/SKILL.md"
+    },
+    {
+      "file": "visual-diagnosis.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-engine-visual-diagnosis/SKILL.md"
+    },
+    {
+      "file": "moss-image-plugin.yml",
+      "uri": "internal:ansible/roles/watoom-code/tasks/moss_image_plugin.yml"
+    },
+    {
+      "file": "image-scope.yml",
+      "uri": "internal:ansible/roles/watoom-code/tasks/image_scope.yml"
+    },
+    {
+      "file": "image-mcp.yml",
+      "uri": "internal:ansible/roles/watoom-code/tasks/image-mcp.yml"
+    },
+    {
+      "file": "image-review.yml",
+      "uri": "internal:ansible/roles/watoom-code/tasks/image_review.yml"
+    },
+    {
+      "file": "blender-job-spec.py",
+      "uri": "internal:tools/watoom-code/blender_job_spec.py"
+    },
+    {
+      "file": "terrain-spec.py",
+      "uri": "internal:tools/watoom-code/terrain_spec.py"
+    },
+    {
+      "file": "unreal-export-spec.py",
+      "uri": "internal:tools/watoom-code/unreal_export_spec.py"
+    },
+    {
+      "file": "workflow-agent.md",
+      "uri": "internal:ansible/roles/opencode-agent/files/v2-native/agents/watoom-workflow.md"
+    },
+    {
+      "file": "builder-agent.md",
+      "uri": "internal:ansible/roles/opencode-agent/files/v2-native/agents/watoom-builder.md"
+    },
+    {
+      "file": "worker-setup.md",
+      "uri": "internal:docs/WORKER_SETUP.md"
+    },
+    {
+      "file": "unreal-lane-build.py",
+      "uri": "internal:tools/rig-async-stage/unreal-lane/build_lane.py"
+    },
+    {
+      "file": "rig-project-sync.yml",
+      "uri": "internal:ansible/roles/watoom-code/tasks/rig_project_sync.yml"
+    },
+    {
+      "file": "fab-catalog.yml",
+      "uri": "internal:ansible/roles/watoom-code/tasks/fab_catalog.yml"
+    },
+    {
+      "file": "game-worker-task.yml",
+      "uri": "internal:ansible/roles/watoom-code/tasks/game_worker.yml"
+    },
+    {
+      "file": "terrain-spec-test.py",
+      "uri": "internal:tools/watoom-code/test_terrain_spec.py"
+    }
+  ]
+}

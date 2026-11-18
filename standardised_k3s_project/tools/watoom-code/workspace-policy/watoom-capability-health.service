@@ -1,0 +1,14 @@
+[Unit]
+Description=WatooM native catalogue and learning health refresh (no inference or promotion)
+After=k3s.service
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/bin/python3 /data/ai/helper-scripts/homelab-workspace-policy/capability_maintenance.py --iac-root /data/ai/projects/homelab/homelab-llm/standardised_k3s_project
+TimeoutStartSec=120
+MemoryMax=192M
+CPUQuota=20%
+Nice=15
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true

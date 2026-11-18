@@ -1,0 +1,231 @@
+{
+ "schema": 1,
+ "name": "realistic",
+ "description": "Physically based look: StandardMaterial3D (colour, roughness, specular), sky ambient, AgX tonemap, SSAO, glow, fog. Texture sets, normal maps and reflective water are not built yet.",
+ "dimensions": [
+  "3d"
+ ],
+ "renderer": "forward_plus",
+ "capture_frames": 24,
+ "render": {
+  "window": [
+   1280,
+   720
+  ],
+  "internal": null,
+  "texture_filter": "linear_mipmap_aniso",
+  "msaa": 2,
+  "fxaa": true,
+  "taa": false,
+  "snap_2d": false
+ },
+ "lighting": {
+  "sun_energy": 1.2,
+  "sun_color": [
+   1.0,
+   0.96,
+   0.9
+  ],
+  "sun_elevation_deg": 42,
+  "sun_azimuth_deg": 135,
+  "shadows": true,
+  "shadow_blur": 1.0,
+  "ambient_source": "sky",
+  "ambient_color": [
+   0.5,
+   0.5,
+   0.5
+  ],
+  "ambient_energy": 1.0,
+  "sky": {
+   "kind": "procedural",
+   "color": [
+    0,
+    0,
+    0
+   ],
+   "top": [
+    0.22,
+    0.38,
+    0.66
+   ],
+   "horizon": [
+    0.66,
+    0.74,
+    0.84
+   ]
+  }
+ },
+ "post": {
+  "tonemap": "agx",
+  "exposure": 1.0,
+  "white": 6.0,
+  "glow": {
+   "on": true,
+   "intensity": 0.25,
+   "threshold": 1.0
+  },
+  "ssao": true,
+  "ssil": false,
+  "sdfgi": false,
+  "fog": {
+   "on": true,
+   "density": 0.0015,
+   "aerial": 0.6
+  },
+  "adjust": {
+   "brightness": 1.0,
+   "contrast": 1.05,
+   "saturation": 1.05
+  }
+ },
+ "material": {
+  "shading": "pbr",
+  "normal_maps": true,
+  "normal_strength": 1.0,
+  "roughness": 0.7,
+  "specular": 0.5,
+  "palette": null,
+  "palette_quantize": false,
+  "outline": {
+   "on": false,
+   "px": 0.0,
+   "color": "000000"
+  },
+  "toon_softness": 0.15,
+  "terrain_shader": "layered_pbr"
+ },
+ "geometry": {
+  "terrain_cell_m": 1.0,
+  "flat_normals": false,
+  "scatter_density": 1.0,
+  "mesh_segments": 48
+ },
+ "water": {
+  "style": "pbr_reflective",
+  "shallow": [
+   0.1,
+   0.32,
+   0.34
+  ],
+  "deep": [
+   0.02,
+   0.09,
+   0.14
+  ]
+ },
+ "targets": {
+  "luma_p5": [
+   0.301,
+   0.402
+  ],
+  "luma_p50": [
+   0.348,
+   0.572
+  ],
+  "luma_p95": [
+   0.365,
+   0.667
+  ],
+  "sat_mean": [
+   0.084,
+   0.333
+  ],
+  "clip_black": [
+   null,
+   0.02
+  ],
+  "clip_white": [
+   null,
+   0.02
+  ],
+  "luma_std": [
+   0.031,
+   null
+  ]
+ },
+ "probe_targets": {
+  "luma_p5": [
+   0.108,
+   0.188
+  ],
+  "luma_p50": [
+   0.504,
+   0.584
+  ],
+  "luma_p95": [
+   0.631,
+   0.731
+  ],
+  "sat_mean": [
+   0.273,
+   0.373
+  ],
+  "flat_fraction": [
+   0.407,
+   0.527
+  ],
+  "clip_black": [
+   null,
+   0.01
+  ],
+  "clip_white": [
+   null,
+   0.02
+  ],
+  "unique_colors": [
+   6699,
+   26796
+  ],
+  "luma_std": [
+   0.078,
+   null
+  ]
+ },
+ "fix_hints": {
+  "luma_p50": {
+   "low": "too dark: raise post.exposure by 0.05 or lighting.sun_energy by 0.1, then shoot again (change one value, shoot again, compare)",
+   "high": "too bright: lower post.exposure by 0.05 or lighting.sun_energy by 0.1, then shoot again (change one value, shoot again, compare)"
+  },
+  "luma_p5": {
+   "low": "shadows too deep: raise post.adjust.brightness by 0.03 (lighting.ambient_energy does nothing with the sky ambient: measured) (change one value, shoot again, compare)",
+   "high": "shadows too light: lower post.adjust.brightness by 0.03 (lighting.ambient_energy does nothing with the sky ambient: measured) (change one value, shoot again, compare)"
+  },
+  "luma_p95": {
+   "low": "no highlights: raise lighting.sun_energy by 0.1 (change one value, shoot again, compare)",
+   "high": "highlights too hot: lower lighting.sun_energy by 0.1 or post.exposure by 0.05 (change one value, shoot again, compare)"
+  },
+  "sat_mean": {
+   "low": "washed out: raise post.adjust.saturation by 0.05 (change one value, shoot again, compare)",
+   "high": "over-saturated: lower post.adjust.saturation by 0.05 (change one value, shoot again, compare)"
+  },
+  "clip_black": {
+   "high": "crushed blacks: raise post.adjust.brightness by 0.03 or post.exposure by 0.05 (change one value, shoot again, compare)"
+  },
+  "clip_white": {
+   "high": "blown whites: lower post.exposure by 0.05 or lighting.sun_energy by 0.1 (change one value, shoot again, compare)"
+  },
+  "unique_colors": {
+   "low": "too few colours for this style: check palette/flat settings were not applied to a realistic preset (change one value, shoot again, compare)",
+   "high": "too many colours: enable material.palette_quantize or use shading flat/unshaded (change one value, shoot again, compare)"
+  },
+  "flat_fraction": {
+   "low": "too noisy for this style: use shading flat/toon and remove textures (change one value, shoot again, compare)",
+   "high": "too flat: shading is unshaded or the frame is mostly one colour (change one value, shoot again, compare)"
+  },
+  "local_contrast": {
+   "low": "too smooth: more geometry/detail (change one value, shoot again, compare)",
+   "high": "too busy: fewer fine textures (change one value, shoot again, compare)"
+  }
+ },
+ "calibration": {
+  "date": "2026-11-17",
+  "renderer": "forward_plus",
+  "adapter": "NVIDIA GeForce GPU",
+  "method": "probe_targets = measured value +- margin on the style probe hero view (gg_style.py calibrate)"
+ },
+ "calibration_level": {
+  "date": "2026-11-17",
+  "method": "targets = overview of two 256 m terrains with sea (island seed 1 relief 40 m, hills seed 7 relief 30 m; preset layer template) spanned +- margin; gg_light.py calibrate"
+ }
+}

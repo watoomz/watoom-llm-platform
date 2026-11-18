@@ -1,0 +1,90 @@
+---
+- name: "Host Ollama | Assert Fedora host"
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.distribution == "Fedora"
+    fail_msg: "The host_ollama role currently targets Fedora."
+
+- name: "Host Ollama | Check whether ollama is already installed"
+  ansible.builtin.stat:
+    path: /usr/local/bin/ollama
+  register: host_ollama_binary
+
+- name: "Host Ollama | Stop if installation is disabled and ollama is absent"
+  ansible.builtin.assert:
+    that:
+      - host_ollama_install | bool or host_ollama_binary.stat.exists
+    fail_msg: >-
+      Host Ollama is not installed. Re-run with -e host_ollama_install=true
+      after the GPU is installed and hardware validation is complete.
+
+- name: "Host Ollama | Download official installer when requested"
+  ansible.builtin.get_url:
+    url: https://ollama.com/install.sh
+    dest: /tmp/ollama-install.sh
+    owner: root
+    group: root
+    mode: "0755"
+  when:
+    - host_ollama_install | bool
+    - not host_ollama_binary.stat.exists
+
+- name: "Host Ollama | Run official installer when requested"
+  ansible.builtin.command:
+    cmd: /bin/sh /tmp/ollama-install.sh
+    creates: /usr/local/bin/ollama
+  when:
+    - host_ollama_install | bool
+    - not host_ollama_binary.stat.exists
+
+- name: "Host Ollama | Ensure systemd override directory exists"
+  ansible.builtin.file:
+    path: /etc/systemd/system/ollama.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "Host Ollama | Ensure model definition directory exists"
+  ansible.builtin.file:
+    path: "{{ host_ollama_model_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "Host Ollama | Write prepared Modelfiles without pulling models"
+  ansible.builtin.template:
+    src: Modelfile.j2
+    dest: "{{ host_ollama_model_dir }}/{{ item.file }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ host_ollama_models }}"
+  loop_control:
+    label: "{{ item.name }} -> {{ item.source }}"
+
+- name: "Host Ollama | Configure systemd runtime environment"
+  ansible.builtin.template:
+    src: ollama-override.conf.j2
+    dest: /etc/systemd/system/ollama.service.d/override.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart host ollama
+
+- name: "Host Ollama | Open LAN API firewall port"
+  ansible.posix.firewalld:
+    port: "{{ host_ollama_firewall_port }}"
+    permanent: true
+    immediate: true
+    state: enabled
+  when: host_ollama_open_firewall | bool
+
+- name: "Host Ollama | Enable service when installed"
+  ansible.builtin.systemd:
+    name: ollama
+    daemon_reload: true
+    enabled: "{{ host_ollama_service_enabled }}"
+    state: "{{ host_ollama_service_state }}"
+  when: host_ollama_binary.stat.exists or host_ollama_install | bool

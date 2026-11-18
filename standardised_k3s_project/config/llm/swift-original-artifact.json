@@ -1,0 +1,69 @@
+{
+  "display_name": "Swift Qwen3.8 27B Original",
+  "source_file": "/data/ai/models/gguf/swift-qwen3.8-27b/Swift-Qwen3.8-27B-IQ4_XS.gguf",
+  "source_sha256": "27f5531a012a4bb3c3e379318dc62216f057131d34347498fabfc23186a4ffda",
+  "selection": {
+    "repository": "ukisai/Swift-Qwen3.8-27B-GGUF",
+    "revision": "98a6100719e3aafa186041089b71c7b48390dbe1",
+    "kind": "gguf",
+    "files": [
+      {
+        "path": "Swift-Qwen3.8-27B-IQ4_XS.gguf",
+        "size": 15688288352,
+        "sha256": "27f5531a012a4bb3c3e379318dc62216f057131d34347498fabfc23186a4ffda",
+        "git_oid": "b21e5fd59b8faf118f2af50d126f06d0558a468b"
+      }
+    ],
+    "settings": {
+      "context": 32768,
+      "output_tokens": 4096,
+      "cache_k": "q4_0",
+      "cache_v": "q4_0",
+      "flash_attention": true,
+      "threads": 8,
+      "gpu_layers": -1,
+      "cpu_ffn": 0,
+      "speculation": "none",
+      "draft_count": 0,
+      "parallel": 1,
+      "batch": 512,
+      "ubatch": 128,
+      "continuous_batching": true,
+      "reasoning": "off",
+      "jinja": true,
+      "projector": null,
+      "projector_gpu": false,
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0.0,
+      "presence_penalty": 0.0,
+      "repeat_penalty": 1.0,
+      "repeat_last_n": 256
+    },
+    "max_context": null
+  },
+  "model_identity": "73306b413506f44b9876a39d5abf442013dc0b1aae586e3594f2a2675f7d50be",
+  "router_alias": "mm-73306b413506f44b",
+  "default_unchanged": "watoom/swift-qwen38-coder",
+  "activation": "REGISTERED_ZERO_REPLICAS",
+  "validation": "text and tool calling; vision/MTP require separate qualification",
+  "rollback": "retire only this managed installation via existing manager; retain original files",
+  "application_profile": {
+    "modelID": "mm-73306b413506f44b",
+    "name": "Swift Qwen3.8 27B Original",
+    "capabilities": {
+      "tools": true,
+      "input": [
+        "text"
+      ],
+      "output": [
+        "text"
+      ]
+    },
+    "limit": {
+      "context": 32768,
+      "output": 4096
+    }
+  }
+}

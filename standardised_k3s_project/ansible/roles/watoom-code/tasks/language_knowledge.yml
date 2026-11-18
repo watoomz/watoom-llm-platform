@@ -1,0 +1,58 @@
+---
+# Versioned RAM-resident language/API reference plugin (tools/language-knowledge). Feature-flagged; off by default.
+# Cards are generated on the host by tools/language-knowledge/extract and live in watoom_code_language_knowledge_cards.
+- name: Stat language-knowledge cards
+  ansible.builtin.stat:
+    path: "{{ watoom_code_language_knowledge_cards }}"
+    checksum_algorithm: sha256
+  register: watoom_code_wlk_cards
+  tags: [language_knowledge]
+- name: Refuse to silently disable language-knowledge when it is enabled but its cards are missing
+  ansible.builtin.assert:
+    that:
+      - watoom_code_wlk_cards.stat.exists
+    fail_msg: >-
+      watoom_code_language_knowledge_enabled is true but {{ watoom_code_language_knowledge_cards }} does not
+      exist. Generate it first (tools/language-knowledge/extract) or set watoom_code_language_knowledge_enabled
+      to false; this used to silently remove the plugin from opencode.json and report success instead.
+  when: watoom_code_language_knowledge_enabled | bool
+  tags: [language_knowledge]
+- name: Derive language-knowledge package version
+  ansible.builtin.set_fact:
+    watoom_code_wlk_hash: >-
+      {{ ((lookup('ansible.builtin.file', role_path + '/../../../tools/language-knowledge/package/index.js', rstrip=false)
+        ~ lookup('ansible.builtin.file', role_path + '/../../../tools/language-knowledge/package/engine.js', rstrip=false)
+        ~ lookup('ansible.builtin.file', role_path + '/../../../tools/language-knowledge/package/triggers.js', rstrip=false)
+        ~ (watoom_code_wlk_cards.stat.checksum | default(''))) | hash('sha256')) }}
+  when: watoom_code_language_knowledge_enabled | bool and watoom_code_wlk_cards.stat.exists
+  tags: [language_knowledge]
+- name: Install versioned language-knowledge package
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../tools/language-knowledge/package/"
+    dest: "{{ watoom_code_root }}/config/watoom-tools/language-knowledge-{{ watoom_code_wlk_hash }}/"
+    owner: '1001'
+    group: '1001'
+    mode: '0644'
+    directory_mode: '0750'
+  when: watoom_code_language_knowledge_enabled | bool and watoom_code_wlk_cards.stat.exists
+  tags: [language_knowledge]
+- name: Install language-knowledge cards beside the package
+  ansible.builtin.copy:
+    src: "{{ watoom_code_language_knowledge_cards }}"
+    dest: "{{ watoom_code_root }}/config/watoom-tools/language-knowledge-{{ watoom_code_wlk_hash }}/cards.jsonl"
+    remote_src: true
+    owner: '1001'
+    group: '1001'
+    mode: '0644'
+  when: watoom_code_language_knowledge_enabled | bool and watoom_code_wlk_cards.stat.exists
+  tags: [language_knowledge]
+- name: Select (or remove) the language-knowledge plugin in native configuration
+  ansible.builtin.script:
+    cmd: >-
+      enable-language-knowledge.py {{ watoom_code_root }}/config/opencode.json
+      {{ ('/config/watoom-tools/language-knowledge-' ~ watoom_code_wlk_hash) if (watoom_code_language_knowledge_enabled | bool and watoom_code_wlk_cards.stat.exists) else '-' }}
+      '{{ {"cards": ["/config/watoom-tools/language-knowledge-" ~ (watoom_code_wlk_hash | default("")) ~ "/cards.jsonl"]} | to_json }}'
+    executable: /usr/bin/python3
+  register: watoom_code_wlk
+  changed_when: "'CHANGED' == watoom_code_wlk.stdout | trim"
+  tags: [language_knowledge]

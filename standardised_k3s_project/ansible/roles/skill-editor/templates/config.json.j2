@@ -1,0 +1,14 @@
+{
+ "socket": {{ (skill_editor_socket_dir + '/broker.sock') | to_json }},
+ "state": {{ skill_editor_state | to_json }},
+ "ui_uid": {{ skill_editor_uid }},
+ "ui_gid": {{ skill_editor_gid }},
+ "repo": {{ skill_editor_repo | to_json }},
+ "skills_path": {{ skill_editor_skills_path | to_json }},
+ "branch": {{ skill_editor_branch | to_json }},
+ "live_root": {{ skill_editor_live_root | to_json }},
+ "live_uid": {{ skill_editor_live_uid }},
+ "live_gid": {{ skill_editor_live_gid }},
+ "author_name": {{ skill_editor_author_name | to_json }},
+ "author_email": {{ skill_editor_author_email | to_json }}
+}

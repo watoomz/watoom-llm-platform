@@ -1,0 +1,997 @@
+#!/usr/bin/env bash
+
+# WATOOM_PIPELINE_ENTRYPOINT_V1
+# Thin dispatcher only. The validated run/session lifecycle remains below unchanged.
+if [[ "${1:-}" == "pipeline" ]]; then
+  shift
+  exec "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/opencode-pipeline" "$@"
+fi
+
+set -Eeuo pipefail
+
+NAMESPACE="${OPENCODE_NAMESPACE:-opencode}"
+WORKSPACE_HOST="${WORKSPACE_HOST:-/data/ai/projects/legacy-workspaces/opencode-workspace}"
+RUN_ROOT="${OPENCODE_RUN_ROOT:-$WORKSPACE_HOST/.opencode-runs}"
+DEFAULT_TIMEOUT="${OPENCODE_RUN_TIMEOUT_SECONDS:-28800}"
+SELF="$(readlink -f "$0")"
+
+usage() {
+  cat <<'EOF_USAGE'
+Usage:
+  scripts/opencode-overnight run [--detach] [--timeout SECONDS] [--prompt-file FILE] [assignment...]
+  scripts/opencode-overnight status [RUN_ID]
+  scripts/opencode-overnight abort [RUN_ID]
+  scripts/opencode-overnight tail [RUN_ID]
+  scripts/opencode-overnight list
+
+Examples:
+  scripts/opencode-overnight run --detach --timeout 28800 \
+    "Build the exporter described in /workspace/specs/exporter.md. Do not commit or push."
+
+  scripts/opencode-overnight run --timeout 1800 --prompt-file /tmp/assignment.txt
+  scripts/opencode-overnight status
+  scripts/opencode-overnight abort
+  scripts/opencode-overnight tail
+
+Unattended runs intentionally use OpenCode --auto. Explicit deny rules remain enforced.
+This helper never commits or pushes by itself.
+
+Lifecycle guarantees:
+  * every run gets a unique OpenCode session title;
+  * the session ID is recorded from JSON events or recovered by exact title;
+  * timeout/max-step failure aborts the server-side session;
+  * cleanup targets only this run's exact remote CLI title;
+  * a successful client exit is rejected if its server-side session is still busy.
+EOF_USAGE
+}
+
+latest_run() {
+  find "$RUN_ROOT" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null | sort | tail -1
+}
+
+get_pod() {
+  kubectl -n "$NAMESPACE" get pod -l app=opencode -o jsonpath='{.items[0].metadata.name}'
+}
+
+api_session_id_by_title() {
+  local pod="$1"
+  local title="$2"
+  kubectl -n "$NAMESPACE" exec "$pod" -- \
+    env WATOOM_SESSION_TITLE="$title" sh -c '
+      BASE=http://127.0.0.1:4096
+      USER="${OPENCODE_SERVER_USERNAME:-opencode}"
+      PASS="${OPENCODE_SERVER_PASSWORD:-}"
+      curl -fsS -u "$USER:$PASS" "$BASE/session" |
+        jq -r --arg t "$WATOOM_SESSION_TITLE" \
+          "[.[] | select(.title == \$t)] | sort_by(.time.created // 0) | last | .id // empty"
+    ' 2>/dev/null || true
+}
+
+api_session_status() {
+  local pod="$1"
+  local session_id="$2"
+  [ -n "$session_id" ] || { echo "unknown"; return 0; }
+  kubectl -n "$NAMESPACE" exec "$pod" -- \
+    env WATOOM_SESSION_ID="$session_id" sh -c '
+      BASE=http://127.0.0.1:4096
+      USER="${OPENCODE_SERVER_USERNAME:-opencode}"
+      PASS="${OPENCODE_SERVER_PASSWORD:-}"
+      curl -fsS -u "$USER:$PASS" "$BASE/session/status" |
+        jq -r --arg s "$WATOOM_SESSION_ID" \
+          "if has(\$s) then .[\$s].type // .[\$s].status // \"present\" else \"not-present\" end"
+    ' 2>/dev/null || echo "unknown"
+}
+
+abort_session() {
+  local pod="$1"
+  local session_id="$2"
+  [ -n "$session_id" ] || return 0
+
+  echo "Aborting OpenCode session: $session_id"
+  kubectl -n "$NAMESPACE" exec "$pod" -- \
+    env WATOOM_SESSION_ID="$session_id" sh -c '
+      BASE=http://127.0.0.1:4096
+      USER="${OPENCODE_SERVER_USERNAME:-opencode}"
+      PASS="${OPENCODE_SERVER_PASSWORD:-}"
+      curl -fsS -X POST -u "$USER:$PASS" \
+        "$BASE/session/$WATOOM_SESSION_ID/abort"
+    ' 2>/dev/null || true
+  echo
+}
+
+cleanup_remote_cli() {
+  local pod="$1"
+  local title="$2"
+
+  kubectl -n "$NAMESPACE" exec "$pod" -- \
+    env WATOOM_SESSION_TITLE="$title" sh -c '
+      pids="$(
+        ps -eo pid=,args= |
+        awk -v marker="$WATOOM_SESSION_TITLE" \
+          "index(\$0, \"opencode run\") && index(\$0, marker) {print \$1}"
+      )"
+
+      [ -n "$pids" ] || exit 0
+
+      for pid in $pids; do
+        cmd="$(tr "\000" " " < "/proc/$pid/cmdline" 2>/dev/null || true)"
+        case "$cmd" in
+          *"opencode run"*"$WATOOM_SESSION_TITLE"*)
+            echo "terminating exact remote run pid=$pid"
+            kill -TERM "$pid" 2>/dev/null || true
+            ;;
+        esac
+      done
+
+      sleep 2
+
+      for pid in $pids; do
+        [ -d "/proc/$pid" ] || continue
+        cmd="$(tr "\000" " " < "/proc/$pid/cmdline" 2>/dev/null || true)"
+        case "$cmd" in
+          *"opencode run"*"$WATOOM_SESSION_TITLE"*)
+            echo "remote run still present after TERM pid=$pid"
+            ;;
+        esac
+      done
+    ' 2>/dev/null || true
+}
+
+extract_session_from_log() {
+  local log="$1"
+  [ -f "$log" ] || return 0
+  grep -oE '"sessionID":"[^"]+"' "$log" 2>/dev/null |
+    head -1 |
+    sed -E 's/^"sessionID":"([^"]+)"$/\1/' || true
+}
+
+duplicate_tool_loop() {
+  local log="$1"
+  [ -f "$log" ] || return 1
+
+  python3 - "$log" <<'PY_INNER'
+import json, sys
+
+calls = []
+try:
+    fh = open(sys.argv[1], "r", encoding="utf-8", errors="replace")
+except OSError:
+    raise SystemExit(1)
+
+with fh:
+    for line in fh:
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            ev = json.loads(line)
+        except Exception:
+            continue
+        if ev.get("type") != "tool_use":
+            continue
+        part = ev.get("part") or {}
+        state = part.get("state") or {}
+        status = state.get("status")
+        if status not in {"completed", "error"}:
+            continue
+        tool = part.get("tool")
+        inp = state.get("input")
+        sig = json.dumps([tool, inp], sort_keys=True, separators=(",", ":"))
+        calls.append((tool, status, sig))
+
+# Three identical terminal calls.
+if len(calls) >= 3 and calls[-1][2] == calls[-2][2] == calls[-3][2]:
+    print("identical:" + calls[-1][2])
+    raise SystemExit(0)
+
+# Three consecutive errors from the same tool, even if the model slightly
+# changes arguments to evade exact duplicate detection.
+if (
+    len(calls) >= 3
+    and calls[-1][0] == calls[-2][0] == calls[-3][0]
+    and calls[-1][1] == calls[-2][1] == calls[-3][1] == "error"
+):
+    print("repeated-error:" + str(calls[-1][0]))
+    raise SystemExit(0)
+
+raise SystemExit(1)
+PY_INNER
+}
+
+
+no_delegation_progress() {
+  local log="$1"
+  local timeout_seconds="$2"
+
+  [ -f "$log" ] || return 1
+
+  python3 - "$log" "$timeout_seconds" <<'PY_INNER'
+import json
+import sys
+import time
+
+path = sys.argv[1]
+timeout_seconds = int(sys.argv[2])
+now_ms = int(time.time() * 1000)
+
+task_seen = False
+step_starts = 0
+first_non_task_terminal_ms = None
+
+try:
+    fh = open(path, "r", encoding="utf-8", errors="replace")
+except OSError:
+    raise SystemExit(1)
+
+with fh:
+    for line in fh:
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+
+        try:
+            ev = json.loads(line)
+        except Exception:
+            continue
+
+        etype = ev.get("type")
+        ts = ev.get("timestamp")
+
+        if etype == "step_start":
+            step_starts += 1
+            continue
+
+        if etype != "tool_use":
+            continue
+
+        part = ev.get("part") or {}
+        state = part.get("state") or {}
+        tool = part.get("tool")
+        status = state.get("status")
+
+        if tool == "task":
+            task_seen = True
+            continue
+
+        if (
+            first_non_task_terminal_ms is None
+            and status in {"completed", "error"}
+            and isinstance(ts, (int, float))
+        ):
+            first_non_task_terminal_ms = int(ts)
+
+if task_seen:
+    raise SystemExit(1)
+
+if step_starts >= 3:
+    print(f"steps={step_starts};task_calls=0")
+    raise SystemExit(0)
+
+if first_non_task_terminal_ms is not None:
+    age_ms = now_ms - first_non_task_terminal_ms
+    if age_ms >= timeout_seconds * 1000:
+        print(
+            f"first_non_task_age={age_ms // 1000}s;"
+            f"limit={timeout_seconds}s;task_calls=0"
+        )
+        raise SystemExit(0)
+
+raise SystemExit(1)
+PY_INNER
+}
+
+
+api_session_messages() {
+  local pod="$1"
+  local session_id="$2"
+
+  [ -n "$session_id" ] || return 2
+
+  kubectl -n "$NAMESPACE" exec "$pod" -- \
+    env WATOOM_SESSION_ID="$session_id" sh -c '
+      BASE=http://127.0.0.1:4096
+      USER="${OPENCODE_SERVER_USERNAME:-opencode}"
+      PASS="${OPENCODE_SERVER_PASSWORD:-}"
+
+      curl -fsS -u "$USER:$PASS" \
+        "$BASE/session/$WATOOM_SESSION_ID/message"
+    '
+}
+
+authoritative_stop_ready() {
+  local pod="$1"
+  local session_id="$2"
+  local expected_agent="$3"
+  local payload=""
+
+  [ -n "$session_id" ] || return 1
+
+  if ! payload="$(api_session_messages "$pod" "$session_id" 2>/dev/null)"; then
+    return 1
+  fi
+
+  WATOOM_EXPECTED_AGENT="$expected_agent" python3 -c '
+import json
+import os
+import sys
+
+try:
+    data = json.load(sys.stdin)
+except Exception:
+    raise SystemExit(1)
+
+if not isinstance(data, list):
+    raise SystemExit(1)
+
+expected_agent = os.environ.get("WATOOM_EXPECTED_AGENT", "")
+if not expected_agent:
+    raise SystemExit(1)
+
+for message in data:
+    if not isinstance(message, dict):
+        continue
+
+    info = message.get("info") or {}
+    if info.get("role") != "assistant":
+        continue
+    if (info.get("agent") or info.get("mode")) != expected_agent:
+        continue
+    if info.get("finish") != "stop":
+        continue
+    if not (info.get("time") or {}).get("completed"):
+        continue
+
+    for part in message.get("parts") or []:
+        if not isinstance(part, dict):
+            continue
+        if part.get("type") != "text":
+            continue
+        if part.get("synthetic") is True:
+            continue
+        if (part.get("metadata") or {}).get("compaction_continue"):
+            continue
+
+        text = part.get("text")
+        if isinstance(text, str) and text.strip():
+            raise SystemExit(0)
+
+raise SystemExit(1)
+' <<< "$payload"
+}
+
+
+persist_authoritative_result() {
+  local pod="$1"
+  local session_id="$2"
+  local run_dir="$3"
+  local expected_agent="$4"
+
+  local messages_tmp="$run_dir/server-messages.json.tmp"
+  local messages="$run_dir/server-messages.json"
+  local final_text="$run_dir/final-response.txt"
+  local final_meta="$run_dir/final-response-meta.json"
+
+  rm -f "$messages_tmp"
+
+  if ! api_session_messages "$pod" "$session_id" > "$messages_tmp"; then
+    printf '%s\n' "session-message-fetch-failed" > "$run_dir/authoritative-result-error"
+    rm -f "$messages_tmp"
+    return 1
+  fi
+
+  mv -f "$messages_tmp" "$messages"
+
+  if ! python3 - "$messages" "$final_text" "$final_meta" "$expected_agent" <<'PY_INNER'
+import json
+import pathlib
+import sys
+
+messages_path = pathlib.Path(sys.argv[1])
+text_path = pathlib.Path(sys.argv[2])
+meta_path = pathlib.Path(sys.argv[3])
+expected_agent = sys.argv[4]
+
+try:
+    data = json.loads(messages_path.read_text())
+except Exception as exc:
+    print(f"invalid session-message JSON: {exc}", file=sys.stderr)
+    raise SystemExit(2)
+
+if not isinstance(data, list):
+    print("session-message response is not a list", file=sys.stderr)
+    raise SystemExit(3)
+
+candidates = []
+for message in data:
+    if not isinstance(message, dict):
+        continue
+
+    info = message.get("info") or {}
+    if info.get("role") != "assistant":
+        continue
+    if (info.get("agent") or info.get("mode")) != expected_agent:
+        continue
+    if info.get("finish") != "stop":
+        continue
+    if not (info.get("time") or {}).get("completed"):
+        continue
+
+    usable_text = False
+    for part in message.get("parts") or []:
+        if not isinstance(part, dict):
+            continue
+        if part.get("type") != "text":
+            continue
+        if part.get("synthetic") is True:
+            continue
+        if (part.get("metadata") or {}).get("compaction_continue"):
+            continue
+
+        text = part.get("text")
+        if isinstance(text, str) and text.strip():
+            usable_text = True
+            break
+
+    if usable_text:
+        candidates.append(message)
+
+if not candidates:
+    print(
+        f"no completed assistant message for agent={expected_agent} with finish=stop and non-synthetic text",
+        file=sys.stderr,
+    )
+    raise SystemExit(4)
+
+message = candidates[0]
+info = message.get("info") or {}
+parts = message.get("parts") or []
+
+texts = []
+for part in parts:
+    if not isinstance(part, dict):
+        continue
+    if part.get("type") != "text":
+        continue
+    if part.get("synthetic") is True:
+        continue
+    if (part.get("metadata") or {}).get("compaction_continue"):
+        continue
+    text = part.get("text")
+    if isinstance(text, str) and text.strip():
+        texts.append(text)
+
+if not texts:
+    print("completed assistant stop message has no text part", file=sys.stderr)
+    raise SystemExit(5)
+
+final = "\n".join(texts)
+text_path.write_text(final + ("" if final.endswith("\n") else "\n"))
+
+meta = {
+    "message_id": info.get("id"),
+    "session_id": info.get("sessionID"),
+    "agent": info.get("agent") or info.get("mode"),
+    "expected_agent": expected_agent,
+    "model_id": info.get("modelID"),
+    "provider_id": info.get("providerID"),
+    "finish": info.get("finish"),
+    "completed": (info.get("time") or {}).get("completed"),
+    "tokens": info.get("tokens"),
+    "text_parts": len(texts),
+}
+meta_path.write_text(json.dumps(meta, indent=2) + "\n")
+PY_INNER
+  then
+    printf '%s\n' "completed-stop-text-missing" > "$run_dir/authoritative-result-error"
+    return 1
+  fi
+
+  rm -f "$run_dir/authoritative-result-error"
+  return 0
+}
+
+worker() {
+  local run_id="$1"
+  local run_dir="$RUN_ROOT/$run_id"
+
+  [ -d "$run_dir" ] || { echo "ERROR: run not found: $run_id" >&2; return 2; }
+
+  local pod title timeout_seconds prompt_file output_log agent workdir
+  pod="$(cat "$run_dir/pod")"
+  title="$(cat "$run_dir/title")"
+  timeout_seconds="$(cat "$run_dir/timeout-seconds")"
+  agent="$(cat "$run_dir/agent" 2>/dev/null || printf '%s' 'watoom-orchestrator')"
+  workdir="$(cat "$run_dir/workdir" 2>/dev/null || printf '%s' '/workspace')"
+  prompt_file="$run_dir/prompt.txt"
+  output_log="$run_dir/output.log"
+
+  printf '%s\n' "$$" > "$run_dir/worker.pid"
+  date -Is > "$run_dir/started-at"
+
+  local full_prompt
+  full_prompt="$(cat "$prompt_file")"
+
+  echo "run_id=$run_id"
+  echo "pod=$pod"
+  echo "title=$title"
+  echo "agent=$agent"
+  echo "workdir=$workdir"
+  echo "timeout_seconds=$timeout_seconds"
+
+  set +e
+  kubectl -n "$NAMESPACE" exec "$pod" -- \
+    opencode run \
+      --attach http://127.0.0.1:4096 \
+      --agent "$agent" \
+      --dir "$workdir" \
+      --auto \
+      --format json \
+      --title "$title" \
+      "$full_prompt" \
+      >"$output_log" 2>&1 &
+  local client_pid=$!
+  set -e
+
+  printf '%s\n' "$client_pid" > "$run_dir/local-kubectl.pid"
+
+  local session_id=""
+  local i
+  for i in $(seq 1 120); do
+    session_id="$(extract_session_from_log "$output_log")"
+    if [ -n "$session_id" ]; then
+      break
+    fi
+
+    session_id="$(api_session_id_by_title "$pod" "$title")"
+    if [ -n "$session_id" ]; then
+      break
+    fi
+
+    if ! kill -0 "$client_pid" 2>/dev/null; then
+      break
+    fi
+    sleep 1
+  done
+
+  if [ -n "$session_id" ]; then
+    printf '%s\n' "$session_id" > "$run_dir/session-id"
+    echo "session_id=$session_id"
+  else
+    echo "WARN: session ID was not discovered during startup"
+  fi
+
+  local start now elapsed reason=""
+  local authoritative_complete=0
+  local no_delegation_timeout="${OPENCODE_NO_DELEGATION_TIMEOUT:-300}"
+  [[ "$no_delegation_timeout" =~ ^[0-9]+$ ]] || no_delegation_timeout=300
+  start="$(date +%s)"
+
+  while kill -0 "$client_pid" 2>/dev/null; do
+    if [ -f "$run_dir/abort-requested" ]; then
+      reason="external-abort"
+      break
+    fi
+
+    if [ -n "$session_id" ] && authoritative_stop_ready "$pod" "$session_id" "$agent"; then
+      echo "authoritative_stop=detected"
+
+      if persist_authoritative_result "$pod" "$session_id" "$run_dir" "$agent"; then
+        echo "authoritative_result=PASS"
+        authoritative_complete=1
+      else
+        echo "ERROR: authoritative stop detected but persistence failed"
+        reason="authoritative-result-missing"
+      fi
+      break
+    fi
+
+    if duplicate_sig="$(duplicate_tool_loop "$output_log" 2>/dev/null)"; then
+      echo "duplicate_tool_loop=$duplicate_sig"
+      printf '%s\n' "$duplicate_sig" > "$run_dir/duplicate-tool-signature"
+      reason="duplicate-tool-loop"
+      break
+    fi
+
+    if [ "$agent" = "watoom-orchestrator" ]; then
+      if delegation_sig="$(no_delegation_progress "$output_log" "$no_delegation_timeout" 2>/dev/null)"; then
+        echo "no_delegation_progress=$delegation_sig"
+        printf '%s\n' "$delegation_sig" > "$run_dir/no-delegation-signature"
+        reason="no-delegation-progress"
+        break
+      fi
+    fi
+
+    if grep -q 'CRITICAL - MAXIMUM STEPS REACHED' "$output_log" 2>/dev/null; then
+      reason="maximum-steps"
+      break
+    fi
+
+    now="$(date +%s)"
+    elapsed=$((now - start))
+    if [ "$elapsed" -ge "$timeout_seconds" ]; then
+      reason="timeout"
+      break
+    fi
+    sleep 2
+  done
+
+  if [ "$authoritative_complete" -eq 1 ]; then
+    echo "phase_boundary=first-authoritative-stop"
+
+    abort_session "$pod" "$session_id"
+    cleanup_remote_cli "$pod" "$title"
+
+    if kill -0 "$client_pid" 2>/dev/null; then
+      kill -TERM "$client_pid" 2>/dev/null || true
+    fi
+    wait "$client_pid" 2>/dev/null || true
+
+    local status_after_stop="unknown"
+    if [ -n "$session_id" ]; then
+      status_after_stop="$(api_session_status "$pod" "$session_id")"
+      printf '%s\n' "$status_after_stop" > "$run_dir/session-status-final"
+    fi
+
+    printf '%s\n' 0 > "$run_dir/exit-code"
+    printf '%s\n' "PASS" > "$run_dir/result"
+    date -Is > "$run_dir/finished-at"
+    return 0
+  fi
+
+  if [ -n "$reason" ]; then
+    echo "watchdog_reason=$reason"
+    printf '%s\n' "$reason" > "$run_dir/watchdog-reason"
+
+    if [ -z "$session_id" ]; then
+      session_id="$(extract_session_from_log "$output_log")"
+      [ -n "$session_id" ] || session_id="$(api_session_id_by_title "$pod" "$title")"
+      [ -z "$session_id" ] || printf '%s\n' "$session_id" > "$run_dir/session-id"
+    fi
+
+    abort_session "$pod" "$session_id"
+    cleanup_remote_cli "$pod" "$title"
+
+    if kill -0 "$client_pid" 2>/dev/null; then
+      kill -TERM "$client_pid" 2>/dev/null || true
+    fi
+    wait "$client_pid" 2>/dev/null || true
+
+    if [ "$reason" = "external-abort" ]; then
+      printf '%s\n' 130 > "$run_dir/exit-code"
+      printf '%s\n' "ABORTED" > "$run_dir/result"
+      date -Is > "$run_dir/finished-at"
+      return 130
+    fi
+
+    printf '%s\n' 124 > "$run_dir/exit-code"
+    printf '%s\n' "FAILED:$reason" > "$run_dir/result"
+    date -Is > "$run_dir/finished-at"
+    return 124
+  fi
+
+  set +e
+  wait "$client_pid"
+  local rc=$?
+  set -e
+
+  if [ -f "$run_dir/abort-requested" ]; then
+    cleanup_remote_cli "$pod" "$title"
+    printf '%s\n' 130 > "$run_dir/exit-code"
+    printf '%s\n' "ABORTED" > "$run_dir/result"
+    date -Is > "$run_dir/finished-at"
+    return 130
+  fi
+
+  if [ -z "$session_id" ]; then
+    session_id="$(extract_session_from_log "$output_log")"
+    [ -n "$session_id" ] || session_id="$(api_session_id_by_title "$pod" "$title")"
+    [ -z "$session_id" ] || printf '%s\n' "$session_id" > "$run_dir/session-id"
+  fi
+
+  local status="unknown"
+  if [ -n "$session_id" ]; then
+    sleep 1
+    status="$(api_session_status "$pod" "$session_id")"
+    printf '%s\n' "$status" > "$run_dir/session-status-final"
+  fi
+
+  local original_rc="$rc"
+  printf '%s\n' "$original_rc" > "$run_dir/client-exit-code"
+
+  if persist_authoritative_result "$pod" "$session_id" "$run_dir" "$agent"; then
+    echo "authoritative_result=PASS"
+
+    if [ "$status" = "busy" ]; then
+      echo "INFO: authoritative result exists while session is busy; stopping continuation"
+      abort_session "$pod" "$session_id"
+    fi
+
+    cleanup_remote_cli "$pod" "$title"
+    rc=0
+  else
+    if [ "$status" = "busy" ]; then
+      echo "ERROR: CLI exited and session is busy without an authoritative stop result"
+      abort_session "$pod" "$session_id"
+      cleanup_remote_cli "$pod" "$title"
+      rc=70
+    else
+      cleanup_remote_cli "$pod" "$title"
+
+      if [ "$original_rc" -eq 0 ]; then
+        echo "ERROR: CLI exited successfully but no authoritative completed assistant stop text exists"
+        rc=71
+      else
+        rc="$original_rc"
+      fi
+    fi
+  fi
+
+  printf '%s\n' "$rc" > "$run_dir/exit-code"
+  if [ "$rc" -eq 0 ]; then
+    printf '%s\n' "PASS" > "$run_dir/result"
+  elif [ "$rc" -eq 71 ]; then
+    printf '%s\n' "FAILED:authoritative-result-missing" > "$run_dir/result"
+  else
+    printf '%s\n' "FAILED:client-rc-$rc" > "$run_dir/result"
+  fi
+  date -Is > "$run_dir/finished-at"
+  return "$rc"
+}
+
+case "${1:-}" in
+  __worker)
+    [ "$#" -eq 2 ] || exit 2
+    worker "$2"
+    ;;
+
+  run)
+    shift
+    detach=0
+    prompt_file=""
+    timeout_seconds="$DEFAULT_TIMEOUT"
+    agent="watoom-orchestrator"
+    workdir="/workspace"
+
+    while [ "$#" -gt 0 ]; do
+      case "$1" in
+        --detach)
+          detach=1
+          shift
+          ;;
+        --agent)
+          [ "$#" -ge 2 ] || { echo "ERROR: --agent requires a WatooM agent name" >&2; exit 2; }
+          agent="$2"
+          shift 2
+          ;;
+        --dir)
+          [ "$#" -ge 2 ] || { echo "ERROR: --dir requires a /workspace path" >&2; exit 2; }
+          workdir="$2"
+          shift 2
+          ;;
+        --timeout)
+          [ "$#" -ge 2 ] || { echo "ERROR: --timeout requires seconds" >&2; exit 2; }
+          timeout_seconds="$2"
+          [[ "$timeout_seconds" =~ ^[0-9]+$ ]] && [ "$timeout_seconds" -ge 30 ] ||
+            { echo "ERROR: --timeout must be an integer >= 30" >&2; exit 2; }
+          shift 2
+          ;;
+        --prompt-file)
+          [ "$#" -ge 2 ] || { echo "ERROR: --prompt-file requires a file" >&2; exit 2; }
+          prompt_file="$2"
+          shift 2
+          ;;
+        --)
+          shift
+          break
+          ;;
+        *)
+          break
+          ;;
+      esac
+    done
+
+    case "$agent" in
+      watoom-orchestrator|watoom-planner|watoom-explorer|watoom-builder|watoom-reviewer|watoom-tester|watoom-fixer|watoom-final-review)
+        ;;
+      *)
+        echo "ERROR: unsupported agent: $agent" >&2
+        exit 2
+        ;;
+    esac
+
+    case "$workdir" in
+      /workspace|/workspace/*)
+        ;;
+      *)
+        echo "ERROR: --dir must be /workspace or a child of /workspace" >&2
+        exit 2
+        ;;
+    esac
+
+    case "$workdir" in
+      *"/../"*|*/..|*"/./"*|*/.)
+        echo "ERROR: --dir must not contain traversal components" >&2
+        exit 2
+        ;;
+    esac
+
+    if [ -n "$prompt_file" ]; then
+      [ -f "$prompt_file" ] || { echo "ERROR: prompt file not found: $prompt_file" >&2; exit 2; }
+      assignment="$(cat "$prompt_file")"
+    else
+      assignment="$*"
+    fi
+
+    [ -n "${assignment//[[:space:]]/}" ] ||
+      { echo "ERROR: assignment is empty" >&2; usage; exit 2; }
+
+    pod="$(get_pod)"
+    run_id="$(date +%Y%m%d-%H%M%S)"
+    run_dir="$RUN_ROOT/$run_id"
+    title="watoom-overnight:$run_id"
+    mkdir -p "$run_dir"
+
+    if [ "$agent" = "watoom-orchestrator" ]; then
+      cat > "$run_dir/prompt.txt" <<EOF_PROMPT
+WATOOM_RUN_ID=$run_id
+Follow the built-in bounded WatooM orchestration workflow in your agent prompt.
+Work autonomously through planning, decomposition, implementation, integration,
+independent review, testing, bounded repair, final acceptance, and handoff.
+Do not load or invoke any skill.
+When the completion condition is satisfied, return the handoff and STOP immediately.
+Do not start another verification, summary, review, or tool call after final handoff.
+Do not commit or push unless the assignment below explicitly requests it.
+
+Original assignment:
+
+$assignment
+EOF_PROMPT
+    else
+      cat > "$run_dir/prompt.txt" <<EOF_PROMPT
+WATOOM_RUN_ID=$run_id
+You are running as the explicit phase agent: $agent.
+Perform only the bounded assignment below using that agent's built-in prompt,
+scope, permissions, and stopping rules.
+Return the phase result and STOP immediately when the assignment is complete.
+Do not invent an additional orchestration, review, or continuation phase.
+
+Original assignment:
+
+$assignment
+EOF_PROMPT
+    fi
+
+    printf '%s\n' "$pod" > "$run_dir/pod"
+    printf '%s\n' "$title" > "$run_dir/title"
+    printf '%s\n' "$timeout_seconds" > "$run_dir/timeout-seconds"
+    printf '%s\n' "$agent" > "$run_dir/agent"
+    printf '%s\n' "$workdir" > "$run_dir/workdir"
+
+    if [ "$detach" -eq 1 ]; then
+      nohup "$SELF" __worker "$run_id" \
+        >"$run_dir/worker.log" 2>&1 < /dev/null &
+      pid=$!
+      printf '%s\n' "$pid" > "$run_dir/launcher.pid"
+      echo "run_id=$run_id"
+      echo "mode=detached"
+      echo "worker_pid=$pid"
+      echo "title=$title"
+      echo "agent=$agent"
+      echo "workdir=$workdir"
+      echo "timeout_seconds=$timeout_seconds"
+      echo "worker_log=$run_dir/worker.log"
+      echo "output_log=$run_dir/output.log"
+      echo "monitor: $0 status $run_id"
+      echo "tail:    $0 tail $run_id"
+      echo "abort:   $0 abort $run_id"
+    else
+      echo "run_id=$run_id"
+      echo "mode=foreground"
+      echo "title=$title"
+      echo "agent=$agent"
+      echo "workdir=$workdir"
+      echo "timeout_seconds=$timeout_seconds"
+      set +e
+      "$SELF" __worker "$run_id" 2>&1 | tee "$run_dir/worker.log"
+      rc=${PIPESTATUS[0]}
+      set -e
+      exit "$rc"
+    fi
+    ;;
+
+  list)
+    mkdir -p "$RUN_ROOT"
+    find "$RUN_ROOT" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -r
+    ;;
+
+  status)
+    run_id="${2:-$(latest_run)}"
+    [ -n "$run_id" ] || { echo "no runs found"; exit 1; }
+    run_dir="$RUN_ROOT/$run_id"
+    [ -d "$run_dir" ] || { echo "ERROR: run not found: $run_id" >&2; exit 1; }
+
+    pod="$(cat "$run_dir/pod" 2>/dev/null || get_pod)"
+    title="$(cat "$run_dir/title" 2>/dev/null || true)"
+    session_id="$(cat "$run_dir/session-id" 2>/dev/null || true)"
+
+    if [ -z "$session_id" ] && [ -n "$title" ]; then
+      session_id="$(api_session_id_by_title "$pod" "$title")"
+    fi
+
+    echo "run_id=$run_id"
+    echo "run_dir=$run_dir"
+    echo "pod=$pod"
+    echo "title=${title:-unknown}"
+    echo "session_id=${session_id:-unknown}"
+
+    if [ -f "$run_dir/worker.pid" ]; then
+      pid="$(cat "$run_dir/worker.pid")"
+      if kill -0 "$pid" 2>/dev/null; then
+        echo "worker=running"
+      else
+        echo "worker=not-running"
+      fi
+      echo "worker_pid=$pid"
+    fi
+
+    if [ -n "$session_id" ]; then
+      echo "server_session_status=$(api_session_status "$pod" "$session_id")"
+    fi
+
+    [ ! -f "$run_dir/watchdog-reason" ] ||
+      echo "watchdog_reason=$(cat "$run_dir/watchdog-reason")"
+    [ ! -f "$run_dir/exit-code" ] ||
+      echo "exit_code=$(cat "$run_dir/exit-code")"
+    [ ! -f "$run_dir/result" ] ||
+      echo "result=$(cat "$run_dir/result")"
+
+    echo
+    echo "===== LAST 20 WORKER LOG LINES ====="
+    tail -20 "$run_dir/worker.log" 2>/dev/null || true
+
+    echo
+    echo "===== LAST 20 OPENCODE EVENT LINES ====="
+    tail -20 "$run_dir/output.log" 2>/dev/null || true
+    ;;
+
+  abort)
+    run_id="${2:-$(latest_run)}"
+    [ -n "$run_id" ] || { echo "no runs found"; exit 1; }
+    run_dir="$RUN_ROOT/$run_id"
+    [ -d "$run_dir" ] || { echo "ERROR: run not found: $run_id" >&2; exit 1; }
+
+    pod="$(cat "$run_dir/pod" 2>/dev/null || get_pod)"
+    title="$(cat "$run_dir/title" 2>/dev/null || true)"
+    session_id="$(cat "$run_dir/session-id" 2>/dev/null || true)"
+
+    if [ -z "$session_id" ] && [ -n "$title" ]; then
+      session_id="$(api_session_id_by_title "$pod" "$title")"
+    fi
+
+    echo "run_id=$run_id"
+    echo "title=${title:-unknown}"
+    echo "session_id=${session_id:-unknown}"
+
+    date -Is > "$run_dir/abort-requested"
+    printf '%s\n' 130 > "$run_dir/exit-code"
+    printf '%s\n' "ABORTED" > "$run_dir/result"
+    date -Is > "$run_dir/finished-at"
+
+    abort_session "$pod" "$session_id"
+    [ -z "$title" ] || cleanup_remote_cli "$pod" "$title"
+    ;;
+
+  tail)
+    run_id="${2:-$(latest_run)}"
+    [ -n "$run_id" ] || { echo "no runs found"; exit 1; }
+    run_dir="$RUN_ROOT/$run_id"
+    [ -f "$run_dir/output.log" ] || { echo "ERROR: no output log for run: $run_id" >&2; exit 1; }
+    tail -f "$run_dir/output.log"
+    ;;
+
+  *)
+    usage
+    exit 2
+    ;;
+esac
+

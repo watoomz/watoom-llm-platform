@@ -1,0 +1,9 @@
+---
+# Legacy canary is opt-in; the production application is the watoom-code role.
+- name: Keep legacy OpenCode canary suspended
+  ansible.builtin.import_tasks: suspended.yml
+  when: opencode_agent_replicas | int == 0
+
+- name: Deploy explicitly enabled legacy OpenCode canary
+  ansible.builtin.import_tasks: v2_canary.yml
+  when: opencode_agent_replicas | int > 0

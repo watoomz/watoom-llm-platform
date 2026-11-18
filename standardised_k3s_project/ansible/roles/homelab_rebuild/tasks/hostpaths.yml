@@ -1,0 +1,4 @@
+---
+- name: "Homelab Rebuild Host Paths | Reconcile required host directories"
+  ansible.builtin.include_role:
+    name: host_paths

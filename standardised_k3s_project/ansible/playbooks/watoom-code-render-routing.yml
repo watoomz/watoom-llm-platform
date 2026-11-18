@@ -1,0 +1,55 @@
+---
+- name: Activate reviewed render-capture defaults under the coordinator admission fence
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Require admission-fenced invocation from the release coordinator
+      ansible.builtin.assert:
+        that: watoom_render_routing_guard_held | default(false) | bool
+        fail_msg: Use deploy-platform.py --render-routing-only with reviewed evidence and approval.
+    - name: Install and select the tested immutable application-shell engine guard
+      ansible.builtin.import_role:
+        name: watoom-code
+        tasks_from: coordinator_guard
+      when: watoom_render_routing_shell_guard | default(false) | bool
+    - name: Install only the shared capture skill and its maintained references
+      ansible.builtin.copy:
+        src: ../roles/watoom-code/files/skills/asset-image-clip-capture/
+        dest: /data/ai/watoom-code/config/skills/asset-image-clip-capture/
+        owner: '1001'
+        group: '1001'
+        mode: '0644'
+        directory_mode: '0750'
+    - name: Apply only the owned default-capture block to managed execution agents
+      ansible.builtin.blockinfile:
+        path: '/data/ai/watoom-code/config/agents/{{ item }}.md'
+        marker: '<!-- {mark} WATOOM DEFAULT CAPTURE RECIPE -->'
+        block: "{{ lookup('ansible.builtin.file', '../roles/watoom-code/files/skills/asset-image-clip-capture/references/default-recipe.md') }}"
+        owner: '1001'
+        group: '1001'
+        mode: '0644'
+      loop: [watoom-workflow, watoom-builder]
+    - name: Apply only the maintained critic step budget
+      ansible.builtin.lineinfile:
+        path: /data/ai/watoom-code/config/agents/watoom-critic.md
+        regexp: '^steps: [0-9]+$'
+        line: "{{ lookup('ansible.builtin.file', '../roles/opencode-agent/files/v2-native/agents/watoom-critic.md') | regex_search('(?m)^steps: [0-9]+$') }}"
+        owner: '1001'
+        group: '1001'
+        mode: '0644'
+
+    - name: Restore existing container-readable labels on only the owned paths
+      ansible.builtin.command:
+        argv: [restorecon, -R, '{{ item }}']
+      loop:
+        - /data/ai/watoom-code/config/skills/asset-image-clip-capture
+        - /data/ai/watoom-code/config/agents/watoom-workflow.md
+        - /data/ai/watoom-code/config/agents/watoom-builder.md
+      changed_when: false
+
+    - name: Install external capture worker contract
+      ansible.builtin.import_role:
+        name: watoom-code
+        tasks_from: asset_capture_worker
+      when: watoom_render_routing_asset_worker | default(false) | bool

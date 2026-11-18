@@ -1,0 +1,17 @@
+---
+llm_model_lab_root: /data/ai
+# Primary model prompt-cache disk tier: on the /app SSD. On the shared /data HDD each ~2 GB spill
+# blocked llama-server's main loop for 17-65 s (2026-11-04), failing requests and metrics scrapes.
+llm_model_lab_prompt_cache_root: /app/ai/cache/llamampere
+llm_model_lab_kubeconfig: /etc/rancher/k3s/k3s.yaml
+llm_model_lab_project_root: "{{ project_root | default('/data/github/watoom-standardised-homelab/standardised_k3s_project') }}"
+llm_model_lab_manifest: "{{ llm_model_lab_project_root }}/manifests/10-infrastructure/llm/llm-model-lab.yml"
+llm_model_lab_router_manifest: "{{ llm_model_lab_project_root }}/manifests/10-infrastructure/llm/llm-router.yml"
+llm_model_lab_models:
+  - ornith-1.5-9b
+  - qwen35-defiant-fable-9b
+  - gemma-4-e4b
+  - tiel-coder-35b-a3b-mtp
+  - llama-mesh
+
+gpu_controller_enabled: true

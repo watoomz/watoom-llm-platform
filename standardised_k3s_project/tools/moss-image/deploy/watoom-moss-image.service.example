@@ -1,0 +1,17 @@
+# EXAMPLE ONLY - not installed, not enabled. Install through an Ansible role after review and a stage rehearsal.
+# The unit name must stay watoom-moss-image.service: the GPU controller verifies that the caller is this unit's MainPID.
+[Unit]
+Description=MOSS Image Studio (GPU sessions via the WatooM GPU controller)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/python3 -I /PATH/TO/standardised_k3s_project/tools/moss-image/moss_image_service.py \
+  --gpu-gate controller --host 127.0.0.1 --port 8791 --quiet-seconds 0 --session-idle 600 --session-max 7200
+Restart=on-failure
+# If the service dies while it owns the GPU, the controller stays in its owned state until an operator reconciles it
+# (same as the game worker, which uses ExecStopPost for recovery; add the equivalent once the recovery path is reviewed).
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes

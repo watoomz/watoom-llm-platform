@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Owned animation library · Agent Export</title><meta name="description" content="Every animation pack owned on Fab, grouped by type (fighting, weapons, locomotion and so on), with rig and format facts and how to apply a pack to a MetaHuman."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link active" aria-current="page" href="/guide/animation-library.html">Animation library</a><div class="toc"><a class="toc-link" href="#what-this-is">What this is</a><a class="toc-link" href="#where-the-list-comes-from">Where the list comes from</a><a class="toc-link" href="#reading-the-types-and-rigs">Reading the types and rigs</a><a class="toc-link" href="#packs-by-type">Packs by type</a><a class="toc-link" href="#on-the-server">On the server</a><a class="toc-link" href="#applying-a-pack-to-a-metahuman">Applying a pack to a MetaHuman</a><a class="toc-link" href="#limits">Limits</a></div><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">Animation library</p><h1>Owned animation library</h1><p class="lede">Every animation pack owned on Fab, grouped by type (fighting, weapons, locomotion and so on), with rig and format facts and how to apply a pack to a MetaHuman.</p></header>
+<div class="content">
+<h2 id="what-this-is">What this is</h2>
+<p>A SQLite catalogue of the animation packs owned on the Fab account, grouped by what the animations are for, plus a tested path for applying a pack to a MetaHuman in Godot. The database is <code>/data/ai/assets/catalog/animations.db</code> (a JSON copy sits beside it). Query it with any SQLite client, for example <code>select type, title, rig_claims, formats from v_packs_by_type</code> or <code>select * from v_clips_by_type where type = 'fighting'</code>. Tables: <code>packs</code>, <code>pack_types</code>, <code>clips</code>, <code>types</code>, <code>recipes</code>; views <code>v_packs_by_type</code> and <code>v_clips_by_type</code>.</p>
+<p>Built by <code>tools/fab/animation_catalog.py</code> (<code>refresh</code> re-reads the account; <code>build</code> rebuilds from saved inputs). The catalogue lists what is owned; it does not download anything. Any download still needs the owner's per-asset approval through the owned-assets skill.</p>
+<h2 id="where-the-list-comes-from">Where the list comes from</h2>
+<p>Fab's API only lists items that have an Unreal-format download, so animation packs that ship only as FBX, glTF or Unity files are invisible to it (the same gap that hid the MetaHuman packs). The My Library &gt; Animations page is the complete list (66 packs); the API shows 44 of them. The rest are resolved one by one through Fab's per-listing endpoints using the titles from that page. The owner-provided page copy is kept at <code>/data/ai/assets/catalog/sources/</code> and must be refreshed when new packs are added. One owned title could not be resolved by search and is recorded with its title only.</p>
+<h2 id="reading-the-types-and-rigs">Reading the types and rigs</h2>
+<p>Types are assigned by keywords in the title and description (a title match counts triple) plus Fab's own category, and a pack can belong to several types; the sections below list each pack once, under its primary type; &quot;any match&quot; in the table counts every type a pack touches. Treat the grouping as a first pass to review, not a verdict. <code>rig_claims</code> is what the listing says about its skeleton. <code>skeleton_evidence</code> is what the files prove, and is only available for packs downloaded to the server; prefer it. Two packs that claim a UE mannequin rig can still be Mixamo-style in the files, so check before relying on a claim.</p>
+<h2 id="packs-by-type">Packs by type</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Primary</th>
+<th>Any match</th>
+<th>What it covers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>fighting</td>
+<td>10</td>
+<td>30</td>
+<td>Hand-to-hand combat: strikes, martial arts, brawling, grapples, blocks, combos</td>
+</tr>
+<tr>
+<td>weapons_firearms</td>
+<td>10</td>
+<td>28</td>
+<td>Guns: rifles, pistols, shooting, aiming, reloads, FPS arms animations</td>
+</tr>
+<tr>
+<td>weapons_melee</td>
+<td>3</td>
+<td>12</td>
+<td>Held melee weapons: swords, spears, axes, staves</td>
+</tr>
+<tr>
+<td>locomotion</td>
+<td>11</td>
+<td>28</td>
+<td>Moving around: idle, walk, run, strafe, sprint, crawl, gait cycles, motion matching sets</td>
+</tr>
+<tr>
+<td>traversal</td>
+<td>4</td>
+<td>13</td>
+<td>Getting past things: climbing, ladders, ziplines, gliding, dashes, jumps, swimming, vaulting</td>
+</tr>
+<tr>
+<td>reactions</td>
+<td>4</td>
+<td>15</td>
+<td>Taking damage and dying: hits, deaths, falls, injuries, exhaustion, lying/dead poses</td>
+</tr>
+<tr>
+<td>emotes_social</td>
+<td>7</td>
+<td>26</td>
+<td>Communication and expression: emotes, gestures, dances, attitudes, talking, sign language, mudras</td>
+</tr>
+<tr>
+<td>poses_hands</td>
+<td>1</td>
+<td>8</td>
+<td>Static poses and hand/finger sets</td>
+</tr>
+<tr>
+<td>daily_life</td>
+<td>6</td>
+<td>18</td>
+<td>Everyday actions and object interaction: sitting, kneeling, doors, pick-ups, vehicles, tools</td>
+</tr>
+<tr>
+<td>sport_fitness</td>
+<td>2</td>
+<td>5</td>
+<td>Exercise and sport: gym, workouts, yoga, qi gong, stretching</td>
+</tr>
+<tr>
+<td>magic_fantasy</td>
+<td>4</td>
+<td>13</td>
+<td>Spellcasting and fantasy movement</td>
+</tr>
+<tr>
+<td>creature_zombie</td>
+<td>0</td>
+<td>7</td>
+<td>Zombies, creatures and animals (rig-specific)</td>
+</tr>
+<tr>
+<td>general_variety</td>
+<td>8</td>
+<td>8</td>
+<td>Mixed or unspecified animation sets</td>
+</tr>
+<tr>
+<td>tools</td>
+<td>2</td>
+<td>2</td>
+<td>Animation tools and plugins, not clip sets</td>
+</tr>
+<tr>
+<td>not_character_animation</td>
+<td>1</td>
+<td>1</td>
+<td>Motion graphics or non-character animation</td>
+</tr>
+<tr>
+<td>unusable_format</td>
+<td>5</td>
+<td>5</td>
+<td>Formats the pipeline cannot read (Sims 4 packages)</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="fighting">Fighting</h3>
+<ul>
+<li><strong>Brawler Animations - Free</strong> (SainDeveloper), unity; ~24 clips; free</li>
+<li><strong>Cutting the throat</strong> (Animation Shopee), fbx; on server; free; also: emotes social, weapons firearms, weapons melee</li>
+<li><strong>Fight Animation Mocap Pack (10 Animations)</strong> (Mocap.in), fbx; ~10 clips; on server; free</li>
+<li><strong>Fight Mocap Animation Data</strong> (Mocap.in), fbx; on server; free; also: locomotion, weapons firearms, weapons melee</li>
+<li><strong>Game-Ready Fight Animation Pack (7 Mocap animation)</strong> (Mocap.in), fbx; ~7 clips; on server; free</li>
+<li><strong>Martial Art Animations - Sample</strong> (SainDeveloper), unity; ~17 clips; free</li>
+<li><strong>Motifect Combat Motion Pack</strong> (Motifect), fbx; ~40 clips; on server; free; also: locomotion, reactions, weapons firearms, weapons melee</li>
+<li><strong>Motifect Martial Arts Motion Pack</strong> (Motifect), fbx; ~40 clips; on server; free; also: weapons firearms</li>
+<li><strong>RamsterZ Free Anims Volume 1</strong> (RamsterZ), unreal; on server; free; also: emotes social, magic fantasy</li>
+<li><strong>Realistic Combat Moves – 10 Mocap Pack</strong> (Mocap.in), fbx; ~5 clips; on server; free</li>
+</ul>
+<h3 id="weapons-firearms">Weapons firearms</h3>
+<ul>
+<li><strong>AK-47 with animations</strong> (A.D), unreal; on server; also: daily life, fighting</li>
+<li><strong>Animated Tactical Soldier</strong> (ebbelende3D), blender, fbx, usdz, glb; on server; free; also: fighting, traversal, weapons melee</li>
+<li><strong>First Person Rifle Animation</strong> (xidePunk Studio), unreal; on server; also: fighting, locomotion, poses hands, traversal</li>
+<li><strong>FPS Animation  Pack_AKS74U</strong> (y0ung001), unreal; ~18 clips; on server; also: fighting, locomotion</li>
+<li><strong>Free Animation Pack</strong> (Gamma Studio), unreal; on server; free; also: daily life, emotes social, fighting, locomotion, reactions</li>
+<li><strong>hit by a bullet</strong> (Animation Shopee), fbx; on server; free; also: emotes social, fighting, magic fantasy, reactions, traversal, weapons melee</li>
+<li><strong>M4A1 rifle with character animations</strong>, unreal; on server; also: daily life</li>
+<li><strong>Modern Gun Shooting Mocap Pack</strong> (Mocap.in), fbx; on server; free; also: fighting, locomotion</li>
+<li><strong>Standing with pistol</strong> (Animation Shopee), unknown</li>
+<li><strong>Weapon Pack 03 (Animated Revolver Handgun)</strong>, unreal; ~3 clips; on server</li>
+</ul>
+<h3 id="weapons-melee">Weapons melee</h3>
+<ul>
+<li><strong>FREE Sword + Animation</strong>, unreal; on server; free; also: daily life, emotes social, locomotion</li>
+<li><strong>Knife FPS Animations</strong>, unreal; on server; also: weapons firearms</li>
+<li><strong>Mega Spear Animation Pack</strong> (Infectedfury), unreal; ~400 clips; on server; also: fighting, poses hands</li>
+</ul>
+<h3 id="locomotion">Locomotion</h3>
+<ul>
+<li><strong>8 Way Levitation Locomotion</strong> (MallHockE), unreal; also: magic fantasy</li>
+<li><strong>ActorCore Sample Motions</strong> (Reallusion Inc), unreal; also: daily life, emotes social, magic fantasy</li>
+<li><strong>Basic Walk Cycle Animation Pack</strong> (XYZAnimationStudios), unreal; also: creature zombie, fighting, weapons firearms</li>
+<li><strong>Creative Characters FREE - Animated Low Poly 3D Models</strong>, unreal; ~14 clips; free; also: creature zombie, magic fantasy, traversal</li>
+<li><strong>Free Crawl Animation</strong> (voxel vision), unreal; free</li>
+<li><strong>FREE Motion Matching Walk Dance Card</strong> (Quantum Stage - Swiss Mocap Animations), unreal; free; also: emotes social</li>
+<li><strong>Free Pack - Basic Motions</strong> (PolyOne Studio), unity; ~22 clips; free; also: creature zombie, daily life, fighting, reactions, sport fitness, traversal, weapons firearms</li>
+<li><strong>MoCap Online Free Animation Pack / UNREAL 3D Character Animations for FAB Market</strong> (MoCap Online), unreal; ~5 clips; free; also: daily life, emotes social, reactions, traversal</li>
+<li><strong>Motifect Locomotion Motion Pack</strong> (Motifect), fbx; ~45 clips; free; also: traversal, weapons firearms</li>
+<li><strong>Pistol and Rifle Locomotion Animations 1700</strong> (Kingboars), fbx; free; also: traversal, weapons firearms</li>
+<li><strong>RIGIPO AI Text to Animation - FREE Animations</strong> (RIGIPO), unreal; ~38 clips; free; also: creature zombie, emotes social, reactions, weapons firearms</li>
+</ul>
+<h3 id="traversal">Traversal</h3>
+<ul>
+<li><strong>Dynamic Falling &amp; Rolling Animation Pack - Free Asset</strong> (DZTFIX KATSU), unreal; ~8 clips; free; also: fighting</li>
+<li><strong>Free Animation Library</strong> (voxel vision), unreal; free; also: daily life, locomotion, weapons melee</li>
+<li><strong>Free Animation Set - Zipline - Skydiving - Glide - Paraglider - Dash - Falling</strong> (Raul Jaramillo), unreal; free; also: fighting</li>
+<li><strong>Free Ladder Animation Set</strong> (BPG), unreal; free; also: locomotion</li>
+</ul>
+<h3 id="reactions">Reactions</h3>
+<ul>
+<li><strong>Dead Bodies Sitting &amp; Lying Poses – Mocap Pack</strong> (nikoff), unreal; ~30 clips; also: poses hands</li>
+<li><strong>FREE Dramatic Death – Animation Performances for NPCs &amp; Cinematics</strong> (Darkania Works), unreal; free; also: emotes social, locomotion, magic fantasy</li>
+<li><strong>Motifect Injured &amp; Exhausted Motion Pack</strong> (Motifect), fbx; ~30 clips; on server; free; also: emotes social, locomotion, weapons firearms</li>
+<li><strong>Struggle to Ascension – Animation Pack</strong> (Ursa.Animation), unreal; ~19 clips</li>
+</ul>
+<h3 id="emotes-social">Emotes social</h3>
+<ul>
+<li><strong>American Sign Language Animation Pack - Alphabet and Common Words</strong> (The Mighty Cat Games), unreal; ~47 clips</li>
+<li><strong>Free Anims Mix Pack</strong> (Jane Gintsar), unreal; ~10 clips; free; also: creature zombie, fighting, magic fantasy, reactions, sport fitness, weapons firearms, weapons melee</li>
+<li><strong>FREE Character Emote Pack</strong> (Klippies), unreal; ~12 clips; free; also: daily life, locomotion</li>
+<li><strong>Lit Moves Emotes Mocap</strong> (TrashPraxis), unreal; ~14 clips; also: daily life, magic fantasy, sport fitness</li>
+<li><strong>Motifect Emotes &amp; Social Motion Pack</strong> (Motifect), fbx; ~30 clips; free; also: weapons firearms</li>
+<li><strong>Mudra Samples</strong> (Rapa Motion), unreal; ~10 clips; also: fighting</li>
+<li><strong>Various Attitudes animations (Motion Cast - FREE01)</strong> (Motion Cast), unreal; ~16 clips; also: poses hands, reactions</li>
+</ul>
+<h3 id="poses-hands">Poses hands</h3>
+<ul>
+<li><strong>60 Finger Poses / Hand animations / Male &amp; Female</strong> (Attaku), unreal; also: emotes social</li>
+</ul>
+<h3 id="daily-life">Daily life</h3>
+<ul>
+<li><strong>Character Interaction Add-On Vol.01</strong> (ZzGERTzZ), unreal; also: fighting, magic fantasy</li>
+<li><strong>Free Interaction Animation</strong> (voxel vision), unreal; free; also: locomotion</li>
+<li><strong>Motifect Daily Life Motion Pack</strong> (Motifect), fbx; ~40 clips; free; also: emotes social, weapons firearms</li>
+<li><strong>Motorcycle Interaction Animset FREE</strong> (SpectraMotions), unreal; free; also: fighting, locomotion, poses hands, weapons firearms</li>
+<li><strong>Simple First-Person Flashlight Animations V1</strong> (Treety), unreal; also: locomotion, traversal</li>
+<li><strong>Sit, Squat &amp; Kneel - Lifestyle Animation Pack Vol.1</strong> (Archer wei), unreal; also: fighting, locomotion</li>
+</ul>
+<h3 id="sport-fitness">Sport fitness</h3>
+<ul>
+<li><strong>Qi Gong animations (Motion Cast - FREE02)</strong> (Motion Cast), unreal; ~22 clips; also: emotes social</li>
+<li><strong>Sport Gym Fitness Workout DEMO animations</strong> (TricksUp), unreal; on server; also: daily life, reactions</li>
+</ul>
+<h3 id="magic-fantasy">Magic fantasy</h3>
+<ul>
+<li><strong>External Wing -human fly pose-</strong> (LuckyMachidaJPN), unreal; also: emotes social, poses hands</li>
+<li><strong>Mage Collection Samples - Free</strong> (Rapa Motion), unreal; free; also: emotes social, fighting, reactions, weapons firearms</li>
+<li><strong>MC Sample Animation Pack</strong> (MoCap Central), unreal; ~120 clips; also: creature zombie, daily life, emotes social, fighting, locomotion, poses hands, reactions, weapons firearms, weapons melee</li>
+<li><strong>Motifect Fantasy &amp; Magic Motion Pack</strong> (Motifect), fbx; ~40 clips; free; also: emotes social, fighting, weapons firearms, weapons melee</li>
+</ul>
+<h3 id="general-variety">General variety</h3>
+<ul>
+<li><strong>10 Variety Game Animations</strong> (Ralentless), unreal</li>
+<li><strong>[FREE] 2025 Trendy Dance Collection Mocap Pack</strong> (XenoMocap), unreal; free; also: emotes social</li>
+<li><strong>Free Animations Pack</strong> (SoerGame), unreal; free</li>
+<li><strong>Free Animations Pack 2</strong> (SoerGame), unreal; free</li>
+<li><strong>Lyra Animation Sequences Only</strong> (Kingboars), fbx; free</li>
+<li><strong>Paragon animations retargeted to Manny</strong> (Kingboars), fbx; free</li>
+<li><strong>UE4 Mannequin: Mobile</strong> (Epic Games), unreal</li>
+<li><strong>Zombie Animation Pack: Standard</strong> (QuokkaVoid), unreal; ~50 clips; also: creature zombie</li>
+</ul>
+<h3 id="tools">Tools</h3>
+<ul>
+<li><strong>Dynamic Niagara for Animation</strong>, unreal</li>
+<li><strong>LCAT: Locodrome Character Animation Toolkit</strong>, unreal</li>
+</ul>
+<h3 id="not-character-animation">Not character animation</h3>
+<ul>
+<li><strong>Gold Bar animated Background and Logo reveal</strong> (Denis Levin), unreal</li>
+</ul>
+<h3 id="unusable-format">Unusable format</h3>
+<ul>
+<li><strong>QuinSims_SupportPropsForAnimations.package</strong>, package; on server</li>
+<li><strong>WW_Anarcis.package</strong>, package; on server</li>
+<li><strong>WW_GreyNaya_Animations.package</strong>, package; on server</li>
+<li><strong>WW_Quin_Animations.package</strong>, package; on server</li>
+<li><strong>WW_Quin_BDSM_Animations.package</strong>, package; on server</li>
+</ul>
+<h2 id="on-the-server">On the server</h2>
+<p>Downloaded packs, with their clips listed in the <code>clips</code> table: AK-47 with animations (skeleton not checked); Animated Tactical Soldier (unknown); Cutting the throat (unknown); FPS Animation  Pack_AKS74U (skeleton not checked); FREE Sword + Animation (skeleton not checked); Fight Animation Mocap Pack (10 Animations) (mixamo_style); Fight Mocap Animation Data (mixamo_style); First Person Rifle Animation (skeleton not checked); Free Animation Pack (skeleton not checked); Game-Ready Fight Animation Pack (7 Mocap animation) (mixamo_style); Knife FPS Animations (skeleton not checked); M4A1 rifle with character animations (skeleton not checked); Mega Spear Animation Pack (skeleton not checked); Modern Gun Shooting Mocap Pack (mixamo_style); Motifect Combat Motion Pack (mixamo_style); Motifect Injured &amp; Exhausted Motion Pack (mixamo_style); Motifect Martial Arts Motion Pack (mixamo_style); RamsterZ Free Anims Volume 1 (skeleton not checked); Realistic Combat Moves – 10 Mocap Pack (mixamo_style); Sport Gym Fitness Workout DEMO animations (ue5_mannequin); Weapon Pack 03 (Animated Revolver Handgun) (skeleton not checked); hit by a bullet (unknown).</p>
+<p>The Fab library page also marks two Kingboars packs as on disk (Paragon animations retargeted to Manny, 9.91 GB; Pistol and Rifle Locomotion Animations 1700, 2.35 GB). Those copies are on the owner's own machine, not on the server, so they are not in <code>clips</code>.</p>
+<h2 id="applying-a-pack-to-a-metahuman">Applying a pack to a MetaHuman</h2>
+<p>The converted MetaHuman body uses Unreal mannequin bone names, so most packs reduce to a bone-name mapping. <code>retarget_animation.gd</code> (installed with the <code>watoom-metahuman</code> skill) converts every clip in an FBX/glTF onto the body skeleton and saves an animation library.</p>
+<h3 id="ue5-direct">ue5-direct</h3>
+<ul>
+<li><strong>Applies to:</strong> packs whose skeleton uses UE5 mannequin names (Sport/Gym, Lyra, Manny-retargeted Paragon, most Unreal packs once exported to FBX)</li>
+<li><strong>Target:</strong> godot (MetaHuman body skeleton) (status: implemented)</li>
+<li><strong>Steps:</strong> 1) Download the pack (owner approval per asset, watoom-fab-owned-assets). 2) Import its FBX/GLB into the Godot project. 3) Run retarget_animation.gd --source &lt;fbx&gt; --character res://metahuman/&lt;Name&gt;/&lt;Name&gt;.tscn --map identity: it reads each clip, converts bone rotations to character-space deltas and writes them onto the MetaHuman body skeleton as an Animation in an AnimationLibrary. 4) Play it with the character's AnimationPlayer; the head follows because it copies the body pose.</li>
+<li><strong>Caveats:</strong> Hip translation is scaled by the height ratio; root motion is dropped unless --keep-root is given. Facial animation is not carried (no RigLogic in Godot).</li>
+</ul>
+<h3 id="mixamo-style">mixamo-style</h3>
+<ul>
+<li><strong>Applies to:</strong> packs with Mixamo-style bone names (Hips/Spine/Spine1/Spine2/LeftArm..., e.g. Motifect, Mocap.in, many FBX mocap packs)</li>
+<li><strong>Target:</strong> godot (MetaHuman body skeleton) (status: implemented)</li>
+<li><strong>Steps:</strong> Same as ue5-direct with --map mixamo. The map pairs Hips-&gt;pelvis, Spine/Spine1/Spine2-&gt;spine_01/02/03, Neck/Head-&gt;neck_01/head, shoulders and limbs by side, fingers by name.</li>
+<li><strong>Caveats:</strong> Spine-chain counts differ (Mixamo has 3, MetaHuman 5): the extra MetaHuman spine bones keep their rest pose and the rotation is shared across the mapped ones. Check feet for sliding on first use.</li>
+</ul>
+<h3 id="unreal-uasset">unreal-uasset</h3>
+<ul>
+<li><strong>Applies to:</strong> Unreal-format animation sequences (.uasset)</li>
+<li><strong>Target:</strong> unreal (MetaHuman) / godot via export (status: documented, not run here)</li>
+<li><strong>Steps:</strong> In Unreal 5.8: open the pack and the MetaHuman body skeleton, create an IK Retargeter (source: pack IK rig, target: MetaHuman IK rig), batch-retarget the sequences, then play them on the MetaHuman Blueprint or export FBX/glTF for Godot and use ue5-direct.</li>
+<li><strong>Caveats:</strong> The MetaHuman plugin must be enabled in the project (see watoom-metahuman copy-to-project). Headless export of animation sequences is not wired in the unreal-export pipeline yet.</li>
+</ul>
+<h3 id="unity-only">unity-only</h3>
+<ul>
+<li><strong>Applies to:</strong> packs whose only format is Unity (.anim/.unitypackage)</li>
+<li><strong>Target:</strong> none (status: blocked)</li>
+<li><strong>Steps:</strong> Unity-only animation clips cannot be read by Godot or Unreal. Check the listing for an FBX; otherwise use the pack only inside Unity.</li>
+<li><strong>Caveats:</strong> Brawler Animations, Martial Art Animations Sample and Free Pack - Basic Motions are Unity-only listings.</li>
+</ul>
+<h3 id="creature-rig">creature-rig</h3>
+<ul>
+<li><strong>Applies to:</strong> zombie/creature/animal packs with their own skeleton</li>
+<li><strong>Target:</strong> same-rig meshes only (status: documented)</li>
+<li><strong>Steps:</strong> Apply to the mesh that ships with the pack (or any mesh skinned to the same skeleton). They do not retarget onto a human MetaHuman.</li>
+<li><strong>Caveats:</strong> Use for zombies/animals already in the game projects.</li>
+</ul>
+<h3 id="sims-package">sims-package</h3>
+<ul>
+<li><strong>Applies to:</strong> Sims 4 .package animation files in /data/ai/assets/animations</li>
+<li><strong>Target:</strong> none (status: not usable)</li>
+<li><strong>Steps:</strong> These are Sims 4 community packages (game-specific binary resources); they cannot be imported to Godot or Unreal by this pipeline.</li>
+<li><strong>Caveats:</strong> Kept only so the inventory is complete.</li>
+</ul>
+<h3 id="command">Command</h3>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">godot --headless --path &lt;project&gt; --import   # import the FBX first
+godot --headless --path &lt;project&gt; -s res://metahuman/MHC_Base_Female/retarget_animation.gd -- \
+    --source res://anims/pack/jab_right.fbx --character res://metahuman/MHC_Base_Female/MHC_Base_Female.tscn
+# add --inspect (no --character) to print a source&#x27;s bones and clips; --map identity|mixamo to override detection; --keep-root to keep hip travel
+</code></pre></div>
+<p>The result is written to <code>&lt;character folder&gt;/animations/&lt;file&gt;.res</code>. The character script adds every library in that folder to its <code>IdleAnimation</code> player automatically: a one-clip library becomes an animation named after the file (<code>jab_right</code>), a multi-clip library keeps its clips under <code>&lt;file&gt;/&lt;clip&gt;</code>. Play one with <code>player.play(&quot;jab_right&quot;)</code>.</p>
+<h3 id="what-was-verified">What was verified</h3>
+<p>Retargeted onto the Base_Female MetaHuman and rendered on Bazzite: three Motifect combat clips (jab, mid block, hook-uppercut combo) and one Sport/Gym clip (kettlebell windmill) with the delta solver; and from the Mocap.in packs a slow gun-carry walk, a punch guard, a dodge, a crouch, plus the single-file &quot;Cutting the throat&quot; and &quot;hit by a bullet&quot; clips. Stances, guard hands, an extended jab, a raised arm and a full-body fall all read correctly with the character facing the camera. Not verified: foot contact (sliding), long root-motion clips, finger detail, limb roll (elbow/knee bend direction) on the pose solver, and Unreal-format packs.</p>
+<h3 id="two-solvers">Two solvers</h3>
+<p>Most Mixamo-style mocap files bake their first frame in as the skeleton's &quot;rest&quot; pose, so there is no neutral T-pose to measure motion against. The retargeter checks the source's rest pose and chooses: the <strong>delta</strong> solver (rotation change from a neutral rest, best fidelity) or the <strong>pose</strong> solver (rebuilds each bone from the source joint positions: limbs aim where the source limbs aim, torso twist follows the hip and shoulder lines, hips travel scales by leg length). Force one with <code>--solver delta|pose</code>; the log prints <code>SOLVER</code> for each run.</p>
+<h3 id="unreal-format-packs">Unreal-format packs</h3>
+<p>The ten Unreal-format packs (RamsterZ, AK-47, FPS AKS74U, First Person Rifle, Free Animation Pack, M4A1, Weapon Pack 03, Sword + Animation, Knife FPS, Mega Spear) were exported to FBX with the unreal-export pipeline (<code>export_pack.py --classes AnimSequence --request-extra '{&quot;anim_format&quot;:&quot;fbx&quot;}'</code>, run headless on Bazzite; 587 sequences, none failed) and then retargeted like any other FBX. The originals under <code>/data/ai/assets/fab</code> are untouched; the FBX copies are in <code>/data/ai/artifacts/unreal-export/anims-fbx/</code>.</p>
+<h3 id="retargeted-libraries">Retargeted libraries</h3>
+<p>Every FBX pack on the server has been retargeted onto the Base_Female MetaHuman, one animation library per pack (<code>animation-packs/&lt;pack&gt;.res</code>; copy one into the character's <code>animations/</code> folder to load it, and its clips then play as <code>&lt;pack&gt;/&lt;clip&gt;</code>). Weapon and equipment rigs (spear IK, barbell, dumbbell, revolver, AK fire/reload) animate the prop's own skeleton and are skipped on purpose. First-person packs (arms-only rigs) and per-bone helper clips retarget but only move part of the body, so review them before use.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Pack</th>
+<th>Clips retargeted</th>
+<th>Files skipped</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cutting the throat</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Fight Animation Mocap Pack (10 Animations)</td>
+<td>10</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Fight Mocap Animation Data</td>
+<td>10</td>
+<td>0</td>
+</tr>
+<tr>
+<td>First Person Rifle Animation</td>
+<td>16</td>
+<td>4</td>
+</tr>
+<tr>
+<td>FPS Animation  Pack_AKS74U</td>
+<td>14</td>
+<td>3</td>
+</tr>
+<tr>
+<td>Free Animation Pack</td>
+<td>64</td>
+<td>0</td>
+</tr>
+<tr>
+<td>FREE Sword + Animation</td>
+<td>41</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Game-Ready Fight Animation Pack (7 Mocap animation)</td>
+<td>7</td>
+<td>0</td>
+</tr>
+<tr>
+<td>hit by a bullet</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Knife FPS Animations</td>
+<td>15</td>
+<td>3</td>
+</tr>
+<tr>
+<td>M4A1 rifle with character animations</td>
+<td>32</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Mega Spear Animation Pack</td>
+<td>215</td>
+<td>129</td>
+</tr>
+<tr>
+<td>Modern Gun Shooting Mocap Pack</td>
+<td>12</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Motifect Combat Motion Pack</td>
+<td>40</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Motifect Injured &amp; Exhausted Motion Pack</td>
+<td>30</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Motifect Martial Arts Motion Pack</td>
+<td>40</td>
+<td>0</td>
+</tr>
+<tr>
+<td>RamsterZ Free Anims Volume 1</td>
+<td>44</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Realistic Combat Moves – 10 Mocap Pack</td>
+<td>10</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Sport Gym Fitness Workout DEMO animations</td>
+<td>18</td>
+<td>24</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="limits">Limits</h2>
+<ul>
+<li>Rotation retargeting only; no facial animation (Godot does not run RigLogic), no retargeting of props or weapons.</li>
+<li>Hip travel is dropped unless <code>--keep-root</code> is given, so locomotion clips play in place by default.</li>
+<li>Creature and zombie packs use their own skeletons and do not apply to a human MetaHuman.</li>
+<li>Sims 4 <code>.package</code> files in <code>/data/ai/assets/animations</code> are listed for completeness only; this pipeline cannot read them.</li>
+</ul>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/animation-library.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

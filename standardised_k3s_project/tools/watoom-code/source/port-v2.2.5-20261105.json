@@ -1,0 +1,21 @@
+{
+  "sourceCommit": "51a6ec509cc77fd446967234ae237458b9316768",
+  "baseCommit": "9bbb8ce18c80f099e0e448775f59d965ead40a21",
+  "baseTag": "upstream-v2.2.5",
+  "image": "127.0.0.1:5000/watoom-code@sha256:358dc4669683a656750530a8eb9d63e2a21e53a2dcf30e203fb720beab3deba1",
+  "supersedes": "127.0.0.1:5000/watoom-code@sha256:f024f74089ca3c509b85053a14971e0a912e31b3ef29c34cb80d54f82003956e",
+  "bundle": "watoom-code-port-v2.2.5-20261105.bundle",
+  "bundleSha256": "2e1336068b3d7659107da430cda8782366d94c24c7d80b3369b2e0e479e2d6a0",
+  "applicationOnly": true,
+  "change": "WatooM fork ported onto OpenCode v2.2.5 (17 commits, branch port/v2.2.5); adds missed question/permission alert recovery (upstream PR anomalyco/opencode#61659). Migrates the database to the v2.2.5 schema (drops empty session_pending; adds blob, blob_ref, job, schedule, session_part).",
+  "checks": {
+    "featureChecklist": "63/63 ported",
+    "forkTests": "core 466 pass; server 6/8 (2 pre-existing); session-ui, codemode, app pass",
+    "appTypecheck": "1,921 files, no errors",
+    "isolatedStaging": "15 agents, 12 WatooM plugins, 154 skills, catalogue, memory, guard, quick_check ok",
+    "liveProbe": "all endpoint statuses match pre-port baseline; WatooM plugins identical; default model unchanged"
+  },
+  "deployEvidence": "/data/ai/artifacts/watoom-code-production-consolidation/deploy-20261104T195830Z",
+  "failedFirstAttempt": "/data/ai/artifacts/watoom-code-production-consolidation/deploy-20261104T195154Z: post-deploy checkpoint queried dropped session_pending; tool rolled the image back with the schema already migrated, no data loss. Fixed by schema-aware checkpoint and clearance in the same commit.",
+  "preserved": {"sessions": 752, "children": 650, "projects": 86}
+}

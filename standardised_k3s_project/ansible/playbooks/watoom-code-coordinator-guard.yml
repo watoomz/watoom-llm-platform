@@ -1,0 +1,14 @@
+---
+- name: Deploy only the reviewed native coordinator guard
+  hosts: homelab
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Require native idle deployment guard
+      ansible.builtin.assert:
+        that:
+          - watoom_coordinator_release_guard_held | default(false) | bool
+    - name: Install and select the immutable coordinator guard
+      ansible.builtin.include_role:
+        name: watoom-code
+        tasks_from: coordinator_guard.yml

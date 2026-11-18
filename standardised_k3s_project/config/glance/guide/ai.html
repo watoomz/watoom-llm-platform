@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>AI inference platform · Agent Export</title><meta name="description" content="Local LLM serving on one GPU — the router, the exclusive GPU controller, the managed model set, the Model Manager and the rules that keep inference safe."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link active" aria-current="page" href="/guide/ai.html">AI platform</a><div class="toc"><a class="toc-link" href="#architecture">Architecture</a><a class="toc-link" href="#primary-model">Primary model</a><a class="toc-link" href="#managed-models">Managed models</a><a class="toc-link" href="#placement-policy">Placement policy</a><a class="toc-link" href="#gpu-controller">GPU controller</a><a class="toc-link" href="#router">Router</a><a class="toc-link" href="#model-manager">Model Manager</a><a class="toc-link" href="#llama-mesh">LLaMA-Mesh</a><a class="toc-link" href="#data">Data</a><a class="toc-link" href="#complete-platform-reference">Complete platform reference</a></div><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">AI platform</p><h1>AI inference platform</h1><p class="lede">Local LLM serving on one GPU — the router, the exclusive GPU controller, the managed model set, the Model Manager and the rules that keep inference safe.</p></header>
+<div class="content">
+<h2 id="architecture">Architecture</h2>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-text">WatooM Code ─┐
+Model Manager ┼──► llm-router.llama-cpp:8000/v1  (OpenAI-compatible)
+Toolkit jobs ─┘        │  model request
+                       ▼
+          watoom-gpu-controller  (systemd, sole replica writer)
+            · admission and inference leases
+            · durable state + journal (generation, owner, phase)
+            · deployment identity pinned by spec SHA-256
+                       │  scale 0 ↔ 1, verified restore
+                       ▼
+          llama-cpp/&lt;model&gt; Deployments ──► GPU (20 GiB)
+</code></pre></div>
+<p>Only one large model fits in VRAM at a time. The router never scales anything: it asks the controller, which drains the current owner, switches the backend and records each step durably so an interrupted switch can be recovered rather than guessed.</p>
+<h2 id="primary-model">Primary model</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Deployment / alias</td>
+<td><code>llama-cpp-swift-qwen38-coder</code> / <code>swift-qwen38-coder</code> (WatooM Code: <code>watoom/swift-qwen38-coder</code>)</td>
+</tr>
+<tr>
+<td>Weights</td>
+<td><code>Swift-1.5-Qwen3.8-27B-Uncensored-Dynamic-MTP-UD-IQ4_XS.gguf</code> + <code>mmproj-BF16.gguf</code> (vision)</td>
+</tr>
+<tr>
+<td>Runtime</td>
+<td>llamAmpere v0.6.2 (sm86 fork of llama.cpp), local registry image pinned by digest; adopted 2026-11-02 (decode +15–38 %, prefill +18–20 % vs upstream b10666)</td>
+</tr>
+<tr>
+<td>Context</td>
+<td>131,072 tokens, KV cache <code>turbo5</code>/<code>turbo4</code> (adopted 2026-11-03; KLD 0.003983 vs <code>q4_0</code> 0.007172 against a <code>q8_0</code> reference), flash attention on, <code>UBATCH=1024</code></td>
+</tr>
+<tr>
+<td>Placement</td>
+<td>all layers on GPU; vision projector on CPU (<code>MMPROJ_OFFLOAD=false</code>)</td>
+</tr>
+<tr>
+<td>Slots</td>
+<td>1 (<code>N_PARALLEL=1</code>), continuous batching</td>
+</tr>
+<tr>
+<td>Speculative decoding</td>
+<td>built-in MTP head (<code>--spec-type draft-mtp</code>, up to 5 draft tokens)</td>
+</tr>
+<tr>
+<td>Prompt cache</td>
+<td>4 GiB host RAM (<code>CACHE_RAM=4096</code>); two measured synthetic 60K states fit; real prefix/checkpoint behavior still needs workload-specific evidence; RAM-evicted states spill to a 16 GiB disk tier on the <code>/app</code> SSD at <code>/app/ai/cache/llamampere/prompt-cache</code> (root-only, survives pod restarts; not the shared <code>/data</code> HDD, where each spill blocked the server for 17-65 s); spills are written by a background thread (<code>LLAMA_ARG_CACHE_DISK_ASYNC=1</code>, watoom llamAmpere build <code>943cbe3</code>, see <code>config/llm/llamampere/</code>), so the server never waits for disk I/O; <code>prompt_cache_disk_async_*</code> metrics count writes and drops</td>
+</tr>
+<tr>
+<td>Sampling</td>
+<td>temp 1.0, top-p 0.95, top-k 20; reasoning on, effort low</td>
+</tr>
+<tr>
+<td>CUDA graphs</td>
+<td>enabled (default)</td>
+</tr>
+<tr>
+<td>GPU power cap</td>
+<td>300 W (<code>gpu_host_power_limit_watts</code>, <code>gpu_host</code> role)</td>
+</tr>
+<tr>
+<td>Profile adopted</td>
+<td>2026-11-03 combined trial vs previous profile: fresh agent turn −16 %, continuation −20 %, decode +30–40 %, prefill +12–19 %, 90K retrieval/tool round-trip/30-min soak pass. Evidence <code>/data/ai/helper-scripts/reports/inference-perf-20261102-tune-combined-turbo-01</code>, rollback manifest in <code>.../inference-perf-20261103-adopt-combined-01/manifest-before.yml</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>WatooM Code budgets <strong>100,000</strong> tokens of context and <strong>4,096</strong> output tokens per request (<code>watoom_code_swift_context_tokens</code>). The difference from the backend's 131,072 is headroom, not waste.</p>
+<h2 id="managed-models">Managed models</h2>
+<p>All models are registered in <code>/data/ai/helper-scripts/config/gpu-controller.json</code>. Non-primary models sit at <code>0/0</code> until requested.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Deployment</th>
+<th>Router alias</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>llama-cpp-swift-qwen38-coder</code></td>
+<td><code>swift-qwen38-coder</code></td>
+<td>Primary coding and agent model</td>
+</tr>
+<tr>
+<td><code>llama-cpp-tiel-coder-35b-a3b-mtp</code></td>
+<td><code>tiel-coder-35b-a3b-mtp</code></td>
+<td>MoE coder; keeps an 8-layer CPU expert fallback at 128K</td>
+</tr>
+<tr>
+<td><code>llama-cpp-qwen38-uncensored-mtp</code></td>
+<td><code>qwen38-uncensored-mtp-iq4-xs</code></td>
+<td>Vision-capable alternative</td>
+</tr>
+<tr>
+<td><code>llama-cpp-qwen38-atomic</code></td>
+<td><code>qwen38-27b-ad-iq4-xs</code></td>
+<td>Alternative 27B build</td>
+</tr>
+<tr>
+<td><code>llama-cpp-qwen35-defiant-fable-9b</code></td>
+<td><code>qwen35-defiant-fable-9b-q8</code></td>
+<td>Creative writing</td>
+</tr>
+<tr>
+<td><code>llama-cpp-ornith-15-9b</code></td>
+<td><code>ornith-1.5-9b-q8</code></td>
+<td>Small general model</td>
+</tr>
+<tr>
+<td><code>llama-cpp-gemma-4-e4b</code></td>
+<td><code>gemma-4-e4b-q8-k-p</code></td>
+<td>Small general model</td>
+</tr>
+<tr>
+<td><code>llama-cpp-llama-mesh</code></td>
+<td><code>llama-mesh-q8</code></td>
+<td>LLaMA-Mesh 3D geometry specialist</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>bge-embeddings</code> runs independently (always on, small) for retrieval. Deployments named <code>*-candidate</code> or <code>llama-cpp-mm-*</code> are experiments or Model Manager installs and are not in rotation unless registered.</p>
+<h2 id="placement-policy">Placement policy</h2>
+<p>Prefer full GPU residency for weights, MTP head and vision projector when the model, KV cache, compute buffers and a safety margin all fit. CPU expert offload is a documented capacity fallback, never a default. Never change quantisation, context or KV precision to claim residency. Validate any placement change through the controller with rollback before touching a running model.</p>
+<h2 id="gpu-controller">GPU controller</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Location</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Service</td>
+<td><code>watoom-gpu-controller.service</code></td>
+</tr>
+<tr>
+<td>Code</td>
+<td><code>tools/llm/watoom-gpu-controller</code> → <code>/data/ai/helper-scripts/gpu-controller</code></td>
+</tr>
+<tr>
+<td>Config</td>
+<td><code>/data/ai/helper-scripts/config/gpu-controller.json</code></td>
+</tr>
+<tr>
+<td>State</td>
+<td><code>/data/ai/helper-scripts/state/gpu-controller/state.json</code> + journal</td>
+</tr>
+<tr>
+<td>Credentials</td>
+<td>rotated by <code>watoom-gpu-controller-credentials.timer</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Healthy idle state:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-json">{&quot;phase&quot;: &quot;qwen-ready&quot;, &quot;owner&quot;: null, &quot;uncertain&quot;: false}
+</code></pre></div>
+<p>The generation counter only increases; never hard-code it. A non-null owner means a model switch, Mesh job or operator task is in progress — let it finish.</p>
+<blockquote class="callout callout-rule" data-kind="Rule">
+<p>Never <code>kubectl scale</code> a model Deployment, reset controller state or bypass admission, even while debugging. Low GPU utilisation does not mean idle; an active coding session or busy inference slot blocks disruptive work.</p>
+</blockquote>
+<h3 id="re-pin-after-a-reviewed-primary-deployment-change">Re-pin after a reviewed primary Deployment change</h3>
+<p>The controller pins each model Deployment's UID and spec digest. If the primary (<code>swift-qwen38-coder</code>) Deployment is changed outside the controller, every action — including <code>recover</code> — fails with <code>Unsafe: deployment identity or model configuration changed</code>. After reviewing the diff, re-pin through the playbook (opt-in; it refuses unless the controller is <code>qwen-ready</code>, unowned and certain, the UID matches, and only the primary digest changes):</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">ansible-playbook ansible/playbooks/gpu-controller.yml -e gpu_controller_repin_primary=true
+</code></pre></div>
+<p>Then copy the new digest into <code>ansible/roles/llm-model-lab/files/gpu-controller.json</code> so a plain rerun does not revert it. A stuck <code>recovery-required</code> state whose owner is a live router process also needs that router restarted before <code>recover</code> is accepted.</p>
+<p>Tools that need the GPU exclusively (for example <code>tools/llm/benchmark-cuda-graphs.py</code>) use the controller's operator protocol: wait for an idle app and idle slots, take ownership with a new generation, do the work, and always restore the primary through the controller.</p>
+<h2 id="router">Router</h2>
+<p><code>llm-router</code> (namespace <code>llama-cpp</code>, port 8000) exposes the OpenAI-compatible API. Read-only inspection:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">kubectl -n llama-cpp port-forward svc/llm-router 18000:8000 &amp;
+curl -s localhost:18000/health
+curl -s localhost:18000/v1/models | jq &#x27;.data[].id&#x27;
+curl -s localhost:18000/models/status | jq
+</code></pre></div>
+<p><code>POST /models/load</code> requests a model switch; it is not a discovery call.</p>
+<h2 id="model-manager">Model Manager</h2>
+<p>Glance → LLM Lab → Model Manager (<code>/model-manager/</code>). It installs models from Hugging Face by immutable revision:</p>
+<ol>
+<li>Paste a Hugging Face URL, choose revision and variant, review exact download size and settings sources.</li>
+<li><strong>Download &amp; set up</strong> fetches, verifies and registers the model with the controller.</li>
+<li>GGUF language models default to 100,000 context, 4,096 output and <code>q4_0</code> KV unless the model documents a lower limit.</li>
+<li>SDXL checkpoints and LoRAs are image backends; a LoRA needs an explicitly chosen compatible base.</li>
+</ol>
+<p>Downloaded, configured, registered and tested are separate states. Removal unregisters and keeps files by default; confirmed removal quarantines only unshared files. The privileged half runs as <code>watoom-model-manager-broker.service</code>. The login password file is server-local and excluded from Git.</p>
+<h2 id="llama-mesh">LLaMA-Mesh</h2>
+<p>LLaMA-Mesh generates OBJ geometry from text. WatooM Code reaches it through its MCP pipeline: the controller lends the GPU to <code>llama-cpp-llama-mesh</code>, the job runs with a stable request ID, the primary is restored, then CPU-side asset preparation continues. Job records are kept under <code>/data/ai/llama-mesh/jobs</code>.</p>
+<h2 id="data">Data</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/data/ai/models</code></td>
+<td>GGUF weights and projectors (excluded from Git)</td>
+</tr>
+<tr>
+<td><code>/data/ai/helper-scripts/reports</code></td>
+<td>Benchmarks and operator evidence</td>
+</tr>
+<tr>
+<td><code>/app/ai/builds/llama.cpp</code></td>
+<td>Local llama.cpp source and build output</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="complete-platform-reference">Complete platform reference</h2>
+<p>See the <a href="/guide/llm-api.html">LLM API &amp; reference</a> for the current contracts, platform source map, operations and schemas, and the <a href="/guide/llm-user-guide.html">LLM user guide</a> for day-to-day workflows. The qualified combined profile is described above.</p>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/ai.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

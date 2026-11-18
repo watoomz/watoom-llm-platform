@@ -1,0 +1,9 @@
+---
+- name: Isolated workstation render staging transport
+  hosts: homelab
+  become: true
+  gather_facts: false
+  vars:
+    workstation_stage_public_key: "{{ lookup('ansible.builtin.file', playbook_dir + '/../../tools/rig-async-stage/worker-source/rig-stage.pub') | trim }}"
+  roles:
+    - workstation-render-stage

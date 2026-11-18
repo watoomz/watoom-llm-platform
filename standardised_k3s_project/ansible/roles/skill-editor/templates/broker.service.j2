@@ -1,0 +1,15 @@
+[Unit]
+Description=WatooM Glance skill editor broker (SKILL.md Git commits and live sync)
+After=network.target
+[Service]
+User=root
+ExecStart=/usr/bin/python3 {{ skill_editor_app_root }}/broker.py --config {{ skill_editor_state }}/config.json
+Restart=on-failure
+RestartSec=10
+MemoryMax=256M
+CPUQuota=50%
+NoNewPrivileges=yes
+PrivateTmp=yes
+UMask=0022
+[Install]
+WantedBy=multi-user.target

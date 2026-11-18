@@ -1,0 +1,794 @@
+# WATOOM_OPENCODE_OBSERVABILITY_V1
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: watoom-opencode-observability
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: watoom-opencode-observability
+    app.kubernetes.io/part-of: monitoring
+data:
+  exporter.py: |
+    #!/usr/bin/env python3
+    import glob
+    import json
+    import os
+    import re
+    import threading
+    import time
+    from collections import Counter, defaultdict
+    from datetime import datetime, timezone
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+    from pathlib import Path
+
+    VERSION = "1.0.0"
+    RUN_ROOT = Path(os.environ.get("OPENCODE_RUN_ROOT", "/runs"))
+    ROUTER_GLOB = os.environ.get("ROUTER_LOG_GLOB", "/var/log/containers/llm-router-*_llama-cpp_*.log")
+    QWEN_GLOB = os.environ.get("QWEN_LOG_GLOB", "/var/log/containers/llama-cpp-swift-qwen38-coder-*_llama-cpp_*.log")
+    PORT = int(os.environ.get("METRICS_PORT", "9108"))
+    MAX_HISTORY = int(os.environ.get("OPENCODE_METRICS_MAX_RUNS", "500"))
+
+    VALID_RESULTS = {"running", "PASS", "FAIL", "BLOCKED", "ABORTED", "UNKNOWN"}
+    VALID_VERDICTS = {"PASS", "FAIL", "BLOCKED", "UNKNOWN"}
+
+
+    def esc(s):
+        return str(s).replace('\\', r'\\').replace('"', r'\"').replace('\n', r'\n')
+
+
+    def metric(name, value, labels=None):
+        labels = labels or {}
+        if labels:
+            body = ",".join(f'{k}="{esc(v)}"' for k, v in sorted(labels.items()))
+            return f"{name}{{{body}}} {value}"
+        return f"{name} {value}"
+
+
+    def read_text(path, default=""):
+        try:
+            return path.read_text(encoding="utf-8", errors="replace").strip()
+        except OSError:
+            return default
+
+
+    def parse_ts(s):
+        if not s:
+            return None
+        try:
+            dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt.timestamp()
+        except Exception:
+            return None
+
+
+    def normalize_result(s):
+        s = (s or "").strip().upper()
+        if not s:
+            return "running"
+        if s in {"PASS", "FAIL", "BLOCKED", "ABORTED"}:
+            return s
+        return "UNKNOWN"
+
+
+    def parse_verdict(text):
+        if not text:
+            return "UNKNOWN"
+        patterns = [
+            r"(?im)^\s*(?:VERDICT|TEST(?:ER)?\s+VERDICT|REVIEW(?:ER)?\s+VERDICT|RESULT)\s*[:=-]\s*(PASS|FAIL|BLOCKED)\b",
+            r"(?im)^\s*\*\*(?:VERDICT|RESULT)\*\*\s*[:=-]?\s*\*\*(PASS|FAIL|BLOCKED)\*\*",
+        ]
+        for p in patterns:
+            m = re.search(p, text)
+            if m:
+                return m.group(1).upper()
+        return "UNKNOWN"
+
+
+    def run_dirs():
+        try:
+            ds = [p for p in RUN_ROOT.iterdir() if p.is_dir() and re.fullmatch(r"\d{8}-\d{6}", p.name)]
+        except OSError:
+            return []
+        ds.sort(key=lambda p: p.name)
+        return ds[-MAX_HISTORY:]
+
+
+    def parse_output_events(path, agent, tool_counts, compactions, step_reasons):
+        try:
+            fh = path.open("r", encoding="utf-8", errors="replace")
+        except OSError:
+            return
+        with fh:
+            for line in fh:
+                line = line.strip()
+                if not line.startswith("{"):
+                    continue
+                try:
+                    ev = json.loads(line)
+                except Exception:
+                    continue
+                typ = ev.get("type")
+                part = ev.get("part") or {}
+                if typ == "tool_use":
+                    tool = str(part.get("tool") or "unknown")[:64]
+                    status = str((part.get("state") or {}).get("status") or "unknown")[:32]
+                    tool_counts[(agent, tool, status)] += 1
+                elif typ == "step_finish":
+                    reason = str(part.get("reason") or "unknown")[:64]
+                    step_reasons[(agent, reason)] += 1
+                elif typ == "text" and (part.get("metadata") or {}).get("compaction_continue"):
+                    compactions[agent] += 1
+
+
+    def collect_run_metrics():
+        ds = run_dirs()
+        lines = []
+        tool_counts = Counter()
+        compactions = Counter()
+        watchdogs = Counter()
+        step_reasons = Counter()
+        aborts = 0
+        phase_invocations = Counter()
+        latest_by_agent = {}
+
+        now = time.time()
+        for d in ds:
+            agent = read_text(d / "agent", "unknown") or "unknown"
+            raw_result = read_text(d / "result", "")
+            result = normalize_result(raw_result)
+            if not (d / "finished-at").exists() and not raw_result:
+                result = "running"
+            phase_invocations[(agent, result)] += 1
+            latest_by_agent[agent] = d
+            if (d / "abort-requested").exists():
+                aborts += 1
+            reason = read_text(d / "watchdog-reason", "")
+            if reason:
+                watchdogs[reason[:80]] += 1
+            parse_output_events(d / "output.log", agent, tool_counts, compactions, step_reasons)
+
+        lines += [
+            "# HELP watoom_opencode_metrics_exporter_info Exporter build information",
+            "# TYPE watoom_opencode_metrics_exporter_info gauge",
+            metric("watoom_opencode_metrics_exporter_info", 1, {"version": VERSION}),
+            "# HELP watoom_opencode_runs_observed Number of retained run directories inspected",
+            "# TYPE watoom_opencode_runs_observed gauge",
+            metric("watoom_opencode_runs_observed", len(ds)),
+        ]
+
+        if ds:
+            d = ds[-1]
+            agent = read_text(d / "agent", "unknown") or "unknown"
+            run_id = d.name
+            session_id = read_text(d / "session-id", "unknown") or "unknown"
+            started = parse_ts(read_text(d / "started-at", ""))
+            finished = parse_ts(read_text(d / "finished-at", ""))
+            raw_result = read_text(d / "result", "")
+            result = normalize_result(raw_result)
+            active = 0 if finished or raw_result else 1
+            if active:
+                result = "running"
+            elapsed = max(0, (finished or now) - started) if started else 0
+            watchdog_reason = read_text(d / "watchdog-reason", "")
+            final_text = read_text(d / "final-response.txt", "")
+            verdict = parse_verdict(final_text) if agent in {"watoom-reviewer", "watoom-tester", "watoom-final-review"} else "UNKNOWN"
+
+            lines += [
+                "# HELP watoom_opencode_run_info Current or most recent OpenCode run identity",
+                "# TYPE watoom_opencode_run_info gauge",
+                metric("watoom_opencode_run_info", 1, {"run_id": run_id, "session_id": session_id, "agent": agent}),
+                "# HELP watoom_opencode_run_active Whether the newest run is active",
+                "# TYPE watoom_opencode_run_active gauge",
+                metric("watoom_opencode_run_active", active),
+                "# HELP watoom_opencode_run_elapsed_seconds Elapsed seconds for newest run",
+                "# TYPE watoom_opencode_run_elapsed_seconds gauge",
+                metric("watoom_opencode_run_elapsed_seconds", f"{elapsed:.3f}"),
+                "# HELP watoom_opencode_run_result Runner authoritative execution result for newest run; distinct from review/test verdict",
+                "# TYPE watoom_opencode_run_result gauge",
+                metric("watoom_opencode_run_result", 1, {"result": result}),
+                "# HELP watoom_opencode_phase_info Current or most recent OpenCode phase agent",
+                "# TYPE watoom_opencode_phase_info gauge",
+                metric("watoom_opencode_phase_info", 1, {"agent": agent}),
+                "# HELP watoom_opencode_phase_authoritative_result Runner authoritative phase execution result; does not imply reviewer/tester verdict",
+                "# TYPE watoom_opencode_phase_authoritative_result gauge",
+                metric("watoom_opencode_phase_authoritative_result", 1, {"agent": agent, "result": result}),
+                "# HELP watoom_opencode_review_verdict Parsed reviewer/tester/final-review verdict when explicitly present in authoritative response text",
+                "# TYPE watoom_opencode_review_verdict gauge",
+                metric("watoom_opencode_review_verdict", 1, {"agent": agent, "verdict": verdict}),
+                "# HELP watoom_opencode_watchdog_active Whether newest run has a watchdog reason",
+                "# TYPE watoom_opencode_watchdog_active gauge",
+                metric("watoom_opencode_watchdog_active", 1 if watchdog_reason else 0, {"reason": watchdog_reason[:80] or "none"}),
+            ]
+
+        lines += [
+            "# HELP watoom_opencode_phase_invocations_total OpenCode phase invocations observed in retained run history",
+            "# TYPE watoom_opencode_phase_invocations_total counter",
+        ]
+        for (agent, result), count in sorted(phase_invocations.items()):
+            lines.append(metric("watoom_opencode_phase_invocations_total", count, {"agent": agent, "result": result}))
+
+        lines += [
+            "# HELP watoom_opencode_phase_duration_seconds Current/last observed duration by agent",
+            "# TYPE watoom_opencode_phase_duration_seconds gauge",
+        ]
+        for agent, d in sorted(latest_by_agent.items()):
+            started = parse_ts(read_text(d / "started-at", ""))
+            finished = parse_ts(read_text(d / "finished-at", ""))
+            dur = max(0, (finished or now) - started) if started else 0
+            lines.append(metric("watoom_opencode_phase_duration_seconds", f"{dur:.3f}", {"agent": agent}))
+
+        lines += [
+            "# HELP watoom_opencode_tool_calls_total Tool calls observed in retained OpenCode run logs",
+            "# TYPE watoom_opencode_tool_calls_total counter",
+        ]
+        for (agent, tool, status), count in sorted(tool_counts.items()):
+            lines.append(metric("watoom_opencode_tool_calls_total", count, {"agent": agent, "tool": tool, "status": status}))
+
+        lines += [
+            "# HELP watoom_opencode_compactions_total Synthetic compaction continuation events observed in retained OpenCode run logs",
+            "# TYPE watoom_opencode_compactions_total counter",
+        ]
+        for agent, count in sorted(compactions.items()):
+            lines.append(metric("watoom_opencode_compactions_total", count, {"agent": agent}))
+
+        lines += [
+            "# HELP watoom_opencode_watchdog_events_total Watchdog events observed in retained run history",
+            "# TYPE watoom_opencode_watchdog_events_total counter",
+        ]
+        for reason, count in sorted(watchdogs.items()):
+            lines.append(metric("watoom_opencode_watchdog_events_total", count, {"reason": reason}))
+
+        lines += [
+            "# HELP watoom_opencode_abort_total Aborted or explicitly abort-requested runs observed in retained run history",
+            "# TYPE watoom_opencode_abort_total counter",
+            metric("watoom_opencode_abort_total", aborts),
+            "# HELP watoom_opencode_step_finish_total Step-finish events observed in retained OpenCode run logs",
+            "# TYPE watoom_opencode_step_finish_total counter",
+        ]
+        for (agent, reason), count in sorted(step_reasons.items()):
+            lines.append(metric("watoom_opencode_step_finish_total", count, {"agent": agent, "reason": reason}))
+
+        return lines
+
+
+    class LogTailState:
+        def __init__(self):
+            self.lock = threading.Lock()
+            self.files = {}
+            self.router_requests = Counter()
+            self.router_messages = Counter()
+            self.router_chars = Counter()
+            self.router_tools = Counter()
+            self.router_failures = Counter()
+            self.router_duration_ms_sum = Counter()
+            self.router_duration_count = Counter()
+            self.last_router = {}
+            self.llama_truncations = 0
+            self.llama_errors = 0
+            self.initialized = False
+
+        def _read_new(self, path, seed_last=False):
+            try:
+                st = os.stat(path)
+                key = (st.st_dev, st.st_ino)
+                prev = self.files.get(path)
+                if prev is None or prev[0] != key:
+                    # On first discovery, do not replay old logs into counters.
+                    offset = max(0, st.st_size - (262144 if seed_last else 0)) if not self.initialized else 0
+                else:
+                    offset = prev[1]
+                    if st.st_size < offset:
+                        offset = 0
+                with open(path, "r", encoding="utf-8", errors="replace") as fh:
+                    fh.seek(offset)
+                    data = fh.read()
+                    newoff = fh.tell()
+                self.files[path] = (key, newoff)
+                return data.splitlines()
+            except OSError:
+                return []
+
+        @staticmethod
+        def cri_body(line):
+            m = re.match(r"^\S+\s+(?:stdout|stderr)\s+[FP]\s+(.*)$", line)
+            return m.group(1) if m else line
+
+        @staticmethod
+        def kv(line, key):
+            m = re.search(rf"(?:^|\s){re.escape(key)}=([^\s]+)", line)
+            return m.group(1).strip("\"'") if m else ""
+
+        def poll(self):
+            with self.lock:
+                router_paths = sorted(glob.glob(ROUTER_GLOB))
+                qwen_paths = sorted(glob.glob(QWEN_GLOB))
+
+                for p in router_paths:
+                    for raw in self._read_new(p, seed_last=True):
+                        line = self.cri_body(raw)
+                        if "[REQMETA]" in line:
+                            requested = self.kv(line, "model") or "unknown"
+                            backend = self.kv(line, "backend_model") or "unknown"
+                            stream = (self.kv(line, "stream") or "unknown").lower()
+                            tools = self.kv(line, "tools") or "0"
+                            tools_enabled = "true" if tools.isdigit() and int(tools) > 0 else "false"
+                            labels = (requested[:96], backend[:96], stream[:12], tools_enabled)
+                            self.last_router = {"requested_model": labels[0], "backend_model": labels[1], "stream": labels[2], "tools_enabled": labels[3]}
+                            if self.initialized:
+                                self.router_requests[labels] += 1
+                                try: self.router_messages[labels[:2]] += int(self.kv(line, "messages") or 0)
+                                except ValueError: pass
+                                try: self.router_chars[labels[:2]] += int(self.kv(line, "message_chars") or 0)
+                                except ValueError: pass
+                                try: self.router_tools[labels[:2]] += int(tools or 0)
+                                except ValueError: pass
+                                dur = self.kv(line, "duration_ms") or self.kv(line, "elapsed_ms")
+                                try:
+                                    if dur:
+                                        self.router_duration_ms_sum[labels[:2]] += float(dur)
+                                        self.router_duration_count[labels[:2]] += 1
+                                except ValueError:
+                                    pass
+                        elif self.initialized and re.search(r"\b(ERROR|exception|traceback|status=5\d\d)\b", line, re.I):
+                            self.router_failures["unknown"] += 1
+
+                for p in qwen_paths:
+                    for raw in self._read_new(p, seed_last=False):
+                        if not self.initialized:
+                            continue
+                        line = self.cri_body(raw)
+                        if re.search(r"\btruncated\s*=\s*1\b", line, re.I):
+                            self.llama_truncations += 1
+                        if re.search(r"\b(ERROR|exception|fatal)\b", line, re.I):
+                            self.llama_errors += 1
+                self.initialized = True
+
+        def metrics(self):
+            self.poll()
+            with self.lock:
+                lines = [
+                    "# HELP watoom_llm_router_requests_total Router requests observed since exporter start, parsed from REQMETA",
+                    "# TYPE watoom_llm_router_requests_total counter",
+                ]
+                for (requested, backend, stream, tools_enabled), count in sorted(self.router_requests.items()):
+                    lines.append(metric("watoom_llm_router_requests_total", count, {"requested_model": requested, "backend_model": backend, "stream": stream, "tools_enabled": tools_enabled}))
+                lines += [
+                    "# HELP watoom_llm_router_messages_total Message count observed in router request metadata since exporter start",
+                    "# TYPE watoom_llm_router_messages_total counter",
+                ]
+                for (requested, backend), count in sorted(self.router_messages.items()):
+                    lines.append(metric("watoom_llm_router_messages_total", count, {"requested_model": requested, "backend_model": backend}))
+                lines += [
+                    "# HELP watoom_llm_router_message_chars_total Message characters observed in router request metadata since exporter start",
+                    "# TYPE watoom_llm_router_message_chars_total counter",
+                ]
+                for (requested, backend), count in sorted(self.router_chars.items()):
+                    lines.append(metric("watoom_llm_router_message_chars_total", count, {"requested_model": requested, "backend_model": backend}))
+                lines += [
+                    "# HELP watoom_llm_router_tools_total Tools exposed across router requests since exporter start",
+                    "# TYPE watoom_llm_router_tools_total counter",
+                ]
+                for (requested, backend), count in sorted(self.router_tools.items()):
+                    lines.append(metric("watoom_llm_router_tools_total", count, {"requested_model": requested, "backend_model": backend}))
+                lines += [
+                    "# HELP watoom_llm_router_failures_total Router error log events observed since exporter start",
+                    "# TYPE watoom_llm_router_failures_total counter",
+                ]
+                for scope, count in sorted(self.router_failures.items()):
+                    lines.append(metric("watoom_llm_router_failures_total", count, {"scope": scope}))
+                lines += [
+                    "# HELP watoom_llm_router_request_duration_milliseconds_sum Router request duration when duration_ms/elapsed_ms is present in logs",
+                    "# TYPE watoom_llm_router_request_duration_milliseconds_sum counter",
+                    "# HELP watoom_llm_router_request_duration_milliseconds_count Router request duration observations",
+                    "# TYPE watoom_llm_router_request_duration_milliseconds_count counter",
+                ]
+                for key, total in sorted(self.router_duration_ms_sum.items()):
+                    labels = {"requested_model": key[0], "backend_model": key[1]}
+                    lines.append(metric("watoom_llm_router_request_duration_milliseconds_sum", f"{total:.3f}", labels))
+                    lines.append(metric("watoom_llm_router_request_duration_milliseconds_count", self.router_duration_count[key], labels))
+                if self.last_router:
+                    lines += [
+                        "# HELP watoom_llm_router_last_request_info Most recently observed router request metadata",
+                        "# TYPE watoom_llm_router_last_request_info gauge",
+                        metric("watoom_llm_router_last_request_info", 1, self.last_router),
+                    ]
+                lines += [
+                    "# HELP watoom_llama_truncations_total Qwen truncation events observed since exporter start",
+                    "# TYPE watoom_llama_truncations_total counter",
+                    metric("watoom_llama_truncations_total", self.llama_truncations),
+                    "# HELP watoom_llama_errors_total Qwen error/fatal log events observed since exporter start",
+                    "# TYPE watoom_llama_errors_total counter",
+                    metric("watoom_llama_errors_total", self.llama_errors),
+                ]
+                return lines
+
+
+    TAIL = LogTailState()
+
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path == "/healthz":
+                body = b"ok\n"
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            if self.path != "/metrics":
+                self.send_error(404)
+                return
+            try:
+                lines = collect_run_metrics() + TAIL.metrics()
+                body = ("\n".join(lines) + "\n").encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            except Exception as exc:
+                body = f"exporter error: {exc}\n".encode()
+                self.send_response(500)
+                self.send_header("Content-Type", "text/plain; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+        def log_message(self, fmt, *args):
+            return
+
+
+    if __name__ == "__main__":
+        TAIL.poll()
+        server = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
+        server.serve_forever()
+  vector.yaml: |
+    data_dir: /vector-data
+    sources:
+      opencode_runs:
+        type: file
+        fingerprint:
+          strategy: device_and_inode
+        include:
+          - /runs/*/output.log
+          - /runs/*/worker.log
+          - /runs/*/final-response.txt
+        read_from: end
+        ignore_older_secs: 86400
+      router_logs:
+        type: file
+        include:
+          - /var/log/containers/llm-router-*_llama-cpp_*.log
+        read_from: end
+        ignore_older_secs: 86400
+      qwen_logs:
+        type: file
+        include:
+          - /var/log/containers/llama-cpp-swift-qwen38-coder-*_llama-cpp_*.log
+        read_from: end
+        ignore_older_secs: 86400
+    sinks:
+      loki_opencode:
+        type: loki
+        inputs: [opencode_runs]
+        endpoint: http://loki.monitoring.svc.cluster.local:3100
+        encoding:
+          codec: json
+        labels:
+          job: watoom-opencode-observability
+          namespace: opencode
+          component: opencode-run
+      loki_router:
+        type: loki
+        inputs: [router_logs]
+        endpoint: http://loki.monitoring.svc.cluster.local:3100
+        encoding:
+          codec: json
+        labels:
+          job: watoom-opencode-observability
+          namespace: llama-cpp
+          component: llm-router
+      loki_qwen:
+        type: loki
+        inputs: [qwen_logs]
+        endpoint: http://loki.monitoring.svc.cluster.local:3100
+        encoding:
+          codec: json
+        labels:
+          job: watoom-opencode-observability
+          namespace: llama-cpp
+          component: qwen
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: watoom-opencode-alert-rules
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: watoom-opencode-observability
+    app.kubernetes.io/part-of: monitoring
+data:
+  platform.yml: |
+    groups:
+      - name: watoom-platform
+        rules:
+          - alert: WatoomRootDiskAbove80
+            expr: 100 * (1 - node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay"}) > 80
+            for: 15m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Root filesystem above 80%"
+              description: "Kubelet hard-evicts at 5% free on / (containerd images live there). Prune images or move data before eviction."
+          - alert: WatoomDataVolumeAbove90
+            expr: 100 * (1 - node_filesystem_avail_bytes{mountpoint=~"/data|/app",fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{mountpoint=~"/data|/app",fstype!~"tmpfs|overlay"}) > 90
+            for: 30m
+            labels:
+              severity: warning
+            annotations:
+              summary: "{{ $labels.mountpoint }} above 90%"
+              description: "/data holds models, assets, projects and media; /app holds Docker, the local registry and service state. Review retention before writes fail."
+          - alert: WatoomPodEvicted
+            expr: sum by (namespace, pod) (kube_pod_status_reason{reason="Evicted"}) > 0
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} was evicted"
+              description: "The kubelet evicted a pod under node resource pressure. Check disk and memory, then delete the failed pod."
+          - alert: WatoomSystemdUnitFailed
+            expr: watoom_systemd_unit_failed == 1
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "systemd unit {{ $labels.unit }} is failed"
+              description: "A WatooM host unit has been in the failed state for 10 minutes."
+          - alert: WatoomBackupStale
+            expr: (time() - watoom_backup_last_success_timestamp_seconds{target="watoom-code"} > 93600) or absent(watoom_backup_last_success_timestamp_seconds{target="watoom-code"})
+            for: 1h
+            labels:
+              severity: critical
+            annotations:
+              summary: "WatooM-Code backup older than 26 hours"
+              description: "No verified backup of application.sqlite in 26 hours (watoom-code-backup.timer, /data/backups/watoom-code)."
+          - alert: WatoomOffhostBackupStale
+            expr: (time() - watoom_backup_offhost_verified_run_timestamp_seconds{target="watoom-code"} > 259200) or absent(watoom_backup_offhost_verified_run_timestamp_seconds{target="watoom-code"})
+            for: 2h
+            labels:
+              severity: warning
+            annotations:
+              summary: "No off-host WatooM-Code backup verified in 3 days"
+              description: "The rig has not verified a backup run newer than 72 hours (pull-homelab-backups.ps1 on the rig, receipts in /data/backups/offhost/receipts, watoom-backup-offhost-check.timer)."
+          - alert: WatoomNodeTextfileStale
+            expr: time() - watoom_node_textfile_timestamp_seconds > 900
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Host textfile metrics are stale"
+              description: "watoom-node-textfile.timer has not refreshed host metrics for 15 minutes."
+  opencode-observability.yml: |
+    groups:
+      - name: watoom-opencode-local-llm
+        rules:
+          - alert: WatoomOpenCodeObservabilityExporterDown
+            expr: absent(watoom_opencode_metrics_exporter_info)
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "OpenCode observability exporter is unavailable"
+              description: "Prometheus has not seen the bounded WatooM OpenCode observability exporter for 5 minutes."
+          - alert: WatoomQwenCoderUnavailable
+            expr: absent(up{job="llama-cpp",service="llama-cpp-swift-qwen38-coder"}) or up{job="llama-cpp",service="llama-cpp-swift-qwen38-coder"} == 0
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Qwen coding model is unavailable"
+              description: "Prometheus cannot scrape llama-cpp-swift-qwen38-coder for 5 minutes."
+          - alert: WatoomGpuMemoryCritical
+            expr: 100 * max(DCGM_FI_DEV_FB_USED{job="dcgm-exporter"}) / clamp_min(max(DCGM_FI_DEV_FB_USED{job="dcgm-exporter"} + DCGM_FI_DEV_FB_FREE{job="dcgm-exporter"}), 1) > 95
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "GPU memory above 95%"
+              description: "RTX GPU framebuffer use has remained above 95% for 10 minutes."
+          - alert: WatoomOpenCodeWatchdogActivated
+            expr: increase(watoom_opencode_watchdog_events_total[10m]) > 0
+            for: 0m
+            labels:
+              severity: warning
+            annotations:
+              summary: "OpenCode watchdog activated"
+              description: "At least one new OpenCode watchdog event was observed in the last 10 minutes."
+          - alert: WatoomLlmRouterRepeatedFailures
+            expr: sum(increase(watoom_llm_router_failures_total[10m])) >= 3
+            for: 2m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Repeated local LLM router failures"
+              description: "Three or more router error events were observed over 10 minutes."
+          - alert: WatoomQwenTruncationObserved
+            expr: increase(watoom_llama_truncations_total[15m]) > 0
+            for: 0m
+            labels:
+              severity: info
+            annotations:
+              summary: "Qwen truncation observed"
+              description: "At least one truncation event was observed in llama.cpp logs over 15 minutes."
+          - alert: WatoomOpenCodeCompactionFrequencyHigh
+            expr: sum(increase(watoom_opencode_compactions_total[30m])) >= 4
+            for: 5m
+            labels:
+              severity: info
+            annotations:
+              summary: "OpenCode compaction frequency elevated"
+              description: "Four or more synthetic compaction-continuation events were observed in 30 minutes."
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: watoom-opencode-observability
+  namespace: monitoring
+  labels:
+    app: watoom-opencode-observability
+    app.kubernetes.io/name: watoom-opencode-observability
+    app.kubernetes.io/part-of: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: watoom-opencode-observability
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: watoom-opencode-observability
+        app.kubernetes.io/name: watoom-opencode-observability
+        app.kubernetes.io/part-of: monitoring
+      annotations:
+        homelab.example/observability-config-version: "1.2.0"
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: exporter
+          image: docker.io/library/python@sha256:6d43704baacd1bfbe7c295d7f13079d5d8104ed33568873133f8fc69980419df
+          imagePullPolicy: IfNotPresent
+          command: ["python3", "/opt/watoom/exporter.py"]
+          env:
+            - name: OPENCODE_RUN_ROOT
+              value: /runs
+            - name: METRICS_PORT
+              value: "9108"
+            - name: OPENCODE_METRICS_MAX_RUNS
+              value: "500"
+          ports:
+            - name: metrics
+              containerPort: 9108
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+            initialDelaySeconds: 2
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: config
+              mountPath: /opt/watoom/exporter.py
+              subPath: exporter.py
+              readOnly: true
+            - name: runs
+              mountPath: /runs
+              readOnly: true
+            - name: var-log-containers
+              mountPath: /var/log/containers
+              readOnly: true
+            - name: var-log-pods
+              mountPath: /var/log/pods
+              readOnly: true
+        - name: vector
+          image: docker.io/timberio/vector@sha256:93761c26fa3a3793f5f200de0f4cfc6102b5e9803ab33b4830d0873ba8dbdc4f
+          imagePullPolicy: IfNotPresent
+          args: ["--config", "/etc/vector/vector.yaml"]
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: vector-config
+              mountPath: /etc/vector/vector.yaml
+              subPath: vector.yaml
+              readOnly: true
+            - name: runs
+              mountPath: /runs
+              readOnly: true
+            - name: var-log-containers
+              mountPath: /var/log/containers
+              readOnly: true
+            - name: var-log-pods
+              mountPath: /var/log/pods
+              readOnly: true
+            - name: vector-data
+              mountPath: /vector-data
+      volumes:
+        - name: config
+          configMap:
+            name: watoom-opencode-observability
+            items:
+              - key: exporter.py
+                path: exporter.py
+        - name: vector-config
+          configMap:
+            name: watoom-opencode-observability
+            items:
+              - key: vector.yaml
+                path: vector.yaml
+        # Legacy file-run history was retired. Keep its optional collector empty;
+        # current container log mounts below remain the live telemetry source.
+        - name: runs
+          emptyDir: {}
+        - name: var-log-containers
+          hostPath:
+            path: /var/log/containers
+            type: Directory
+        - name: var-log-pods
+          hostPath:
+            path: /var/log/pods
+            type: Directory
+        - name: vector-data
+          hostPath:
+            path: /app/ai/services/opencode/observability-vector
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: watoom-opencode-observability
+  namespace: monitoring
+  labels:
+    app: watoom-opencode-observability
+    app.kubernetes.io/name: watoom-opencode-observability
+    app.kubernetes.io/part-of: monitoring
+spec:
+  type: ClusterIP
+  selector:
+    app: watoom-opencode-observability
+  ports:
+    - name: metrics
+      port: 9108
+      targetPort: metrics
+      protocol: TCP

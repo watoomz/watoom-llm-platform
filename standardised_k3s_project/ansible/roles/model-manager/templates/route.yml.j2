@@ -1,0 +1,19 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: model-manager
+  namespace: {{ model_manager_namespace }}
+  labels: {watoom.io/owner: model-manager}
+  annotations: {watoom.io/model-manager-release: "{{ model_manager_release }}"}
+spec:
+  entryPoints: [websecure]
+  routes:
+  - kind: Rule
+    match: Host(`glance.internal.homelab.example`) && PathPrefix(`/model-manager/`)
+    priority: 110
+    services:
+    - name: model-manager
+      port: 8787
+      nativeLB: true
+  tls:
+    secretName: watoom-tls

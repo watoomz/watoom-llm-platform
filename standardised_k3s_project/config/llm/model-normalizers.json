@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "identity_source": "request.model",
+  "fallback_environment_only": true,
+  "profiles": {
+    "ornith": {
+      "status": "probe-required",
+      "parser": null,
+      "aliases_normalize_only": true,
+      "fail_closed": true
+    },
+    "qwen-defiant": {
+      "status": "probe-required",
+      "parser": null,
+      "aliases_normalize_only": true,
+      "fail_closed": true
+    },
+    "gemma": {
+      "status": "probe-required",
+      "parser": null,
+      "aliases_normalize_only": true,
+      "fail_closed": true
+    }
+  }
+}

@@ -1,0 +1,9 @@
+---
+- name: Maintain project storage and capture viewing layout without application rollout
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - ansible.builtin.include_role:
+        name: watoom-code
+        tasks_from: project_layout

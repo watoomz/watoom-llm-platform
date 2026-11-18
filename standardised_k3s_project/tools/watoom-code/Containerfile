@@ -1,0 +1,19 @@
+# Toolchain dependencies are maintained in
+# ansible/roles/opencode-agent/templates/opencode-v2-coding-Dockerfile.j2.
+# Pinned Debian/glibc layer retains Git, SSH, Python/venv, Node, C/C++,
+# CMake/Ninja/Make, JSON/YAML, Blender and Playwright/Chromium on rebuilds.
+FROM 127.0.0.1:5000/watoom-code-engineering@sha256:561657a1d2e8a22b7a5cde0cab7a4ec2081e31b4e3a8453b186de7b1b75ce489
+ARG WATOOM_SOURCE_COMMIT
+LABEL org.opencontainers.image.revision=${WATOOM_SOURCE_COMMIT}
+RUN groupadd --gid 1001 opencode \
+    && useradd --uid 1001 --gid 1001 --home-dir /home/opencode --no-create-home --shell /bin/bash opencode
+COPY opencode /usr/local/bin/opencode
+COPY bun /usr/local/bin/bun
+COPY godot /usr/local/bin/godot
+ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+RUN opencode --version && bun --version && godot --headless --version \
+    && python3 -m venv /tmp/venv-check && /tmp/venv-check/bin/pip --version \
+    && rm -r /tmp/venv-check
+WORKDIR /workspace
+ENTRYPOINT ["opencode"]
+CMD ["serve", "--hostname", "0.0.0.0", "--port", "4096"]

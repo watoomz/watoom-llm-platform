@@ -1,0 +1,172 @@
+{
+  "schema": 1,
+  "product": "cpp",
+  "version": "GCC 16.2.1-2",
+  "language": "cpp",
+  "license": "GFDL (GCC manuals); GPL-3.0-or-later WITH GCC-exception-3.1 (libstdc++ headers)",
+  "trust_tier": "vendor_doc",
+  "note": "Verified on 2026-11-13 (Australia/Queensland): GCC 16.2.1-2 and libstdc++ 16.2.1. Verbatim GCC C++ attribute documentation and installed libstdc++ Doxygen comments from string, vector, associative and sequence containers, algorithms, smart pointers, numeric utilities, optional/variant/tuple, streams, mutex, any, bitset, and functional headers. Cards are limited to interfaces with actual explanatory header prose; selected reference, not exhaustive.",
+  "pages": [
+    {
+      "title": "GCC Info \u2014 C++ attributes",
+      "file": "gcc.info",
+      "uri": "file:///usr/share/info/gcc.info.gz (GCC 16.2.1-2)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "libstdc++ basic_string header documentation",
+      "file": "libstdc++-basic_string.h",
+      "uri": "file:///usr/include/c++/16/bits/basic_string.h (libstdc++-devel 16.2.1-2.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "libstdc++ bits/stl_vector.h header documentation",
+      "file": "libstdc++-bits-stl_vector.h",
+      "uri": "file:///usr/include/c++/16/bits/stl_vector.h (libstdc++ 16.2.1)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "libstdc++ bits/stl_map.h header documentation",
+      "file": "libstdc++-bits-stl_map.h",
+      "uri": "file:///usr/include/c++/16/bits/stl_map.h (libstdc++ 16.2.1)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "libstdc++ bits/stl_set.h header documentation",
+      "file": "libstdc++-bits-stl_set.h",
+      "uri": "file:///usr/include/c++/16/bits/stl_set.h (libstdc++ 16.2.1)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "libstdc++ bits/stl_list.h header documentation",
+      "file": "libstdc++-bits-stl_list.h",
+      "uri": "file:///usr/include/c++/16/bits/stl_list.h (libstdc++ 16.2.1)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "libstdc++ bits/stl_deque.h header documentation",
+      "file": "libstdc++-bits-stl_deque.h",
+      "uri": "file:///usr/include/c++/16/bits/stl_deque.h (libstdc++ 16.2.1)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "libstdc++ bits/stl_queue.h header documentation",
+      "file": "libstdc++-bits-stl_queue.h",
+      "uri": "file:///usr/include/c++/16/bits/stl_queue.h (libstdc++ 16.2.1)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "libstdc++ bits/stl_stack.h header documentation",
+      "file": "libstdc++-bits-stl_stack.h",
+      "uri": "file:///usr/include/c++/16/bits/stl_stack.h (libstdc++ 16.2.1)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "libstdc++ bits/stl_algo.h header documentation",
+      "file": "libstdc++-bits-stl_algo.h",
+      "uri": "file:///usr/include/c++/16/bits/stl_algo.h (libstdc++ 16.2.1)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "libstdc++ bits/stl_algobase.h header documentation",
+      "file": "libstdc++-bits-stl_algobase.h",
+      "uri": "file:///usr/include/c++/16/bits/stl_algobase.h (libstdc++ 16.2.1)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "libstdc++ bits/unique_ptr.h header documentation",
+      "file": "libstdc++-bits-unique_ptr.h",
+      "uri": "file:///usr/include/c++/16/bits/unique_ptr.h (libstdc++ 16.2.1)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "libstdc++ bits/shared_ptr.h header documentation",
+      "file": "libstdc++-bits-shared_ptr.h",
+      "uri": "file:///usr/include/c++/16/bits/shared_ptr.h (libstdc++ 16.2.1)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "libstdc++ bits/stl_numeric.h header documentation",
+      "file": "libstdc++-bits-stl_numeric.h",
+      "uri": "file:///usr/include/c++/16/bits/stl_numeric.h (libstdc++ 16.2.1)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "libstdc++ optional header documentation",
+      "file": "libstdc++-optional",
+      "uri": "file:///usr/include/c++/16/optional (libstdc++ 16.2.1)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "libstdc++ variant header documentation",
+      "file": "libstdc++-variant",
+      "uri": "file:///usr/include/c++/16/variant (libstdc++ 16.2.1)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "libstdc++ tuple header documentation",
+      "file": "libstdc++-tuple",
+      "uri": "file:///usr/include/c++/16/tuple (libstdc++ 16.2.1)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "libstdc++ functional header documentation",
+      "file": "libstdc++-functional",
+      "uri": "file:///usr/include/c++/16/functional (libstdc++ 16.2.1)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "libstdc++ fstream header documentation",
+      "file": "libstdc++-fstream",
+      "uri": "file:///usr/include/c++/16/fstream (libstdc++ 16.2.1)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "libstdc++ sstream header documentation",
+      "file": "libstdc++-sstream",
+      "uri": "file:///usr/include/c++/16/sstream (libstdc++ 16.2.1)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "libstdc++ mutex header documentation",
+      "file": "libstdc++-mutex",
+      "uri": "file:///usr/include/c++/16/mutex (libstdc++ 16.2.1)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "libstdc++ any header documentation",
+      "file": "libstdc++-any",
+      "uri": "file:///usr/include/c++/16/any (libstdc++ 16.2.1)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "libstdc++ bitset header documentation",
+      "file": "libstdc++-bitset",
+      "uri": "file:///usr/include/c++/16/bitset (libstdc++ 16.2.1)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    }
+  ]
+}

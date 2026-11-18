@@ -1,0 +1,24 @@
+diff --git a/packages/app/src/settings/skills/catalog.tsx b/packages/app/src/settings/skills/catalog.tsx
+index 6c6062b..f88b3ab 100644
+--- a/packages/app/src/settings/skills/catalog.tsx
++++ b/packages/app/src/settings/skills/catalog.tsx
+@@ -51,7 +51,7 @@ export function SkillCatalogBrowser(props: { directory?: string } = {}) {
+       sdk.connection.status() === "connected"
+         ? {
+             query: skillSearchQuery(state.query),
+-            approvedOnly: false,
++            approvedOnly: state.view === "available",
+             validOnly: true,
+             offset: state.offset,
+             limit: 32,
+@@ -194,8 +194,8 @@ export function SkillCatalogBrowser(props: { directory?: string } = {}) {
+       <Show when={page.latest?.enabled} fallback={<p>{language.t("settings.skills.catalog.disabled")}</p>}>
+         <p data-testid="skill-catalog-counts">
+           {language.t("settings.skills.catalog.counts", {
+-            discovered: page.latest?.validated ?? 0,
+-            validated: page.latest?.validated ?? 0,
++            discovered: state.view === "available" ? (page.latest?.approved ?? 0) : (page.latest?.validated ?? 0),
++            validated: state.view === "available" ? (page.latest?.approved ?? 0) : (page.latest?.validated ?? 0),
+             approved: page.latest?.approved ?? 0,
+           })}
+         </p>

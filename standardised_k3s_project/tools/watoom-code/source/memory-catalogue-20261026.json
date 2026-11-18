@@ -1,0 +1,17 @@
+{
+  "sourceCommit": "4f64b0e38ac22652907f48029beb12fae5f7a4c9",
+  "baseCommit": "a517564813cda063d3967a49025b6b8ce07cf741",
+  "image": "127.0.0.1:5000/watoom-code@sha256:8a688bc3b2d53f512d01d546499be798b0bfc1180b7596eae98b76e7ff4bd91a",
+  "bundle": "watoom-code-memory-catalogue-20261026.bundle",
+  "bundleSha256": "3364588903ebe0b777cd9426e2c73b3aa88a8564d7ee4dddd5617ceeda83d5dc",
+  "approval": "User approved controlled rollout in Codex chat on 2026-10-26",
+  "checks": {
+    "controllerOffline": 135,
+    "appFocused": 27,
+    "statusAndIndexAPI": 2,
+    "routing": 7,
+    "packageTypechecks": "PASS",
+    "uiFixtureAndPixelReview": "PASS",
+    "canonicalCheck": "BLOCKED: reused dependency tree lacks @tsconfig/node22; turbo SIGSEGV"
+  }
+}

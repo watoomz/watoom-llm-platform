@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+import argparse, json, os
+from pathlib import Path
+
+BASE='/workspace/.watoom/agent-rules'
+ALWAYS=['universal.md','homelab.md']
+
+def walk(root,max_files=5000,max_depth=8):
+    root=root.resolve(); count=0
+    for cur,dirs,names in os.walk(root):
+        pcur=Path(cur)
+        try: depth=len(pcur.relative_to(root).parts)
+        except Exception: depth=0
+        if depth >= max_depth: dirs[:] = []
+        dirs[:] = [d for d in dirs if d not in {'.git','node_modules','.venv','venv','target','dist','build','__pycache__','.cache','.terraform'}]
+        for name in names:
+            count += 1
+            if count > max_files: return
+            yield pcur/name
+
+def detect(root):
+    rules=list(ALWAYS); seen=set(rules); names=[]; suffixes=set(); rels=[]
+    if not root.exists(): return rules
+    for p in walk(root):
+        names.append(p.name.lower()); suffixes.add(p.suffix.lower())
+        try: rels.append(str(p.relative_to(root)).lower())
+        except Exception: rels.append(str(p).lower())
+    ns=set(names)
+    def add(x):
+        if x not in seen: seen.add(x); rules.append(x)
+    if '.sh' in suffixes or ns.intersection({'bashrc','profile'}): add('coding/shell.md')
+    if '.py' in suffixes or ns.intersection({'pyproject.toml','setup.py','setup.cfg','tox.ini','requirements.txt','requirements-dev.txt','pytest.ini'}): add('coding/python.md')
+    if suffixes.intersection({'.js','.mjs','.cjs','.ts','.tsx','.jsx'}) or ns.intersection({'package.json','tsconfig.json','pnpm-lock.yaml','yarn.lock','package-lock.json'}): add('coding/javascript-typescript.md')
+    if '.go' in suffixes or 'go.mod' in ns: add('coding/go.md')
+    if '.rs' in suffixes or 'cargo.toml' in ns: add('coding/rust.md')
+    if suffixes.intersection({'.c','.h','.cc','.cpp','.cxx','.hpp','.hh'}) or 'cmakelists.txt' in ns: add('coding/c-cpp.md')
+    if '.sql' in suffixes or any('/migrations/' in '/'+r+'/' for r in rels): add('coding/sql.md')
+    if any(n=='dockerfile' or n.startswith('dockerfile.') for n in ns) or ns.intersection({'docker-compose.yml','docker-compose.yaml','compose.yml','compose.yaml'}): add('coding/docker.md')
+    if any(r.startswith(('manifests/','k8s/','kubernetes/')) or '/manifests/' in r or '/k8s/' in r or '/kubernetes/' in r or r.endswith('kustomization.yaml') or r.endswith('chart.yaml') or '/templates/deployment' in r or '/templates/service' in r for r in rels): add('coding/kubernetes.md')
+    if any(r.startswith(('ansible/','roles/','playbooks/','group_vars/','host_vars/')) or '/ansible/' in r or '/roles/' in r or '/playbooks/' in r or '/group_vars/' in r or '/host_vars/' in r for r in rels) or ns.intersection({'ansible.cfg','.ansible-lint'}): add('coding/ansible.md')
+    return rules
+
+def source_root():
+    # Installed host-side selector lives at <project>/scripts/watoom-agent-rules.
+    p=Path(__file__).resolve()
+    candidate=p.parent.parent/'ansible'/'roles'/'opencode-agent'/'files'/'agent-rules'
+    if candidate.is_dir(): return candidate
+    # Package self-test path.
+    candidate=p.parent/'agent-rules'
+    return candidate
+
+def main():
+    ap=argparse.ArgumentParser(description='Select WatooM agent rule overlays from repository evidence')
+    sp=ap.add_subparsers(dest='cmd',required=True)
+    s=sp.add_parser('select'); s.add_argument('--root',required=True); s.add_argument('--format',choices=['paths','prompt','bundle','json'],default='paths')
+    a=ap.parse_args(); root=Path(a.root); rules=detect(root); paths=[f'{BASE}/{x}' for x in rules]
+    if a.format=='json': print(json.dumps({'root':str(root),'rules':rules,'paths':paths},indent=2)); return
+    if a.format=='paths':
+        print('\n'.join(paths)); return
+    if a.format=='prompt':
+        print('Applicable WatooM rule files:'); [print('- '+x) for x in paths]; print('Repository evidence overrides generic defaults.'); return
+    sr=source_root(); print('BEGIN SELECTED WATOOM RULE BUNDLE')
+    for rule,path in zip(rules,paths):
+        print(f'\n--- {path} ---'); f=sr/rule
+        print(f.read_text().strip() if f.is_file() else f'[rule content unavailable: {rule}]')
+    print('\nEND SELECTED WATOOM RULE BUNDLE')
+    print('Apply only these selected rules; repository evidence overrides generic defaults.')
+
+if __name__=='__main__': main()

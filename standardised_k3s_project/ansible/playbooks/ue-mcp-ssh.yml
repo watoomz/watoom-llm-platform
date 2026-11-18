@@ -1,0 +1,110 @@
+---
+# Lab side of a direct SSH route from the watoom-code pod to the restricted account on the rig
+# that runs the ue-mcp server (db-lyon/ue-mcp) (see tools/rig-ue-mcp/README.md for why this is a
+# direct SSH command rather than a reverse tunnel like tools/rig-unreal-mcp: ue-mcp is
+# a stdio server and the rig's account is restricted to a single ForceCommand, so SSH itself is the
+# whole transport -- there is nothing left for a lab-side proxy process to do).
+# This playbook only generates the lab's half of the keypair and stages the credentials the pod
+# mounts (opencode.json.j2's "watoom-ue" server runs `ssh -i <key> ... uemcp@rig "..."`).
+# It does NOT touch the rig and does NOT touch the router -- those are manual steps, see the README's
+# deploy runbook. Nothing reaches watoom-code until watoom_code_ue_mcp_enabled is turned on.
+- name: Generate and stage the lab's SSH identity for the rig's ue-mcp account
+  hosts: homelab
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../roles/watoom-code/defaults/main.yml
+  vars:
+    key_dir: /data/ai/ue-mcp-ssh
+    rig_host: "{{ watoom_code_ue_mcp_host | default('10.99.1.44') }}"
+    rig_port: "{{ watoom_code_ue_mcp_port | default(2224) }}"
+  tasks:
+    - name: Key directory
+      ansible.builtin.file: {path: "{{ key_dir }}", state: directory, owner: root, group: root, mode: "0755"}
+
+    - name: Generate the lab's SSH identity for this route only
+      ansible.builtin.command:
+        argv: [ssh-keygen, -q, -t, ed25519, -N, '', -C, 'watoom-ue-mcp', -f, "{{ key_dir }}/key"]
+        creates: "{{ key_dir }}/key"
+      no_log: true
+
+    - name: Read the generated public key
+      ansible.builtin.slurp:
+        src: "{{ key_dir }}/key.pub"
+      register: ue_mcp_public_key
+
+    - name: Show the public key to install on the rig (see README step 2)
+      ansible.builtin.debug:
+        msg: "{{ ue_mcp_public_key.content | b64decode | trim }}"
+
+    - name: Try to learn the rig's host key, if its SSH server is already up (best-effort)
+      ansible.builtin.command:
+        argv: [ssh-keyscan, -p, "{{ rig_port }}", -t, ed25519, "{{ rig_host }}"]
+      register: rig_keyscan
+      changed_when: false
+      failed_when: false
+
+    - name: Pin the rig's host key once known (idempotent; re-run this playbook after the rig's sshd is up)
+      ansible.builtin.copy:
+        dest: "{{ key_dir }}/known_hosts"
+        content: "{{ rig_keyscan.stdout }}\n"
+        owner: root
+        group: root
+        mode: "0644"
+      when: rig_keyscan.stdout | default('') | length > 0
+
+    - name: Compute the fingerprint of the host key just pinned
+      ansible.builtin.command:
+        argv: [ssh-keygen, -l, -f, "{{ key_dir }}/known_hosts"]
+      register: rig_hostkey_fingerprint
+      changed_when: false
+      failed_when: false
+      when: rig_keyscan.stdout | default('') | length > 0
+
+    - name: Verify the pinned host key out of band (the first connection is trust-on-first-use)
+      ansible.builtin.debug:
+        msg: >-
+          Pinned {{ rig_hostkey_fingerprint.stdout | default('') }}. Compare it with the rig's own key before relying on it:
+          on the rig run  ssh-keygen -lf C:\ProgramData\ssh\ssh_host_ed25519_key.pub  and check the SHA256 value matches.
+      when: rig_keyscan.stdout | default('') | length > 0
+
+    - name: Warn if the rig's host key is not yet known
+      ansible.builtin.debug:
+        msg: >-
+          Could not reach {{ rig_host }}:{{ rig_port }} to learn its host key yet. Install and start
+          OpenSSH Server on the rig (README step 3), open the router rule (README step 1), then
+          re-run this playbook before enabling watoom_code_ue_mcp_enabled.
+      when: rig_keyscan.stdout | default('') | length == 0
+
+    - name: Protected application transport directory
+      ansible.builtin.file:
+        path: "{{ watoom_code_root }}/config/watoom-tools/ue-mcp-credentials"
+        state: directory
+        owner: root
+        group: "{{ watoom_code_gid }}"
+        mode: "0750"
+
+    - name: Install the restricted application transport key
+      ansible.builtin.copy:
+        remote_src: true
+        src: "{{ key_dir }}/key"
+        dest: "{{ watoom_code_root }}/config/watoom-tools/ue-mcp-credentials/key"
+        owner: "{{ watoom_code_uid }}"
+        group: "{{ watoom_code_gid }}"
+        mode: "0400"
+      no_log: true
+
+    - name: Pin the rig's host identity for the restricted transport
+      ansible.builtin.copy:
+        remote_src: true
+        src: "{{ key_dir }}/known_hosts"
+        dest: "{{ watoom_code_root }}/config/watoom-tools/ue-mcp-credentials/known_hosts"
+        owner: root
+        group: "{{ watoom_code_gid }}"
+        mode: "0440"
+      when: rig_keyscan.stdout | default('') | length > 0
+
+    - name: Preserve container readability for the credential files
+      ansible.builtin.command:
+        argv: [restorecon, -R, "{{ watoom_code_root }}/config/watoom-tools/ue-mcp-credentials"]
+      changed_when: false

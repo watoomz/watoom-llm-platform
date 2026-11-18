@@ -1,0 +1,74 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tickets board</title><link rel="stylesheet" href="/style.css">
+<body>
+<header class="bar">
+ <h1>Tickets</h1>
+ <select id="f-project" aria-label="Project filter"><option value="">All projects</option></select>
+ <input id="f-text" type="search" placeholder="Filter id or title" aria-label="Filter id or title">
+ <label class="toggle"><input id="f-mine" type="checkbox"> Mine only</label>
+ <button id="new-btn" type="button">New ticket</button>
+ <span class="spacer"></span>
+ <span id="who" class="hint"></span>
+ <form id="logout" method="post" action="/logout" hidden><button type="submit" class="secondary">Sign out</button></form>
+</header>
+<p id="message" role="status" hidden></p>
+<main id="board" aria-label="Tickets board"></main>
+
+<aside id="panel" hidden aria-label="Ticket detail">
+ <div class="panel-head">
+  <span id="d-id" class="tid"></span><span id="d-status" class="badge"></span><span id="d-queue" class="hint"></span>
+  <span class="spacer"></span><button id="d-close" type="button" class="secondary" aria-label="Close">Close</button>
+ </div>
+ <input id="d-title" class="title-input" maxlength="200" aria-label="Title">
+ <label class="row">Move to <select id="d-move"></select></label>
+ <div class="grid">
+  <label>Priority <select id="d-priority"><option>high</option><option>normal</option><option>low</option></select></label>
+  <label>Project <input id="d-project" maxlength="80" list="projects"></label>
+  <label>Owner <select id="d-owner"></select></label>
+  <label>PR / commit <input id="d-pr" maxlength="300"></label>
+ </div>
+ <p id="d-prlink" class="hint"></p>
+ <p id="d-meta" class="hint"></p>
+ <div class="checks">
+  <label class="toggle"><input id="d-shared" type="checkbox"> Other agents may work on this</label>
+  <label class="toggle" id="d-blocked-wrap"><input id="d-blocked" type="checkbox"> Blocked</label>
+ </div>
+ <label>Body <textarea id="d-body" maxlength="4000" rows="7"></textarea></label>
+ <div class="actions"><button id="d-save" type="button">Save changes</button><span id="d-can" class="hint"></span></div>
+ <section>
+  <h3>Change requests</h3>
+  <ul id="d-crs" class="list"></ul>
+  <div id="d-cr-new"><textarea id="d-cr-text" maxlength="1000" rows="2" placeholder="What should change and why"></textarea><button id="d-cr-send" type="button">Request a change</button></div>
+ </section>
+ <section>
+  <h3>Updates</h3>
+  <div id="d-note-new"><textarea id="d-note-text" maxlength="1000" rows="2" placeholder="Add update"></textarea><button id="d-note-send" type="button">Add update</button></div>
+  <ul id="d-notes" class="list"></ul>
+ </section>
+</aside>
+<datalist id="projects"></datalist>
+
+<dialog id="new-dlg">
+ <form id="new-form" method="dialog">
+  <h2>New ticket</h2>
+  <label>Title <input name="title" maxlength="200" required></label>
+  <label>Body <textarea name="body" maxlength="4000" rows="5"></textarea></label>
+  <div class="grid">
+   <label>Project <input name="project" maxlength="80" list="projects"></label>
+   <label>Priority <select name="priority"><option>normal</option><option>high</option><option>low</option></select></label>
+   <label>Queue <select name="queue"><option value="requests">Requests</option><option value="issues">Issues</option><option value="backlog">Backlog</option></select></label>
+  </div>
+  <label class="toggle"><input name="shared" type="checkbox"> Global ticket: any agent may work on it</label>
+  <div class="actions"><button value="ok">Create</button><button value="cancel" formnovalidate class="secondary">Cancel</button></div>
+ </form>
+</dialog>
+
+<dialog id="move-dlg">
+ <form id="move-form" method="dialog">
+  <h2 id="move-title"></h2>
+  <label id="move-note-label">Note <textarea name="note" maxlength="1000" rows="3"></textarea></label>
+  <label id="move-pr-label">PR / commit link (optional) <input name="pr" maxlength="300"></label>
+  <div class="actions"><button value="ok">Move</button><button value="cancel" formnovalidate class="secondary">Cancel</button></div>
+ </form>
+</dialog>
+<script src="/app.js"></script>
+</body></html>

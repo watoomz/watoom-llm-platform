@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>WatooM LLM platform — project guide · Agent Export</title><meta name="description" content="Project overview, requirements, installation, configuration, development and operating procedures for the self-hosted WatooM-Code environment."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link active" aria-current="page" href="/guide/llm-project.html">Project guide</a><div class="toc"><a class="toc-link" href="#what-the-project-provides">What the project provides</a><a class="toc-link" href="#features-and-boundaries">Features and boundaries</a><a class="toc-link" href="#repository-layout">Repository layout</a><a class="toc-link" href="#requirements">Requirements</a><a class="toc-link" href="#installation-and-configuration">Installation and configuration</a><a class="toc-link" href="#everyday-operation">Everyday operation</a><a class="toc-link" href="#development-and-tests">Development and tests</a><a class="toc-link" href="#troubleshooting">Troubleshooting</a><a class="toc-link" href="#environment-disaster-recovery">Environment disaster recovery</a></div><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">Project guide</p><h1>WatooM LLM platform — project guide</h1><p class="lede">Project overview, requirements, installation, configuration, development and operating procedures for the self-hosted WatooM-Code environment.</p></header>
+<div class="content">
+<h2 id="what-the-project-provides">What the project provides</h2>
+<p>WatooM is a self-hosted coding and creative-work environment built around a customised OpenCode application, local llama.cpp inference and an Ansible-managed single-node k3s deployment. WatooM-Code provides the browser workspace, project selection, agents and native tools. The surrounding platform adds model routing, exclusive GPU reservations, persistent memory, guarded handoffs, independent image review, bounded asset workers and operator observability.</p>
+<p>This is an operator-managed environment, not a one-command portable appliance. Host paths, image registry pins, inventory and ingress names describe a specific deployment and must be adapted for another installation. The source references below name the supported operating path for each component.</p>
+<p>Start with the <a href="/guide/software-design.html">software design</a>, <a href="/guide/llm-extensions.html">custom extensions</a>, <a href="/guide/llm-api.html">API reference</a> and <a href="/guide/server-catalogue.html">server automation catalogue</a>. For browser workflows, see the <a href="/guide/llm-user-guide.html">user guide</a>.</p>
+<h2 id="features-and-boundaries">Features and boundaries</h2>
+<p>The active inference path is WatooM-Code → <code>llm-router</code> → managed llama.cpp backends. <code>llm-router</code> is the only model entry point; no other model runtime is an installation prerequisite.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Capability</th>
+<th>Implementation</th>
+<th>Operating boundary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Browser coding workspace</td>
+<td>Custom OpenCode application and embedded UI</td>
+<td>Application source is separate from the IaC checkout</td>
+</tr>
+<tr>
+<td>Local inference</td>
+<td>llama.cpp backends, router and model profiles</td>
+<td>Capacity depends on the selected weights, KV budget and GPU</td>
+</tr>
+<tr>
+<td>Model arbitration</td>
+<td>Host GPU controller and inference leases</td>
+<td>Never use direct replica changes as a model-switch API</td>
+</tr>
+<tr>
+<td>Agent coordination</td>
+<td>Native agents and coordinator-guard plugin</td>
+<td>Serial child identity, budgets and durable recovery boundaries</td>
+</tr>
+<tr>
+<td>Project spaces</td>
+<td>Role-generated group configuration and mounts</td>
+<td>Projects stay in their configured workspace; purchased sources remain read-only</td>
+</tr>
+<tr>
+<td>Image review</td>
+<td>Image-scope plugin, evidence receipts and native presentation</td>
+<td>Capturing an image is not independent visual acceptance</td>
+</tr>
+<tr>
+<td>Memory and learning</td>
+<td>AgentMemory, embeddings and guarded learning tooling</td>
+<td>Feature flags and reviewed cutovers govern activation</td>
+</tr>
+<tr>
+<td>Creative work</td>
+<td>Toolkit plus Blender, Godot, Unreal and workstation bridges</td>
+<td>Jobs are bounded, source-preserving and reconciled after uncertainty</td>
+</tr>
+<tr>
+<td>Operations</td>
+<td>Ansible, Glance, Prometheus/Loki and backups</td>
+<td>Dashboard observation does not grant lifecycle ownership</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="repository-layout">Repository layout</h2>
+<p>The private distribution keeps the infrastructure tree under <code>standardised_k3s_project/</code> and the exact application snapshot under <code>application/</code>.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>application/</code></td>
+<td>Pinned WatooM-Code/OpenCode source, packages, lockfiles, UI, native plugin interfaces and tests</td>
+</tr>
+<tr>
+<td><code>standardised_k3s_project/ansible/</code></td>
+<td>Playbooks, roles, defaults, templates and deployment pins</td>
+</tr>
+<tr>
+<td><code>standardised_k3s_project/config/</code></td>
+<td>Source configuration, prompts, model templates and Glance guide inputs</td>
+</tr>
+<tr>
+<td><code>standardised_k3s_project/manifests/</code></td>
+<td>Namespaces, workload and service definitions, monitoring and access policies</td>
+</tr>
+<tr>
+<td><code>standardised_k3s_project/scripts/</code></td>
+<td>Operator wrappers, renderers, checks and recovery entrypoints</td>
+</tr>
+<tr>
+<td><code>standardised_k3s_project/tools/</code></td>
+<td>Controllers, workers, release tooling, contracts and focused tests</td>
+</tr>
+<tr>
+<td><code>standardised_k3s_project/docs/</code></td>
+<td>Design, user/API guides, operations and generated source inventory</td>
+</tr>
+<tr>
+<td><code>publication/</code></td>
+<td>Provenance, exclusions, inventory and publication-readiness report</td>
+</tr>
+</tbody>
+</table></div>
+<p>The canonical server IaC remains <code>/data/github/watoom-standardised-homelab/standardised_k3s_project</code>. A distribution snapshot does not transfer production ownership to a second checkout.</p>
+<h2 id="requirements">Requirements</h2>
+<ul>
+<li>A Linux operator environment with Git, Python 3, Ansible and the collections declared by this repository. Use the existing execution environment and validation wrapper where available.</li>
+<li>An existing, healthy k3s/containerd host; this guide does not reinstall k3s or Docker. NVIDIA driver/device-plugin integration is required for GPU inference.</li>
+<li>Storage for application state, local model files, image builds and workspace assets. Keep these outside Git. The current deployment uses <code>/data</code> for bulk data and <code>/app</code> for application/registry storage.</li>
+<li>A reachable image registry and reviewed immutable images. The server's <code>127.0.0.1:5000</code> pins are not publicly downloadable images.</li>
+<li>Provisioned credentials and TLS/ingress appropriate to the destination environment. Example files contain placeholders; generated Secret objects and private state are not distribution inputs.</li>
+<li>Bun and native build dependencies for application development; the application snapshot's <code>package.json</code> declares its exact package-manager version. Use the lockfile and package-specific scripts, not an arbitrary latest Bun.</li>
+<li>Optional Blender/Godot/Unreal and workstation tooling only for the corresponding worker paths. Model weights, engine source and purchased assets have their own download/license requirements.</li>
+</ul>
+<h2 id="installation-and-configuration">Installation and configuration</h2>
+<h3 id="review-before-deploying">Review before deploying</h3>
+<ol>
+<li>Read the <a href="/guide/server-roles.html">server roles</a>, <a href="/guide/server-playbooks.html">playbooks</a> and <a href="/guide/operations.html">Operations</a>. Check which component each playbook actually changes.</li>
+<li>Create a destination inventory and private credentials through the established mechanism. Review <code>ansible/inventories/homelab</code>, <code>ansible/roles/watoom-code/defaults/main.yml</code>, <code>ansible/roles/llm-model-lab/defaults/main.yml</code> and the owning manifest inputs.</li>
+<li>Adapt host paths, registry references, project roots, DNS/ingress and storage classes in an isolated checkout. Some guards intentionally require the original namespace/root; port those invariants explicitly rather than disabling checks.</li>
+<li>Build or obtain the matching application, AgentMemory, Toolkit and inference images. Record image digest and source commit together. <code>ansible/vars/watoom-code.yml</code> is the current independent pin source for application, Toolkit and AgentMemory.</li>
+<li>Install the model weights separately and select a profile that fits the destination GPU. Preserve the controller and admission/fencing requirements; a model manifest alone is not the full platform.</li>
+<li>Validate the exact source changes before selecting any deployment entrypoint.</li>
+</ol>
+<h3 id="existing-host-validation">Existing-host validation</h3>
+<p>Run from <code>standardised_k3s_project/</code> in a configured operator environment:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">git status --short
+./scripts/watoom-ansible-validate.sh standard
+python3 scripts/render-server-catalogue.py --check
+/data/ai/toolchains/docs-render/bin/python scripts/render-glance-guide.py --check
+python3 scripts/verify-homelab-documentation.py
+</code></pre></div>
+<p>The catalogue uses Python's standard library. The guide renderer needs the versions in <code>scripts/requirements-docs.txt</code>; YAML operations use the existing Ansible/PyYAML environment. Syntax checks do not establish safe deployment, resource capacity or functional acceptance.</p>
+<h3 id="component-entrypoints">Component entrypoints</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Owning entrypoint</th>
+<th>What to inspect first</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WatooM-Code application</td>
+<td><code>watoom-code.yml</code> imports <code>watoom-code.yml</code></td>
+<td><code>watoom-code</code> role, release pins, namespace/root assertions, state preservation</td>
+</tr>
+<tr>
+<td>Router/model lab</td>
+<td><code>llm-model-lab.yml</code></td>
+<td>Both plays: Pi model-lab controls and <code>llm-model-lab</code> role; activation gates</td>
+</tr>
+<tr>
+<td>GPU controller runtime</td>
+<td><code>gpu-controller.yml</code></td>
+<td><code>llm-model-lab</code> role's <code>gpu-controller</code> tasks and existing ownership state</td>
+</tr>
+<tr>
+<td>Native skills</td>
+<td><code>watoom-native-skills.yml</code></td>
+<td><code>watoom-code</code> role's <code>native-skills</code> tasks and approved source catalogue</td>
+</tr>
+<tr>
+<td>Coordinator/image scope</td>
+<td>Dedicated <code>watoom-code-coordinator-guard.yml</code> and <code>watoom-code-image-scope.yml</code></td>
+<td>Native idleness/admission, package identity and rollback</td>
+</tr>
+<tr>
+<td>Game/asset workers</td>
+<td>Dedicated game-worker, Fab, pose and workstation playbooks</td>
+<td>Request contracts, source mounts, resource bounds and fallback policy</td>
+</tr>
+<tr>
+<td>Backups</td>
+<td><code>watoom-code-backup.yml</code></td>
+<td>Backend-specific backup limits and off-host destination</td>
+</tr>
+</tbody>
+</table></div>
+<p>After reviewing a component's requirements, the existing operator wrapper accepts an explicit playbook, for example <code>./ansible-run playbooks/watoom-code.yml</code>. This is a mutation, not an installation smoke test. Do not run broad <code>site.yml</code> to discover dependencies.</p>
+<h2 id="everyday-operation">Everyday operation</h2>
+<p>Check Kubernetes readiness, controller status and the native authenticated <code>/api/info</code> endpoint. Use the browser's configured project spaces and native model selection. The router mediates inference; <code>qwen-ready</code> with <code>owner=null</code> means the primary model is available and no exclusive specialist job holds a reservation. Inference requests have separate leases.</p>
+<p>For a worker request, retain the original request ID, source fingerprint, parent session and receipt. <code>QUEUED</code> is admission, <code>RUNNING</code> is execution, and a completed process is not automatically visual acceptance. On restart/uncertainty reconcile the exact existing job; do not resubmit blindly.</p>
+<p>Back up state before release or schema changes. <code>tools/watoom-code/backup.py</code> verifies SQLite snapshots and archives configuration; read its README for AgentMemory engine limitations. A Deployment rollback does not undo a database migration. Preserve known-good image pins and backups until restored behaviour is verified.</p>
+<h2 id="development-and-tests">Development and tests</h2>
+<p>Work in an isolated checkout; preserve other dirty files and active sessions. Application changes belong in the application source, platform helpers in <code>tools/</code>, and durable installation/configuration in the owning role or manifest input. See <a href="/guide/llm-extensions.html">the extensions map</a> for the correct layer.</p>
+<p>The application root intentionally rejects <code>bun test</code>; select the affected package and its declared test script. Start with <code>application/package.json</code> and the relevant package's <code>package.json</code>. Use the pinned lockfile and inspect the build helper before invoking it: <code>tools/watoom-code/build.py</code> contains environment-specific build paths and registry expectations.</p>
+<p>Focused platform checks include:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">node tools/watoom-code/test-coordinator-guard.mjs
+python3 -m unittest discover -s docs/llm-platform/examples -p &#x27;test_*.py&#x27;
+python3 docs/llm-platform/validate.py
+</code></pre></div>
+<p>Choose checks for the changed component. Many acceptance/recovery scripts inspect or mutate a live system; do not bulk-execute every <code>test*</code>, <code>acceptance*</code>, <code>cutover*</code> or <code>recover*</code> file. A tested source change is not evidence that a production runtime was updated.</p>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>First evidence</th>
+<th>Next step</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Browser loads but API fails</td>
+<td><code>/api/info</code>, authentication, app readiness and native logs</td>
+<td>Check configured origin/auth and matching source/image identity</td>
+</tr>
+<tr>
+<td>Model unavailable</td>
+<td>Router health, exact backend readiness, controller phase and lease state</td>
+<td>Use the owner lifecycle; never force GPU replicas</td>
+</tr>
+<tr>
+<td>Worker remains queued</td>
+<td>Exact status reason and dispatcher/remote worker availability</td>
+<td>Restore the required worker or seek an approved fallback; keep request identity</td>
+</tr>
+<tr>
+<td>Guard rejects a handoff</td>
+<td>Exact rejection, pending child and canonical checkpoint</td>
+<td>Continue the recorded child or return through the existing critic boundary</td>
+</tr>
+<tr>
+<td>Image review does not qualify</td>
+<td>Presentation evidence, image hash and structured receipt</td>
+<td>Repeat only the missing qualified review step; never fabricate a receipt</td>
+</tr>
+<tr>
+<td>Node slows down</td>
+<td>Memory/swap, I/O pressure, disk free space and pod resource limits</td>
+<td>Identify the workload before changing limits or restarting services</td>
+</tr>
+<tr>
+<td>Guide source/output drift</td>
+<td>Catalogue and renderer <code>--check</code>, then local link verifier</td>
+<td>Regenerate from source; don't patch generated HTML</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="new-extension-requirements-and-limits">New extension requirements and limits</h3>
+<p>The language-knowledge plugin requires the configured versioned card data; vector search additionally depends on its vector files and embedding service, while lexical lookup can continue without them. The production card data covers Godot and Blender (about 124,000 cards; the app needs roughly 650 MiB more memory than with the Godot-only subset). Bazzite heavy-work routes require the remote worker, staged toolkit/capture image as applicable, and enough free RAM; jobs remain queued until service recovers or their status permits the agent to request a RIG equivalent. The 10-minute wait does not automatically dispatch to the RIG. Keep the default server local fallback disabled because it would reserve GPU headroom.</p>
+<p>The MetaHuman path requires an owned package and its target-engine licence review; the skin-map stage additionally requires the RIG Unreal lane, installed MetaHuman optional content, and a tested memory limit. Current verification covers one editable Base_Female character only. Game templates must retain their attribution/licence and be copied into a project; DEM terrain contains elevation, not roads/buildings. Fab acquisition remains individually owner-approved. See <a href="/guide/llm-extensions.html#what-s-new-2026-11-03-to-2026-11-07">Custom extensions</a> for source paths and verification scope.</p>
+<p>See <a href="/guide/recovery.html">Recovery</a>, <a href="/guide/troubleshooting.html">Troubleshooting</a>, <a href="/guide/monitoring.html">Monitoring</a> and <a href="/guide/llm-publication.html">GitHub publication</a> for the corresponding procedures.</p>
+<h2 id="environment-disaster-recovery">Environment disaster recovery</h2>
+<p>The <a href="/guide/disaster-recovery.html">disaster recovery guide</a> defines the environment/project/service-state scope, private capture, off-host verification, isolated restoration and guarded replacement-host phases. Git alone is not a full backup; readiness remains blocked until the required recovery evidence exists. Media and purchased libraries may be reacquired, while private state and authored projects need independent protection.</p>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/llm-project.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

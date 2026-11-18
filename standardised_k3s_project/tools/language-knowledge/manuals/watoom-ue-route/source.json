@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "product": "watoom-ue-route",
+  "version": "snapshot-2026-11-14",
+  "language": "internal operational guidance",
+  "license": "proprietary",
+  "trust_tier": "internal_doc",
+  "note": "First-party WatooM rule set for the watoom-ue MCP route (pod -> restricted SSH account on the rig -> policy wrapper -> ue-mcp -> Unreal Editor). The source file is a byte-for-byte copy of tools/rig-ue-mcp/ue-mcp-policy.reviewed.json, generated from ue-mcp's own effect declarations by extract/ue_mcp_entries.py on 2026-11-14. The route is built and tested on the lab but not yet run on the rig. The live policy is C:\\ProgramData\\watoom\\ue-mcp-policy.json.",
+  "pages": [
+    {
+      "file": "ue-mcp-policy.reviewed.json",
+      "uri": "internal:tools/rig-ue-mcp/ue-mcp-policy.reviewed.json"
+    }
+  ]
+}

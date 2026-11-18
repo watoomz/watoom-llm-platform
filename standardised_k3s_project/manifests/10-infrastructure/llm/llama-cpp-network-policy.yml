@@ -1,0 +1,98 @@
+# Ingress isolation for the llama-cpp namespace (audit S6).
+# Clients reach models through llm-router; model servers accept only the router,
+# the GPU controller, and the few direct consumers recorded below. Clients were
+# taken from IaC references and a conntrack sample of live flows.
+# 10.242.0.1/32 is the node's cni0 address: kubelet probes and host-network tools.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: llm-router-clients
+  namespace: llama-cpp
+spec:
+  podSelector:
+    matchLabels:
+      app: llm-router
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector: {}
+        - namespaceSelector:
+            matchExpressions:
+              - key: kubernetes.io/metadata.name
+                operator: In
+                values:
+                  - opencode                 # opencode-agent, kali agent gateway
+                  - watoom-code    # WatooM-Code
+                  - watoom-code-rig-jobs  # rig async WatooM-Code
+                  - pi-agent                 # pi-kali-agent
+                  - glance                   # helper, model manager, guide
+                  - monitoring               # Prometheus scrape
+                  - kube-system              # Traefik
+        - namespaceSelector:
+            matchExpressions:
+              - key: watoom-owner            # watoom-code-learning-* namespaces
+                operator: Exists
+        - ipBlock:
+            cidr: 10.242.0.1/32
+      ports:
+        - protocol: TCP
+          port: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: llama-cpp-model-servers
+  namespace: llama-cpp
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: NotIn
+        values: [llm-router]
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector: {}            # llm-router and the GPU controller
+        - namespaceSelector:
+            matchExpressions:
+              - key: kubernetes.io/metadata.name
+                operator: In
+                values:
+                  - glance           # helper (direct swift/qwen38), model-manager broker (:8080)
+                  - monitoring       # Prometheus scrape
+                  - kube-system      # Traefik route to llama-cpp-qwen38
+        - ipBlock:
+            cidr: 10.242.0.1/32
+---
+# BGE embeddings: AgentMemory embeds memories through this service. The rule previously named the retired
+# namespace opencode-watoom-stage, so after the rename to watoom-code every embedding call was refused
+# ("fetch failed") and the AgentMemory vector index stayed empty (2026-11-16).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: bge-embeddings-clients
+  namespace: llama-cpp
+spec:
+  podSelector:
+    matchLabels:
+      app: bge-embeddings
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: watoom-code
+          podSelector:
+            matchLabels:
+              app: agentmemory
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+        - ipBlock:
+            cidr: 10.242.0.1/32
+      ports:
+        - protocol: TCP
+          port: 8000

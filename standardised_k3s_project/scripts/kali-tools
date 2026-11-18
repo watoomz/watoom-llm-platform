@@ -1,0 +1,1014 @@
+#!/usr/bin/env python3
+
+from pathlib import Path
+import argparse
+import os
+import re
+import shlex
+import subprocess
+import sys
+import yaml
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+DEFAULTS_FILE = (
+    ROOT
+    / "ansible/roles/pi-kali-agent/defaults/main.yml"
+)
+
+VARS_FILE = (
+    ROOT
+    / "ansible/inventories/homelab/"
+    "group_vars/homelab/kali-tools.yml"
+)
+
+INVENTORY = (
+    ROOT
+    / "ansible/inventories/homelab/hosts.yml"
+)
+
+PLAYBOOK = (
+    ROOT
+    / "ansible/playbooks/pi-kali-agent.yml"
+)
+
+ROLES_PATH = (
+    ROOT
+    / "ansible/roles"
+)
+
+PACKAGE_RE = re.compile(
+    r"^[a-z0-9][a-z0-9+.-]*$"
+)
+
+LARGE_METAPACKAGES = {
+    "kali-linux-default",
+    "kali-linux-large",
+    "kali-linux-everything",
+}
+
+
+def die(message, code=1):
+    print(
+        f"ERROR: {message}",
+        file=sys.stderr,
+    )
+    raise SystemExit(code)
+
+
+def load_yaml(path):
+    if not path.exists():
+        return {}
+
+    with path.open() as handle:
+        data = yaml.safe_load(handle) or {}
+
+    if not isinstance(data, dict):
+        die(
+            f"{path} does not contain "
+            "a YAML mapping"
+        )
+
+    return data
+
+
+DEFAULTS = load_yaml(DEFAULTS_FILE)
+
+CONTAINER = os.environ.get(
+    "KALI_CONTAINER_NAME",
+    str(
+        DEFAULTS.get(
+            "kali_container_name",
+            "kali-pentest",
+        )
+    ),
+)
+
+BASE_PACKAGES = set(
+    DEFAULTS.get(
+        "kali_tool_packages",
+        [],
+    )
+)
+
+
+def run(
+    argv,
+    *,
+    check=True,
+    capture=False,
+    env=None,
+):
+    argv = [
+        str(item)
+        for item in argv
+    ]
+
+    result = subprocess.run(
+        argv,
+        cwd=ROOT,
+        text=True,
+        stdout=(
+            subprocess.PIPE
+            if capture
+            else None
+        ),
+        stderr=(
+            subprocess.PIPE
+            if capture
+            else None
+        ),
+        env=env,
+    )
+
+    if check and result.returncode != 0:
+        if capture:
+            if result.stdout:
+                print(
+                    result.stdout.rstrip()
+                )
+
+            if result.stderr:
+                print(
+                    result.stderr.rstrip(),
+                    file=sys.stderr,
+                )
+
+        raise SystemExit(
+            result.returncode
+        )
+
+    return result
+
+
+def container_running():
+    result = run(
+        [
+            "docker",
+            "inspect",
+            "-f",
+            "{{.State.Running}}",
+            CONTAINER,
+        ],
+        check=False,
+        capture=True,
+    )
+
+    return (
+        result.returncode == 0
+        and result.stdout.strip() == "true"
+    )
+
+
+def require_container():
+    if not container_running():
+        die(
+            f"Kali container {CONTAINER!r} "
+            "is not currently running.\n"
+            "Run: kali-tools sync"
+        )
+
+
+def docker_exec(
+    *argv,
+    check=True,
+    capture=False,
+):
+    require_container()
+
+    return run(
+        [
+            "docker",
+            "exec",
+            "--user",
+            "0",
+            CONTAINER,
+            *argv,
+        ],
+        check=check,
+        capture=capture,
+    )
+
+
+def apt_catalog_present():
+    result = docker_exec(
+        "sh",
+        "-lc",
+        (
+            "find /var/lib/apt/lists "
+            "-maxdepth 1 "
+            "-type f "
+            "-name '*Packages*' "
+            "-print -quit "
+            "| grep -q ."
+        ),
+        check=False,
+        capture=True,
+    )
+
+    return result.returncode == 0
+
+
+def refresh_catalog():
+    require_container()
+
+    print(
+        "Refreshing Kali APT catalog..."
+    )
+
+    docker_exec(
+        "apt-get",
+        "-o",
+        "APT::Sandbox::User=root",
+        "update",
+        "-qq",
+    )
+
+
+def ensure_catalog():
+    if not apt_catalog_present():
+        refresh_catalog()
+
+
+def validate_package_name(name):
+    if not PACKAGE_RE.fullmatch(name):
+        die(
+            f"Invalid Debian package name: "
+            f"{name!r}"
+        )
+
+
+def package_exists(name):
+    result = docker_exec(
+        "apt-cache",
+        "show",
+        "--no-all-versions",
+        name,
+        check=False,
+        capture=True,
+    )
+
+    return (
+        result.returncode == 0
+        and bool(
+            result.stdout.strip()
+        )
+    )
+
+
+def _dpkg_package_installed(name):
+    result = docker_exec(
+        "dpkg-query",
+        "-W",
+        "-f=${Status}",
+        name,
+        check=False,
+        capture=True,
+    )
+
+    return (
+        result.returncode == 0
+        and result.stdout.strip()
+        == "install ok installed"
+    )
+
+
+def package_installed(name):
+    # First check whether the requested package itself is installed.
+    if _dpkg_package_installed(name):
+        return True
+
+    # Debian/Kali can expose names such as dnsutils as virtual
+    # packages. In that case, consider the package satisfied when
+    # one of its Reverse Provides entries is installed.
+    result = docker_exec(
+        "apt-cache",
+        "showpkg",
+        name,
+        check=False,
+        capture=True,
+    )
+
+    if result.returncode != 0:
+        return False
+
+    in_reverse_provides = False
+
+    for raw_line in result.stdout.splitlines():
+        line = raw_line.strip()
+
+        if line == "Reverse Provides:":
+            in_reverse_provides = True
+            continue
+
+        if not in_reverse_provides:
+            continue
+
+        if not line:
+            continue
+
+        provider = line.split()[0]
+
+        if (
+            PACKAGE_RE.fullmatch(provider)
+            and _dpkg_package_installed(provider)
+        ):
+            return True
+
+    return False
+
+
+def load_vars():
+    data = load_yaml(
+        VARS_FILE
+    )
+
+    data.setdefault(
+        "kali_extra_tool_packages",
+        [],
+    )
+
+    data.setdefault(
+        "kali_tool_metapackages",
+        [],
+    )
+
+    return data
+
+
+def save_vars(data):
+    extras = sorted(
+        set(
+            data.get(
+                "kali_extra_tool_packages",
+                [],
+            )
+        )
+    )
+
+    metas = sorted(
+        set(
+            data.get(
+                "kali_tool_metapackages",
+                [],
+            )
+        )
+    )
+
+    VARS_FILE.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    text = (
+        "---\n"
+        "# Additional Kali packages selected "
+        "by the local operator.\n"
+        "# Manage this file with: "
+        "scripts/kali-tools\n"
+        "\n"
+    )
+
+    text += yaml.safe_dump(
+        {
+            "kali_extra_tool_packages": extras,
+            "kali_tool_metapackages": metas,
+        },
+        sort_keys=False,
+        default_flow_style=False,
+    )
+
+    VARS_FILE.write_text(
+        text
+    )
+
+
+def run_playbook(
+    *,
+    tags=None,
+):
+    env = os.environ.copy()
+
+    env["ANSIBLE_ROLES_PATH"] = str(
+        ROLES_PATH
+    )
+
+    argv = [
+        "ansible-playbook",
+        "-i",
+        str(INVENTORY),
+        str(PLAYBOOK),
+    ]
+
+    if tags:
+        argv.extend(
+            [
+                "--tags",
+                tags,
+            ]
+        )
+
+    print()
+    print(
+        "+ "
+        + shlex.join(argv)
+    )
+    print()
+
+    run(
+        argv,
+        env=env,
+    )
+
+
+def cmd_search(args):
+    ensure_catalog()
+
+    query = " ".join(
+        args.term
+    )
+
+    result = docker_exec(
+        "apt-cache",
+        "search",
+        "--names-only",
+        query,
+        check=False,
+        capture=True,
+    )
+
+    if result.stdout:
+        print(
+            result.stdout.rstrip()
+        )
+
+    if result.returncode:
+        raise SystemExit(
+            result.returncode
+        )
+
+
+def cmd_info(args):
+    validate_package_name(
+        args.package
+    )
+
+    ensure_catalog()
+
+    result = docker_exec(
+        "apt-cache",
+        "show",
+        args.package,
+        check=False,
+        capture=True,
+    )
+
+    if (
+        result.returncode != 0
+        or not result.stdout.strip()
+    ):
+        die(
+            f"{args.package!r} "
+            "was not found in the current "
+            "Kali APT catalog"
+        )
+
+    print(
+        result.stdout.rstrip()
+    )
+
+
+def cmd_categories(_args):
+    ensure_catalog()
+
+    result = docker_exec(
+        "apt-cache",
+        "search",
+        "--names-only",
+        "^kali-tools-",
+        capture=True,
+    )
+
+    print(
+        result.stdout.rstrip()
+    )
+
+
+def cmd_refresh(_args):
+    refresh_catalog()
+
+
+def add_packages(
+    packages,
+    *,
+    metapackage=False,
+    no_sync=False,
+    yes_large=False,
+):
+    ensure_catalog()
+
+    data = load_vars()
+
+    extras = set(
+        data[
+            "kali_extra_tool_packages"
+        ]
+    )
+
+    metas = set(
+        data[
+            "kali_tool_metapackages"
+        ]
+    )
+
+    changed = False
+
+    for package in packages:
+        validate_package_name(
+            package
+        )
+
+        if not package_exists(
+            package
+        ):
+            die(
+                f"{package!r} "
+                "does not exist in the current "
+                "Kali APT catalog"
+            )
+
+        is_meta = (
+            metapackage
+            or package.startswith(
+                "kali-tools-"
+            )
+            or package.startswith(
+                "kali-linux-"
+            )
+        )
+
+        if (
+            is_meta
+            and package
+            in LARGE_METAPACKAGES
+            and not yes_large
+        ):
+            die(
+                f"{package} is a large "
+                "Kali metapackage.\n"
+                "Re-run with --yes-large "
+                "if intentional."
+            )
+
+        if package in BASE_PACKAGES:
+            print(
+                f"BASE PACKAGE: {package}"
+            )
+            continue
+
+        target = (
+            metas
+            if is_meta
+            else extras
+        )
+
+        if package in target:
+            print(
+                f"ALREADY CONFIGURED: {package}"
+            )
+            continue
+
+        target.add(package)
+        changed = True
+
+        print(
+            f"ADDED: {package}"
+            + (
+                " (metapackage)"
+                if is_meta
+                else ""
+            )
+        )
+
+    if not changed:
+        print(
+            "No changes to save."
+        )
+        return
+
+    data["kali_extra_tool_packages"] = extras
+    data["kali_tool_metapackages"] = metas
+
+    save_vars(data)
+
+    print(
+        f"Saved: {VARS_FILE}"
+    )
+
+    if no_sync:
+        print(
+            "Skipping sync "
+            "(--no-sync given). "
+            "Run 'kali-tools sync' "
+            "when ready."
+        )
+        return
+
+    run_playbook(
+        tags="build,verify"
+    )
+
+
+def remove_packages(
+    packages,
+    *,
+    no_sync=False,
+):
+    data = load_vars()
+
+    extras = set(
+        data[
+            "kali_extra_tool_packages"
+        ]
+    )
+
+    metas = set(
+        data[
+            "kali_tool_metapackages"
+        ]
+    )
+
+    changed = False
+
+    for package in packages:
+        validate_package_name(
+            package
+        )
+
+        if package in BASE_PACKAGES:
+            die(
+                f"{package!r} is a base "
+                "package defined in "
+                f"{DEFAULTS_FILE} and "
+                "cannot be removed here."
+            )
+
+        removed = False
+
+        if package in extras:
+            extras.discard(package)
+            removed = True
+
+        if package in metas:
+            metas.discard(package)
+            removed = True
+
+        if not removed:
+            print(
+                f"NOT CONFIGURED: {package}"
+            )
+            continue
+
+        changed = True
+
+        print(
+            f"REMOVED: {package}"
+        )
+
+    if not changed:
+        print(
+            "No changes to save."
+        )
+        return
+
+    data["kali_extra_tool_packages"] = extras
+    data["kali_tool_metapackages"] = metas
+
+    save_vars(data)
+
+    print(
+        f"Saved: {VARS_FILE}"
+    )
+
+    if no_sync:
+        print(
+            "Skipping sync "
+            "(--no-sync given). "
+            "Run 'kali-tools sync' "
+            "when ready to remove "
+            "the packages from the "
+            "container."
+        )
+        return
+
+    run_playbook(
+        tags="build,verify"
+    )
+
+
+def cmd_add(args):
+    add_packages(
+        args.packages,
+        metapackage=args.metapackage,
+        no_sync=args.no_sync,
+        yes_large=args.yes_large,
+    )
+
+
+def cmd_remove(args):
+    remove_packages(
+        args.packages,
+        no_sync=args.no_sync,
+    )
+
+
+def cmd_list(_args):
+    data = load_vars()
+
+    print("Base packages "
+          f"(from {DEFAULTS_FILE.name}):")
+    for package in sorted(BASE_PACKAGES):
+        installed = (
+            container_running()
+            and package_installed(package)
+        )
+        marker = "+" if installed else "-"
+        print(f"  {marker} {package}")
+
+    print()
+    print("Extra packages:")
+    for package in sorted(
+        data.get(
+            "kali_extra_tool_packages",
+            [],
+        )
+    ):
+        installed = (
+            container_running()
+            and package_installed(package)
+        )
+        marker = "+" if installed else "-"
+        print(f"  {marker} {package}")
+
+    print()
+    print("Metapackages:")
+    for package in sorted(
+        data.get(
+            "kali_tool_metapackages",
+            [],
+        )
+    ):
+        installed = (
+            container_running()
+            and package_installed(package)
+        )
+        marker = "+" if installed else "-"
+        print(f"  {marker} {package}")
+
+
+def cmd_status(_args):
+    running = container_running()
+
+    print(
+        f"Container: {CONTAINER}"
+    )
+    print(
+        "State:     "
+        + (
+            "running"
+            if running
+            else "not running"
+        )
+    )
+
+    if running:
+        print(
+            "Catalog:   "
+            + (
+                "present"
+                if apt_catalog_present()
+                else "missing "
+                "(run 'kali-tools refresh')"
+            )
+        )
+
+
+def cmd_sync(_args):
+    run_playbook(
+        tags="build,verify"
+    )
+
+
+
+def run_reference_cli(*argv):
+    os_mod = __import__("os")
+    subprocess_mod = __import__("subprocess")
+
+    cli = os_mod.environ.get(
+        "WATOOM_KALI_TOOL_REFERENCE_CLI",
+        "/usr/local/bin/watoom-kali-tool-reference",
+    )
+    root = os_mod.environ.get(
+        "WATOOM_KALI_TOOL_REFERENCE_HOST_ROOT",
+        "/data/pi-agent/kali/tool-reference",
+    )
+
+    result = subprocess_mod.run(
+        [cli, "--root", root, *argv],
+        check=False,
+    )
+    raise SystemExit(result.returncode)
+
+
+def cmd_docs(args):
+    argv = ["reference", args.tool, "--detail", args.detail]
+    if args.task:
+        argv.extend(["--task", args.task])
+    run_reference_cli(*argv)
+
+
+def cmd_docs_search(args):
+    argv = ["search", *args.term, "--limit", str(args.limit)]
+    if args.json:
+        argv.append("--json")
+    run_reference_cli(*argv)
+
+
+def cmd_docs_categories(args):
+    argv = ["categories"]
+    if args.json:
+        argv.append("--json")
+    run_reference_cli(*argv)
+
+
+def cmd_docs_stats(args):
+    argv = ["stats"]
+    if args.json:
+        argv.append("--json")
+    run_reference_cli(*argv)
+
+
+def build_parser():
+    parser = argparse.ArgumentParser(
+        prog="kali-tools",
+        description=(
+            "Manage packages inside the "
+            f"{CONTAINER!r} Kali container "
+            "via the pi-kali-agent Ansible role."
+        ),
+    )
+
+    sub = parser.add_subparsers(
+        dest="command",
+        required=True,
+    )
+
+    # BEGIN WATOOM KALI TOOL REFERENCE CLI V2.2
+    sub_docs = sub.add_parser(
+        "docs",
+        help="Show host-exported documentation for an installed Kali command.",
+    )
+    sub_docs.add_argument("tool")
+    sub_docs.add_argument("--task", default="")
+    sub_docs.add_argument(
+        "--detail",
+        choices=["summary", "detailed"],
+        default="summary",
+    )
+    sub_docs.set_defaults(func=cmd_docs)
+
+    sub_docs_search = sub.add_parser(
+        "docs-search",
+        help="Search installed Kali tools without starting Kali.",
+    )
+    sub_docs_search.add_argument("term", nargs="+")
+    sub_docs_search.add_argument("--limit", type=int, default=12)
+    sub_docs_search.add_argument("--json", action="store_true")
+    sub_docs_search.set_defaults(func=cmd_docs_search)
+
+    sub_docs_categories = sub.add_parser(
+        "docs-categories",
+        help="List tool-reference categories without starting Kali.",
+    )
+    sub_docs_categories.add_argument("--json", action="store_true")
+    sub_docs_categories.set_defaults(func=cmd_docs_categories)
+
+    sub_docs_stats = sub.add_parser(
+        "docs-stats",
+        help="Show tool-reference coverage without starting Kali.",
+    )
+    sub_docs_stats.add_argument("--json", action="store_true")
+    sub_docs_stats.set_defaults(func=cmd_docs_stats)
+    # END WATOOM KALI TOOL REFERENCE CLI V2.2
+
+    p_search = sub.add_parser(
+        "search",
+        help="search the Kali APT catalog",
+    )
+    p_search.add_argument(
+        "term",
+        nargs="+",
+    )
+    p_search.set_defaults(func=cmd_search)
+
+    p_info = sub.add_parser(
+        "info",
+        help="show details for a package",
+    )
+    p_info.add_argument("package")
+    p_info.set_defaults(func=cmd_info)
+
+    p_cats = sub.add_parser(
+        "categories",
+        help="list available kali-tools-* "
+        "metapackages",
+    )
+    p_cats.set_defaults(func=cmd_categories)
+
+    p_refresh = sub.add_parser(
+        "refresh",
+        help="refresh the container's APT "
+        "catalog",
+    )
+    p_refresh.set_defaults(func=cmd_refresh)
+
+    p_add = sub.add_parser(
+        "add",
+        help="add one or more packages and "
+        "sync",
+    )
+    p_add.add_argument(
+        "packages",
+        nargs="+",
+    )
+    p_add.add_argument(
+        "--metapackage",
+        action="store_true",
+        help="force treating the package(s) "
+        "as metapackages",
+    )
+    p_add.add_argument(
+        "--yes-large",
+        action="store_true",
+        help="allow adding a large "
+        "metapackage "
+        f"({', '.join(sorted(LARGE_METAPACKAGES))})",
+    )
+    p_add.add_argument(
+        "--no-sync",
+        action="store_true",
+        help="save the selection but skip "
+        "running the playbook",
+    )
+    p_add.set_defaults(func=cmd_add)
+
+    p_remove = sub.add_parser(
+        "remove",
+        help="remove one or more packages "
+        "and sync",
+    )
+    p_remove.add_argument(
+        "packages",
+        nargs="+",
+    )
+    p_remove.add_argument(
+        "--no-sync",
+        action="store_true",
+        help="save the selection but skip "
+        "running the playbook",
+    )
+    p_remove.set_defaults(func=cmd_remove)
+
+    p_list = sub.add_parser(
+        "list",
+        help="list configured packages and "
+        "their install state",
+    )
+    p_list.set_defaults(func=cmd_list)
+
+    p_status = sub.add_parser(
+        "status",
+        help="show container and catalog "
+        "status",
+    )
+    p_status.set_defaults(func=cmd_status)
+
+    p_sync = sub.add_parser(
+        "sync",
+        help="re-run the full pi-kali-agent "
+        "playbook",
+    )
+    p_sync.set_defaults(func=cmd_sync)
+
+    return parser
+
+
+def main(argv=None):
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()

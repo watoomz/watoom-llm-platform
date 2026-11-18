@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+PROJECT="${PROJECT_ROOT:-/data/github/watoom-standardised-homelab/standardised_k3s_project}"
+CLI="$PROJECT/ansible/roles/pi-kali-agent/files/tool-knowledge.py"
+SOURCE="${WATOOM_TOOL_KNOWLEDGE_SOURCE:-$PROJECT/config/kali/tool_knowledge_src}"
+DB="${WATOOM_TOOL_KNOWLEDGE_DB_HOST:-/data/pi-agent/kali/tool-knowledge/tool_knowledge.db}"
+COMPILER="$PROJECT/ansible/roles/pi-kali-agent/files/pi-mcp-bridge/lotce/compilers/nmap.json"
+CONTAINER="${KALI_CONTAINER_NAME:-kali-pentest}"
+case "${1:-}" in
+  refresh)
+    shift
+    [[ "${1:-nmap}" == "nmap" ]] || { echo "Only nmap is promoted initially" >&2; exit 2; }
+    exec python3 "$CLI" --source-dir "$SOURCE" --db "$DB" --container "$CONTAINER" --compiler "$COMPILER" refresh-nmap
+    ;;
+  build|verify|status)
+    cmd="$1"
+    exec python3 "$CLI" --source-dir "$SOURCE" --db "$DB" --container "$CONTAINER" --compiler "$COMPILER" "$cmd"
+    ;;
+  sync)
+    python3 "$CLI" --source-dir "$SOURCE" --db "$DB" --container "$CONTAINER" --compiler "$COMPILER" refresh-nmap
+    python3 "$CLI" --source-dir "$SOURCE" --db "$DB" --container "$CONTAINER" --compiler "$COMPILER" build
+    exec python3 "$CLI" --source-dir "$SOURCE" --db "$DB" --container "$CONTAINER" --compiler "$COMPILER" verify
+    ;;
+  *)
+    cat <<EOF
+Usage:
+  scripts/tool-knowledge refresh nmap
+  scripts/tool-knowledge build
+  scripts/tool-knowledge verify
+  scripts/tool-knowledge status
+  scripts/tool-knowledge sync
+EOF
+    exit 2
+    ;;
+esac

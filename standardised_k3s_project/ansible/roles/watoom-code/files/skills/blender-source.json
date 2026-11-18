@@ -1,0 +1,276 @@
+{
+  "upstream": "https://github.com/EL4CTEO/blender-skills",
+  "commit": "71d031dab8bc6729504d11a78cbe91945401045f",
+  "license": "MIT",
+  "runtime": "Blender 4.2.23",
+  "port_script_sha256": "af5ea56f5b0b3b4c129c320b55796e65bcbff510b85622c0723ad01acfd1f6ed",
+  "validation": {
+    "modules": 20,
+    "checks": [
+      "PASS test_addon::test_template_validates_builds_and_registers (1.1s)",
+      "PASS test_animation::test_bake_to_copy_with_root_motion_and_export (0.2s)",
+      "PASS test_atmosphere::test_fog_density_from_visibility_and_moods (0.0s)",
+      "PASS test_atmosphere::test_night_renders_darker_than_noon (4.4s)",
+      "PASS test_atmosphere::test_time_presets_sun_color_and_balance (0.0s)",
+      "PASS test_baking::test_high_to_low_bake_normal_ao_curv_orm_basecolor (0.2s)",
+      "PASS test_baking::test_self_bake_procedural_roughness (0.0s)",
+      "PASS test_core::test_bpy_patterns_snippets_run (0.4s)",
+      "PASS test_core::test_env_report (0.0s)",
+      "PASS test_core::test_snippet_docs_across_skills (0.0s)",
+      "PASS test_export::test_all_presets_roundtrip_scale (1.2s)",
+      "PASS test_export::test_batch_export_at_origin (0.0s)",
+      "PASS test_facial::test_arkit_split_mirror_drivers_report (0.0s)",
+      "PASS test_geonodes::test_build_apply_set_inputs (0.0s)",
+      "PASS test_geonodes::test_describe (0.0s)",
+      "PASS test_geonodes::test_reference_recipes_build_and_evaluate (0.1s)",
+      "PASS test_geonodes::test_repeat_zone (0.0s)",
+      "PASS test_materials::test_presets_and_srgb_color_override (0.0s)",
+      "PASS test_materials::test_texture_set_autowire_orm_dx_normal (0.0s)",
+      "PASS test_modeling::test_hardsurface_snippet_attributes (0.0s)",
+      "PASS test_modeling::test_midpoly_stack_with_boolean_and_apply (0.0s)",
+      "PASS test_modeling::test_subd_preset_adds_smooth_by_angle (0.0s)",
+      "PASS test_optimization::test_lods_halve_and_cleanup (0.1s)",
+      "PASS test_optimization::test_mesh_stats_budget (0.2s)",
+      "PASS test_pipeline::test_batch_convert_report_script_shard (0.3s)",
+      "PASS test_qa::test_clean_cube_passes (0.0s)",
+      "PASS test_qa::test_detects_floating_parts_and_objects (0.0s)",
+      "PASS test_qa::test_detects_inverted_and_inconsistent_normals_and_back_to_back (0.0s)",
+      "PASS test_qa::test_detects_zfighting_between_objects_and_within_mesh (0.0s)",
+      "PASS test_qa::test_enclosed_part_is_not_floating (0.0s)",
+      "SKIP test_qa::test_review_shots_renders_sheet (needs GPU context)",
+      "PASS test_qa::test_roblox_profile_flags_open_mesh_and_ngons (0.0s)",
+      "PASS test_qa::test_slightly_offset_coplanar_is_zfighting_but_far_is_not (0.0s)",
+      "PASS test_qa::test_touching_parts_are_not_floating (0.0s)",
+      "SKIP test_rendering::test_lookdev_turntable_and_studio (needs GPU context)",
+      "SKIP test_rendering::test_render_stills_cycles_eevee_workbench (needs GPU context)",
+      "PASS test_retopo_uv::test_auto_retopo_methods (0.6s)",
+      "PASS test_retopo_uv::test_uv_pack_and_texel_density_set (0.0s)",
+      "PASS test_rigging::test_proxy_bind_and_fix (1.8s)",
+      "PASS test_rigging::test_rigify_pipeline_bind_check_stress (0.3s)",
+      "PASS test_scene::test_collection_exporter_snippet (0.0s)",
+      "PASS test_scene::test_scene_audit_flags_and_fixes (0.0s)",
+      "PASS test_sculpt::test_sculpt_ops_chain (0.8s)",
+      "PASS test_simulation::test_classic_cloth_drapes_on_collider (0.3s)",
+      "SKIP test_simulation::test_gn_cloth_52_asset (UNSUPPORTED on 4.2: built-in Geometry Nodes cloth requires 5.2)",
+      "PASS test_simulation::test_rigid_body_drop_and_keys (0.0s)",
+      "PASS test_weather::test_lightning_keys_strokes_and_bolt (0.0s)",
+      "PASS test_weather::test_precipitation_loops_and_stops_on_ground (0.1s)",
+      "PASS test_weather::test_snow_geometry_and_vertex_mask (0.0s)",
+      "PASS test_weather::test_surface_weather_roundtrip_restores_materials (0.0s)"
+    ],
+    "cpu_render": {
+      "status": "PASS",
+      "lighting": {
+        "ok": true,
+        "camera": "LD_Cam",
+        "lens": 85.0,
+        "distance": 8.054,
+        "lights": 3,
+        "frames": 24,
+        "pivot": "LD_Pivot",
+        "collection": "LD_Lookdev",
+        "note": "frame N+1 == frame 1, so 1..N loops seamlessly"
+      },
+      "rendering": {
+        "engine": "CYCLES",
+        "device": "CPU",
+        "ok": true,
+        "files": [
+          "/job/cpu-preview_0001.png",
+          "/job/cpu-preview_0012.png"
+        ],
+        "sec_per_image": 0.29,
+        "res": [
+          96,
+          96
+        ],
+        "view": "AgX"
+      },
+      "direct_gpu_refused": true
+    }
+  },
+  "limitations": [
+    "GPU context rendering not run; production defaults to CPU and rejects direct GPU",
+    "5.2 Geometry Nodes cloth assets unsupported; classic cloth validated",
+    "Nishita sky uses approximate inherited irradiance table; no calibrated photometry claim",
+    "4.2 white-point compositor grade unsupported; saturation and fog glow supported",
+    "Meshopt/WebP optional unavailable exporter settings report fallback warnings"
+  ],
+  "runner_recovery": {
+    "status": "PASS",
+    "tests": [
+      {
+        "signal": "kill",
+        "status": "PASS",
+        "owned_blender_child_stopped": true,
+        "model_hash_preserved": true,
+        "resume_all_local_stages_pass": true,
+        "no_engine_replay": true,
+        "attempts": 2
+      },
+      {
+        "signal": "terminate",
+        "status": "PASS",
+        "owned_blender_child_stopped": true,
+        "model_hash_preserved": true,
+        "resume_all_local_stages_pass": true,
+        "no_engine_replay": true,
+        "attempts": 2
+      }
+    ],
+    "missing_output_control": {
+      "status": "PASS",
+      "zero_exit_missing_artifact_rejected": true,
+      "classification": "MISSING_OUTPUT"
+    },
+    "evidence": "/data/ai/projects/llm/pipelines/blender-asset-builder/acceptance-interruption-v2-20261020/result.json",
+    "runner_sha256": "ed0129108e13636c8ab8cbb9f59356c7a7a4b91ef3d99e835a3da669582f9d1a"
+  },
+  "final_source_qa": {
+    "status": "PASS",
+    "evidence": "/data/ai/projects/llm/pipelines/blender-asset-builder/acceptance-final-source-gate-20261020/result.json",
+    "controls": [
+      "clean packed source accepted",
+      "preview GroundPlane rejected"
+    ],
+    "runner_sha256": "81eeb18be3c8b3cd7634a0edf131be3ed4ed7a96f161fabfe4cf0a691c2e3491"
+  },
+  "current_worker_qualification": {
+    "date": "2026-10-26",
+    "runtime": "Blender 5.2.1",
+    "rig": "Windows Job Object 8GiB, RTX2080SUPER, OptiX/CPU",
+    "components": {
+      "modules": [
+        {
+          "module": "test_addon",
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "module": "test_animation",
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "module": "test_atmosphere",
+          "passed": 3,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "module": "test_baking",
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "module": "test_core",
+          "passed": 3,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "module": "test_export",
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "module": "test_facial",
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "module": "test_geonodes",
+          "passed": 4,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "module": "test_materials",
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "module": "test_modeling",
+          "passed": 3,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "module": "test_optimization",
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "module": "test_pipeline",
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "module": "test_qa",
+          "passed": 9,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "module": "test_rendering",
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "module": "test_retopo_uv",
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "module": "test_rigging",
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "module": "test_scene",
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "module": "test_sculpt",
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "module": "test_simulation",
+          "passed": 3,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "module": "test_weather",
+          "passed": 4,
+          "failed": 0,
+          "skipped": 0
+        }
+      ],
+      "total": {
+        "passed": 50,
+        "failed": 0,
+        "skipped": 0
+      },
+      "gpu_context_tests_enabled": true,
+      "optix_additional": "4 passed, 0 failed, 0 skipped"
+    },
+    "evidence": "/data/ai/helper-scripts/workstation-render-parity-20261026/component-suite",
+    "historical_validation_retained": true
+  }
+}

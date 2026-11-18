@@ -1,0 +1,64 @@
+---
+- name: Check the pinned image in the local registry
+  ansible.builtin.uri:
+    url: "{{ artex_registry_url }}/v2/{{ artex_image_repository }}/manifests/{{ artex_image.split('@')[1] }}"
+    method: HEAD
+    headers:
+      Accept: >-
+        application/vnd.oci.image.index.v1+json,
+        application/vnd.oci.image.manifest.v1+json,
+        application/vnd.docker.distribution.manifest.list.v2+json,
+        application/vnd.docker.distribution.manifest.v2+json
+    status_code: [200, 404]
+    return_content: false
+  register: artex_registry_image
+  changed_when: false
+
+- name: Build, publish and verify only when the pinned digest is absent
+  when: artex_registry_image.status != 200
+  block:
+    - name: Read the source checkout commit
+      ansible.builtin.command:
+        argv: [git, -C, "{{ artex_source_dir }}", rev-parse, HEAD]
+      register: artex_source_head
+      changed_when: false
+
+    - name: Refuse to build from a commit other than the reviewed one
+      ansible.builtin.assert:
+        that:
+          - artex_source_head.stdout | trim == artex_image_source_commit
+        fail_msg: >-
+          {{ artex_source_dir }} is at {{ artex_source_head.stdout | trim }} but vars/artex.yml pins
+          artex_image_source_commit {{ artex_image_source_commit }}. Check out the reviewed commit or update the pin.
+
+    - name: Verify the pinned English frontend overlay
+      ansible.builtin.command:
+        argv: [git, -C, "{{ artex_source_dir }}", diff, --exit-code, "{{ artex_frontend_source_commit }}", --, web]
+      changed_when: false
+      when: artex_frontend_source_commit is defined
+
+    - name: Build the image from source with the vendor's hardened Dockerfile
+      ansible.builtin.command:
+        argv: [docker, build, -f, Dockerfile.safe, -t, "{{ artex_image_build_tag }}", .]
+        chdir: "{{ artex_source_dir }}"
+      changed_when: true
+
+    - name: Push the image to the local registry
+      ansible.builtin.command:
+        argv: [docker, push, "{{ artex_image_build_tag }}"]
+      changed_when: true
+
+    - name: Read the pushed image digest
+      ansible.builtin.command:
+        argv: [docker, image, inspect, --format, "{{ '{{' }}join .RepoDigests \"\\n\"{{ '}}' }}", "{{ artex_image_build_tag }}"]
+      register: artex_pushed_digests
+      changed_when: false
+
+    - name: Refuse to deploy a rebuild whose digest is not the pinned one
+      ansible.builtin.assert:
+        that:
+          - artex_image in artex_pushed_digests.stdout_lines
+        fail_msg: >-
+          Built and pushed {{ artex_image_build_tag }} as {{ artex_pushed_digests.stdout_lines | join(', ') }},
+          which is not the pinned {{ artex_image }}. Nothing was deployed. Review the build, then pin the new
+          digest as artex_image in vars/artex.yml and re-run.

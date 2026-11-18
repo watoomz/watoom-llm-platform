@@ -1,0 +1,131 @@
+---
+- name: Require isolated namespace and immutable release
+  ansible.builtin.assert:
+    that:
+      - artex_namespace == 'artex'
+      - artex_root == '/data/ai/artex'
+      - artex_image is defined
+      - artex_image_source_commit is defined
+      - artex_image is match('^127\.0\.0\.1:5000/' ~ artex_image_repository ~ '@sha256:[0-9a-f]{64}$')
+    fail_msg: Load ansible/vars/artex.yml; the application image pin has no role default.
+
+- name: Build and publish the pinned image when the registry does not hold it
+  ansible.builtin.import_tasks: image.yml
+
+- name: Create private application directories
+  ansible.builtin.file:
+    path: "{{ artex_root }}{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: '0700'
+  loop:
+    - {path: ''}
+    - {path: /data}
+    - {path: /keys}
+    - {path: /pgdata, owner: "{{ artex_postgres_uid }}", group: "{{ artex_postgres_gid }}"}
+    - {path: /render}
+    - {path: /docs}
+
+- name: Deploy the user guide alongside the application data
+  ansible.builtin.copy:
+    src: "docs/{{ item }}"
+    dest: "{{ artex_root }}/docs/{{ item }}"
+    owner: root
+    group: root
+    mode: '0600'
+  loop:
+    - ARTEX-USER-GUIDE.md
+    - ARTEX-USER-GUIDE.pdf
+
+- name: Persist SELinux label for isolated application data
+  community.general.sefcontext:
+    target: '{{ artex_root }}(/.*)?'
+    setype: container_file_t
+    state: present
+
+- name: Apply SELinux label only to application data
+  ansible.builtin.command:
+    argv: [restorecon, -R, -v, '{{ artex_root }}']
+  register: artex_labels
+  changed_when: "'Relabeled' in artex_labels.stdout"
+
+- name: Create namespace
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: '{{ artex_namespace }}'
+        labels:
+          app.kubernetes.io/managed-by: artex-ansible
+
+- name: Read existing database credentials
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    namespace: '{{ artex_namespace }}'
+    name: artex-postgres
+  register: artex_auth
+  no_log: true
+
+# Letters and digits only: the DSN is assembled from this value, so URL-special characters would need escaping.
+# No LLM provider key is managed here; the owner configures the provider in the console after first boot.
+- name: Create database credentials once
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: artex-postgres
+        namespace: '{{ artex_namespace }}'
+        labels:
+          app.kubernetes.io/managed-by: artex-ansible
+      stringData:
+        POSTGRES_PASSWORD: "{{ lookup('ansible.builtin.password', '/dev/null', length=48, chars=['ascii_letters', 'digits']) }}"
+  when: artex_auth.resources | length == 0
+  no_log: true
+
+- name: Render resources
+  ansible.builtin.template:
+    src: resources.json.j2
+    dest: '{{ artex_root }}/render/resources.json'
+    mode: '0600'
+
+- name: Validate resources with the API server
+  ansible.builtin.command:
+    argv: [kubectl, apply, --dry-run=server, -f, '{{ artex_root }}/render/resources.json']
+  changed_when: false
+
+- name: Apply resources
+  kubernetes.core.k8s:
+    state: present
+    src: '{{ artex_root }}/render/resources.json'
+  when: artex_apply | bool
+
+- name: Wait for the database and the application
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - -n
+      - '{{ artex_namespace }}'
+      - rollout
+      - status
+      - deployment/{{ item }}
+      - --timeout={{ artex_rollout_timeout }}
+  loop:
+    - artex-postgres
+    - artex
+  changed_when: false
+  when: artex_apply | bool
+
+# The Service stays ClusterIP; the only way in is the internal Traefik route at artex_hostname.
+- name: Refuse any Service exposure of the console beyond ClusterIP
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Service
+    namespace: '{{ artex_namespace }}'
+  register: artex_services
+  failed_when: artex_services.resources | rejectattr('spec.type', 'equalto', 'ClusterIP') | list | length > 0

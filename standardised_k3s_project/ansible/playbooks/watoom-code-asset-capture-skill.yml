@@ -1,0 +1,18 @@
+---
+- name: Install owner-requested asset image and clip capture skill
+  hosts: homelab
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Install maintained capture skill only
+      ansible.builtin.copy:
+        src: ../roles/watoom-code/files/skills/asset-image-clip-capture/
+        dest: /data/ai/watoom-code/config/skills/asset-image-clip-capture/
+        owner: '1001'
+        group: '1001'
+        mode: '0644'
+        directory_mode: '0750'
+    - name: Preserve container-readable capture skill label
+      ansible.builtin.command:
+        argv: [restorecon, -R, /data/ai/watoom-code/config/skills/asset-image-clip-capture]
+      changed_when: false

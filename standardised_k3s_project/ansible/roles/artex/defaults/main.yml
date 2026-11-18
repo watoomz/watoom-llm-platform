@@ -1,0 +1,32 @@
+---
+artex_namespace: artex
+artex_root: /data/ai/artex
+# The application image pin and its source commit live only in ansible/vars/artex.yml;
+# the role fails closed without them.
+artex_source_dir: /data/github/artex
+artex_image_repository: artex
+artex_image_build_tag: "127.0.0.1:5000/{{ artex_image_repository }}:v0.3.15-safe"
+artex_registry_url: http://127.0.0.1:5000
+# Same digest the vendor's docker-compose.safe.yml pins.
+artex_postgres_image: "postgres:16-alpine@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab"
+# postgres:16-alpine runs the server as uid/gid 70 after its entrypoint drops privileges.
+artex_postgres_uid: 70
+artex_postgres_gid: 70
+artex_postgres_memory_request: 256Mi
+artex_postgres_cpu_request: 250m
+artex_postgres_memory_limit: 1Gi
+artex_postgres_cpu_limit: "1"
+# Go server plus Node/Playwright/Chromium browser automation.
+artex_memory_request: 1Gi
+artex_cpu_request: 500m
+artex_memory_limit: 4Gi
+artex_cpu_limit: "2"
+# Internal HTTPS route through Traefik, same convention as the other internal apps. The wildcard
+# certificate Secret is reconciled into the namespace by `rebuild-homelab.yml --tags tls`.
+artex_hostname: artex.internal.homelab.example
+artex_tls_secret: watoom-tls
+artex_apply: true
+artex_rollout_timeout: 180s
+
+# Only Artex application pods may reach the local LLM router on TCP 8000.
+artex_llm_router_namespace: llama-cpp

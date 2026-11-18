@@ -1,0 +1,9 @@
+---
+- name: Deploy ARTEX (FailSafe source build, internal ingress only)
+  hosts: homelab
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../vars/artex.yml
+  roles:
+    - artex

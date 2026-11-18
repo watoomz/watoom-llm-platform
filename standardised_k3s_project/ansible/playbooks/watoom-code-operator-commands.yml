@@ -1,0 +1,23 @@
+---
+# Install the operator-commands skill and the pointers to it (plain skill-directory copies; no app change).
+- name: Install operator-commands guidance
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    operator_command_skills: [operator-commands, ansible, esp32-development]
+  tasks:
+    - name: Install skill directories
+      ansible.builtin.copy:
+        src: "../roles/watoom-code/files/skills/{{ item }}/"
+        dest: "/data/ai/watoom-code/config/skills/{{ item }}/"
+        owner: '1001'
+        group: '1001'
+        mode: '0644'
+        directory_mode: '0755'
+      loop: "{{ operator_command_skills }}"
+    - name: Restore skill labels
+      ansible.builtin.command:
+        argv: [restorecon, -R, "/data/ai/watoom-code/config/skills/{{ item }}"]
+      loop: "{{ operator_command_skills }}"
+      changed_when: false

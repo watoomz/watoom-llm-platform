@@ -1,0 +1,95 @@
+---
+- name: Create root-owned maintained Homelab policy installer directory
+  ansible.builtin.file:
+    path: /data/ai/helper-scripts/homelab-workspace-policy
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+- name: Install reviewed policy runtime source without generated caches
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../tools/watoom-code/workspace-policy/{{ item }}"
+    dest: "/data/ai/helper-scripts/homelab-workspace-policy/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop: [guard.mjs, provision.py, register.py, project-AGENTS.md, capability_maintenance.py, lesson_audit.py]
+- name: Provision the independent Homelab project and preserve native plugin options
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/python3
+      - /data/ai/helper-scripts/homelab-workspace-policy/provision.py
+      - --apply
+  register: watoom_homelab_project
+  changed_when: "(watoom_homelab_project.stdout | from_json).changed | bool"
+- name: Ensure required application configuration ownership after installers
+  ansible.builtin.file:
+    path: "{{ watoom_code_root }}/config/opencode.json"
+    owner: "{{ watoom_code_uid }}"
+    group: "{{ watoom_code_gid }}"
+    mode: '0600'
+# Host account names differ from the container. Numeric setpriv is authoritative.
+- name: Verify application UID can read configuration without exposing it
+  ansible.builtin.command:
+    argv: [setpriv, --reuid=1001, --regid=1001, --clear-groups, test, -r, "{{ watoom_code_root }}/config/opencode.json"]
+  changed_when: false
+
+- name: Create root-owned native administrative helper directory
+  ansible.builtin.file:
+    path: /data/ai/helper-scripts/homelab-workspace-policy/native
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+- name: Install reviewed native API helpers outside model-writable source
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../tools/watoom-code/{{ item }}"
+    dest: "/data/ai/helper-scripts/homelab-workspace-policy/native/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop: [maintenance_guard.py, release_guard.py]
+- name: Register and name the native Homelab project without creating sessions
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/python3
+      - /data/ai/helper-scripts/homelab-workspace-policy/register.py
+      - --iac-root
+      - /data/ai/projects/homelab/homelab-llm/standardised_k3s_project
+  register: watoom_homelab_registration
+  # The app reloads its plugins after the configuration tasks above; the guard plugin is briefly absent.
+  retries: 12
+  delay: 10
+  until: watoom_homelab_registration.rc == 0
+  changed_when: "(watoom_homelab_registration.stdout | from_json).changed | bool"
+
+- name: Install domain parent skills with progressive child discovery
+  ansible.builtin.copy:
+    src: "{{ role_path }}/files/skills/{{ item }}/"
+    dest: "{{ watoom_code_root }}/config/skills/{{ item }}/"
+    owner: "{{ watoom_code_uid }}"
+    group: "{{ watoom_code_gid }}"
+    mode: '0644'
+    directory_mode: '0755'
+  loop: [blender, godot, homelab, kubernetes-router, ansible, image-creation,
+         creative-writing, red-hat, cybersecurity, asset-pipelines, llm-models,
+         self-learning, sims]
+
+- name: Install bounded capability health service and schedule
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../tools/watoom-code/workspace-policy/{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop: [watoom-capability-health.service, watoom-capability-health.timer]
+  register: watoom_capability_schedule
+- name: Reload service definitions only when metadata maintenance units changed
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+  when: watoom_capability_schedule.changed
+- name: Enable bounded catalogue and learning health refresh
+  ansible.builtin.systemd_service:
+    name: watoom-capability-health.timer
+    enabled: true
+    state: started

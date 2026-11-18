@@ -1,0 +1,393 @@
+---
+- name: "Kubernetes app {{ kubernetes_app_name | default('unspecified') }} | Validate request"
+  ansible.builtin.assert:
+    that:
+      - kubernetes_app_name | length > 0
+      - kubernetes_app_namespace | length > 0
+      - kubernetes_app_action in ['status', 'start', 'stop', 'restart', 'reconcile', 'set_image']
+    fail_msg: >-
+      Required:
+      kubernetes_app_name,
+      kubernetes_app_namespace,
+      kubernetes_app_action=status|start|stop|restart|reconcile|set_image.
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Validate reconciliation mapping"
+  ansible.builtin.assert:
+    that:
+      - kubernetes_app_name in kubernetes_app_manifests
+      - kubernetes_app_manifests[kubernetes_app_name] | length > 0
+    fail_msg: >-
+      No deterministic manifest mapping exists for
+      {{ kubernetes_app_name }}.
+  when: kubernetes_app_action == 'reconcile'
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Resolve requested replica count"
+  ansible.builtin.set_fact:
+    kubernetes_app_effective_replicas: >-
+      {{
+        0
+        if kubernetes_app_action == 'stop'
+        else kubernetes_app_replicas | int
+      }}
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Query Deployments"
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    kind: Deployment
+    namespace: "{{ kubernetes_app_namespace }}"
+    kubeconfig: "{{ k3s_kubeconfig }}"
+  register: kubernetes_app_deployments
+  changed_when: false
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Query StatefulSets"
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    kind: StatefulSet
+    namespace: "{{ kubernetes_app_namespace }}"
+    kubeconfig: "{{ k3s_kubeconfig }}"
+  register: kubernetes_app_statefulsets
+  changed_when: false
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Initialise workload lists"
+  ansible.builtin.set_fact:
+    kubernetes_app_workloads: []
+    kubernetes_app_previous_replicas: []
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Register existing Deployments"
+  ansible.builtin.set_fact:
+    kubernetes_app_workloads: >-
+      {{
+        kubernetes_app_workloads
+        +
+        [
+          {
+            'kind': 'Deployment',
+            'name': item.metadata.name
+          }
+        ]
+      }}
+    kubernetes_app_previous_replicas: >-
+      {{
+        kubernetes_app_previous_replicas
+        +
+        [
+          {
+            'kind': 'Deployment',
+            'name': item.metadata.name,
+            'replicas': item.spec.replicas | default(0)
+          }
+        ]
+      }}
+  loop: "{{ kubernetes_app_deployments.resources }}"
+  loop_control:
+    label: "{{ kubernetes_app_namespace }}/Deployment/{{ item.metadata.name }}"
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Register existing StatefulSets"
+  ansible.builtin.set_fact:
+    kubernetes_app_workloads: >-
+      {{
+        kubernetes_app_workloads
+        +
+        [
+          {
+            'kind': 'StatefulSet',
+            'name': item.metadata.name
+          }
+        ]
+      }}
+    kubernetes_app_previous_replicas: >-
+      {{
+        kubernetes_app_previous_replicas
+        +
+        [
+          {
+            'kind': 'StatefulSet',
+            'name': item.metadata.name,
+            'replicas': item.spec.replicas | default(0)
+          }
+        ]
+      }}
+  loop: "{{ kubernetes_app_statefulsets.resources }}"
+  loop_control:
+    label: "{{ kubernetes_app_namespace }}/StatefulSet/{{ item.metadata.name }}"
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Assert workloads exist"
+  ansible.builtin.assert:
+    that:
+      - kubernetes_app_workloads | length > 0
+    fail_msg: >-
+      No Deployments or StatefulSets exist in namespace
+      {{ kubernetes_app_namespace }}.
+  when: kubernetes_app_action in ['status', 'start', 'stop', 'restart']
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Verify declared manifests"
+  ansible.builtin.stat:
+    path: "{{ project_root }}/{{ item }}"
+  loop: "{{ kubernetes_app_manifests[kubernetes_app_name] | default([]) }}"
+  loop_control:
+    label: "{{ item }}"
+  register: kubernetes_app_manifest_stats
+  when: kubernetes_app_action == 'reconcile'
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Assert declared manifests exist"
+  ansible.builtin.assert:
+    that:
+      - item.stat.exists
+      - item.stat.isreg
+    fail_msg: "Declared manifest missing: {{ item.item }}"
+  loop: "{{ kubernetes_app_manifest_stats.results | default([]) }}"
+  loop_control:
+    label: "{{ item.item | default('unknown') }}"
+  when: kubernetes_app_action == 'reconcile'
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Reconcile declared manifests"
+  kubernetes.core.k8s:
+    state: present
+    src: "{{ project_root }}/{{ item }}"
+    kubeconfig: "{{ k3s_kubeconfig }}"
+    apply: true
+  loop: "{{ kubernetes_app_manifests[kubernetes_app_name] | default([]) }}"
+  loop_control:
+    label: "{{ item }}"
+  when: kubernetes_app_action == 'reconcile'
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Restore pre-reconcile replica state"
+  kubernetes.core.k8s_scale:
+    api_version: apps/v1
+    kind: "{{ item.kind }}"
+    name: "{{ item.name }}"
+    namespace: "{{ kubernetes_app_namespace }}"
+    replicas: "{{ item.replicas | int }}"
+    kubeconfig: "{{ k3s_kubeconfig }}"
+    wait: true
+    wait_timeout: "{{ kubernetes_app_wait_timeout }}"
+  loop: "{{ kubernetes_app_previous_replicas }}"
+  loop_control:
+    label: >-
+      {{ kubernetes_app_namespace }}/{{ item.kind }}/{{ item.name }}
+      -> replicas={{ item.replicas }}
+  when:
+    - kubernetes_app_action == 'reconcile'
+    - kubernetes_app_previous_replicas | length > 0
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Wait for reconciled Deployments"
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    kind: Deployment
+    name: "{{ item.name }}"
+    namespace: "{{ kubernetes_app_namespace }}"
+    kubeconfig: "{{ k3s_kubeconfig }}"
+  register: kubernetes_app_reconcile_deployment_wait
+  retries: 30
+  delay: 5
+  until:
+    - kubernetes_app_reconcile_deployment_wait.resources | length == 1
+    - >-
+      (
+        kubernetes_app_reconcile_deployment_wait.resources[0].status.availableReplicas
+        | default(0)
+        | int
+      )
+      >=
+      (
+        kubernetes_app_reconcile_deployment_wait.resources[0].spec.replicas
+        | default(0)
+        | int
+      )
+  loop: "{{ kubernetes_app_previous_replicas }}"
+  loop_control:
+    label: "{{ kubernetes_app_namespace }}/Deployment/{{ item.name }}"
+  when:
+    - kubernetes_app_action == 'reconcile'
+    - item.kind == 'Deployment'
+    - item.replicas | int > 0
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Wait for reconciled StatefulSets"
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    kind: StatefulSet
+    name: "{{ item.name }}"
+    namespace: "{{ kubernetes_app_namespace }}"
+    kubeconfig: "{{ k3s_kubeconfig }}"
+  register: kubernetes_app_reconcile_statefulset_wait
+  retries: 30
+  delay: 5
+  until:
+    - kubernetes_app_reconcile_statefulset_wait.resources | length == 1
+    - >-
+      (
+        kubernetes_app_reconcile_statefulset_wait.resources[0].status.readyReplicas
+        | default(0)
+        | int
+      )
+      >=
+      (
+        kubernetes_app_reconcile_statefulset_wait.resources[0].spec.replicas
+        | default(0)
+        | int
+      )
+  loop: "{{ kubernetes_app_previous_replicas }}"
+  loop_control:
+    label: "{{ kubernetes_app_namespace }}/StatefulSet/{{ item.name }}"
+  when:
+    - kubernetes_app_action == 'reconcile'
+    - item.kind == 'StatefulSet'
+    - item.replicas | int > 0
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Scale workloads to {{ kubernetes_app_effective_replicas }}"
+  kubernetes.core.k8s_scale:
+    api_version: apps/v1
+    kind: "{{ item.kind }}"
+    name: "{{ item.name }}"
+    namespace: "{{ kubernetes_app_namespace }}"
+    replicas: "{{ kubernetes_app_effective_replicas | int }}"
+    kubeconfig: "{{ k3s_kubeconfig }}"
+    wait: true
+    wait_timeout: "{{ kubernetes_app_wait_timeout }}"
+  loop: "{{ kubernetes_app_workloads }}"
+  loop_control:
+    label: "{{ kubernetes_app_namespace }}/{{ item.kind }}/{{ item.name }}"
+  when: kubernetes_app_action in ['start', 'stop']
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Restart Deployments"
+  kubernetes.core.k8s:
+    api_version: apps/v1
+    kind: Deployment
+    name: "{{ item.metadata.name }}"
+    namespace: "{{ kubernetes_app_namespace }}"
+    kubeconfig: "{{ k3s_kubeconfig }}"
+    state: present
+    merge_type:
+      - merge
+    definition:
+      spec:
+        template:
+          metadata:
+            annotations:
+              homelab.example/restarted-at: >-
+                {{ now(utc=true, fmt='%Y-%m-%dT%H:%M:%SZ') }}
+  loop: "{{ kubernetes_app_deployments.resources }}"
+  loop_control:
+    label: "{{ kubernetes_app_namespace }}/Deployment/{{ item.metadata.name }}"
+  when: kubernetes_app_action == 'restart'
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Restart StatefulSets"
+  kubernetes.core.k8s:
+    api_version: apps/v1
+    kind: StatefulSet
+    name: "{{ item.metadata.name }}"
+    namespace: "{{ kubernetes_app_namespace }}"
+    kubeconfig: "{{ k3s_kubeconfig }}"
+    state: present
+    merge_type:
+      - merge
+    definition:
+      spec:
+        template:
+          metadata:
+            annotations:
+              homelab.example/restarted-at: >-
+                {{ now(utc=true, fmt='%Y-%m-%dT%H:%M:%SZ') }}
+  loop: "{{ kubernetes_app_statefulsets.resources }}"
+  loop_control:
+    label: "{{ kubernetes_app_namespace }}/StatefulSet/{{ item.metadata.name }}"
+  when: kubernetes_app_action == 'restart'
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Validate requested image change"
+  ansible.builtin.assert:
+    that:
+      - kubernetes_app_container | length > 0
+      - kubernetes_app_image | length > 0
+      - kubernetes_app_deployments.resources | length == 1
+      - >-
+        kubernetes_app_container in (
+        kubernetes_app_deployments.resources[0].spec.template.spec.containers
+        | map(attribute='name') | list)
+    fail_msg: >-
+      set_image requires exactly one Deployment, kubernetes_app_image, and a
+      kubernetes_app_container that already exists in that Deployment.
+  when: kubernetes_app_action == 'set_image'
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Set image for container {{ kubernetes_app_container }}"
+  kubernetes.core.k8s:
+    api_version: apps/v1
+    kind: Deployment
+    name: "{{ kubernetes_app_deployments.resources[0].metadata.name }}"
+    namespace: "{{ kubernetes_app_namespace }}"
+    kubeconfig: "{{ k3s_kubeconfig }}"
+    state: present
+    merge_type:
+      - merge
+    definition:
+      spec:
+        template:
+          spec:
+            containers:
+              - name: "{{ kubernetes_app_container }}"
+                image: "{{ kubernetes_app_image }}"
+  when: kubernetes_app_action == 'set_image'
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Wait for image rollout"
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    kind: Deployment
+    name: "{{ kubernetes_app_deployments.resources[0].metadata.name }}"
+    namespace: "{{ kubernetes_app_namespace }}"
+    kubeconfig: "{{ k3s_kubeconfig }}"
+  register: kubernetes_app_image_wait
+  retries: 36
+  delay: 5
+  until:
+    - kubernetes_app_image_wait.resources | length == 1
+    - >-
+      (
+        kubernetes_app_image_wait.resources[0].status.availableReplicas
+        | default(0)
+        | int
+      )
+      >=
+      (
+        kubernetes_app_image_wait.resources[0].spec.replicas
+        | default(0)
+        | int
+      )
+  when: kubernetes_app_action == 'set_image'
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Query final Deployments"
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    kind: Deployment
+    namespace: "{{ kubernetes_app_namespace }}"
+    kubeconfig: "{{ k3s_kubeconfig }}"
+  register: kubernetes_app_final_deployments
+  changed_when: false
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Query final StatefulSets"
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    kind: StatefulSet
+    namespace: "{{ kubernetes_app_namespace }}"
+    kubeconfig: "{{ k3s_kubeconfig }}"
+  register: kubernetes_app_final_statefulsets
+  changed_when: false
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Report Deployment state"
+  ansible.builtin.debug:
+    msg: >-
+      {{ kubernetes_app_namespace }}/Deployment/{{ item.metadata.name }}
+      desired={{ item.spec.replicas | default(0) }}
+      ready={{ item.status.readyReplicas | default(0) }}
+      available={{ item.status.availableReplicas | default(0) }}
+  loop: "{{ kubernetes_app_final_deployments.resources }}"
+  loop_control:
+    label: "{{ kubernetes_app_namespace }}/Deployment/{{ item.metadata.name }}"
+
+- name: "Kubernetes app {{ kubernetes_app_name }} | Report StatefulSet state"
+  ansible.builtin.debug:
+    msg: >-
+      {{ kubernetes_app_namespace }}/StatefulSet/{{ item.metadata.name }}
+      desired={{ item.spec.replicas | default(0) }}
+      ready={{ item.status.readyReplicas | default(0) }}
+  loop: "{{ kubernetes_app_final_statefulsets.resources }}"
+  loop_control:
+    label: "{{ kubernetes_app_namespace }}/StatefulSet/{{ item.metadata.name }}"

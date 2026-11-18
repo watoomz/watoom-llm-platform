@@ -1,0 +1,49 @@
+---
+- name: Publish verified environment recovery bundles through the existing backup jail
+  hosts: homelab
+  become: true
+  gather_facts: false
+  vars:
+    watoom_backup_libexec: /usr/local/libexec/watoom-backup
+    watoom_recovery_keep: 2
+  tasks:
+    - name: Require an exact completed recovery run
+      ansible.builtin.assert:
+        that:
+          - watoom_recovery_run | default('') is match('^[0-9]{8}T[0-9]{6}Z$')
+    - name: Check the selected private recovery manifest
+      ansible.builtin.stat:
+        path: "/data/backups/recovery/{{ watoom_recovery_run }}/manifest.json"
+      register: recovery_manifest
+    - name: Refuse incomplete or missing captures
+      ansible.builtin.assert:
+        that:
+          - recovery_manifest.stat.exists
+          - recovery_manifest.stat.isreg
+    - name: Require the existing pull-only account
+      ansible.builtin.getent:
+        database: passwd
+        key: watoom-backup-pull
+    - name: Install existing reviewed backup export helpers
+      ansible.builtin.include_tasks: tasks/watoom-backup-libexec.yml
+    - name: Maintain only the separate environment receipt directory
+      ansible.builtin.file:
+        path: /data/backups/offhost/receipts/environment
+        state: directory
+        owner: watoom-backup-pull
+        group: watoom-backup-pull
+        mode: '0750'
+    - name: Publish verified runs without pruning application backups
+      ansible.builtin.command:
+        argv:
+          - /usr/bin/python3
+          - -I
+          - "{{ watoom_backup_libexec }}/backup_offhost.py"
+          - export
+          - --dest
+          - /data/backups/recovery
+          - --export
+          - /data/backups/offhost/export/environment
+          - --keep
+          - "{{ watoom_recovery_keep | string }}"
+      changed_when: true

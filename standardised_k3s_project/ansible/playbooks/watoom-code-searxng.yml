@@ -1,0 +1,10 @@
+---
+- name: Maintain only the native SearXNG search provider
+  hosts: homelab
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Install the maintained search provider without replacing user settings
+      ansible.builtin.import_role:
+        name: watoom-code
+        tasks_from: searxng

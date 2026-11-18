@@ -1,0 +1,21 @@
+---
+# Read-only SMB share of the projects folder for the rig (mapped as a drive). The rig only ever initiates the connection (it has no listening services).
+projects_share_name: projects
+projects_share_path: /data/ai/projects
+projects_share_user: rigshare             # SMB-only login: no shell, no home, no unix privileges
+projects_share_run_as: watoom             # unix user the files are read as (already has read access through the project ACLs)
+projects_share_bind: "{{ network.lan_cidr.split('/')[0] }}"
+projects_share_allowed_hosts:
+  - "{{ network.rig_host }}"
+projects_share_firewall_zone: FedoraServer
+projects_share_read_only: true            # flip to false only on purpose: a writable share lets the rig change project files
+# Files never served even to the authenticated rig login.
+projects_share_veto:
+  - .env
+  - .env.*
+  - "*.pem"
+  - "*.key"
+  - id_rsa*
+  - id_ed25519*
+  - "*.kdbx"
+  - "*.pfx"

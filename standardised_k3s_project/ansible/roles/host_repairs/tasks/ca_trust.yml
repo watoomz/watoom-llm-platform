@@ -1,0 +1,42 @@
+---
+- name: "CA Trust Steam | Install required trust packages"
+  ansible.builtin.dnf:
+    name:
+      - ca-certificates
+      - p11-kit-trust
+      - p11-kit-trust.i686
+      - openssl-libs.i686
+      - libcurl.i686
+      - nss.i686
+    state: present
+
+- name: "CA Trust Steam | Refresh trust store"
+  ansible.builtin.command: update-ca-trust extract
+  changed_when: false
+
+- name: "CA Trust Steam | Ensure /etc/ssl/certs exists"
+  ansible.builtin.file:
+    path: /etc/ssl/certs
+    state: directory
+    mode: "0755"
+
+- name: "CA Trust Steam | Reconcile /etc/pki/tls/certs/ca-bundle.crt"
+  ansible.builtin.file:
+    src: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+    dest: /etc/pki/tls/certs/ca-bundle.crt
+    state: link
+    force: true
+
+- name: "CA Trust Steam | Reconcile /etc/ssl/certs/ca-certificates.crt"
+  ansible.builtin.file:
+    src: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+    dest: /etc/ssl/certs/ca-certificates.crt
+    state: link
+    force: true
+
+- name: "CA Trust Steam | Reconcile /etc/ssl/certs/ca-bundle.crt"
+  ansible.builtin.file:
+    src: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+    dest: /etc/ssl/certs/ca-bundle.crt
+    state: link
+    force: true

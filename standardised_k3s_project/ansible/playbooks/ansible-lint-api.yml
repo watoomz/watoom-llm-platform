@@ -1,0 +1,8 @@
+---
+- name: Reconcile ansible-lint API host service
+  hosts: homelab
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: ansible_lint_api

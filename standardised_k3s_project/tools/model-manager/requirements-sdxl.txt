@@ -1,0 +1,9 @@
+# Versions require image build and generation validation before activation.
+diffusers==0.36.0
+transformers==4.57.3
+accelerate==1.12.0
+safetensors==0.7.0
+peft==0.18.0
+Pillow==12.0.0
+
+huggingface-hub==0.36.0

@@ -1,0 +1,20 @@
+# Managed by Ansible (roles/moss-image). The unit name is fixed: the GPU controller verifies that the
+# caller is the MainPID of watoom-moss-image.service.
+[Unit]
+Description=MOSS Image Studio (GPU sessions via the WatooM GPU controller)
+After=network.target k3s.service watoom-gpu-controller.service
+Wants=watoom-gpu-controller.service
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/python3 -I {{ moss_image_project_root }}/tools/moss-image/moss_image_service.py --gpu-gate controller --host {{ moss_image_host }} --port {{ moss_image_port }} --quiet-seconds {{ moss_image_quiet_seconds }} --session-idle {{ moss_image_session_idle }} --session-max {{ moss_image_session_max }}{{ (' --llm-demand-url ' ~ moss_image_llm_demand_url) if moss_image_llm_demand_url else '' }}
+ExecStopPost=/usr/bin/python3 -I {{ moss_image_project_root }}/tools/moss-image/gpu_recover.py
+Restart=on-failure
+RestartSec=10
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+
+[Install]
+WantedBy=multi-user.target

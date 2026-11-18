@@ -1,0 +1,23 @@
+{
+  "sourceCommit": "c822b63210dcad13bd8aeb4a20364b73143f6f24",
+  "baseCommit": "240150d96e544d1cc39a64493f3bf9817162a3ce",
+  "image": "127.0.0.1:5000/watoom-code@sha256:0000879e92ab9dc356b4443df759def2755ba0abd3eb401f03d5068bc7957f67",
+  "bundle": "watoom-code-production-context-20261029.bundle",
+  "bundleSha256": "00f6048fb579614d672cf243d66af01c27432170fc56c597e865ee3fba369a91",
+  "applicationOnly": true,
+  "updatesCapabilities": false,
+  "checks": {
+    "compactionTests": 26,
+    "assertions": 200,
+    "coreTypecheck": "PASS",
+    "lint": "PASS",
+    "rootCheck": "BLOCKED: turbo SIGSEGV; package typecheck and application build pass"
+  },
+  "productionDependencies": [
+    "rig integrations",
+    "Bazzite",
+    "grouped Skills",
+    "AgentMemory",
+    "single GPU controller"
+  ]
+}

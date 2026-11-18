@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="${ROOT:-/data/github/watoom-standardised-homelab/standardised_k3s_project}"
+
+export ANSIBLE_CONFIG="$ROOT/ansible/ansible.cfg"
+
+if [[ $# -lt 1 ]]; then
+    echo "Usage: $0 <playbook> [ansible-playbook options...]" >&2
+    exit 2
+fi
+
+PLAYBOOK="$1"
+shift
+
+case "$PLAYBOOK" in
+    "$ROOT"/*)
+        ;;
+    ansible/*)
+        PLAYBOOK="$ROOT/$PLAYBOOK"
+        ;;
+    playbooks/*)
+        PLAYBOOK="$ROOT/ansible/$PLAYBOOK"
+        ;;
+    *)
+        PLAYBOOK="$ROOT/ansible/playbooks/$PLAYBOOK"
+        ;;
+esac
+
+if [[ ! -f "$PLAYBOOK" ]]; then
+    echo "ERROR: playbook not found: $PLAYBOOK" >&2
+    exit 1
+fi
+
+exec ansible-playbook "$PLAYBOOK" "$@"

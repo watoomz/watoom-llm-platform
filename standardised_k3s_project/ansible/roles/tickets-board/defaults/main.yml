@@ -1,0 +1,31 @@
+---
+# Tickets board (kanban) at https://glance.internal.homelab.example/tickets/: UI pod + root broker over the existing ticket store.
+# Same shape as the skill-editor role. Design: tools/tickets/kanban-design.md.
+tickets_board_namespace: glance
+# uid/gid 1011 (proposed in the design) is the host user "codex"; the broker accepts its socket peer by uid, so the UI
+# uid must not belong to any host account. 1012 was free on 2026-11-17 (skill-editor uses 1010).
+tickets_board_uid: 1012
+tickets_board_gid: 1012
+tickets_board_origin: https://glance.internal.homelab.example
+tickets_board_host: glance.internal.homelab.example
+tickets_board_prefix: /tickets
+tickets_board_port: 8789
+tickets_board_image: docker.io/library/python@sha256:6d43704baacd1bfbe7c295d7f13079d5d8104ed33568873133f8fc69980419df
+tickets_board_app_root: /app/tickets-board
+tickets_board_state: /data/ai/helper-scripts/state/tickets-board
+tickets_board_socket_dir: /data/ai/helper-scripts/state/tickets-board/socket
+tickets_board_private_dir: /data/ai/private/tickets-board
+tickets_board_service_name: watoom-tickets-board-broker
+tickets_board_store_dir: /data/ai/tickets
+tickets_board_agents_file: /data/ai/tickets/agents.json
+tickets_board_webhook_file: /data/ai/secrets/discord_tickets_webhook
+# The CLI the sessions, timers and broker share (one ticket.py, installed in the same task as the broker's copy).
+tickets_board_cli: /usr/local/bin/watoom-ticket
+# Registry (kanban-design.md 3.1, owner decision 1). It only seeds ids, labels and aliases: any other model that claims a
+# ticket ("model:<name>" from the queue path) gets a WIP lane automatically, with no change here. Exactly one role: owner.
+# Every role: agent entry also gets a bearer token for the HTTP API (tokens/<id> on the host, root 0600).
+tickets_board_agents:
+  - {id: owner, label: Owner, role: owner, lane: false, aliases: [root, watoom]}
+  - {id: claude-sonnet, label: Sonnet, role: agent, lane: true, aliases: [claude-sonnet-3a]}
+  - {id: claude-sabre, label: Sabre, role: agent, lane: true, aliases: [claude-sabre-fd]}
+  - {id: "model:Swift-Qwen-coder", label: Swift Qwen coder, role: agent, lane: true, aliases: []}

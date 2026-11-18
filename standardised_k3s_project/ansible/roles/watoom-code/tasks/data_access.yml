@@ -1,0 +1,23 @@
+---
+- name: Inspect existing Toolkit receipt directory
+  ansible.builtin.stat:
+    path: /data/ai/toolkit/resume-runs
+    follow: false
+  register: watoom_code_toolkit_receipts
+- name: Maintain read-only application access to Toolkit receipts
+  when:
+    - watoom_code_toolkit_receipts.stat.isdir | default(false)
+    - not (watoom_code_toolkit_receipts.stat.islnk | default(false))
+  block:
+    - name: Permit application traversal of Toolkit state root
+      ansible.builtin.command:
+        argv: [setfacl, -m, 'u:1001:rx', /data/ai/toolkit]
+      changed_when: false
+    - name: Permit application read of existing bounded Toolkit receipts
+      ansible.builtin.command:
+        argv: [setfacl, -R, -m, 'u:1001:r-X', /data/ai/toolkit/resume-runs]
+      changed_when: false
+    - name: Inherit application read on new Toolkit receipt directories
+      ansible.builtin.command:
+        argv: [find, /data/ai/toolkit/resume-runs, -xdev, -type, d, -exec, setfacl, -m, 'd:u:1001:r-x', '{}', '+']
+      changed_when: false

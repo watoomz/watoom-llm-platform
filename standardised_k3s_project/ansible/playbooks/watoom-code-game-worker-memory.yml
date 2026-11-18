@@ -1,0 +1,21 @@
+---
+- name: Activate controller-owned CPU game worker handoff
+  hosts: homelab
+  become: true
+  tasks:
+    - name: Install reviewed controller service module
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../../tools/llm/watoom-gpu-controller/g3h_service.py"
+        dest: /data/ai/helper-scripts/gpu-controller/g3h_service.py
+        mode: '0600'
+        owner: root
+        group: root
+      register: cpu_controller_module
+    - name: Activate reviewed controller service module
+      ansible.builtin.systemd_service:
+        name: watoom-gpu-controller.service
+        state: "{{ 'restarted' if cpu_controller_module.changed else 'started' }}"
+    - name: Install maintained worker units
+      ansible.builtin.include_role:
+        name: watoom-code
+        tasks_from: game_worker.yml

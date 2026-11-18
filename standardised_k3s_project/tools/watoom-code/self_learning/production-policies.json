@@ -1,0 +1,22 @@
+[
+  {
+    "id": "verified-godot-import",
+    "description": "Validate a Godot project import using its existing bounded CPU worker and current source revision",
+    "tool": "watoom_game_worker",
+    "match": {"action": "status", "operation": "import"},
+    "verifier": "native-cpu-worker-v1",
+    "steps": ["Request the existing native watoom_game_worker import operation with a stable job identity after inspecting the project invocation.", "Use the same job identity to read its terminal status; do not duplicate an admitted request or run import in the app shell.", "Match the root-owned status and receipt to the current source fingerprint; require actual PASS and no import errors."],
+    "validation": "Root-owned matching COMPLETED status, unchanged current source fingerprint, import PASS, source_unchanged true and empty errors. Import is technical evidence and does not establish visual acceptance.",
+    "recovery": "Retain the original request, source and partial cache. Inspect its captured error evidence and repair the cause before requesting a new revision. Never delete caches or change GPU/model ownership automatically."
+  },
+  {
+    "id": "verified-godot-regression",
+    "description": "Verify Godot regression tests through the existing bounded CPU worker without changing the live project",
+    "tool": "watoom_game_worker",
+    "match": {"action": "status", "operation": "regression"},
+    "verifier": "native-cpu-worker-v1",
+    "steps": ["Discover and preserve the project's existing test invocation and success baseline.", "Request the native watoom_game_worker regression operation once with a stable job identity.", "Read the same job's root-owned current-revision receipt; require test success, no runtime errors, and an untouched original project."],
+    "validation": "Current source fingerprint equals the matching root-owned COMPLETED status. Receipt PASS, exit_status 0, summary.failed 0, summary.passed positive, runtime_error_count 0, original_project_untouched true, and live_source_still_matches_snapshot true.",
+    "recovery": "Preserve the worker snapshot and logs; inspect failed test and runtime-error examples. Correct only the task-owned cause, and rerun through the existing admission mechanism. No automatic infrastructure or permission changes."
+  }
+]

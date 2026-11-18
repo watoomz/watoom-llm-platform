@@ -1,0 +1,25 @@
+{
+  "sourceCommit": "64b56be16885ed34d0a40bcaaee8f89b1cd2390c",
+  "baseCommit": "e7e2c3c7fe67255ac87c0995fb920010513f5c5e",
+  "image": "127.0.0.1:5000/watoom-code@sha256:c770078a500a32b617e360cf4795e1bb11f4d53f78d028659c0da2a9ad86686d",
+  "supersedes": "127.0.0.1:5000/watoom-code@sha256:bd23e3802e40cf3a83ece5a93b1b83b74115ec5b553f35f40aeb979817987d3b",
+  "bundle": "watoom-code-loop-noop-execute-20261029.bundle",
+  "bundleSha256": "62e9e409a02da2c7d797bba9ee6ba5eb60f63e27ddddaaa245e42ed8a9c2ea5a",
+  "applicationOnly": true,
+  "updatesCapabilities": false,
+  "change": "Code Mode execute calls that invoke no tool count as no progress (three-attempt stop); unknown-tool error points to direct native tools",
+  "checks": {
+    "sessionLoopTests": "10/10",
+    "codemodeTests": "1373/1373",
+    "coreTypecheck": "PASS",
+    "routerTests": "4/4",
+    "selectorTests": "10/10"
+  },
+  "deployEvidence": "/data/ai/artifacts/watoom-code-production-consolidation/deploy-20261029T070913Z",
+  "guardDeployEvidence": "/data/ai/artifacts/bge-agentmemory/guard-39df13c",
+  "preserved": {
+    "sessions": 652,
+    "children": 562,
+    "projects": 79
+  }
+}

@@ -1,0 +1,14 @@
+[gd_scene load_steps=@STEPS@ format=3]
+
+[ext_resource type="PackedScene" path="res://metahuman/@NAME@/meshes/@BODY_GLB@" id="1_body"]
+[ext_resource type="PackedScene" path="res://metahuman/@NAME@/meshes/@HEAD_GLB@" id="2_head"]
+[ext_resource type="Script" path="res://metahuman/@NAME@/metahuman_setup.gd" id="3_setup"]
+@TEXTURE_RESOURCES@
+
+[node name="@NAME@" type="Node3D"]
+script = ExtResource("3_setup")
+@TEXTURE_PROPERTIES@
+
+[node name="Body" parent="." instance=ExtResource("1_body")]
+
+[node name="Head" parent="." instance=ExtResource("2_head")]

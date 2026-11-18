@@ -1,0 +1,24 @@
+{
+  "repository": "ajgazin/Swift-1.5-Qwen3.8-27B-Uncensored-Dynamic-MTP-GGUF",
+  "revision": "540448475b2a84843fa2a54fcfd9c888de8a99ca",
+  "directory": "/data/ai/models/gguf/swift-1.5-qwen3.8-27b-uncensored-dynamic-mtp",
+  "files": [
+    {
+      "name": "Swift-1.5-Qwen3.8-27B-Uncensored-Dynamic-MTP-UD-IQ4_XS.gguf",
+      "size": 14252844672,
+      "sha256": "9341ee462261bde1dc357ca995704b6a6541852c74c11e89ec490418cdc0051b"
+    },
+    {
+      "name": "mmproj-BF16.gguf",
+      "size": 931145888,
+      "sha256": "19acd7fcf4ee504328566eddf0f8e603ef853a205b4830209d2a4908213abdea"
+    }
+  ],
+  "deployment": "llama-cpp-swift-qwen38-coder",
+  "server_alias": "swift-qwen38-coder",
+  "quant": "UD-IQ4_XS",
+  "context": 131072,
+  "mtp": "draft-mtp",
+  "draft_max": 4,
+  "projector_offload": false
+}

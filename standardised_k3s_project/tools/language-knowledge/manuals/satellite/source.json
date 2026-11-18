@@ -1,0 +1,81 @@
+{
+  "schema": 1,
+  "product": "satellite",
+  "version": "satellite-6.x via foreman/katello/hammer-cli upstream",
+  "language": "shell",
+  "license": "per each upstream repository (GPLv3/MIT, see each repo's own LICENSE)",
+  "trust_tier": "vendor_doc",
+  "note": "Red Hat Satellite is built directly on the open-source Foreman + Katello + Hammer CLI stack (Satellite's own hammer CLI is the same hammer-cli-foreman/hammer-cli-katello plugins, and Satellite's content management is Katello/Pulp). Red Hat's own Satellite docs (docs.redhat.com) return HTTP 403 to automated clients -- verified directly 2026-11-13, same block already documented in manuals/rhel-admin/source.json for RHEL -- so this pack is NOT built from docs.redhat.com. Instead it is built from the real upstream project documentation that Satellite ships verbatim: hammer-cli-foreman's doc/ (CLI config, auth, host creation flags, name/ID resolution, option builders, plugin authoring), hammer-cli's and hammer-cli-katello's README files, Katello's README, and katello-client-bootstrap's README (the real bootstrap.py host-registration script used to register RHEL clients to Foreman+Katello/Satellite, covering activation keys, organizations, locations, content-only registration, and legacy Satellite 5/RHN migration). Coverage is strongest on hammer CLI usage and host registration/activation-key workflows; content-view/lifecycle-environment internals and the REST API are only covered where the stored sources happen to mention them (e.g. host-create's --content-view/--lifecycle-environment flags), not as dedicated guides -- no verbatim, fetchable dedicated Katello content-management guide or Foreman REST API guide was found during a real search (katello.org and the Katello/Foreman GitHub orgs do not host one as plain fetchable text); do not claim this pack covers content-view/lifecycle-environment or REST API usage beyond what is literally in these entries.",
+  "pages": [
+    {
+      "title": "hammer-cli-foreman-configuration.md",
+      "uri": "https://github.com/theforeman/hammer-cli-foreman/blob/master/doc/configuration.md",
+      "file": "hammer-cli-foreman-configuration.md",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "hammer-cli-foreman-host_create.md",
+      "uri": "https://github.com/theforeman/hammer-cli-foreman/blob/master/doc/host_create.md",
+      "file": "hammer-cli-foreman-host_create.md",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "hammer-cli-foreman-using_hammer_cli_foreman_command.md",
+      "uri": "https://github.com/theforeman/hammer-cli-foreman/blob/master/doc/using_hammer_cli_foreman_command.md",
+      "file": "hammer-cli-foreman-using_hammer_cli_foreman_command.md",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "hammer-cli-foreman-name_id_resolution.md",
+      "uri": "https://github.com/theforeman/hammer-cli-foreman/blob/master/doc/name_id_resolution.md",
+      "file": "hammer-cli-foreman-name_id_resolution.md",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "hammer-cli-foreman-option_builder.md",
+      "uri": "https://github.com/theforeman/hammer-cli-foreman/blob/master/doc/option_builder.md",
+      "file": "hammer-cli-foreman-option_builder.md",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "hammer-cli-foreman-plugin.md",
+      "uri": "https://github.com/theforeman/hammer-cli-foreman/blob/master/doc/plugin.md",
+      "file": "hammer-cli-foreman-plugin.md",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "hammer-cli-readme.md",
+      "uri": "https://github.com/theforeman/hammer-cli/blob/master/README.md",
+      "file": "hammer-cli-readme.md",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "katello-readme.md",
+      "uri": "https://github.com/Katello/katello/blob/master/README.md",
+      "file": "katello-readme.md",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "hammer-cli-katello-readme.md",
+      "uri": "https://github.com/Katello/hammer-cli-katello/blob/master/README.md",
+      "file": "hammer-cli-katello-readme.md",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "katello-client-bootstrap-readme.md",
+      "uri": "https://github.com/Katello/katello-client-bootstrap/blob/master/README.md",
+      "file": "katello-client-bootstrap-readme.md",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    }
+  ]
+}

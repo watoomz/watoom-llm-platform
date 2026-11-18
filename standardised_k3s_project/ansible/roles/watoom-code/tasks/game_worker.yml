@@ -1,0 +1,96 @@
+---
+- name: Create private game worker registry
+  ansible.builtin.file:
+    path: /data/ai/private/game-worker
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+- name: Create private manifest hash cache (game_validation.manifest())
+  ansible.builtin.file:
+    path: /data/ai/private/manifest-cache
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+- name: Maintain explicit game worker project allowlist
+  ansible.builtin.copy:
+    dest: /etc/watoom-game-worker.json
+    owner: root
+    group: root
+    mode: '0600'
+    content: "{{ {'projects': (watoom_code_editable_project_scopes | map(attribute='project') | list + watoom_game_worker_extra_projects) | unique | list,
+                  'bazzite_operations': watoom_game_worker_bazzite_operations,
+                  'local_fallback': watoom_game_worker_local_fallback | bool} | to_nice_json }}"
+# Root timers must not execute from the (agent-writable) checkout, so the dispatcher runs from a root-owned release mirror. The dispatcher and its operator
+# scripts locate their helpers relative to the repo layout (HERE.parent.parent/ansible/roles/..., ../fab, ../ts4-animation), so the mirror keeps that layout
+# and holds exactly what they import or run. Installing only game_worker_bridge.py (commit bbde4d24) left every poll failing with ModuleNotFoundError.
+- name: Create the game worker release mirror root
+  ansible.builtin.file:
+    path: "{{ watoom_game_worker_release_root }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+- name: Mirror the game worker dispatcher, operator scripts and the helpers they run into the root-owned release
+  ansible.posix.synchronize:
+    src: "{{ role_path }}/../../../{{ item.src }}"
+    dest: "{{ watoom_game_worker_release_root }}/standardised_k3s_project/{{ item.dest }}"
+    delete: true
+    recursive: true
+    owner: false
+    group: false
+    perms: false
+    rsync_opts: "{{ ['--mkpath', '--chown=root:root', '--chmod=D755,F644', '--exclude=__pycache__/', '--exclude=*.pyc'] + item.filters }}"
+  loop:
+    - {src: "tools/watoom-code/", dest: "tools/watoom-code/", filters: ['--exclude=test_*', '--exclude=test-*', '--include=/*.py', '--include=/*.json', '--exclude=/*']}
+    - {src: "tools/fab/", dest: "tools/fab/", filters: ['--include=/*.py', '--include=/*.json', '--exclude=/*']}
+    - {src: "tools/ts4-animation/", dest: "tools/ts4-animation/", filters: ['--include=/retarget_contract.py', '--exclude=/*']}
+    - {src: "ansible/roles/watoom-code/files/skills/", dest: "ansible/roles/watoom-code/files/skills/", filters: ['--exclude=test_*', '--exclude=fixtures/']}
+  loop_control:
+    label: "{{ item.dest }}"
+  register: watoom_game_worker_release
+- name: Install bounded game request worker
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/watoom-game-worker.service
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Dispatch native admitted bounded game validation
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/bin/python3 {{ watoom_game_worker_release_root }}/standardised_k3s_project/tools/watoom-code/game_worker_bridge.py
+      ExecStopPost=/usr/bin/python3 {{ watoom_game_worker_release_root }}/standardised_k3s_project/tools/watoom-code/game_worker_bridge.py --recover-cpu
+      TimeoutStopSec=65min
+      Nice=15
+      CPUQuota=100%
+      MemoryMax=768M
+      MemorySwapMax=0
+      TimeoutStartSec=60min
+      # The HDD uses the bfq scheduler: give this job's disk reads a lower share so the GUI's database reads are not starved.
+      IOWeight=20
+      KillMode=control-group
+- name: Install game request poll timer
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/watoom-game-worker.timer
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Check admitted native Godot worker requests
+      [Timer]
+      OnBootSec=2min
+      OnUnitInactiveSec=30s
+      # Default 1min accuracy let systemd batch this onto the 5s RIG dispatcher wakeup; the RIG run
+      # then held the shared worker lock and this poll skipped, delaying zas-regression-4 by ~2 minutes.
+      AccuracySec=1s
+      Unit=watoom-game-worker.service
+      [Install]
+      WantedBy=timers.target
+  register: watoom_game_worker_timer_unit
+- name: Enable native game worker dispatch
+  ansible.builtin.systemd_service:
+    name: watoom-game-worker.timer
+    # restart only the timer when its schedule changed; a running poll is a separate oneshot and is not touched
+    state: "{{ 'restarted' if watoom_game_worker_timer_unit is changed else 'started' }}"
+    enabled: true
+    daemon_reload: true

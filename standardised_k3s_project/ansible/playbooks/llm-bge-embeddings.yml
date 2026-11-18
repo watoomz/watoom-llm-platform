@@ -1,0 +1,84 @@
+---
+# BGE Small v1.5 embeddings for AgentMemory (WP2/WP3), CPU-only by default (bge_gpu_layers: 0; 99 restores the GPU layout).
+# Installs the pinned model (official revision + verified GGUF conversion), then the
+# llama.cpp server and chunking proxy. AgentMemory uses it only when the watoom-code
+# role runs with watoom_code_memory_embeddings: true.
+- name: Deploy BGE embeddings (CPU by default)
+  hosts: homelab
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../vars/bge-embeddings.yml
+  vars:
+    bge_tools: "{{ playbook_dir }}/../../tools/llm/bge"
+    bge_proxy_sha256: "{{ lookup('ansible.builtin.file', bge_tools + '/embed_proxy.py') | hash('sha256') }}"
+    bge_objects: "{{ lookup('ansible.builtin.template', 'templates/bge-embeddings.yml.j2') | ansible.builtin.from_yaml_all | list }}"
+  tasks:
+    - name: Maintain the model directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      loop:
+        - "{{ bge_model_dir }}"
+        - "{{ bge_model_dir }}/hf-{{ bge_hf_revision }}"
+        - "{{ bge_model_dir }}/hf-{{ bge_hf_revision }}/1_Pooling"
+    - name: Install the official BGE revision (checksum-pinned)
+      ansible.builtin.get_url:
+        url: "https://huggingface.co/{{ bge_hf_repo }}/resolve/{{ bge_hf_revision }}/{{ item.key }}"
+        dest: "{{ bge_model_dir }}/hf-{{ bge_hf_revision }}/{{ item.key }}"
+        checksum: "sha256:{{ item.value }}"
+        mode: '0644'
+      loop: "{{ bge_hf_files | dict2items }}"
+      loop_control: {label: "{{ item.key }}"}
+    - name: Install the GGUF conversion (checksum-pinned)
+      ansible.builtin.get_url:
+        url: "https://huggingface.co/{{ bge_gguf_repo }}/resolve/{{ bge_gguf_revision }}/{{ bge_gguf_file }}"
+        dest: "{{ bge_model_dir }}/{{ bge_gguf_file }}"
+        checksum: "sha256:{{ bge_gguf_sha256 }}"
+        mode: '0644'
+    - name: Prove the GGUF equals the official weights, tokenizer and pooling
+      ansible.builtin.command:
+        argv: [python3, -I, "{{ bge_tools }}/verify_gguf.py", "{{ bge_model_dir }}/{{ bge_gguf_file }}", "{{ bge_model_dir }}/hf-{{ bge_hf_revision }}"]
+      changed_when: false
+    - name: Publish the chunking proxy
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata: {name: "{{ bge_name }}-proxy", namespace: "{{ bge_namespace }}"}
+          data:
+            embed_proxy.py: "{{ lookup('ansible.builtin.file', bge_tools + '/embed_proxy.py') }}"
+    - name: Apply the BGE Service and NetworkPolicy
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ bge_objects | rejectattr('kind', 'equalto', 'Deployment') | list }}"
+    # Separate task: wait_condition applies to every object, and only a Deployment reports Available.
+    - name: Apply the BGE Deployment and wait until Available
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ bge_objects | selectattr('kind', 'equalto', 'Deployment') | first }}"
+        wait: true
+        wait_condition: {type: Available, status: "True"}
+        wait_timeout: 300
+    - name: Read the Service address (the host cannot resolve cluster DNS)
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Service
+        namespace: "{{ bge_namespace }}"
+        name: "{{ bge_name }}"
+      register: bge_service
+    - name: Check a 384-dimension embedding through the Service
+      ansible.builtin.uri:
+        url: "http://{{ bge_service.resources[0].spec.clusterIP }}:8000/v1/embeddings"
+        method: POST
+        body_format: json
+        body: {input: "kubectl rollout status for the watoom-code deployment"}
+      register: bge_probe
+      retries: 10
+      delay: 6
+      until: bge_probe.status == 200
+      failed_when: (bge_probe.json.data[0].embedding | length) != 384

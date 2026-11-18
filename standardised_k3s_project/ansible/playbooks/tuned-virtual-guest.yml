@@ -1,0 +1,10 @@
+---
+# AAP entry point for applying the TuneD virtual-guest profile to Fedora hosts.
+- name: Configure TuneD virtual-guest profile
+  hosts: homelab
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: tuned_virtual_guest
+      tags: [tuning, tuned]

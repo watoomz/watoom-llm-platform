@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "product": "watoom-unreal-combat",
+  "version": "snapshot-2026-11-19b",
+  "language": "internal operational guidance",
+  "license": "proprietary",
+  "trust_tier": "internal_doc",
+  "note": "First-party WatooM guidance for networked Unreal 5.8 combat on GAS (WatooMCombat plugin, unreal_combat.py, unreal_niagara_fx.py), copied byte-for-byte from ansible/roles/watoom-code/files/skills/watoom-unreal-combat/ (SKILL.md, references/combat.md) on 2026-11-19 (refreshed after T-0023/T-0024 the same night). Generators covered by unit tests; every measured number in combat.md was read on the rig (UE 5.8.4) in PIE standalone and listen server + client on 2026-11-18/19 (T-0063).",
+  "pages": [
+    {
+      "file": "SKILL.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-unreal-combat/SKILL.md"
+    },
+    {
+      "file": "combat.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-unreal-combat/references/combat.md"
+    }
+  ]
+}

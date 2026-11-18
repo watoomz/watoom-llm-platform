@@ -1,0 +1,21 @@
+---
+- name: Check owner-added Sims source library
+  ansible.builtin.stat:
+    path: /data/ai/assets/sims
+  register: sims_library_root
+- name: Install the Sims library ACL script to a root-owned path
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../tools/assets/sims_library.py"
+    dest: /data/ai/helper-scripts/watoom-code/sims_library.py
+    owner: root
+    group: root
+    mode: '0755'
+  when: sims_library_root.stat.isdir | default(false)
+- name: Maintain scoped source-read ACLs and default inheritance
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/python3
+      - /data/ai/helper-scripts/watoom-code/sims_library.py
+  when: sims_library_root.stat.isdir | default(false)
+  register: sims_library_access
+  changed_when: "(sims_library_access.stdout | from_json).acl_changed | bool"

@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Tickets (to-do list with Discord alerts) · Agent Export</title><meta name="description" content="The shared to-do list for you and the models. How to log, start, block and finish an item, how the models use it without running commands, what appears in Discord, and what to check when something does not show up."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link active" aria-current="page" href="/guide/tickets.html">Tickets</a><div class="toc"><a class="toc-link" href="#what-it-is">What it is</a><a class="toc-link" href="#using-it-yourself">Using it yourself</a><a class="toc-link" href="#how-the-models-use-it">How the models use it</a><a class="toc-link" href="#in-discord">In Discord</a><a class="toc-link" href="#setup-and-files">Setup and files</a><a class="toc-link" href="#troubleshooting">Troubleshooting</a></div><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">Tickets</p><h1>Tickets (to-do list with Discord alerts)</h1><p class="lede">The shared to-do list for you and the models. How to log, start, block and finish an item, how the models use it without running commands, what appears in Discord, and what to check when something does not show up.</p></header>
+<div class="content">
+<h2 id="what-it-is">What it is</h2>
+<p>A small shared to-do list so nothing is forgotten, whether you or a model noticed it. Every ticket has an id (<code>T-0001</code>), a title, a status, a priority, an optional project and PR or commit link, and a history of notes. Every new ticket, status change and note is posted to your Discord channel, and a digest of everything still open is posted at 08:30 each day.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>open</code></td>
+<td>Logged, nobody has started it</td>
+</tr>
+<tr>
+<td><code>doing</code></td>
+<td>Someone is working on it now</td>
+</tr>
+<tr>
+<td><code>blocked</code></td>
+<td>Waiting for you or for something outside the work (the latest note says what)</td>
+</tr>
+<tr>
+<td><code>done</code></td>
+<td>Finished and checked (the note says how; a PR or commit link is attached when there is one)</td>
+</tr>
+<tr>
+<td><code>dropped</code></td>
+<td>Cancelled. Only you can set this; models cannot</td>
+</tr>
+</tbody>
+</table></div>
+<p>Priorities are <code>high</code>, <code>normal</code> and <code>low</code>; lists show high first.</p>
+<h2 id="using-it-yourself">Using it yourself</h2>
+<p>Run these on the server. <code>watoom-ticket</code> is installed at <code>/usr/local/bin/watoom-ticket</code> (source <code>tools/tickets/ticket.py</code>).</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Log something</td>
+<td><code>watoom-ticket add &quot;Fix the creek gap&quot; --priority high --project game --body &quot;Details and full paths&quot;</code></td>
+</tr>
+<tr>
+<td>See what is open</td>
+<td><code>watoom-ticket list</code> (add <code>--all</code> for finished ones, <code>--project game</code> to filter)</td>
+</tr>
+<tr>
+<td>Read one ticket with its notes</td>
+<td><code>watoom-ticket show T-0004</code></td>
+</tr>
+<tr>
+<td>Start, block or finish</td>
+<td><code>watoom-ticket status T-0004 doing</code>, <code>... blocked --note &quot;needs the webhook&quot;</code>, <code>... done --note &quot;verified in the viewport&quot; --pr &lt;commit or URL&gt;</code></td>
+</tr>
+<tr>
+<td>Add a note</td>
+<td><code>watoom-ticket note T-0004 &quot;tried a deeper carve, still buried at 17-23&quot;</code></td>
+</tr>
+<tr>
+<td>Post the open list now</td>
+<td><code>watoom-ticket digest</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>The tickets live in <code>/data/ai/tickets/tickets.json</code>. It is one file with atomic, locked writes, so the commands and the models can use it at the same time.</p>
+<h2 id="how-the-models-use-it">How the models use it</h2>
+<p>Models cannot run commands, so they write small request files and a timer turns them into ticket changes within about two minutes. This is the same pattern as the change-request and ESP32 queues.</p>
+<ol>
+<li>The model reads <code>&lt;project&gt;/.opencode/tickets/OPEN-TICKETS.md</code>, a generated list of every open ticket. It uses it to avoid duplicates and to find ticket ids.</li>
+<li>It writes <code>&lt;project&gt;/.opencode/tickets/&lt;id&gt;.json</code>, where the id is lower-case letters, digits and dashes and is the same as the file name.</li>
+<li><code>watoom-tickets-ingest.timer</code> runs every 2 minutes, applies each new request once (oldest first, so a later &quot;done&quot; wins), and writes <code>&lt;id&gt;.status.json</code> next to it with <code>created</code>, <code>updated</code> or <code>rejected</code> and the reason.</li>
+</ol>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Request</th>
+<th>File content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Create</td>
+<td><code>{&quot;schema&quot;:1,&quot;id&quot;:&quot;creek-gap&quot;,&quot;title&quot;:&quot;Creek 2 still buried&quot;,&quot;body&quot;:&quot;details&quot;,&quot;priority&quot;:&quot;high&quot;,&quot;project&quot;:&quot;game&quot;}</code></td>
+</tr>
+<tr>
+<td>Start, block, finish</td>
+<td><code>{&quot;schema&quot;:1,&quot;id&quot;:&quot;creek-gap-start&quot;,&quot;action&quot;:&quot;status&quot;,&quot;ticket&quot;:&quot;T-0007&quot;,&quot;status&quot;:&quot;doing&quot;,&quot;note&quot;:&quot;re-carving&quot;}</code> (statuses <code>open</code>, <code>doing</code>, <code>blocked</code>, <code>done</code>; optional <code>pr</code>)</td>
+</tr>
+<tr>
+<td>Note</td>
+<td><code>{&quot;schema&quot;:1,&quot;id&quot;:&quot;creek-gap-note&quot;,&quot;action&quot;:&quot;note&quot;,&quot;ticket&quot;:&quot;T-0007&quot;,&quot;text&quot;:&quot;buried at points 17-23&quot;}</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>The <code>watoom-tickets</code> skill and a short block in every assembled agent prompt (<code>_src/shared/73_tickets.md</code>) tell the models when to log a ticket: work they will not finish this turn, a problem outside their task, something left blocked, or you saying &quot;remember&quot; or &quot;don't forget&quot;. The models are told to mark a ticket <code>done</code> only when it is finished and verified, and to say how in the note.</p>
+<blockquote class="callout callout-note" data-kind="Note">
+<p>A model-created ticket shows <code>model:&lt;project folder&gt;</code> as its author in the ticket and in Discord. Your own commands show your user name.</p>
+</blockquote>
+<h2 id="in-discord">In Discord</h2>
+<p>Each change is one message with the ticket id, title, status colour (blue open, amber doing, red blocked, green done, grey dropped), priority, project, the PR or commit link and the latest note. The daily digest lists every open ticket, highest priority first. Discord is only a notification: the source of truth is <code>/data/ai/tickets/tickets.json</code>, and a failed post never blocks a ticket change.</p>
+<h2 id="setup-and-files">Setup and files</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Webhook</td>
+<td>The channel's webhook URL in the root-only file <code>/data/ai/secrets/discord_tickets_webhook</code> (change the path with <code>WATOOM_TICKET_WEBHOOK_FILE</code>). The URL is never printed, logged or stored in the tickets. To rotate it, create a new webhook in Discord (Channel Settings, Integrations) and overwrite the file.</td>
+</tr>
+<tr>
+<td>Timers</td>
+<td><code>watoom-tickets-ingest.timer</code> (every 2 minutes) and <code>watoom-tickets-digest.timer</code> (08:30 daily), units under <code>tools/tickets/</code>, installed to <code>/etc/systemd/system/</code></td>
+</tr>
+<tr>
+<td>Queue folders</td>
+<td><code>/data/ai/projects/*/*/.opencode/tickets</code> (only real directories, never symlinks; files over 16 KB are rejected)</td>
+</tr>
+<tr>
+<td>Test</td>
+<td><code>python3 tools/tickets/test_ticket.py</code> (10 tests, including a fake Discord server)</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote class="callout callout-rule" data-kind="Rule">
+<p>Tickets are posted to Discord, so never put secrets, tokens or webhook URLs in a title, body or note.</p>
+</blockquote>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause and fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A model's request never became a ticket</td>
+<td>Check for <code>&lt;id&gt;.status.json</code> next to it. No file after 2 minutes: <code>systemctl status watoom-tickets-ingest.timer</code>, and check the request is in a project folder matching <code>/data/ai/projects/*/*/.opencode/tickets</code>.</td>
+</tr>
+<tr>
+<td>Status says <code>rejected</code></td>
+<td>The <code>reason</code> says what is wrong: file name and <code>id</code> differ, <code>schema</code> is not 1, the ticket id does not exist, or a model tried to set <code>dropped</code>. The model sends a new request with a new id.</td>
+</tr>
+<tr>
+<td>Tickets are created but nothing appears in Discord</td>
+<td>The command prints <code>(not posted to Discord)</code> when the webhook file is missing or empty, and a one-line <code>discord: not sent (...)</code> error when Discord refuses it. Check the file exists and is the full URL; a deleted or rotated webhook needs the file replaced.</td>
+</tr>
+<tr>
+<td><code>OPEN-TICKETS.md</code> is old</td>
+<td>It is rewritten on every ingest run, so a stale time in its heading means the timer is not running.</td>
+</tr>
+<tr>
+<td>Two tickets for the same item</td>
+<td>Close the second with <code>watoom-ticket status T-00NN dropped --note &quot;duplicate of T-00MM&quot;</code>.</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/tickets.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

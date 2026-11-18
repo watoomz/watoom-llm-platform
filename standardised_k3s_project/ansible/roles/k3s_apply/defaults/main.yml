@@ -1,0 +1,7 @@
+---
+k3s_apply_groups:
+  - namespaces
+  - infrastructure
+  - media
+  - games
+  - rbac

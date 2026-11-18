@@ -1,0 +1,11 @@
+{
+  "upstream_commit": "71d031dab8bc6729504d11a78cbe91945401045f",
+  "original_skill_sha256": "f0b696e8144504c6563bbf58887a181e647e9c215e309223a806bc5123ca996b",
+  "files": {
+    "SKILL.md": "fde89a6ffa1b940317560a71202f7666866eed103573df17b723c6b3082c2783",
+    "scripts/_bpyx.py": "a3339ba8a678469e8ed29510e32a7331e0235202191ca4edb977af4720819b4b",
+    "scripts/gn_builder.py": "29985c6e329a778fdc665a9f4f12f22b0f536c4d66d6fb9d545b5c532a04a9a9",
+    "references/recipes.md": "9c2438db79ca4bcab6a89b62ef0e65868ccf140b4ffc7a7fb42d3ee0265cf976",
+    "references/upstream-SKILL.md": "f0b696e8144504c6563bbf58887a181e647e9c215e309223a806bc5123ca996b"
+  }
+}

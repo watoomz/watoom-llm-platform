@@ -1,0 +1,27 @@
+{
+  "profiles": [
+    {"id":"minimal","version":"1.0.0","extends":[],"capabilities":["native-core"],"skills":["watoom-core"]},
+    {"id":"developer","version":"1.0.0","extends":["minimal"],"capabilities":["developer"],"skills":["watoom-developer"]},
+    {"id":"homelab","version":"1.0.0","extends":["developer"],"capabilities":["homelab-inspection"],"skills":["watoom-homelab"]},
+    {"id":"ai-cuda","version":"1.0.0","extends":["developer"],"capabilities":["gpu-inspection","specialist-registry"],"skills":["watoom-ai-cuda"]},
+    {"id":"game-development","version":"1.0.0","extends":["developer"],"capabilities":["godot","blender","unreal"],"skills":["watoom-game-development"]},
+    {"id":"3d-generation","version":"1.0.0","extends":["game-development"],"capabilities":["vision-3d-inspector","procedural-generators","avian","spar3d","sf3d","hunyuan3d"],"skills":["watoom-3d-generation"]},
+    {"id":"full","version":"1.0.0","extends":["homelab","ai-cuda","3d-generation"],"capabilities":[],"skills":["watoom-full"]}
+  ],
+  "capabilities": [
+    {"id":"native-core","tools":["read","glob","grep","edit","question","skill"],"dependencies":[],"permission":"allow","optional":false},
+    {"id":"developer","tools":["shell","subagent","webfetch"],"dependencies":[],"permission":"ask","optional":false},
+    {"id":"homelab-inspection","tools":[],"dependencies":["kubectl"],"permission":"ask","optional":true},
+    {"id":"gpu-inspection","tools":[],"dependencies":["nvidia-smi"],"permission":"ask","optional":true},
+    {"id":"specialist-registry","tools":[],"dependencies":["specialist-adapter"],"permission":"ask","optional":true},
+    {"id":"godot","tools":[],"dependencies":["godot"],"permission":"ask","optional":true},
+    {"id":"blender","tools":[],"dependencies":["blender"],"permission":"ask","optional":true},
+    {"id":"unreal","tools":[],"dependencies":["unreal-editor"],"permission":"ask","optional":true},
+    {"id":"vision-3d-inspector","tools":[],"dependencies":["vision-3d-adapter"],"permission":"ask","optional":true},
+    {"id":"procedural-generators","tools":[],"dependencies":["procedural-adapter"],"permission":"ask","optional":true},
+    {"id":"avian","tools":[],"dependencies":["avian-approved-compatible-runtime"],"permission":"ask","optional":true},
+    {"id":"spar3d","tools":[],"dependencies":["spar3d-authorized-backend"],"permission":"ask","optional":true},
+    {"id":"sf3d","tools":[],"dependencies":["sf3d-authorized-backend"],"permission":"ask","optional":true},
+    {"id":"hunyuan3d","tools":[],"dependencies":["hunyuan3d-authorized-backend"],"permission":"ask","optional":true}
+  ]
+}

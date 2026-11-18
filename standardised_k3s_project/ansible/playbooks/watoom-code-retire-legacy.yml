@@ -1,0 +1,42 @@
+---
+- name: Retire only the archived and already idle legacy canary
+  hosts: homelab
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Require verified archive admission and original identities
+      ansible.builtin.assert:
+        that:
+          - watoom_legacy_archive_verified | default(false) | bool
+          - watoom_legacy_deployment_uid | length > 0
+    - name: Read legacy deployment
+      kubernetes.core.k8s_info:
+        api_version: apps/v1
+        kind: Deployment
+        namespace: opencode
+        name: opencode-v2-canary
+      register: legacy
+    - name: Read legacy pod consumers
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Pod
+        namespace: opencode
+        label_selectors: [app=opencode-v2-canary]
+      register: consumers
+    - name: Block any active or replaced workload
+      ansible.builtin.assert:
+        that:
+          - consumers.resources | length == 0
+          - legacy.resources | length == 0 or legacy.resources[0].spec.replicas == 0
+          - legacy.resources | length == 0 or legacy.resources[0].metadata.uid == watoom_legacy_deployment_uid
+    - name: Remove the archived obsolete workload and routes with UID preconditions
+      kubernetes.core.k8s:
+        state: absent
+        api_version: "{{ item.api_version }}"
+        kind: "{{ item.kind }}"
+        namespace: opencode
+        name: "{{ item.name }}"
+        delete_options:
+          preconditions:
+            uid: "{{ item.uid }}"
+      loop: "{{ watoom_legacy_resources }}"

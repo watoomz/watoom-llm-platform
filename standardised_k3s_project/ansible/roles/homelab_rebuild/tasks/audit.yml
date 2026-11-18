@@ -1,0 +1,52 @@
+---
+- name: "Homelab Rebuild | Audit uptime and memory"
+  ansible.builtin.shell: |
+    set -euo pipefail
+    uptime
+    free -h
+  args:
+    executable: /bin/bash
+  register: homelab_audit_memory
+  changed_when: false
+
+- name: "Homelab Rebuild | Audit disk usage"
+  ansible.builtin.shell: |
+    set -euo pipefail
+    df -hT / /app /data /var/lib/rancher /var/lib/docker 2>/dev/null || df -hT
+    du -xh --max-depth=2 /var/lib/rancher /var/lib/docker 2>/dev/null | sort -h | tail -n 20
+  args:
+    executable: /bin/bash
+  register: homelab_audit_disk
+  changed_when: false
+
+- name: "Homelab Rebuild | Audit tuning"
+  ansible.builtin.shell: |
+    set -euo pipefail
+    sysctl net.ipv4.ip_forward net.ipv4.tcp_congestion_control net.core.default_qdisc vm.swappiness fs.inotify.max_user_watches fs.file-max 2>/dev/null || true
+    tuned-adm active 2>/dev/null || true
+    journalctl --disk-usage 2>/dev/null || true
+  args:
+    executable: /bin/bash
+  register: homelab_audit_tuning
+  changed_when: false
+
+- name: "Homelab Rebuild | Audit Kubernetes and Docker"
+  ansible.builtin.shell: |
+    set -euo pipefail
+    docker system df 2>/dev/null || true
+    kubectl top nodes 2>/dev/null || true
+    kubectl top pods -A --sort-by=memory 2>/dev/null | tail -n 25 || true
+  args:
+    executable: /bin/bash
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  register: homelab_audit_services
+  changed_when: false
+
+- name: "Homelab Rebuild | Print audit summary"
+  ansible.builtin.debug:
+    msg:
+      - "{{ homelab_audit_memory.stdout_lines }}"
+      - "{{ homelab_audit_disk.stdout_lines }}"
+      - "{{ homelab_audit_tuning.stdout_lines }}"
+      - "{{ homelab_audit_services.stdout_lines }}"

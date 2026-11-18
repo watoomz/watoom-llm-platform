@@ -1,0 +1,6 @@
+{
+  "schema": 3,
+  "target": "mpfb",
+  "status": "BLOCKED",
+  "reason": "No verified MPFB install/source/revision/5.2 compatibility"
+}

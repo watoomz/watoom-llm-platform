@@ -1,0 +1,182 @@
+{
+{% if (watoom_code_kali_mcp_enabled | default(false)) or (watoom_code_mesh_enabled | default(false)) or (watoom_code_image_mcp_enabled | default(false)) or (watoom_code_unreal_mcp_enabled | default(false)) or (watoom_code_godot_mcp_enabled | default(false)) %}
+  "mcp": {
+    "servers": {
+{% if watoom_code_unreal_mcp_enabled | default(false) %}
+      "watoom-unreal": {
+        "type": "remote",
+        "url": "{{ watoom_code_unreal_mcp_url }}",
+        "headers": {"Authorization": "Bearer {file:/data/ai/unreal-mcp/token}"},
+        "oauth": false,
+        "protocol": "legacy",
+        "codemode": false,
+        "timeout": {"catalog": 30000, "execution": 120000}
+      }{% if (watoom_code_godot_mcp_enabled | default(false)) or (watoom_code_mesh_enabled | default(false)) or (watoom_code_kali_mcp_enabled | default(false)) or (watoom_code_image_mcp_enabled | default(false)) %},{% endif %}
+
+{% endif %}
+{% if watoom_code_godot_mcp_enabled | default(false) %}
+      "watoom-godot": {
+        "type": "local",
+        "command": ["ssh", "-i", "/config/watoom-tools/godot-mcp-credentials/key",
+                    "-o", "UserKnownHostsFile=/config/watoom-tools/godot-mcp-credentials/known_hosts",
+                    "-o", "StrictHostKeyChecking=yes", "-o", "BatchMode=yes",
+                    "-p", "{{ watoom_code_godot_mcp_port }}",
+                    "{{ watoom_code_godot_mcp_user }}@{{ watoom_code_godot_mcp_host }}"],
+        "timeout": {"catalog": 30000, "execution": 120000},
+        "codemode": false
+      }{% if (watoom_code_mesh_enabled | default(false)) or (watoom_code_kali_mcp_enabled | default(false)) or (watoom_code_image_mcp_enabled | default(false)) %},{% endif %}
+
+{% endif %}
+{% if watoom_code_mesh_enabled | default(false) %}
+      "watoom-llama-mesh": {
+        "type": "local",
+        "command": ["/usr/bin/python3", "/config/watoom-tools/watoom-llama-mesh.py", "mcp"],
+        "environment": {"WATOOM_MESH_ASSET_ROOT": "/data/ai/assets"},
+        "timeout": {"catalog": 30000, "execution": 3600000},
+        "codemode": true
+      }{% if (watoom_code_kali_mcp_enabled | default(false)) or (watoom_code_image_mcp_enabled | default(false)) %},{% endif %}
+{% endif %}
+{% if watoom_code_kali_mcp_enabled | default(false) %}
+      "watoom-kali": {
+        "type": "remote",
+        "url": "{{ watoom_code_kali_mcp_url }}",
+        "oauth": false,
+        "protocol": "legacy",
+        "codemode": true
+      }{% if watoom_code_image_mcp_enabled | default(false) %},{% endif %}
+{% endif %}
+{% if watoom_code_image_mcp_enabled | default(false) %}
+      "watoom-images": {
+        "type": "remote",
+        "url": "{{ watoom_code_image_mcp_url }}",
+        "headers": {"Authorization": "Bearer {file:/config/watoom-tools/image-credentials/token}"},
+        "oauth": false,
+        "protocol": "legacy",
+        "codemode": false,
+        "timeout": {"catalog": 30000, "execution": 30000}
+      }
+{% endif %}
+    }
+  },
+{% endif %}
+{# Keep outbound image bytes identical to those hashed by the coordinator guard. #}
+  "media": {"image": {"auto_resize": false}},
+  "experimental": {"subagent_depth": 2},
+  "plugins": ["/config/plugins/searxng-search", {"package": "/config/watoom-tools/coordinator-guard", "options": {"verifiedVisionModels": ["watoom/swift-qwen38-coder", "watoom/qwen38-uncensored-mtp", "watoom/tiel-coder-35b-a3b-mtp"]}}{% if watoom_code_image_mcp_enabled | default(false) %}, "/config/watoom-tools/image-scope"{% endif %}{% if watoom_code_dev_enabled | default(false) %}, {"package": "/config/watoom-tools/dev-workspace-{{ watoom_code_dev_package_sha }}", "options": {"host": "{{ watoom_code_dev_host }}", "user": "watoom-dev-run", "key": "/config/watoom-tools/dev-workspace-credentials/key", "knownHosts": "/config/watoom-tools/dev-workspace-credentials/known_hosts"}}{% endif %}],
+  "websearch": {"provider": "searxng"},
+  "model": "watoom/swift-qwen38-coder",
+  "default_agent": "watoom-workflow",
+  "providers": {
+    "watoom": {
+      "name": "WatooM Local LLM Router",
+      "package": "@opencode/ai/providers/openai-compatible",
+      "settings": {
+        "baseURL": "{{ watoom_code_router_url }}",
+        "watoomRouterDiscovery": true
+      },
+      "models": {
+        "tiel-coder-35b-a3b-mtp": {"modelID":"tiel-coder-35b-a3b-mtp","name":"CyberTiel Coder 35B-A3B MTP IQ4_XS","limit":{"context":100000,"output":{{ watoom_code_model_output_tokens | int }}},"capabilities":{"tools":true,"input":["text","image"],"output":["text"]}},
+        "qwen38-uncensored-mtp": {
+          "modelID": "qwen38-uncensored-mtp",
+          "name": "Qwen3.8 Uncensored MTP",
+          "capabilities": {"tools": true, "input": ["text", "image"], "output": ["text"]},
+          "limit": {"context": 100000, "output": {{ watoom_code_model_output_tokens | int }}}
+        },
+        "swift-qwen38-coder": {
+          "modelID": "swift-qwen38-coder",
+          "name": "Swift Qwen coder",
+          "capabilities": {
+            "tools": true,
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "limit": {
+            "context": {{ watoom_code_swift_context_tokens | int }},
+            "output": {{ watoom_code_model_output_tokens | int }}
+          }
+        },
+        "mm-73306b413506f44b": {
+          "modelID": "mm-73306b413506f44b",
+          "name": "Swift Qwen3.8 27B Original",
+          "capabilities": {
+            "tools": true,
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "limit": {
+            "context": 32768,
+            "output": {{ watoom_code_model_output_tokens | int }}
+          }
+        }
+      }
+    }
+  },
+  "skill_catalog": {
+    "database": "/state/catalog.sqlite",
+    "artifacts": "/state/skills",
+    "administration": true{% if watoom_code_skills_enabled %},
+    "collection": {{ watoom_code_skill_collection | tojson }}{% endif %}
+  },
+  "permissions": [
+    {
+      "action": "watoom_specialist_*",
+      "resource": "*",
+      "effect": "ask"
+    }
+  ],
+  "watoom_specialists": {
+    "entries": [
+      {
+        "descriptor": {
+          "id": "local-toolkit",
+          "capabilities": [
+            "3d.inspect",
+            "3d.generate",
+            "3d.repair"{% if watoom_code_creative_enabled %},
+            "asset.index", "asset.search", "asset.inspect", "asset.optimize",
+            "world.compose", "character.prepare", "material.derive"{% endif %}
+          ],
+          "backend": "watoom-toolkit",
+          "model": {
+            "model": "Blender5.2.3",
+            "modelSha256": "580aa8ba8bff3ac09781b9f0f9dc555cd429eb84d6d9c298223be15b79f55097",
+            "configurationSha256": "580aa8ba8bff3ac09781b9f0f9dc555cd429eb84d6d9c298223be15b79f55097",
+            "deploymentUID": "staging-toolkit-pinned-release",
+            "router": "none:cpu"
+          },
+          "execution": "cpu",
+          "inputSchema": "toolkit.3d/v1",
+          "outputSchema": "watoom-specialist/v1",
+          "timeoutMs": {{ 900000 if watoom_code_dungeon_enabled else 210000 if watoom_code_creative_enabled else 120000 }},
+          "maxInputBytes": 16384,
+          "resources": {
+            "cpuCores": {{ 2 if watoom_code_dungeon_enabled else 1 }},
+            "ramMiB": {{ 6144 if watoom_code_dungeon_enabled else 2048 }},
+            "gpuMiB": 0,
+            "diskMiB": 512
+          },
+          "requiredSkills": [],
+          "requiredTools": [],
+          "cancellation": "cooperative-abort",
+          "recovery": "positive-receipt-only",
+          "restoration": "exact-primary-identity",
+          "sourceCommit": "{{ watoom_code_toolkit_source_commit }}",
+          "evidence": "verified-source"
+        },
+        "backend": "toolkit-3d",
+        "url": "http://watoom-toolkit.{{ watoom_code_namespace }}.svc.cluster.local:8879",
+        "artifactRoot": "/generated",
+        "tokenEnv": "WATOOM_TOKEN"
+      }
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "output_root": "/data/ai/assets/generated/llama-mesh",
+  "namespace": "llama-cpp",
+  "backend_service": "llama-cpp-llama-mesh",
+  "model": "llama-mesh-q8",
+  "max_tokens": 4096,
+  "maximum_response_bytes": 8388608,
+  "size_cm": 100,
+  "blender": "blender"
+}

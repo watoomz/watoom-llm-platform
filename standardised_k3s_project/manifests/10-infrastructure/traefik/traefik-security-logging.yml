@@ -1,0 +1,23 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/part-of: monitoring
+spec:
+  valuesContent: |
+    additionalArguments:
+    - --global.checknewversion=false
+    - --global.sendanonymoususage=false
+    - --accesslog=true
+    - --accesslog.format=json
+    - --accesslog.fields.defaultmode=drop
+    - --accesslog.fields.headers.defaultmode=drop
+    - --accesslog.fields.names.StartUTC=keep
+    - --accesslog.fields.names.ClientHost=keep
+    - --accesslog.fields.names.ClientPort=keep
+    - --accesslog.fields.names.DownstreamStatus=keep
+    - --accesslog.fields.names.RequestMethod=keep
+    - --accesslog.fields.names.ServiceName=keep
+    - --accesslog.fields.names.RouterName=keep

@@ -1,0 +1,6 @@
+## Content-only Unreal map assembly
+For static grid/map authoring, first use the accepted editor's PythonScriptPlugin and EditorScriptingUtilities in a content-only project. A Python assembly script can create editable static-mesh actors and save/reopen a .umap; a custom C++ commandlet is not required. Do not add an editor module, install .NET, rebuild the engine or patch UBT merely to place actors.
+The published UE5.8.3 runtime contains its own Linux .NET10 under Engine/Binaries/ThirdParty/DotNet/10.0/linux-x64. PATH absence or a container's view is not a host-wide absence claim. Use actual supported interfaces and bounded evidence.
+The maintained operator reference route is tools/unreal/grid_layout.py plus grid-map-probe.py, executed through existing accept-render.py ownership/resource controls. Its existence does not grant agent sudo/host execution or establish a deployed native fixed_layout capability. If the installed session lacks assembly/render admission, report that precise access gap once; never substitute a speculative C++ build.
+A 26x19 grid has 494 total cells, not necessarily 494 walkable floors. Respect the source legend: shaded solid rock must not become walkable floor. Check walls/door openings and distinguish logical connectivity from actual Recast validation.
+

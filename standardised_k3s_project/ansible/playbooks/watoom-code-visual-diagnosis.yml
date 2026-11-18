@@ -1,0 +1,10 @@
+---
+- name: Activate maintained engine visual diagnosis
+  hosts: homelab
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Install maintained diagnosis skill, agent routing and templates
+      ansible.builtin.include_role:
+        name: watoom-code
+        tasks_from: visual_diagnosis.yml

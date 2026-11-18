@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Custom plugins, agents and integrations · Agent Export</title><meta name="description" content="Where WatooM&#x27;s custom application changes, native plugins, agents, skills, workers, memory and model integrations are implemented and deployed."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link active" aria-current="page" href="/guide/llm-extensions.html">Custom extensions</a><div class="toc"><a class="toc-link" href="#what-counts-as-an-extension">What counts as an extension</a><a class="toc-link" href="#native-plugin-lifecycle">Native plugin lifecycle</a><a class="toc-link" href="#skills-and-agent-definitions">Skills and agent definitions</a><a class="toc-link" href="#workers-and-receipts">Workers and receipts</a><a class="toc-link" href="#upstream-attribution-and-completeness">Upstream attribution and completeness</a><a class="toc-link" href="#registered-native-plugins">Registered native plugins</a><a class="toc-link" href="#current-worker-and-knowledge-integrations">Current worker and knowledge integrations</a><a class="toc-link" href="#what-s-new-2026-11-03-to-2026-11-07">What&#x27;s new (2026-11-03 to 2026-11-07)</a><a class="toc-link" href="#language-knowledge-and-agent-guidance">Language knowledge and agent guidance</a><a class="toc-link" href="#bazzite-first-heavy-work-and-rig-eligibility">Bazzite-first heavy work and RIG eligibility</a><a class="toc-link" href="#metahuman-package-conversion">MetaHuman package conversion</a><a class="toc-link" href="#outbound-rig-unreal-lane">Outbound RIG Unreal lane</a><a class="toc-link" href="#game-authoring-templates-terrain-and-asset-discovery">Game authoring, templates, terrain, and asset discovery</a><a class="toc-link" href="#asset-archives-zip-tar-7z-rar">Asset archives (zip, tar, 7z, rar)</a><a class="toc-link" href="#learning-loop-and-verification">Learning loop and verification</a><a class="toc-link" href="#guard-and-worker-handoff-corrections">Guard and worker-handoff corrections</a><a class="toc-link" href="#application-inference-and-observability-changes">Application, inference, and observability changes</a><a class="toc-link" href="#verification-status">Verification status</a></div><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">Custom extensions</p><h1>Custom plugins, agents and integrations</h1><p class="lede">Where WatooM&#x27;s custom application changes, native plugins, agents, skills, workers, memory and model integrations are implemented and deployed.</p></header>
+<div class="content">
+<h2 id="what-counts-as-an-extension">What counts as an extension</h2>
+<p>The environment contains several different extension layers. A native application plugin, an agent instruction, a skill, an MCP adapter and a host dispatcher are different contracts with different privileges. Preserve their source and deployment owners together. The application snapshot includes upstream interfaces and dependencies; their presence is not a claim that WatooM authored them or enabled every plugin.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Source</th>
+<th>Deployment/configuration owner</th>
+<th>Contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Application and UI customisations</td>
+<td>Separate pinned application checkout, distributed under <code>application/</code></td>
+<td>Application build and <code>watoom-code</code> role</td>
+<td>Native sessions, project picker, tool/UI integration and API schema</td>
+</tr>
+<tr>
+<td>Coordinator guard</td>
+<td><code>ansible/roles/watoom-code/files/coordinator-guard/</code></td>
+<td>Role <code>tasks/coordinator_guard.yml</code></td>
+<td>Native plugin hooks/storage; delegation budgets, child identity and receipts</td>
+</tr>
+<tr>
+<td>Image scope</td>
+<td><code>ansible/roles/watoom-code/files/image-scope/</code></td>
+<td>Role image-scope tasks and enable helper</td>
+<td>Native image tool scope and presentation/review constraints</td>
+</tr>
+<tr>
+<td>Native agents</td>
+<td><code>ansible/roles/opencode-agent/files/</code> and WatooM role agent tasks</td>
+<td><code>watoom-code-agents.yml</code>, agent renderer and role</td>
+<td>Coordinator, builder, investigator, reviewer, critic, writing and separate security scope</td>
+</tr>
+<tr>
+<td>Native skills</td>
+<td><code>ansible/roles/watoom-code/files/skills/</code> plus approved source registry in role defaults</td>
+<td><code>watoom-native-skills.yml</code> and role <code>native-skills</code> tasks</td>
+<td>Discoverable instructions/resources; a skill document is not a service</td>
+</tr>
+<tr>
+<td>Model/runtime capability mapping</td>
+<td><code>verified-model-capabilities.json</code>, <code>enable-verified-model-capabilities.py</code> and reasoning/context helpers in the role</td>
+<td>Owning WatooM playbooks and production vars</td>
+<td>Model IDs, provider routing, variants and verified context interfaces</td>
+</tr>
+<tr>
+<td>Toolkit</td>
+<td><code>tools/watoom-toolkit/</code></td>
+<td>WatooM role and independent Toolkit release pins</td>
+<td>Authenticated bounded job controller; worker isolation and artifact publication</td>
+</tr>
+<tr>
+<td>GPU controller</td>
+<td><code>tools/llm/watoom-gpu-controller/</code></td>
+<td><code>llm-model-lab</code> role, controller playbook</td>
+<td>Sole GPU lifecycle writer, durable ownership, fencing and inference leases</td>
+</tr>
+<tr>
+<td>Router and model adapters</td>
+<td><code>ansible/roles/llm-model-lab/files/</code></td>
+<td>Model-lab tasks and manifests</td>
+<td>OpenAI-compatible inference front end and controller admission</td>
+</tr>
+<tr>
+<td>Game/asset bridges</td>
+<td><code>tools/watoom-code/game_worker_bridge.py</code>, capture/spec modules and <code>tools/rig-async-stage/</code></td>
+<td>Dedicated worker playbooks</td>
+<td>Exact parent/source/request identity, status and receipts</td>
+</tr>
+<tr>
+<td>Blender/Fab/Unreal</td>
+<td><code>tools/blender-asset-builder/</code>, <code>tools/fab/</code>, <code>tools/unreal/</code> and owning skills</td>
+<td>Blender/Fab/workstation roles and scoped helpers</td>
+<td>Preserve purchased sources; export portable artifacts via bounded workers</td>
+</tr>
+<tr>
+<td>Workstation execution</td>
+<td><code>tools/bazzite-render-worker/</code>, <code>tools/workstation-render-stage/</code></td>
+<td>Worker configuration and workstation playbook</td>
+<td>Offload heavy work without parking production inference by default</td>
+</tr>
+<tr>
+<td>Memory/learning</td>
+<td><code>tools/watoom-code/self_learning/</code>, memory helpers and role tasks</td>
+<td>Dedicated memory and self-learning playbooks</td>
+<td>Durable recall, guarded optimisation, explicit activation/rollback</td>
+</tr>
+<tr>
+<td>Language knowledge</td>
+<td><code>tools/language-knowledge/</code>, role capability configuration</td>
+<td>Owning flags and imported card sources</td>
+<td>Source-derived language reference, separate from executable tools</td>
+</tr>
+<tr>
+<td>Security/MCP integrations</td>
+<td><code>tools/kali/</code>, <code>pi-kali-agent</code>/gateway roles</td>
+<td>Dedicated isolated security playbooks</td>
+<td>Authorised security sessions; development agents do not inherit Kali powers</td>
+</tr>
+<tr>
+<td>Glance observability</td>
+<td><code>config/glance/helper.py</code>, guide sources and renderers</td>
+<td>Glance manifest/ConfigMaps and guide hostPath</td>
+<td>Read-only view of APIs, controller, jobs and metrics</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="native-plugin-lifecycle">Native plugin lifecycle</h2>
+<ol>
+<li>Modify the maintained plugin package, not a live application-state copy. Keep its <code>package.json</code>, plugin entrypoint and configuration schema together.</li>
+<li>Run the focused native guard/scope tests and inspect changed hook contracts against the pinned application source.</li>
+<li>Preserve the prior immutable plugin/package identity and configuration snapshot.</li>
+<li>Confirm native sessions and child executions are idle through the supported API and deployment guard. Do not interrupt sessions to reload instructions.</li>
+<li>Apply only the owning role tasks through the established release mechanism.</li>
+<li>Verify actual native hooks, refusal behaviour and durable state after reload. A copied file is not acceptance.</li>
+</ol>
+<p>Coordinator guard uses the native application database/plugin storage rather than inventing a second registry. Its durable counters, exact child IDs and image evidence must survive compaction and restart. Private recovery grants are runtime authorisations and are excluded from Git; publishing the plugin implementation does not authorise publishing those grants.</p>
+<h2 id="skills-and-agent-definitions">Skills and agent definitions</h2>
+<p>The role's approved skill catalogue is authoritative for installation. Some entries point outside this repository, including a deliberately private instruction source. The source inventory marks this exclusion rather than substituting a fabricated public body. The distribution manifest records missing external sources and their owners so a new installation cannot quietly assume they were bundled.</p>
+<p>Native agents have structured front matter and explicit tool/model permissions. Keep model/tool IDs aligned with the live loader. Render existing definitions with <code>scripts/render-native-agents.py</code> where applicable; do not create a parallel agent registry. Coordinator-owned canonical work state stays under the project <code>.opencode/work/</code> tree.</p>
+<h2 id="workers-and-receipts">Workers and receipts</h2>
+<p>The native tool admits a request, the dispatcher reconciles it, the worker executes within bounds, and the coordinator consumes the resulting receipt. These are separate stages. The source fingerprint, operation, request/job identity and parent session must agree. A <code>RECONCILIATION_REQUIRED</code> result blocks replay until existing evidence is accounted for.</p>
+<p>Keep application code, Toolkit code, role templates, service/timer installation and acceptance checks in the publication. Do not copy runtime jobs, private request bodies, session contents or acquired assets into a source repository. The <a href="/guide/server-roles.html">role reference</a> lists deployed helper payloads; the <a href="/guide/server-tools.html">tools reference</a> covers controllers, validators and release helpers.</p>
+<h2 id="upstream-attribution-and-completeness">Upstream attribution and completeness</h2>
+<p>The application is based on OpenCode; retain its <code>LICENSE</code> and package notices. Preserve third-party notices for bundled dependencies, imported skills and engine/tool integrations. Do not apply a new root license to upstream or third-party code by implication. WatooM-authored code needs an explicit owner-selected license before a public open-source release.</p>
+<p>The <a href="/guide/llm-publication.html">publication guide</a> defines what is bundled, what remains an external prerequisite, how source pins are recorded and how the private distribution is checked. Source availability, production activation and clean-room installation qualification are separate claims.</p>
+<h2 id="registered-native-plugins">Registered native plugins</h2>
+<p>The following packages are selected by the inspected native configuration. Runtime
+hash-suffixed directories are release copies; maintain the owning source below.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Native plugin</th>
+<th>Maintained source</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>searxng-search</code></td>
+<td><code>ansible/roles/opencode-agent/files/v2-native/plugins/searxng-search/</code></td>
+<td>Native web search through the configured local SearXNG service</td>
+</tr>
+<tr>
+<td><code>coordinator-guard</code></td>
+<td><code>ansible/roles/watoom-code/files/coordinator-guard/</code></td>
+<td>Serial delegation, tool budgets, durable evidence and recovery boundaries</td>
+</tr>
+<tr>
+<td><code>self-learning</code></td>
+<td><code>tools/watoom-code/self_learning/</code></td>
+<td>Native lesson/context integration and guarded learning lifecycle</td>
+</tr>
+<tr>
+<td><code>image-scope</code></td>
+<td><code>ansible/roles/watoom-code/files/image-scope/</code></td>
+<td>Image operations constrained to approved project/output scope</td>
+</tr>
+<tr>
+<td><code>homelab-workspace</code></td>
+<td><code>tools/watoom-code/workspace-policy/</code></td>
+<td>Project-scoped homelab capabilities and source/workspace policy</td>
+</tr>
+<tr>
+<td><code>language-knowledge</code></td>
+<td><code>tools/language-knowledge/package/</code></td>
+<td>RAM-resident language/API reference cards and native lookup</td>
+</tr>
+</tbody>
+</table></div>
+<p>The separate <code>dev-workspace</code> package is optional configuration, not selected by
+this inspected plugin list. Its source and role tasks remain in the distribution.
+Skill and tool visibility depends on project/agent scope; being bundled does not
+enable every integration or grant additional permissions.</p>
+<h2 id="current-worker-and-knowledge-integrations">Current worker and knowledge integrations</h2>
+<ul>
+<li>Blender and declarative asset capture use Bazzite workers. Requests wait when that worker is unavailable; RIG eligibility follows the maintained 10-minute wait policy. Do not park production inference as an implicit fallback.</li>
+<li>Asset capture has a derived Xvfb/Mesa EGL runtime, pinned Blender execution and common result/receipt validation. Worker exit/deadline classification distinguishes script failures from resource failures; the text &quot;OOM&quot; is not evidence of a memory kill.</li>
+<li><code>watoom-metahuman</code> provides owned-package inspection, Unreal installation and Godot export helpers. The native skill and Unreal export scripts are source-owned; model/engine/asset licenses and static-face/skin/groom limits still apply.</li>
+<li>The outbound-only RIG Unreal lane accepts fixed <code>probe</code> and <code>metahuman-skin</code> operations, verifies shipped/runtime hashes, uses a Windows Job Object (12 GiB default), respects busy/pause journals, and refuses installer replacement during an active job. It is separate from the Blender/Godot broker.</li>
+<li>Language-knowledge includes inert reference triggers for recognised tool errors and uncertainty near API/CLI terms. Its package is selected independently of the main application image; preserve card/procedure data and verify the exact configured package after reload.</li>
+</ul>
+<p>The application, Toolkit and AgentMemory image pins remain independent. The current worker/plugin changes do not imply that the application image was rebuilt. Source and runtime provenance are recorded in the private distribution's publication metadata; <a href="/guide/disaster-recovery.html">Disaster recovery</a> includes external worker re-staging and journal reconciliation.</p>
+<h2 id="what-s-new-2026-11-03-to-2026-11-07">What's new (2026-11-03 to 2026-11-07)</h2>
+<p>This interval adds source-backed API help, a Bazzite-first execution policy, an owned MetaHuman conversion path, and changes to the game-building and learning workflows. The sections below describe the user-visible behavior, operation, boundaries, and maintained source. The <a href="/guide/watoom-code.html">WatooM Code guide</a> covers how to invoke these from a session; the <a href="/guide/software-design.html">software design page</a> traces the trust and execution flows.</p>
+<h2 id="language-knowledge-and-agent-guidance">Language knowledge and agent guidance</h2>
+<p><code>watoom-language-knowledge</code> is a version-pinned, RAM-resident reference for the installed Godot and Blender APIs and command-line flags. Extractors build cards from installed/pinned interfaces and official reference material; cards include signatures, parameters, constraints, version/source and licence metadata. Search combines lexical matching with optional BGE embedding/vector results and reciprocal-rank fusion. If the embedding service or vector files are absent, lexical search remains available. Native tools are <code>wlk_search</code>, <code>wlk_symbol</code>, <code>wlk_command</code>, <code>wlk_get</code>, <code>wlk_status</code>, and <code>wlk_feedback</code>. Feedback is queued for operator validation; a card or feedback item is reference data, never executable permission.</p>
+<p>The plugin also has two bounded, inert context triggers. A recognised Godot/Blender API or CLI error can append a matching reference entry to that tool result. When a reasoning block has an uncertainty phrase close to an API-looking name, the plugin may attach a short answer to the next model call as a trailing user-role data message. Doubts about importer behaviour (for example whether the FBX importer overwrites extracted textures) and option keys such as <code>fbx/embedded_image_handling</code> are answered from 81 import-option cards (<code>kind=import_option</code>), generated from the engine itself: option names and defaults come from the <code>.import</code> files Godot writes for generated sample assets, and value labels from the engine binary's own strings, so a card can say that the default is <code>1 = Extract Textures</code> and list the alternatives. That lookup stays silent unless a card clearly matches the file type and wording. The note does not alter the cached prompt prefix, is consumed once, and is limited/deduplicated per prompt. The plugin skips its own tools and does not turn suggestions into commands. Unit tests and a simulated plugin context exercise these hooks; live agent-session behavior has not yet been observed. Production card data covers Godot only; the full 124,278-card/vector build is not wired into production.</p>
+<p>Use the agent's <code>wlk_*</code> tools before guessing a Godot/Blender API or CLI option. The explicit “wait, does X exist?” instruction asks the agent to check when uncertain. A displayed “Reference lookup” block is data, not an instruction. Source, extractors, admin/procedure tooling and tests are in <code>tools/language-knowledge/</code>; deployment is the <code>language_knowledge.yml</code> role task and its enable/card-path variables. The plugin is selected separately from the application image, so a main image pin does not identify its version.</p>
+<h2 id="bazzite-first-heavy-work-and-rig-eligibility">Bazzite-first heavy work and RIG eligibility</h2>
+<p>Rendering, captures, Blender, conversion and similar heavy work route to the Bazzite desktop worker first. Bazzite is reached over SSH and runs rootless Podman with a staged toolkit, no network, read-only root and dropped capabilities. The homelab does not run the local fallback by default: a local execution route would reserve GPU headroom and park the production model. <code>local_fallback</code> is an explicit opt-in (<code>watoom_game_worker_local_fallback</code>, default false).</p>
+<p>When Bazzite is unavailable, a request stays <code>QUEUED</code> with <code>waiting_since</code> and <code>rig_eligible</code>. After 600 seconds, status allows the agent to submit the equivalent <code>watoom_rig_game_job</code>; the bridge itself cannot submit to the RIG, which accepts only model-submitted requests. The agent should continue useful work and follow the existing request ID rather than repeatedly resubmitting. The <code>bazzite_operations</code> setting controls which operations are eligible. Godot import/regression/capture, Blender and declarative asset capture use their Bazzite runners; asset capture polls Bazzite first. Godot requires 8 GiB free RAM; Blender and asset capture require the requested job size plus 2 GiB. Bazzite Blender and asset capture have passed small end-to-end jobs; Godot capture ran through worker startup to the game's own script error, not a successful game capture.</p>
+<p>Godot's capture runtime is a separately built additive Xvfb/Mesa EGL image because the production toolkit lacks Xvfb, xauth and EGL. If that image is absent, preflight reports the missing capture image/tool. The systemd user unit must allow Podman's <code>newuidmap</code>: <code>PrivateDevices=yes</code> and <code>NoNewPrivileges=yes</code> caused intermittent helper failures and are omitted. SSH exit 255 is reported as unreachable; a bare string “OOM” is not treated as evidence of a memory kill; a deadline after a script error retains the script error as the cause. Source of routing and runners is in <code>tools/watoom-code/</code>, <code>tools/bazzite-render-worker/</code>, and the owned skill's <code>scripts/unreal-export/</code>; role defaults/rendering are under <code>ansible/roles/watoom-code/</code>.</p>
+<p>Agent policy is assembled from <code>ansible/roles/opencode-agent/files/v2-native/_src/shared/69_language_knowledge_tools.md</code> and <code>70_bazzite_first_then_rig.md</code> by <code>scripts/render-native-agents.py</code>, then deployed through <code>ansible/playbooks/watoom-code-agents.yml</code>. The policy tells agents to check reference tools before guessing, keep working while jobs wait, and submit to the RIG only when status says eligible.</p>
+<h2 id="metahuman-package-conversion">MetaHuman package conversion</h2>
+<p>The <code>watoom-metahuman</code> skill handles an owned <code>.mhpkg</code> (a ZIP containing Unreal assets and manifests). <code>inspect</code> reports editable versus assembled content, LODs, grooms/clothing and hashes; <code>unpack</code> produces a verified Unreal <code>Content</code> tree; <code>copy-to-project</code> installs that content and enables the needed MetaHuman plugins in a UE project. <code>export-godot</code> runs two Unreal stages on Bazzite and emits head/body/full-body GLBs, DNA, textures, a Godot scene, setup script and manifest. The asset advisor now identifies <code>metahuman-pipeline</code> for MetaHuman packs.</p>
+<p>The geometry stage uses the full Unreal Editor: the commandlet path asserts in Slate. Editable characters load headlessly once opened for edit; geometry export needs an 8 GiB job and the editor may crash at shutdown after a verified successful native result. The head skeleton follows the body through shared bone names. For skin maps, <code>export_dcc</code> can write DNA headlessly but Epic TextureGraph needs a GPU. The separate RIG <code>metahuman-skin</code> operation runs the full editor with a renderer and returns skin maps; without it, the pipeline uses a flat skin tone plus package normal maps. Godot applies the skin material to the largest head surface and body; the other head surfaces retain defaults, with their maps in <code>textures/reference/</code>. The normal green flip and roughness from SRMF green follow Epic conventions; textures have been imported and checked headlessly without import errors, but have not been visually rendered. Godot lacks RigLogic, so the face remains neutral/static. Editable characters have no grooms; assembled characters and male base are untested. Check the MetaHuman licence for use in another engine.</p>
+<p>The Godot output is repaired before import: Unreal's empty accessors are stripped, and the head's vertex normals are recomputed because about 30% of the exported skin-triangle normals point against the mesh (it renders as dark and white blocks under lighting while an unlit view looks correct). The scene uses the neck-cut body mesh, because the full-body mesh carries its own head. Eyes, teeth and eyelashes get their own materials, identified from mesh geometry. The character plays a procedural 8-second looping idle (<code>IdleAnimation</code>, breathing, a slow weight sway, drifting head and neck, relaxed arms) built at load from the body skeleton; <code>play_idle</code>, <code>idle_strength</code> and <code>arm_drop_degrees</code> on the scene's script control it, and other animations can be added to the same skeleton. The face is a static neutral pose and does not blink, because Godot does not run RigLogic.</p>
+<p><code>tools/rig-godot-viewer/</code> opens any glTF, scene or converted folder on the RIG's GPU: drag it onto <code>Open-InGodot.bat</code>. It stages the folder where the scene's own <code>res://</code> paths expect it, imports it, and opens an orbit viewer (<code>1</code>-<code>4</code> switch shaded, unshaded, wireframe and normals views, which separates texture problems from lighting problems).</p>
+<p>Maintained code is <code>ansible/roles/watoom-code/files/skills/watoom-metahuman/</code> (<code>scripts/metahuman_pipeline.py</code>, <code>scripts/rig_lane.py</code>, Godot setup and tests), with Unreal stages in <code>watoom-fab-owned-assets/scripts/unreal-export/ue_metahuman.py</code> and <code>export_pack.py</code>. The skill documents commands and output locations; it is for owned packs only.</p>
+<h2 id="outbound-rig-unreal-lane">Outbound RIG Unreal lane</h2>
+<p>The Unreal lane is a separate outbound-only worker for the Windows RIG. The homelab writes a JSON manifest and package ZIP into an SFTP transfer jail; the scheduled worker polls, runs exactly one operation from <code>unreal_lane.OPS</code> (<code>probe</code> or <code>metahuman-skin</code>) under a Windows Job Object, and uploads artifacts with <code>result.json</code> last. Manifests carry no code or arbitrary paths. Shipped scripts and installed Unreal executables are hash-pinned; returned names, suffixes, size and SHA-256 are checked before homelab collection. A job interrupted by worker death is reported failed, never replayed. The lane defers while Blender/Godot workers are busy and obeys the shared pause control.</p>
+<p>The operator installs/reinstalls the worker using <code>tools/rig-async-stage/unreal-lane/Install-UnrealWorker.ps1</code>; installation refuses replacement during a running job. <code>build_lane.py</code> builds the bundle. The model-facing skill helper submits <code>probe</code> or <code>metahuman-skin</code> and supports list/status/collect/cancel. UE 5.8.4 probe and one Base_Female skin job passed on an RTX 2080 SUPER; the skin job took 532 seconds with a 20 GiB Job Object limit and returned 34 files. MetaHuman optional content must be installed in the engine. A 12 GiB cap failed through commit exhaustion/D3D12 E_OUTOFMEMORY; about 20 GB free RAM and disk are advisable on the tested RIG. These are results for one rig and one editable character, not general compatibility. Source and detailed install steps are in <code>tools/rig-async-stage/unreal-lane/README.md</code>.</p>
+<h2 id="game-authoring-templates-terrain-and-asset-discovery">Game authoring, templates, terrain, and asset discovery</h2>
+<p><code>watoom-prompt-game-template</code> and <code>watoom-prompt-game-blueprint</code> turn a short request into a bounded project task; they prepare prompts rather than building the game themselves. The game-template catalogue contains licence-checked, pinned starter projects for supported genres. The agent searches for a matching template, reports its licence/revision/declared engine, copies it into the project (never edits the library copy), checks import, then implements the requested scope. If no template fits, it should say so. Prompt and skill sources are in <code>config/glance/pipeline-prompts.json</code> and <code>ansible/roles/watoom-code/files/skills/</code>; cataloguing/download/install helpers are in <code>tools/game-template-catalogue/</code>.</p>
+<p><code>watoom-terrain-map</code> generates a Godot terrain from a place name or latitude/longitude using open elevation DEM data. It writes a float EXR heightmap, preview, metadata, reusable mesh/collision script, rural material shader and ready scene. The agent uses <code>height_at()</code> for placement and the maintained landscape capture environment for review. DEM detail is limited by its source resolution; it does not add roads/buildings or satellite imagery, and a higher output grid interpolates rather than inventing detail. Source is <code>ansible/roles/watoom-code/files/skills/watoom-terrain-map/</code>; the prompt template is in the pipeline prompts.</p>
+<p>The automatic Blender rig fitter classifies human, animal and bird subjects, fits a suitable rig, and validates the result through its staged passes; the asset catalogue advisor resolves an asset/query to a supported preparation pipeline, with format and rig preconditions. A candidate recommendation is not proof of compatibility or acceptance. Consult the selected skill's declared route and receipts. Implementations are maintained in the installed skills and <code>tools/fab/</code> (including <code>asset_advisor.py</code>); do not directly alter a purchased source pack.</p>
+<p>The owned Fab workflow enriches catalogue entries with listing facts, offers a project-relevant advisor, and requires explicit owner approval for each exact download request. Requests bind asset, project and preparation plan; authenticated acquisition produces receipts and indexed source references. Unreal pack export is now a native game-worker operation: the request names a pack, <code>/Game</code> root and bounded class/include filters; worker output and receipt are copied to the project. Bazzite is preferred when staged and capable, with a pre-start-only local job fallback; a started export is not replayed. Downloaded plugins/code are not executed automatically, and a successful export does not prove Godot import, gameplay or visual correctness. Sources are <code>tools/fab/</code>, <code>watoom-fab-owned-assets/scripts/</code>, and <code>tools/watoom-code/game_unreal_export.py</code>; the owning skill has the request contract and limits.</p>
+<h2 id="asset-archives-zip-tar-7z-rar">Asset archives (zip, tar, 7z, rar)</h2>
+<p>The native skill <code>watoom-asset-archive</code> (<code>ansible/roles/watoom-code/files/skills/watoom-asset-archive/</code>) gives models one safe way to look inside asset packs and extract only what a project needs. <code>asset_archive.py</code> offers <code>list</code>, <code>inspect</code>, <code>read</code>, <code>extract</code> and <code>status</code>; selection by glob, folder prefix and extension; <code>--strip</code> to drop wrapper folders; and <code>--dry-run</code> to preview. Output is one JSON document with <code>ok</code>, <code>errors</code> and <code>warnings</code>, so a corrupt, truncated, encrypted or unsafe archive is reported to the model rather than hidden.</p>
+<ul>
+<li><strong>Safety.</strong> Absolute paths, <code>..</code>, symlinks and special files are never extracted. Case-only name clashes, over-long paths, decompression bombs and oversized selections are flagged. Every extracted file is checked against the archive's size and CRC, written to a temporary name first, and never overwrites a different existing file unless <code>--overwrite</code> is given. Destinations stay inside the chosen project and never inside <code>.git</code>, <code>.godot</code> or <code>.opencode</code>. A receipt is written to <code>&lt;project&gt;/.opencode/asset-extractions/</code>.</li>
+<li><strong>Where it runs.</strong> zip and tar run inside the watoom-code pod. The pod has no <code>7z</code> or <code>unrar</code> (and the host's binaries need a newer glibc), so 7z and rar requests are left as files in <code>&lt;project&gt;/.opencode/archive-requests/</code> or the shared queue <code>/data/ai/projects/work/.archive-requests/</code>, and the host service <code>watoom-asset-archive</code> (user <code>opencode</code>, writes only under <code>/data/ai/projects</code>) answers them, normally within a few seconds. Install it with <code>ansible/playbooks/watoom-asset-archive.yml</code>; the skill itself is installed by <code>watoom-native-skills.yml</code>.</li>
+<li><strong>RAR support.</strong> The distribution's <code>7z</code> cannot open RAR, so RAR uses RARLAB's <code>unrar</code> on the host.</li>
+<li><strong>Tests.</strong> <code>python3 -m unittest test_asset_archive</code> in the skill's <code>scripts/</code> folder (27 tests, including real 7z archives, corruption and the request queue).</li>
+</ul>
+<h2 id="learning-loop-and-verification">Learning loop and verification</h2>
+<p>The learning work has distinct stages. A harness-side verification grader selects static checks by changed file type and owns the result; unsupported graders are reported as skips. Owner chat messages marked with <code>+</code> and verified engine/API failures can become lesson candidates; agents can see relevant engine error lessons. A deterministic nightly memory curator mines owner commits over agent-authored paths and may ingest existing verification evidence. It uses no LLM/GPU and writes a journalled sidecar SQLite store separate from AgentMemory. Its timer is off by default and can be disabled or rolled back by transaction. Learning proposals are not automatically activated code or skills. The existing detailed operation and rollback steps are in <a href="/guide/watoom-code.html">WatooM Code</a>; source is <code>tools/watoom-code/verification_loop.py</code>, <code>tools/watoom-code/self_learning/</code>, and the <code>self-learning</code> plugin/role tasks.</p>
+<h2 id="guard-and-worker-handoff-corrections">Guard and worker-handoff corrections</h2>
+<p>Recent coordinator-guard fixes make child-session and worker evidence handling stricter: a completed child is not resumed as active work; a fresh package starts instead. A delegated result is accepted only when the corresponding request exists, and a visual-review handoff returns through the required receipt tool so the parent turn can continue. Image review keeps the original image bytes, and a guard rejection names the specific denied operation. These changes prevent stale child state or a claimed-but-missing worker request from being mistaken for completed work. The implementation and regression checks are in <code>ansible/roles/watoom-code/files/coordinator-guard/</code> and <code>tools/watoom-code/</code>.</p>
+<h2 id="application-inference-and-observability-changes">Application, inference, and observability changes</h2>
+<p>The custom application was ported to the pinned OpenCode v2.2.5 source and released as a separate immutable image; GUI-plugin, scroll-fix and file-download images also have their own pins. Follow <code>ansible/vars/watoom-code.yml</code> and the release owner rather than assuming a plugin change rebuilds the main application. GUI reasoning choices expose <code>xhigh</code>, <code>medium</code>, <code>low</code>, and <code>off</code> where supported. The configured Qwen model variants map to reasoning effort; <code>preserve_thinking=false</code> removes stale prior reasoning from subsequent context while the model still reasons on each turn. Chat-template tuning maps the model's medium/low modes to its supported template behavior; users should select a GUI level and need not supply backend flags.</p>
+<p>The prompt cache has an SSD-backed disk tier under <code>/data</code> and writes through a background writer. It supplements memory cache; a long fresh prompt may still need prefill and model/prefix changes can invalidate reuse. Do not infer that every slow continuation is a cache fault. Source/configuration belongs to the LLM serving role and manifests, while the GUI variants are rendered by the WatooM Code role. Glance's command center adds read-only server and LLM serving panels; guide Markdown and helper sources render through existing Glance tooling. The panels observe health and do not acquire control of model or service lifecycles.</p>
+<h2 id="verification-status">Verification status</h2>
+<ul>
+<li>Language-knowledge triggers: unit-tested (24 plugin tests) and exercised with a simulated plugin context; not yet observed on a live agent session.</li>
+<li>Bazzite Blender and asset capture: tested end to end with small jobs, including still and MP4 turntable capture. Godot capture reached the game's own script error after worker startup.</li>
+<li>MetaHuman: one editable Base_Female package was verified. Male base, assembled characters and other packs remain untested; Godot texture import was checked headlessly, not visually rendered.</li>
+<li>RIG lane: verified on the one UE 5.8.4 / RTX 2080 SUPER rig described above.</li>
+<li>Language-knowledge production data: the full Godot and Blender card set (about 124,000 cards, roughly 650 MiB resident) is loaded; vector search over it is not wired in production.</li>
+</ul>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/llm-extensions.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "root": "/data/ai/projects/llm/pipelines/godot-particle-vfx-v1",
+  "git_commit": "9f4a3d7ac78763727bec75bc46ca483c71ce05b4",
+  "engine": "4.7.2",
+  "recipe": "/data/ai/projects/llm/pipelines/godot-particle-vfx-v1/README.md",
+  "hashes": {
+    "pipeline.py": "a7bb0372a19ff081e83c90581cb504be7f674a7c872dea170737b2e8216b32d3",
+    "profile.json": "5626da0a5ac9cfef17e387de9b9d57ff0a1804ccc0e8fd545cf332ee7a32f09d",
+    "validate_recipe.py": "10d7ad8ca92fde3681e7c8018c701081235bf6b53be98de22ff21ca605654f26",
+    "scripts/particle_vfx_recipe.gd": "ee4b8bcb2e0c9298351253af5900416d809034287865c476cfe2bfb17e186328",
+    "scripts/recipe_test.gd": "45aa8776f4b7f6ed1569fff97d2e15cd35e744ca2c7eebd4ef93adba7fc795dc",
+    "scripts/poo_vfx.gd": "54576b131c0487b1c4ad19aeddc41f81f8a95b9575a7b30376615ff0dc2a9768",
+    "assets/generated/poo_vfx/splash-alpha.png": "81afe365183a75630dafc08d67d1dc4fae505d479b4e3acea6fd370f34113dbc",
+    "assets/generated/poo_vfx/radial-alpha.png": "f265c176bf761917a58f4a1a3376e8fe362ea5e14b80dadc7e15fd09bc484ad1",
+    "assets/generated/poo_vfx/splat-alpha.png": "c6aa073b9b5ffd63c04985a9bbbd67170eef4b4d09a7ece835fe7a5fd7c796f4"
+  },
+  "archive": "/data/ai/helper-scripts/watoom-blender-unified/snapshots/godot-particle-recipe-9f4a3d7ac787.tar.gz",
+  "archive_sha256": "ec1810bc02383938360a9500046eef7f6ad9ebdfa88fe5a60485446b55b8caef"
+}

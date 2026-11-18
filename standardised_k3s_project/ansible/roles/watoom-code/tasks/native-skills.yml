@@ -1,0 +1,106 @@
+# T-0055: the copy below installs the WORKING TREE, so uncommitted (unreviewed) edits to an approved skill go live in the
+# models' catalog. Say so instead of doing it silently. Warn only: a deliberate install of a dirty tree must still work.
+- name: Find approved skills whose working tree differs from HEAD
+  ansible.builtin.command:
+    cmd: git status --porcelain -- {{ watoom_code_native_skills | join(' ') }}
+    chdir: "{{ role_path }}/files/skills"
+  delegate_to: localhost
+  become: false
+  run_once: true
+  register: watoom_native_skills_dirty
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Warn that uncommitted skill edits are about to be installed
+  ansible.builtin.debug:
+    msg: >-
+      WARNING: uncommitted changes in approved skill trees will be installed as-is (not from a commit):
+      {{ watoom_native_skills_dirty.stdout_lines }}
+  when: watoom_native_skills_dirty.stdout_lines | default([]) | length > 0
+
+- name: Create native skill root
+  ansible.builtin.file:
+    path: "{{ watoom_code_root }}/config/skills"
+    state: directory
+    owner: "{{ watoom_code_uid }}"
+    group: "{{ watoom_code_gid }}"
+    mode: '0750'
+
+- name: Install owner-approved native skill trees
+  ansible.builtin.copy:
+    src: "skills/{{ item }}/"
+    dest: "{{ watoom_code_root }}/config/skills/{{ item }}/"
+    owner: "{{ watoom_code_uid }}"
+    group: "{{ watoom_code_gid }}"
+    mode: '0644'
+    directory_mode: '0750'
+  loop: "{{ watoom_code_native_skills }}"
+
+- name: Verify private native skill sources remain on the managed host
+  ansible.builtin.stat:
+    path: "{{ item.source }}/SKILL.md"
+  loop: "{{ watoom_code_private_native_skills | default([]) }}"
+  register: watoom_private_skill_sources
+  no_log: true
+
+- name: Require existing private native skill instructions
+  ansible.builtin.assert:
+    that:
+      - item.stat.isreg | default(false)
+      - not (item.stat.islnk | default(false))
+    fail_msg: "Restore the server-private native skill source before deployment."
+  loop: "{{ watoom_private_skill_sources.results | default([]) }}"
+  no_log: true
+
+- name: Keep private instruction roots traversable
+  ansible.builtin.file:
+    path: "{{ watoom_code_root }}/config/skills/{{ item.name }}"
+    state: directory
+    owner: "{{ watoom_code_uid }}"
+    group: "{{ watoom_code_gid }}"
+    mode: '0750'
+  loop: "{{ watoom_code_private_native_skills | default([]) }}"
+  no_log: true
+
+# Current server-private sources contain only SKILL.md. Copy the instruction file
+# explicitly: remote_src recursive copy applies file mode to the root directory.
+- name: Install server-private native instructions without controller copies
+  ansible.builtin.copy:
+    remote_src: true
+    src: "{{ item.source }}/SKILL.md"
+    dest: "{{ watoom_code_root }}/config/skills/{{ item.name }}/SKILL.md"
+    owner: "{{ watoom_code_uid }}"
+    group: "{{ watoom_code_gid }}"
+    mode: '0644'
+  loop: "{{ watoom_code_private_native_skills | default([]) }}"
+  no_log: true
+
+- name: Preserve upstream skill provenance and license
+  ansible.builtin.copy:
+    src: "skills/{{ item }}"
+    dest: "{{ watoom_code_root }}/config/skills/{{ item }}"
+    owner: "{{ watoom_code_uid }}"
+    group: "{{ watoom_code_gid }}"
+    mode: '0644'
+  loop:
+    - redhat-source.json
+    - redhat-LICENSE
+    - plurigrid-source.json
+    - plurigrid-LICENSE
+    - story-skills-source.json
+    - story-skills-LICENSE
+    - blender-source.json
+    - blender-LICENSE
+
+- name: Remove completed temporary Red Hat bootstrap installer
+  ansible.builtin.file:
+    path: "{{ watoom_code_root }}/config/skills/red-hat-get-started"
+    state: absent
+  when: "'red-hat-get-started' not in watoom_code_native_skills"
+
+- name: Label only the maintained native skill directory
+  ansible.builtin.command:
+    argv: [restorecon, -R, -v, "{{ watoom_code_root }}/config/skills"]
+  register: watoom_native_skill_labels
+  changed_when: "'Relabeled' in watoom_native_skill_labels.stdout"

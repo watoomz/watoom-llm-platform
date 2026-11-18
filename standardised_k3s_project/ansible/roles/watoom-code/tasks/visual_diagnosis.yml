@@ -1,0 +1,11 @@
+---
+- name: Install maintained visual diagnosis skill
+  ansible.builtin.copy:
+    src: skills/watoom-engine-visual-diagnosis/
+    dest: '{{ watoom_code_root }}/config/skills/watoom-engine-visual-diagnosis/'
+    owner: '{{ watoom_code_uid }}'
+    group: '{{ watoom_code_gid }}'
+    mode: '0644'
+    directory_mode: '0750'
+- name: Install diagnosis routing and capture templates
+  ansible.builtin.include_tasks: native_agents.yml

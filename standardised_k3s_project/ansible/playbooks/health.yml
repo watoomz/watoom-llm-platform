@@ -1,0 +1,10 @@
+---
+- name: Validate WatooM host health
+  hosts: homelab
+  become: true
+  gather_facts: false
+
+  roles:
+    - role: preflight
+    - role: host_health
+    - role: validation

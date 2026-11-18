@@ -1,0 +1,31 @@
+{
+  "engine_version": "5.8.3",
+  "accepted_engine": "/data/ai/builds/unreal-recovery-20261016T213935Z/source",
+  "plugin_directories": [
+    "Animation/AnimationWarping",
+    "Animation/AnimationLocomotionLibrary",
+    "Runtime/StateTree",
+    "Runtime/GameplayStateTree",
+    "FX/NiagaraFluids",
+    "Experimental/Water",
+    "Animation/RigLogic",
+    "Runtime/CommonUI"
+  ],
+  "build_scope": "Cached isolated target finalization with UBT metadata, or selected modules; accepted installation unchanged",
+  "memory_gib": 12,
+  "parallel_actions": 7,
+  "cpu_limit": 8,
+  "build_seconds": 10800,
+  "native_test_seconds": 600,
+  "original_engine_policy": "Read-only lower bind and isolated CoW upper; preserve accepted engine and paid source",
+  "integration_gate": "Actual core Blueprint compile then gameplay/render acceptance before opting games into the candidate engine",
+  "game_instance_policy": {
+    "default": "preserve project-selected class; no unconditional BP_GameInstance_Base requirement",
+    "offline_or_lan": "BP_GameInstance_Base only if supplied by package; validate selected class exists",
+    "online_ue58": "HOI BP_GameInstance_HOI or compatible derived class plus correct subsystem components; opt-in and provider credentials required",
+    "legacy_online": "Matching EIK/SIK GameInstance and provider-specific configuration only",
+    "reference": "https://gamesbyhyper.com/docs/multiplayer/online-multiplayer-framework/",
+    "online_acceptance": "NOT TESTED; separate from offline combat acceptance"
+  },
+  "engine_plugin_defaults": "Enabled for content acceptance: Hyper depends on default PBIK, EngineCameras, PropertyAccessNode, Synthesis and animation data modules"
+}

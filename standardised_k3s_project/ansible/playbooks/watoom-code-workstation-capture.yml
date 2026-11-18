@@ -1,0 +1,22 @@
+---
+- name: Activate the qualified workstation capture backend under native admission fence
+  hosts: homelab
+  become: true
+  gather_facts: false
+  vars:
+    workstation_stage_public_key: "{{ lookup('ansible.builtin.file', playbook_dir + '/../../tools/rig-async-stage/worker-source/rig-stage.pub') | trim }}"
+  tasks:
+    - name: Require native admission fence
+      ansible.builtin.assert:
+        that: watoom_render_routing_guard_held | default(false) | bool
+    - name: Maintain qualified backend and SFTP transport
+      ansible.builtin.import_role:
+        name: workstation-render-stage
+    - name: Select the immutable capture tool description and preserve app shell guard
+      ansible.builtin.import_role:
+        name: watoom-code
+        tasks_from: coordinator_guard
+    - name: Maintain the admitted capture backend selection
+      ansible.builtin.import_role:
+        name: watoom-code
+        tasks_from: asset_capture_worker

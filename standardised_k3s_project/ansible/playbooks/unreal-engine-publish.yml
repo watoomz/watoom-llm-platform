@@ -1,0 +1,10 @@
+---
+- name: Publish already built and validated Unreal output without rebuilding
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Materialize the versioned runtime using the normal build role
+      ansible.builtin.include_role:
+        name: unreal-engine
+        tasks_from: publish

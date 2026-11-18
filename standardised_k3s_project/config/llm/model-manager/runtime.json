@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "source_commit": "5061244e06cd999a2853ff2e08b10a3d901143ee",
+  "cpu_image": {
+    "image": "127.0.0.1:5000/watoom-model-manager@sha256:eb321eeaef1de9286d581b036d85af48fcf030b95fe6537495346db6f9d0bd78",
+    "source_commit": "5061244e06cd999a2853ff2e08b10a3d901143ee",
+    "note": "Built from source; generation stage reporting plus real published image path in job results"
+  },
+  "sdxl_image": {
+    "image": "127.0.0.1:5000/watoom-model-manager-sdxl-runner@sha256:16aab4548d0ce2f3e9cc875361ad20f147c0189a879c95186c90252e77834e79",
+    "source_commit": "e4ce76cec69a1d04d08735dcfb7933e97ece192d",
+    "generation": "NOT TESTED"
+  },
+  "defaults": {
+    "context": 100000,
+    "output": 4096,
+    "cache_k": "q4_0",
+    "cache_v": "q4_0"
+  },
+  "live_generation": "PASS: GGUF text, SDXL checkpoint and base-plus-LoRA; primary restoration verified",
+  "sdxl_runtime": {
+    "format": "read-only-conda-v1",
+    "path": "/data/ai/toolchains/model-manager-sdxl/92b130715fb325780b1be5a9f8d8130f828e326933bf94efcc5bf5ad02678d71/bundle/rootfs/opt/conda",
+    "manifest": "/data/ai/toolchains/model-manager-sdxl/92b130715fb325780b1be5a9f8d8130f828e326933bf94efcc5bf5ad02678d71/payload.json",
+    "sha256": "b747b7a4296b7016a1af542e7e1cabdc6791439f40e44a93c76e988262ea9295",
+    "software": "127.0.0.1:5000/watoom-model-manager-sdxl@sha256:92b130715fb325780b1be5a9f8d8130f828e326933bf94efcc5bf5ad02678d71"
+  },
+  "image_mcp": {
+    "verified": true,
+    "source_commit": "09a281e739b5258eb8995e0155c26fc78798dc3d",
+    "generation": "PASS: benign 1024x1024 image, 30 steps; prior Defiant restoration verified",
+    "session_resume": false
+  },
+  "image_result_delivery": {
+    "schema": 1,
+    "source_commit": "09a281e739b5258eb8995e0155c26fc78798dc3d",
+    "origin": "native MCP session metadata",
+    "automatic_inference": false,
+    "validation": "PASS: scoped receipts, neutral worker image, prior model restoration, automatic chat display and checksum-matched download",
+    "native_inference_started": false
+  },
+  "negative_prompt": {
+    "source_commit": "e4ce76cec69a1d04d08735dcfb7933e97ece192d",
+    "validation": "PASS: 99 tests, immutable runner CPU inspection, live schema, all three registered worker image pins/identities, native guard and queue reopened; no new generation",
+    "max_length": 4096
+  }
+}

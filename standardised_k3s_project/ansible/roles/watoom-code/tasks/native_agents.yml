@@ -1,0 +1,74 @@
+---
+# The restructured native agents (watoom-workflow/builder/critic/investigator/reviewer)
+# are assembled from single-source fragments under
+# opencode-agent/files/v2-native/_src/ (shared blocks + per-role fragments, ordered
+# by _src/assembly.json). The .md under .../agents/ are generated artifacts; this
+# step regenerates them from _src so the source of truth stays authoritative, then
+# the copy below installs every agent .md (creative-writer/kali are not templated).
+- name: Assemble restructured native agent definitions from single-source fragments
+  ansible.builtin.command:
+    cmd: 'python3 {{ role_path }}/../../../scripts/render-native-agents.py'
+  delegate_to: localhost
+  become: false  # this writes into the git checkout on the controller; the play's "become: true" is for the
+                 # remote host, and running this as root would dirty the worktree with root-owned files
+  run_once: true
+  changed_when: false
+  tags: [agent_roster]
+
+- name: Install managed agents inheriting the session-selected language model
+  ansible.builtin.copy:
+    content: "{{ lookup('ansible.builtin.file', item) | regex_replace('(?m)^model:\\n  providerID: watoom\\n  model: [A-Za-z0-9_.-]+\\n', '') }}"
+    dest: '{{ watoom_code_root }}/config/agents/{{ item | basename }}'
+    owner: '1001'
+    group: '1001'
+    mode: '0644'
+  loop: "{{ query('ansible.builtin.fileglob', role_path ~ '/../opencode-agent/files/v2-native/agents/*.md') }}"
+  tags: [agent_roster]
+
+- name: Create maintained capture template directory
+  ansible.builtin.file:
+    path: '{{ watoom_code_root }}/config/templates/capture'
+    state: directory
+    owner: '1001'
+    group: '1001'
+    mode: '0755'
+
+- name: Install maintained capture templates and contract
+  ansible.builtin.copy:
+    src: 'capture-templates/'
+    dest: '{{ watoom_code_root }}/config/templates/capture/'
+    owner: '1001'
+    group: '1001'
+    mode: '0644'
+
+# watoom-openspec was written against ~/.config/opencode/{skills,watoom-tools}/,
+# the same layout opencode-agent's now-retired v2-canary playbook used to deploy
+# here. Nothing ever carried it over to this role, so the skill and its notify
+# script have never actually been live -- install them the same way the other
+# native skills/tools above are installed.
+- name: Create native OpenSpec skill directory
+  ansible.builtin.file:
+    path: '{{ watoom_code_root }}/config/skills/watoom-openspec'
+    state: directory
+    owner: "{{ watoom_code_uid }}"
+    group: "{{ watoom_code_gid }}"
+    mode: '0750'
+  tags: [watoom_openspec]
+
+- name: Install native OpenSpec skill instructions
+  ansible.builtin.copy:
+    src: '{{ role_path }}/../opencode-agent/files/v2-native/skills/watoom-openspec/SKILL.md'
+    dest: '{{ watoom_code_root }}/config/skills/watoom-openspec/SKILL.md'
+    owner: "{{ watoom_code_uid }}"
+    group: "{{ watoom_code_gid }}"
+    mode: '0644'
+  tags: [watoom_openspec]
+
+- name: Install native OpenSpec Discord notifier
+  ansible.builtin.copy:
+    src: '{{ role_path }}/../opencode-agent/files/v2-native/tools/watoom-openspec-notify.py'
+    dest: '{{ watoom_code_root }}/config/watoom-tools/watoom-openspec-notify.py'
+    owner: "{{ watoom_code_uid }}"
+    group: "{{ watoom_code_gid }}"
+    mode: '0755'
+  tags: [watoom_openspec]

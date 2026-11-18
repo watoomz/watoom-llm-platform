@@ -1,0 +1,66 @@
+---
+- name: "Vault Secrets | Check encrypted secret source exists"
+  ansible.builtin.stat:
+    path: "{{ vault_secrets_vault_file }}"
+  register: vault_secret_source
+  changed_when: false
+
+- name: "Vault Secrets | Assert encrypted secret source exists"
+  ansible.builtin.assert:
+    that:
+      - vault_secret_source.stat.exists
+      - vault_secret_source.stat.isreg
+    fail_msg: >-
+      Missing encrypted secret source:
+      {{ vault_secrets_vault_file }}
+
+- name: "Vault Secrets | Check vault password file exists"
+  ansible.builtin.stat:
+    path: "{{ vault_secrets_password_file }}"
+  register: vault_password_source
+  changed_when: false
+  no_log: true
+
+- name: "Vault Secrets | Assert vault password file exists"
+  ansible.builtin.assert:
+    that:
+      - vault_password_source.stat.exists
+      - vault_password_source.stat.isreg
+    fail_msg: >-
+      Ansible Vault password file is missing.
+      Restore the homelab vault password file before continuing.
+  no_log: true
+
+- name: "Vault Secrets | Ensure decrypted secret directory exists"
+  ansible.builtin.file:
+    path: "{{ vault_secrets_output_file | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: "Vault Secrets | Decrypt homelab environment secrets"
+  ansible.builtin.command:
+    argv:
+      - ansible-vault
+      - view
+      - --vault-password-file
+      - "{{ vault_secrets_password_file }}"
+      - "{{ vault_secrets_vault_file }}"
+  register: decrypted_homelab_environment
+  changed_when: false
+  no_log: true
+
+- name: "Vault Secrets | Install decrypted homelab environment"
+  ansible.builtin.copy:
+    content: "{{ decrypted_homelab_environment.stdout }}\n"
+    dest: "{{ vault_secrets_output_file }}"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
+- name: "Vault Secrets | Remove decrypted secret content from registered variable"
+  ansible.builtin.set_fact:
+    decrypted_homelab_environment: {}
+  no_log: true

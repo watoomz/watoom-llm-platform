@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/anomalyco/opencode.git",
+  "base_tag": "v2.0.18",
+  "base_commit": "cd9a14a6b688d4021bee381dfd39d2cef9c0f862",
+  "application_commit": "57f99e22fd07a0871e2038753cd85fa303036fe2",
+  "tree": "725cbb329c450771d098070c5ef242ef63210865",
+  "bundle_sha256": "57bb41845616176c5434a5f7354f7f900d8eeaa7a214a472c91efdb19602fb31",
+  "deployed_image": "127.0.0.1:5000/watoom-code@sha256:f63d0cd0a79a155590dfb8b9c04cf055b6dab23228fbcf31760e337c877c2ee7",
+  "deployed_toolkit_image": "127.0.0.1:5000/watoom-toolkit@sha256:3b2368f5c45c8ebced2644ac6f316ef499512de912afa4c6be85a3e37212ef39",
+  "toolkit_iac_commit": "b201f68e6cc95e251c7fe9dfed0ea000e5b792b7",
+  "application_branch": "codex/skills-manager",
+  "bundle": "watoom-code-fixed-layout.bundle",
+  "release_status": "CANDIDATE_NOT_PRODUCTION"
+}

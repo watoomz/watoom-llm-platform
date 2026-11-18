@@ -1,0 +1,105 @@
+{
+  "apiVersion": "v1",
+  "items": [
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "Middleware",
+      "metadata": {
+        "labels": {
+          "app": "watoom-toolkit",
+          "app.kubernetes.io/managed-by": "watoom-toolkit-traefik-script"
+        },
+        "name": "watoom-toolkit-lan-only",
+        "namespace": "opencode"
+      },
+      "spec": {
+        "ipAllowList": {
+          "sourceRange": [
+            "10.99.0.0/16"
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRoute",
+      "metadata": {
+        "labels": {
+          "app": "watoom-toolkit",
+          "app.kubernetes.io/managed-by": "watoom-toolkit-traefik-script"
+        },
+        "name": "watoom-toolkit",
+        "namespace": "opencode"
+      },
+      "spec": {
+        "entryPoints": [
+          "websecure"
+        ],
+        "routes": [
+          {
+            "kind": "Rule",
+            "match": "Host(`toolkit.internal.homelab.example`)",
+            "services": [
+              {
+                "name": "watoom-toolkit",
+                "nativeLB": true,
+                "port": 8879
+              }
+            ]
+          }
+        ],
+        "tls": {
+          "secretName": "watoom-tls"
+        }
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "labels": {
+          "app": "watoom-toolkit",
+          "app.kubernetes.io/managed-by": "watoom-toolkit-traefik-script"
+        },
+        "name": "watoom-toolkit-allow-traefik",
+        "namespace": "opencode"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "kube-system"
+                  }
+                },
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/instance": "traefik-kube-system",
+                    "app.kubernetes.io/name": "traefik"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 8879,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app": "watoom-toolkit"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    }
+  ],
+  "kind": "List"
+}

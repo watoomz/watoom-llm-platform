@@ -1,0 +1,18 @@
+---
+kubernetes_secrets_env_file: >-
+  {{ role_path | dirname | dirname | dirname }}/secrets/.env.local
+
+kubernetes_managed_secrets:
+
+  - namespace: monitoring
+    name: grafana-secrets
+    required: true
+    data:
+      GF_SECURITY_ADMIN_USER: GRAFANA_ADMIN_USER
+      GF_SECURITY_ADMIN_PASSWORD: GRAFANA_ADMIN_PASSWORD
+
+  - namespace: monitoring
+    name: mktxp-credentials
+    required: false
+    data:
+      credentials.yml: MKTXP_CREDENTIALS_YML

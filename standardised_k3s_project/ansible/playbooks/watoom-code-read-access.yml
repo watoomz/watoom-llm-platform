@@ -1,0 +1,31 @@
+---
+- name: Deploy scoped native read access under the held release fence
+  hosts: homelab
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Require native idle deployment guard
+      ansible.builtin.assert:
+        that:
+          - watoom_coordinator_release_guard_held | default(false) | bool
+    - name: Install immutable coordinator guard
+      ansible.builtin.include_role:
+        name: watoom-code
+        tasks_from: coordinator_guard.yml
+    - name: Install managed role policies
+      ansible.builtin.include_role:
+        name: watoom-code
+        tasks_from: native_agents.yml
+    - name: Expose server repositories as read-only evidence
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - -n
+          - '{{ watoom_code_namespace | default("watoom-code") }}'
+          - patch
+          - deployment
+          - watoom-code
+          - --type=strategic
+          - --patch
+          - '{{ {"spec":{"template":{"spec":{"containers":[{"name":"app","volumeMounts":[{"name":"server-repositories","mountPath":"/data/github","readOnly":true}]}],"volumes":[{"name":"server-repositories","hostPath":{"path":"/data/github","type":"Directory"}}]}}}} | to_json }}'
+      changed_when: true

@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Voice companion (ESP32-S3) · Agent Export</title><meta name="description" content="The ESP32-S3 desk companion: a hand-drawn capybara on a 2.8&quot; touch screen that wakes on &quot;Hey Buddy&quot; and talks through the Gemini Live API. Hardware, behaviour, build and flash, and fixes for known faults."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link active" aria-current="page" href="/guide/voice-companion.html">Voice companion</a><div class="toc"><a class="toc-link" href="#overview">Overview</a><a class="toc-link" href="#behaviour">Behaviour</a><a class="toc-link" href="#build-and-flash">Build and flash</a><a class="toc-link" href="#troubleshooting">Troubleshooting</a><a class="toc-link" href="#known-limits">Known limits</a></div><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">Voice companion</p><h1>Voice companion (ESP32-S3)</h1><p class="lede">The ESP32-S3 desk companion: a hand-drawn capybara on a 2.8&quot; touch screen that wakes on &quot;Hey Buddy&quot; and talks through the Gemini Live API. Hardware, behaviour, build and flash, and fixes for known faults.</p></header>
+<div class="content">
+<h2 id="overview">Overview</h2>
+<p>A small voice assistant on an ES3C28P board (ESP32-S3, 16 MB flash, 8 MB PSRAM, 2.8&quot; 240x320 ILI9341 touch display, ES8311 audio codec). It listens locally for the wake word, then streams the conversation straight from the board to the Gemini Live API over Wi-Fi. No server on this platform sits in the audio path.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Wake word</td>
+<td>&quot;Hey Buddy&quot; (<code>wn10_en_heybuddy</code>, ESP-SR WakeNet), recognised on the board. Nothing leaves the board while idle.</td>
+</tr>
+<tr>
+<td>Conversation</td>
+<td>Gemini Live API websocket, model <code>models/gemini-3.8-live</code>, voice Kore, English only.</td>
+</tr>
+<tr>
+<td>Audio</td>
+<td>16 kHz 16-bit mono up. The reply arrives at 24 kHz and is resampled to 16 kHz on the board. Half duplex: the microphone is muted while it speaks.</td>
+</tr>
+<tr>
+<td>Time</td>
+<td>SNTP, time zone <code>AEST-10</code> (<code>TZ_STR</code> in <code>main.c</code>).</td>
+</tr>
+<tr>
+<td>Source</td>
+<td><code>/data/ai/projects/devices/grok-voice-esp32s3</code> (not part of this repository; <code>main/*.bak</code> files are the previous versions). The folder name is historical.</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote class="callout callout-warning" data-kind="Warning">
+<p>The Gemini free tier may use submitted audio to improve Google's products, and the Live API is a preview with session limits of about 10 to 15 minutes. The board returns to wake-word mode long before that.</p>
+</blockquote>
+<h2 id="behaviour">Behaviour</h2>
+<p>Everything below is drawn on the screen from the owner's hand-drawn capybara (<code>art/capybara-handrawn.avif</code>), with the glow ring around it showing the state.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>State</th>
+<th>Capybara</th>
+<th>Ring</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Idle</td>
+<td>Breathes, blinks, tilts its head curiously, yawns now and then</td>
+<td>Slow blue-grey breathing</td>
+</tr>
+<tr>
+<td>Asleep (after 1 minute idle)</td>
+<td>Separate pose: head dropped between the shoulders, paws in front, floating z's, dimmed screen</td>
+<td>Faint</td>
+</tr>
+<tr>
+<td>Connecting</td>
+<td>Looks around</td>
+<td>Orange spinner</td>
+</tr>
+<tr>
+<td>Listening</td>
+<td>Leans in, cocks its head, nods</td>
+<td>Green pulse with an expanding ripple</td>
+</tr>
+<tr>
+<td>Thinking</td>
+<td>Tilts its head, heavy-lidded, thought bubbles</td>
+<td>Purple spinner</td>
+</tr>
+<tr>
+<td>Speaking</td>
+<td>Mouth follows the audio level, small bounce</td>
+<td>Blue, widening with the voice level</td>
+</tr>
+<tr>
+<td>Patted (touch on the head)</td>
+<td>Eyes shut, nuzzles, blushes, &quot;&lt;3&quot;s, &quot;purr...&quot;</td>
+<td>Pink</td>
+</tr>
+<tr>
+<td>No connection</td>
+<td>Shakes its head</td>
+<td>Flashing red</td>
+</tr>
+</tbody>
+</table></div>
+<p>Other on-screen items: a clock (top left), Wi-Fi bars (top right), a volume bar while the volume changes, and a &quot;tap to stop&quot; button during a conversation. The backlight dims from 21:00 to 07:00 and dims further while asleep.</p>
+<h3 id="controls">Controls</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&quot;Hey Buddy&quot;</td>
+<td>Start a conversation</td>
+</tr>
+<tr>
+<td>BOOT short press</td>
+<td>Start or stop a conversation</td>
+</tr>
+<tr>
+<td>BOOT long press (0.6 s)</td>
+<td>Step the volume 30, 50, 70, 90, 100, then back to 30</td>
+</tr>
+<tr>
+<td>Tap the body while idle</td>
+<td>Start a conversation</td>
+</tr>
+<tr>
+<td>Tap the head</td>
+<td>Pat him (does not start a conversation)</td>
+</tr>
+<tr>
+<td>Tap the &quot;tap to stop&quot; button</td>
+<td>Stop the conversation</td>
+</tr>
+<tr>
+<td>Say &quot;volume 30&quot;, &quot;louder&quot; and so on</td>
+<td>The model calls a <code>set_volume</code> tool (0 to 100)</td>
+</tr>
+</tbody>
+</table></div>
+<p>A conversation ends by itself after 20 seconds with no reply from the model. A sleeping capybara wakes on the wake word, a tap, or a pat.</p>
+<h2 id="build-and-flash">Build and flash</h2>
+<p>The build runs in the Espressif IDF container (<code>espressif/idf:v5.4.2</code>) on this server. The board is plugged into the rig, so flashing goes through the rig's <code>migrate</code> account.</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">cd /data/ai/projects/devices/grok-voice-esp32s3
+./build.sh     # writes build/, reads the two secret files below, removes main/secrets.h afterwards
+./flash.sh     # copies the images to the rig, flashes COM8, deletes the copies
+</code></pre></div>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Secret file</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/data/ai/secrets/gemini_api_key</code></td>
+<td>The Gemini API key (a Google AI Studio key)</td>
+</tr>
+<tr>
+<td><code>/data/ai/secrets/esp32_wifi.env</code></td>
+<td><code>SSID=...</code> and <code>PASS=...</code></td>
+</tr>
+</tbody>
+</table></div>
+<blockquote class="callout callout-rule" data-kind="Rule">
+<p>The key and Wi-Fi password are compiled into the firmware by <code>build.sh</code> through a generated <code>main/secrets.h</code> that is deleted after the build. Never commit the key, never paste it into chat, and rebuild and reflash after rotating it. The <code>KEY_FILE</code> environment variable points <code>build.sh</code> at a different key file.</p>
+</blockquote>
+<h3 id="rebuilding-the-artwork">Rebuilding the artwork</h3>
+<p>The pictures are generated from the drawing, not hand-edited.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Awake sprite and feature coordinates</td>
+<td><code>ffmpeg -i art/capybara-handrawn.avif x.png</code> then <code>python3 -I tools/make_sprite.py x.png main/capy_sprite.c main/capy_sprite.h</code></td>
+</tr>
+<tr>
+<td>Sleeping pose</td>
+<td><code>python3 -I tools/make_sleep.py art/capybara-sleep-composite.png main/capy_sleep.c</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>The wake word is chosen in <code>sdkconfig.defaults</code> (<code>CONFIG_SR_WN_WN10_EN_HEYBUDDY</code>). Custom wake words such as &quot;Hey Cappy&quot; are not available without Espressif's paid training service.</p>
+<h3 id="reading-the-board-s-log">Reading the board's log</h3>
+<p>Opening COM8 on the rig resets the board and prints the boot log. Read it over SSH to the rig with a short PowerShell <code>System.IO.Ports.SerialPort</code> loop at 115200 baud. A colour test card (five labelled bars) is shown for the first 25 seconds after every reset.</p>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause and fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Stuck on &quot;connecting&quot;, log shows <code>esp_ws_handshake_status_code=400</code></td>
+<td>The API key is invalid. Query <code>https://generativelanguage.googleapis.com/</code> with the key from the server to read the exact message, replace the key file, then rebuild and reflash.</td>
+</tr>
+<tr>
+<td>Log shows <code>403</code> or &quot;no credits or licenses&quot;</td>
+<td>The key belongs to an account with no usable quota. Use a key from a project that has access to the Live API.</td>
+</tr>
+<tr>
+<td>Connects, then drops about 2 s later</td>
+<td>Wi-Fi power save or a short write timeout aborting the socket. The firmware disables power save and allows 3 s per send; keep both.</td>
+</tr>
+<tr>
+<td>Replies in another language</td>
+<td>The setup message pins <code>languageCode: en-US</code> and an English-only instruction. Check both are still in <code>main.c</code>.</td>
+</tr>
+<tr>
+<td>Colours wrong (red shows cyan, white shows black)</td>
+<td>The panel is inverted: <code>esp_lcd_panel_invert_color(p, true)</code> must stay set. Read the boot test card to tell inversion from a red/blue channel swap.</td>
+</tr>
+<tr>
+<td><code>task_wdt</code> warning about <code>taskLVGL</code></td>
+<td>Too much software rotation or zoom of the sprite. Rotation and zoom are quantised and limited to a few states; keep the idle pose to plain blits and small vertical offsets.</td>
+</tr>
+<tr>
+<td>Touch does nothing</td>
+<td>The log should show <code>touch controller found (chip id 0x64)</code> after boot. The controller sits at address 0x38 on the codec's I2C bus.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="known-limits">Known limits</h2>
+<ul>
+<li>The touch coordinate orientation (head and bottom-button regions) follows the display's vertical axis; if patting the head or tapping &quot;tap to stop&quot; lands in the wrong place, the regions in <code>touch_task</code> and <code>face_tick</code> need adjusting.</li>
+<li>The clock needs Wi-Fi for its first sync and shows <code>--:--</code> until then.</li>
+<li>Weather and other online extras are not implemented.</li>
+</ul>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/voice-companion.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

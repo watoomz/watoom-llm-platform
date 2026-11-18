@@ -1,0 +1,32 @@
+---
+- ansible.builtin.import_playbook: watoom-code-uploads.yml
+- name: Deploy WatooM Code context reliability application only
+  hosts: homelab
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Require the durable application admission fence
+      ansible.builtin.assert:
+        that:
+          - watoom_context_guard_held | default(false) | bool
+          - "'@sha256:' in watoom_context_image"
+    - name: Set only the reviewed application image
+      kubernetes.core.k8s:
+        state: patched
+        merge_type: strategic-merge
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: watoom-code
+            namespace: watoom-code
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: app
+                    image: "{{ watoom_context_image }}"
+    - name: Wait for the application rollout
+      ansible.builtin.command:
+        argv: [kubectl, -n, watoom-code, rollout, status, deployment/watoom-code, --timeout=240s]
+      changed_when: false

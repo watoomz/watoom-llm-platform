@@ -1,0 +1,34 @@
+[
+  {
+    "test": "disconnected_chain",
+    "status": "PASS"
+  },
+  {
+    "test": "rest_roll_world_transform_endpoint_orientation",
+    "status": "PASS"
+  },
+  {
+    "test": "constrained_rig_blocked",
+    "status": "PASS"
+  },
+  {
+    "test": "missing_invalid_exceeded_limits",
+    "status": "PASS"
+  },
+  {
+    "test": "missing_ground_balance_warn",
+    "status": "PASS"
+  },
+  {
+    "test": "same_mesh_crossing_adjacent_exclusion",
+    "status": "PASS"
+  },
+  {
+    "test": "evaluated_world_environment_collision",
+    "status": "PASS"
+  },
+  {
+    "test": "failure_no_save_source_hash_and_reloaded_pose",
+    "status": "PASS"
+  }
+]

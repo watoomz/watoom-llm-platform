@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WatooM · Change requests</title>
+<link rel="stylesheet" href="/command-center/cc.css">
+<link rel="stylesheet" href="/command-center/change-requests.css">
+</head>
+<body>
+  <header class="cc-head">
+    <div>
+      <div class="cc-title"><b>WatooM</b> Change requests</div>
+      <div class="cc-sub">host files the models asked to change · review the diff, then approve or reject</div>
+    </div>
+    <div class="cc-sub"><a href="/command-center/">Command Center</a> · <a href="/command-center/break-glass.html">Break glass</a> · <span id="stamp">loading…</span></div>
+  </header>
+  <main class="cr-main">
+    <section class="panel">
+      <label class="cr-pin">Operator PIN
+        <input id="pin" type="password" autocomplete="off" spellcheck="false" placeholder="from /root/.watoom-change-request-pin">
+      </label>
+      <p class="cr-note">Approving applies the exact diff shown, runs the fixed checks, then commits and pushes that one file. It is refused if the request or the file changed after you loaded this page. The PIN keeps models and other LAN clients from approving for you.</p>
+      <div id="msg" role="status" aria-live="polite"></div>
+    </section>
+    <section class="panel"><h2>Waiting for your decision <span class="hint" id="pending-count"></span></h2><div id="pending"></div></section>
+    <section class="panel"><h2>Recent decisions</h2><div id="history"></div></section>
+  </main>
+  <script src="/command-center/change-requests.js"></script>
+</body>
+</html>

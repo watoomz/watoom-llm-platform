@@ -1,0 +1,13 @@
+{
+  "upstream_commit": "71d031dab8bc6729504d11a78cbe91945401045f",
+  "original_skill_sha256": "137a8f7aa339b5e785f6a2fe42834ee429788030d37277b256dec520382827a3",
+  "files": {
+    "SKILL.md": "aeef732ddff67a50c4acb17e282a8d3d7cc56650fb1cfbb6c2e59e5a91c45140",
+    "scripts/stress_poses.py": "71998a915aa95e20c20ab64bd6faff97e2bb95f8a7e7d7a832fa7973567b6bb8",
+    "scripts/rig_check.py": "9e954866f194676d73f27cf7dab42678093644790fffdee55cc81447433b9405",
+    "scripts/_bpyx.py": "a3339ba8a678469e8ed29510e32a7331e0235202191ca4edb977af4720819b4b",
+    "scripts/bind_mesh.py": "1da27ab64d659ee624ca4682ecba508b85fc9b3be32726279c74a689520b12b5",
+    "scripts/rigify_build.py": "66c242c512da7b10222feb859e11deb10a3c6273652eceb275357ccd7c8a6efc",
+    "references/upstream-SKILL.md": "137a8f7aa339b5e785f6a2fe42834ee429788030d37277b256dec520382827a3"
+  }
+}

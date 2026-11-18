@@ -1,0 +1,165 @@
+---
+homelab_hostname: ai-host
+homelab_timezone: UTC
+homelab_locale: en_US.UTF-8
+homelab_keymap: us
+
+homelab_primary_user: watoom
+homelab_primary_uid: 1000
+homelab_codex_user: codex
+homelab_codex_uid: 1001
+homelab_codex_passwordless_sudo: true
+
+homelab_lan_iface: eth0
+homelab_lan_vlan_iface: eth0.20
+homelab_lan_vlan_id: 20
+homelab_lan_ip_cidr: 10.99.20.225/24
+homelab_lan_gateway: 10.99.20.1
+homelab_lan_dns: "10.99.20.1,1.1.1.1"
+homelab_dmz_iface: eth1
+homelab_dmz_ip_cidr: 192.168.250.225/24
+
+homelab_k3s_version: v1.36.3+k3s1
+homelab_k3s_node_name: ai-host
+homelab_k3s_node_ip: 10.99.20.225
+homelab_k3s_disable:
+  - traefik
+
+homelab_repo_root: "{{ playbook_dir }}/../.."
+homelab_app_path: /app
+homelab_data_path: /data
+
+homelab_manage_packages: true
+homelab_manage_desktop_packages: false  # GPU driver/CUDA and browser packages are listed below; enable if you want them managed
+homelab_manage_network: true
+homelab_manage_firewall: true
+homelab_manage_dns_stub: false
+homelab_manage_k3s: true
+homelab_manage_local_tls: true
+
+# Canonical local wildcard TLS material.  On the first managed run this is
+# seeded from an existing live watoom-tls Secret when available so the
+# currently deployed certificate is preserved rather than rotated.
+homelab_local_tls_domain: "{{ homelab_domains.local }}"
+homelab_local_tls_secret: watoom-tls
+homelab_local_tls_dir: "{{ homelab_data_path }}/watoom-local-tls"
+homelab_local_tls_cert: "{{ homelab_local_tls_dir }}/tls.crt"
+homelab_local_tls_key: "{{ homelab_local_tls_dir }}/tls.key"
+homelab_local_tls_sans:
+  - "DNS:*.{{ homelab_local_tls_domain }}"
+  - "DNS:{{ homelab_local_tls_domain }}"
+  - "IP:{{ homelab_lan_ip_cidr.split('/')[0] }}"
+  - "IP:{{ homelab_dmz_ip_cidr.split('/')[0] }}"
+
+# Namespaces that require wildcard TLS before their IngressRoute exists.
+# Missing namespaces are skipped until they have been created.
+homelab_local_tls_extra_namespaces: []
+
+homelab_manage_host_ollama: false
+
+homelab_bootstrap_k8s_services: []
+homelab_bootstrap_docker_stacks: []
+
+homelab_core_manifest_paths:
+  - manifests/00-namespaces/namespaces.yml
+  - manifests/10-infrastructure/traefik
+  - manifests/40-rbac
+
+# AI platform workloads only; the base manifests live under manifests/10-infrastructure.
+homelab_k8s_services:
+  glance: manifests/10-infrastructure/glance
+  monitoring: manifests/10-infrastructure/monitoring
+  llm: manifests/10-infrastructure/llm
+  opencode: manifests/10-infrastructure/opencode
+  platform-workers: manifests/10-infrastructure/platform-workers
+
+homelab_base_packages:
+  - bash-completion
+  - bind-utils
+  - btop
+  - ca-certificates
+  - chrony
+  - curl
+  - device-mapper-persistent-data
+  - docker-buildx
+  - docker-cli
+  - docker-compose
+  - docker-compose-switch
+  - fail2ban
+  - firewalld
+  - git
+  - htop
+  - iproute
+  - iputils
+  - jq
+  - kernel-modules
+  - kernel-modules-extra
+  - libcurl.i686
+  - lsof
+  - lvm2
+  - moby-engine
+  - moby-engine-rootless-extras
+  - nano
+  - NetworkManager
+  - nm-connection-editor
+  - nss.i686
+  - openssh-server
+  - openssl
+  - openssl-libs.i686
+  - p11-kit-trust
+  - p11-kit-trust.i686
+  - policycoreutils-python-utils
+  - rsync
+  - smartmontools
+  - tar
+  - tmux
+  - unzip
+  - vim
+  - wget
+  - xfsprogs
+  - yq
+  - zip
+
+homelab_desktop_packages:
+  - akmod-nvidia-580xx
+  - alsa-plugins-pulseaudio
+  - alsa-sof-firmware
+  - alsa-utils
+  - ffmpeg
+  - google-chrome-stable
+  - gstreamer1-libav
+  - gstreamer1-plugins-bad-free
+  - gstreamer1-plugins-bad-freeworld
+  - gstreamer1-plugins-good
+  - gstreamer1-plugins-ugly
+  - pavucontrol
+  - pipewire-alsa
+  - xorg-x11-drv-nvidia-580xx-cuda
+
+homelab_firewall_services:
+  - ssh
+  - dns
+
+homelab_firewall_zone: FedoraServer
+
+homelab_firewall_ports:
+  - 80/tcp
+  - 443/tcp
+  - 6443/tcp
+  - 8472/udp
+  - 10250/tcp
+  - 9100/tcp
+
+homelab_nsswitch_hosts: "files myhostname dns resolve mdns4_minimal"
+
+# BEGIN WATOOM K3S MEMORY SAFETY
+# Preserve host/k3s headroom on the single-node host.
+homelab_k3s_memory_safety_enabled: true
+homelab_k3s_system_reserved_memory: "1536Mi"
+homelab_k3s_kube_reserved_memory: "1536Mi"
+homelab_k3s_eviction_memory_available: "2Gi"
+homelab_k3s_eviction_nodefs_available: "5%"
+homelab_k3s_eviction_nodefs_inodes_free: "5%"
+homelab_k3s_eviction_imagefs_available: "5%"
+homelab_k3s_eviction_imagefs_inodes_free: "5%"
+# END WATOOM K3S MEMORY SAFETY

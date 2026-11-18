@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<class name="Node" inherits="Object">
+  <brief_description> A [b]scene[/b] node. </brief_description>
+  <description>Fallback should not replace the brief.</description>
+  <methods>
+    <method name="add_child">
+      <return type="void"/>
+      <param index="2" name="internal" type="int" enum="Node.InternalMode" default="0"/>
+      <param index="0" name="node" type="Node"/>
+      <param index="1" name="force_readable_name" type="bool" default="false"/>
+      <description>Add a [Node] with [method add_child].[br]See [url=https://example.org]details[/url].</description>
+    </method>
+    <method name="_ready" qualifiers="virtual const" experimental="API may change">
+      <return type="void"/>
+      <description/>
+    </method>
+    <method name="make_node" qualifiers="static" deprecated="Use [method add_child].">
+      <return type="Node"/>
+      <param index="0" name="label" type="String" default="&amp;&quot;Hello  world&quot;"/>
+      <param index="1" name="offset" type="Vector2" default="Vector2(1, 2)"/>
+      <param index="2" name="mode" type="int" enum="Other.Mode"/>
+    </method>
+    <method name="call_many" qualifiers="vararg const">
+      <return type="int" enum="Node.InternalMode"/>
+      <param index="0" name="flags" type="int" enum="Node.Flags" is_bitfield="true" default="3"/>
+    </method>
+  </methods>
+  <members>
+    <member name="display_name" type="String" default="&quot;&quot;" setter="set_display_name" getter="get_display_name" deprecated="">A [i]label[/i].</member>
+    <member name="owner" type="Node" setter="" getter="get_owner"/>
+  </members>
+  <signals>
+    <signal name="child_added" experimental="">
+      <param index="0" name="child" type="Node"/>
+      <description>Emitted for [param child].</description>
+    </signal>
+  </signals>
+  <constants>
+    <constant name="INTERNAL_MODE_DISABLED" value="0" enum="InternalMode">No internal mode.</constant>
+    <constant name="INTERNAL_MODE_FRONT" value="1" enum="InternalMode" deprecated="Old mode"/>
+    <constant name="FLAG_FIRST" value="1" enum="Flags" is_bitfield="true"/>
+    <constant name="FLAG_SECOND" value="2" enum="Flags" is_bitfield="true"/>
+    <constant name="SPECIAL" value="0xFF" experimental="Unstable value"/>
+  </constants>
+</class>

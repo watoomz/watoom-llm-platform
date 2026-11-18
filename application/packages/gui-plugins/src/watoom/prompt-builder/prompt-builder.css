@@ -1,0 +1,84 @@
+.prompt-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.prompt-builder-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.prompt-builder-card {
+  min-width: 0;
+  border: 1px solid var(--v2-border-border-base);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.prompt-builder label {
+  display: block;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
+}
+.prompt-builder textarea,
+.prompt-builder input,
+.prompt-builder select {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--v2-border-border-base);
+  border-radius: 8px;
+  background: var(--v2-background-bg-layer-01);
+  color: var(--v2-text-text-base);
+  font-size: 13px;
+  line-height: 20px;
+}
+.prompt-builder textarea {
+  resize: vertical;
+}
+.prompt-builder textarea:focus-visible,
+.prompt-builder input:focus-visible,
+.prompt-builder select:focus-visible {
+  outline: 2px solid var(--v2-border-border-focus);
+  outline-offset: 2px;
+}
+.prompt-builder-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-top: 1px solid var(--v2-border-border-base);
+  padding-top: 20px;
+  margin-top: 8px;
+}
+.prompt-builder-questions p {
+  margin-top: 4px;
+}
+.prompt-builder-preview textarea {
+  min-height: 360px;
+}
+.prompt-builder-source {
+  color: var(--v2-text-text-muted);
+}
+@media (max-width: 800px) {
+  .prompt-builder-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .prompt-builder-card {
+    padding: 14px;
+  }
+}
+
+/* Native popup options need an explicit opaque themed background. */
+.prompt-builder select option {
+  background-color: var(--v2-background-bg-layer-01);
+  color: var(--v2-text-text-base);
+}
+
+.prompt-builder [aria-invalid="true"] {
+  outline: 2px solid var(--v2-border-border-focus);
+  outline-offset: 2px;
+}

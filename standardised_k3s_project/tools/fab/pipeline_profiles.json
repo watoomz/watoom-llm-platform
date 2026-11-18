@@ -1,0 +1,94 @@
+{
+  "world-and-terrain": {
+    "pipelines": [
+      "godot",
+      "unreal-godot",
+      "fixed-map",
+      "procedural-mesh",
+      "mesh-generate"
+    ],
+    "terms": [
+      "Landscape Mesh Builder",
+      "Stylized Landscape and Grass",
+      "Advanced Landscape Auto Material",
+      "20 Heightmaps",
+      "Wildwood",
+      "Stylized Nature"
+    ],
+    "reason": "Terrain/vegetation candidates; verify actual engine/conversion support."
+  },
+  "characters-and-animation": {
+    "pipelines": [
+      "character",
+      "blender-builder",
+      "blender-godot"
+    ],
+    "terms": [
+      "German Shepherd",
+      "Ultimate Metahuman Body",
+      "Free Animation Library",
+      "Game Animation Sample",
+      "LCAT:",
+      "Metahuman Animation Tool"
+    ],
+    "reason": "Character/animation candidates; verify rigs, clips and actual target integration."
+  },
+  "materials-and-textures": {
+    "pipelines": [
+      "material",
+      "blender-builder",
+      "repair",
+      "optimize"
+    ],
+    "terms": [
+      "Pack Bonus Textures",
+      "Chiselled Wood",
+      "Fabric Material Pack",
+      "Crafted Wood Material",
+      "Landscape Material"
+    ],
+    "reason": "Material inputs; verify complete maps, licensing and shader translation."
+  },
+  "effects": {
+    "pipelines": [
+      "effects",
+      "unreal-godot"
+    ],
+    "terms": [
+      "Blood FX",
+      "Nature Water FX",
+      "Water Magic",
+      "Waterfall Blades",
+      "Vdb Effects",
+      "Poo VFX"
+    ],
+    "reason": "VFX candidates; runtime behaviour may need native integration or accepted bake."
+  },
+  "dungeon-and-game-systems": {
+    "pipelines": [
+      "dungeon",
+      "hyper",
+      "fixed-map",
+      "plugin-qualification"
+    ],
+    "terms": [
+      "Dungeon Builder:",
+      "Dungeon Forge:",
+      "Castle Forge:",
+      "Simple Inventory System",
+      "Modular Save",
+      "Hyper"
+    ],
+    "reason": "Environment/system candidates; mesh export does not port Blueprint/code behaviour."
+  },
+  "capture-composition": {
+    "pipelines": [
+      "captures",
+      "plugin-qualification"
+    ],
+    "terms": [
+      "Camera Composition Overlays"
+    ],
+    "reason": "Inspect actual composition aid format before claiming integration."
+  }
+}

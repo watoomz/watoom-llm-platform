@@ -1,0 +1,8 @@
+[DevOptions.Shaders]
+NumUnusedShaderCompilingThreads={{ [unreal_cpu_count.stdout | int - unreal_engine_shader_workers | int, 1] | max }}
+NumUnusedShaderCompilingThreadsDuringGame={{ [unreal_cpu_count.stdout | int - unreal_engine_shader_workers | int, 1] | max }}
+ShaderCompilerCoreCountThreshold=100000
+
+[/Script/LinuxTargetPlatform.LinuxTargetSettings]
+!TargetedRHIs=ClearArray
++TargetedRHIs=SF_VULKAN_SM6

@@ -1,0 +1,13 @@
+config_version=5
+
+[application]
+config/name="WatooM asset viewer"
+run/main_scene="res://viewer.tscn"
+config/features=PackedStringArray("4.7")
+
+[display]
+window/size/viewport_width=1400
+window/size/viewport_height=900
+
+[rendering]
+anti_aliasing/quality/msaa_3d=2

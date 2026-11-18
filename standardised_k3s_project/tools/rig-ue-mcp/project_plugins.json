@@ -1,0 +1,13 @@
+{
+ "_comment": "Plugin switches of the rig project WatooM_UEMCP_Test, enforced by rig_project_plugins.py --apply (editor stopped). Only these names are touched.",
+ "plugins": [
+  {"name": "MeshPartitionWater", "enabled": false,
+   "why": "T-0061 (2026-11-19): enabled, every foliage add crashes the editor (access violation in FoliageEdit, bridge and Python alike); bisected: only this one disabled -> adds work. Experimental, unused by the project's content and tools."},
+  {"name": "GameplayAbilities", "enabled": true, "why": "T-0063: WatooMCombat runs on GAS."},
+  {"name": "Niagara", "enabled": true, "why": "Combat and world effects (unreal_niagara_fx.py)."},
+  {"name": "PythonScriptPlugin", "enabled": true, "why": "ue-mcp bridge requirement (npx ue-mcp init)."},
+  {"name": "UE_MCP_Bridge", "enabled": true, "why": "The rig route (tools/rig-ue-mcp)."},
+  {"name": "NiagaraToolsets", "enabled": true,
+   "why": "T-0074 (2026-11-19): ue-mcp's niagara.epic_* actions (epic_set_stack_input_data binds the tracer beam end to User.BeamEnd) exist only when this engine toolset is live; without it they are 'Unknown action' on 1.4.13 and 1.4.14 alike."}
+ ]
+}

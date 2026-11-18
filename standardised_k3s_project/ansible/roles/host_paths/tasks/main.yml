@@ -1,0 +1,7 @@
+---
+- name: "Host Paths | Reconcile configured path"
+  ansible.builtin.include_tasks: path.yml
+  loop: "{{ homelab_host_paths }}"
+  loop_control:
+    loop_var: host_path_target
+    label: "{{ host_path_target }}"

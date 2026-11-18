@@ -1,0 +1,20 @@
+{
+  "sourceCommit": "a1d4b713f3629c12cf7c515f36625e5530b1a416",
+  "baseCommit": "51a6ec509cc77fd446967234ae237458b9316768",
+  "image": "127.0.0.1:5000/watoom-code@sha256:8ca2d0af5ae4c7e27f7894c17f1eb3d0fb5591128aa13dab6e1fe953c6d8640d",
+  "supersedes": "127.0.0.1:5000/watoom-code@sha256:0c3e62d80e51dfdb7c009eda95e064965180de6c6a6f862bc8e8ea3ce32b5f00",
+  "bundle": "watoom-code-gui-plugin-20261105.bundle",
+  "bundleSha256": "ceb73ea895c73d1e1ce337d98ba10f5f48c055d015030bd1f6520e36ed91000e",
+  "applicationOnly": true,
+  "change": "WatooM GUI moved into the built-in watoom GUI plugin: Settings > Memory, Catalogue, Skills, Prompt builder; titlebar pills and palette commands; old /memory, /catalogue, /skills, /prompt-builder URLs redirect. Includes the scroll fix (cherry-pick of d24de0c), settled() resource reads so failed requests show alerts instead of a blank page, and per-section loading. App diff vs upstream v2.2.5 down from 40 files/+2703 to 25 files/+447.",
+  "checks": {
+    "typecheck": "gui-plugins and app clean",
+    "unitTests": "gui-plugins 274/274, app 959/959",
+    "mockedBrowserAcceptance": "navigation, skills, prompt builder, memory/catalogue PASS",
+    "isolatedStaging": "network none; probe matches production except router models (no network); release Skills light/dark and prompt builder PASS",
+    "liveProbe": "identical to the scroll-fix release; WatooM plugins identical",
+    "productionGuiAcceptance": "under fence: prompt builder PASS; Skills light failed once on a blank first page load right after deploy, clean re-run light and dark PASS"
+  },
+  "deployEvidence": "/data/ai/artifacts/watoom-code-production-consolidation/deploy-20261104T214441Z",
+  "preserved": {"sessions": 752, "children": 650, "projects": 86}
+}

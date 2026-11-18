@@ -1,0 +1,10 @@
+{
+  "schema": 3,
+  "target": "unreal",
+  "format": "fbx",
+  "up": "Z",
+  "forward": "-Y",
+  "leaf_bones": false,
+  "skeletal_mesh": true,
+  "physics_asset": "BLOCKED until native Unreal import/PhysicsAsset validation"
+}

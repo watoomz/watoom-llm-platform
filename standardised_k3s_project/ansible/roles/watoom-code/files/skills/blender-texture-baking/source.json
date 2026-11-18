@@ -1,0 +1,10 @@
+{
+  "upstream_commit": "71d031dab8bc6729504d11a78cbe91945401045f",
+  "original_skill_sha256": "b02a766f81399e3a596d450033413df94bc00ce880e96d8d5f5342bf512a3233",
+  "files": {
+    "SKILL.md": "f8f2f93381ab062932a0dc7e2c73999076eb28f564fc04bf0fad488bd6c7c8ed",
+    "scripts/bake_maps.py": "296c16730c47821a433790db22b4faec2816d191d22260638bed25c8921a54ef",
+    "scripts/_bpyx.py": "a3339ba8a678469e8ed29510e32a7331e0235202191ca4edb977af4720819b4b",
+    "references/upstream-SKILL.md": "b02a766f81399e3a596d450033413df94bc00ce880e96d8d5f5342bf512a3233"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "upstream_commit": "71d031dab8bc6729504d11a78cbe91945401045f",
+  "original_skill_sha256": "0860bc29f8d7af633bdf475b36884cef8f9acb4a5988a47be6deeecdb56bb0b2",
+  "files": {
+    "SKILL.md": "44ca3f9e3ec57127376f2d50d1053ea5fcafaa758d0972e1ac979bafffa70d0b",
+    "scripts/scene_audit.py": "a7baf10fb5a25acaf87d1024e5ec5fb89aee43b7ebff0f8598c4667cef64ae5b",
+    "scripts/_bpyx.py": "a3339ba8a678469e8ed29510e32a7331e0235202191ca4edb977af4720819b4b",
+    "references/upstream-SKILL.md": "0860bc29f8d7af633bdf475b36884cef8f9acb4a5988a47be6deeecdb56bb0b2"
+  }
+}

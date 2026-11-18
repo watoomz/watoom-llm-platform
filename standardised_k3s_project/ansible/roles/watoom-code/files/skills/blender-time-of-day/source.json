@@ -1,0 +1,13 @@
+{
+  "upstream_commit": "71d031dab8bc6729504d11a78cbe91945401045f",
+  "original_skill_sha256": "d32b342df7950c13d4f3838a94be96c7cb6a118a1c53a87dc18149d3bef4acf4",
+  "files": {
+    "SKILL.md": "2df5fdc137e9f4c4189c721f33fc120ca1c43530b5673a26153883991da77a17",
+    "scripts/scene_mood.py": "420b26ea7750c6a8f955b91d4926711cd5d71bb846a16e861b9844f550fec8bd",
+    "scripts/_bpyx.py": "a3339ba8a678469e8ed29510e32a7331e0235202191ca4edb977af4720819b4b",
+    "references/light-values.md": "21569a5d3c92271f6e219ee77cf3982c9cde59d4d1f3090528086d608030a3a8",
+    "references/night-and-moods.md": "662299d09b341c70488a1e934ce07437610c2ad0dddc92bed93b348e94a76442",
+    "references/fog-volumetrics.md": "8371b4b7517363b97e8b023611a5ea8351c913d60205a09805bb47f76d62320c",
+    "references/upstream-SKILL.md": "d32b342df7950c13d4f3838a94be96c7cb6a118a1c53a87dc18149d3bef4acf4"
+  }
+}

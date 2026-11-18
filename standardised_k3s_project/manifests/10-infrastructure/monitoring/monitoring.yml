@@ -1,0 +1,691 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus-kubelet-scrape
+  labels:
+    app.kubernetes.io/name: prometheus-kubelet-scrape
+    app.kubernetes.io/part-of: monitoring
+    app.kubernetes.io/managed-by: kubectl
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - nodes
+  - nodes/metrics
+  - nodes/proxy
+  - pods
+  - pods/proxy
+  - services
+  - endpoints
+  verbs:
+  - get
+  - list
+  - watch
+- nonResourceURLs:
+  - /metrics
+  - /metrics/cadvisor
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus-kubelet-scrape
+  labels:
+    app.kubernetes.io/name: prometheus-kubelet-scrape
+    app.kubernetes.io/part-of: monitoring
+    app.kubernetes.io/managed-by: kubectl
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus-kubelet-scrape
+subjects:
+- kind: ServiceAccount
+  name: prometheus
+  namespace: monitoring
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: monitoring
+data:
+  prometheus.yml: "global:\n  scrape_interval: 15s\n  evaluation_interval: 15s\nrule_files:\n- /etc/prometheus/alert-rules.yml\n\
+    - /etc/prometheus/rules/*.yml\nscrape_configs:\n- job_name: prometheus\n  static_configs:\n  - targets:\n\
+    \    - localhost:9090\n- job_name: node-exporter\n  static_configs:\n  - targets:\n    - 10.99.20.225:9100\n- job_name:\
+    \ router-snmp\n  scrape_interval: 60s\n  scrape_timeout: 20s\n  metrics_path: /snmp\n  params:\n    auth:\n    - public_v2\n\
+    \    module:\n    - if_mib\n  static_configs:\n  - targets:\n    - 10.99.20.1\n    labels:\n      device: router-router\n\
+    \  relabel_configs:\n  - source_labels:\n    - __address__\n    target_label: __param_target\n  - source_labels:\n   \
+    \ - __param_target\n    target_label: instance\n  - target_label: __address__\n    replacement: snmp-exporter.monitoring.svc.cluster.local:9116\n\
+    - job_name: snmp-exporter\n  static_configs:\n  - targets:\n    - snmp-exporter.monitoring.svc.cluster.local:9116\n- job_name:\
+    \ mktxp\n  scrape_interval: 60s\n  scrape_timeout: 30s\n  static_configs:\n  - targets:\n    - mktxp.monitoring.svc.cluster.local:49090\n\
+    - job_name: loki\n  static_configs:\n  - targets:\n    - loki.monitoring.svc.cluster.local:3100\n- job_name: vector-router-syslog\n\
+    \  static_configs:\n  - targets:\n    - vector-router-syslog.monitoring.svc.cluster.local:9598\n- job_name: kube-state-metrics\n\
+    \  static_configs:\n  - targets:\n    - kube-state-metrics.monitoring.svc.cluster.local:8080\n- job_name: dcgm-exporter\n\
+    \  scrape_interval: 15s\n  static_configs:\n  - targets:\n    - dcgm-exporter.monitoring.svc.cluster.local:9400\n- job_name:\
+    \ llama-cpp\n  scrape_interval: 15s\n  metrics_path: /metrics\n  kubernetes_sd_configs:\n  - role: service\n    namespaces:\n\
+    \      names:\n      - llama-cpp\n  relabel_configs:\n  - source_labels:\n    - __meta_kubernetes_service_name\n    regex:\
+    \ llama-cpp-.+\n    action: keep\n  - source_labels:\n    - __meta_kubernetes_service_port_name\n    regex: http\n   \
+    \ action: keep\n  - source_labels:\n    - __meta_kubernetes_service_name\n    target_label: service\n  - source_labels:\n\
+    \    - __meta_kubernetes_service_name\n    regex: llama-cpp-(.+)\n    target_label: model\n    replacement: $1\n  - target_label:\
+    \ runtime\n    replacement: llama.cpp\n  - target_label: gpu\n    replacement: rtx-3080\n- job_name: llama-perf\n  scrape_interval:\
+    \ 15s\n  metrics_path: /metrics\n  static_configs:\n  - targets:\n    - platform-workers.platform-workers.svc.cluster.local:9599\n\
+    \  relabel_configs:\n  - target_label: runtime\n    replacement: llama.cpp\n  - target_label: exporter\n    replacement:\
+    \ vector\n  - target_label: source\n    replacement: llama-server-logs\n\n- job_name: moss-image\n  scrape_interval: 15s\n  metrics_path: /metrics\n  static_configs:\n  - targets:\n    - 10.242.0.1:8791\n  relabel_configs:\n  - target_label: service\n    replacement: moss-image\n\n- job_name: kubernetes-cadvisor\n  scheme: https\n\
+    \  bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token\n  tls_config:\n    ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt\n\
+    \  kubernetes_sd_configs:\n  - role: node\n  relabel_configs:\n  - target_label: __address__\n    replacement: kubernetes.default.svc:443\n\
+    \  - source_labels:\n    - __meta_kubernetes_node_name\n    regex: (.+)\n    target_label: __metrics_path__\n    replacement:\
+    \ /api/v1/nodes/${1}/proxy/metrics/cadvisor\n\n- job_name: watoom-opencode-observability\n\n  scrape_interval: 15s\n\n\
+    \  scrape_timeout: 10s\n\n  metrics_path: /metrics\n\n  scheme: http\n\n  static_configs:\n\n    - targets:\n\n      \
+    \  - watoom-opencode-observability.monitoring.svc.cluster.local:9108\n\n      labels:\n\n        namespace: monitoring\n\
+    \n        service: watoom-opencode-observability\n\n\n- job_name: kubernetes-pods-traefik\n  scheme: https\n  bearer_token_file:\
+    \ /var/run/secrets/kubernetes.io/serviceaccount/token\n  tls_config:\n    ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt\n\
+    \  kubernetes_sd_configs:\n  - role: pod\n  relabel_configs:\n  - source_labels:\n    - __meta_kubernetes_namespace\n\
+    \    action: keep\n    regex: kube-system\n  - source_labels:\n    - __meta_kubernetes_pod_label_app_kubernetes_io_name\n\
+    \    action: keep\n    regex: traefik\n  - source_labels:\n    - __meta_kubernetes_pod_annotation_prometheus_io_scrape\n\
+    \    action: keep\n    regex: \"true\"\n  - target_label: __address__\n    replacement: kubernetes.default.svc:443\n \
+    \ - source_labels:\n    - __meta_kubernetes_namespace\n    - __meta_kubernetes_pod_name\n    - __meta_kubernetes_pod_annotation_prometheus_io_port\n\
+    \    action: replace\n    regex: (.+);(.+);(.+)\n    target_label: __metrics_path__\n    replacement: /api/v1/namespaces/${1}/pods/${2}:${3}/proxy/metrics\n\
+    \  - source_labels:\n    - __meta_kubernetes_pod_name\n    target_label: pod\n"
+  alert-rules.yml: "groups:\n- name: watoom-node-health\n  rules:\n  - alert: WatoomNodeExporterDown\n    expr: up{job=\"\
+    node-exporter\"} == 0\n    for: 2m\n    labels:\n      severity: critical\n    annotations:\n      summary: \"Node exporter\
+    \ is down\"\n      description: \"Prometheus cannot scrape node-exporter on the homelab server.\"\n  - alert: WatoomRootDiskHigh\n\
+    \    expr: 100 * (1 - node_filesystem_avail_bytes{mountpoint=\"/\",fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{mountpoint=\"\
+    /\",fstype!~\"tmpfs|overlay\"}) > 85\n    for: 10m\n    labels:\n      severity: warning\n    annotations:\n      summary:\
+    \ \"Root filesystem above 85%\"\n      description: \"The root filesystem is getting full. Check old packages, logs, and\
+    \ container images.\"\n  - alert: WatoomAppDiskHigh\n    expr: 100 * (1 - node_filesystem_avail_bytes{mountpoint=\"/app\"\
+    ,fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{mountpoint=\"/app\",fstype!~\"tmpfs|overlay\"}) > 85\n    for:\
+    \ 10m\n    labels:\n      severity: warning\n    annotations:\n      summary: \"/app filesystem above 85%\"\n      description:\
+    \ \"Application config/state storage is getting full.\"\n  - alert: WatoomDataDiskHigh\n    expr: 100 * (1 - node_filesystem_avail_bytes{mountpoint=\"\
+    /data\",fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{mountpoint=\"/data\",fstype!~\"tmpfs|overlay\"}) > 85\n\
+    \    for: 10m\n    labels:\n      severity: warning\n    annotations:\n      summary: \"/data filesystem above 85%\"\n\
+    \      description: \"Media/data storage is getting full. Plan cleanup or NAS expansion.\"\n  - alert: WatoomNodeLoadHigh\n\
+    \    expr: node_load15 / count without (cpu, mode) (node_cpu_seconds_total{mode=\"idle\"}) > 2\n    for: 15m\n    labels:\n\
+    \      severity: warning\n    annotations:\n      summary: \"Sustained high node load\"\n      description: \"15-minute\
+    \ load average is more than twice the CPU core count.\"\n  - alert: WatoomMemoryLow\n    expr: node_memory_MemAvailable_bytes\
+    \ / node_memory_MemTotal_bytes < 0.10\n    for: 10m\n    labels:\n      severity: warning\n    annotations:\n      summary:\
+    \ \"Available memory below 10%\"\n      description: \"The server is low on available memory.\"\n  - alert: WatoomWorkerSnapshotStale\n    expr: time() - watoom_worker_snapshot_timestamp_seconds > 300\n    for: 2m\n    labels:\n      severity: warning\n    annotations:\n      summary: \"Worker status snapshot is stale\"\n      description: \"The worker collector has not refreshed its snapshot for more than five minutes.\"\n  - alert: WatoomBazziteDown\n    expr: watoom_worker_up{worker=\"bazzite\"} == 0\n    for: 10m\n    labels:\n      severity: warning\n    annotations:\n      summary: \"Bazzite worker is down\"\n      description: \"Bazzite has been unreachable for ten minutes.\"\n  - alert: WatoomWorkerJobStuck\n    expr: watoom_worker_running_job_seconds > (2 * watoom_worker_running_job_deadline_seconds)\n    for: 2m\n    labels:\n      severity: warning\n    annotations:\n      summary: \"Worker job exceeded twice its deadline\"\n      description: \"A worker job has been running for more than twice its prepared deadline.\"\n  - alert: WatoomWorkerFailureRateHigh\n    expr: (sum by (worker) (watoom_worker_jobs{state=\"failed\"}) / clamp_min(sum by (worker) (watoom_worker_jobs), 1)) > 0.5 and sum by (worker) (watoom_worker_jobs) >= 4\n    for: 10m\n    labels:\n      severity: warning\n    annotations:\n      summary: \"Worker failure rate is high\"\n      description: \"More than half of at least four jobs in the rolling 24-hour window failed.\"\n"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-provisioning
+  namespace: monitoring
+data:
+  datasources.yml: "apiVersion: 1\ndatasources:\n- name: Prometheus\n  type: prometheus\n  uid: prometheus\n  access: proxy\n\
+    \  url: http://prometheus.monitoring.svc.cluster.local:9090\n  isDefault: true\n  editable: true\n- name: Loki\n  type:\
+    \ loki\n  uid: loki\n  access: proxy\n  url: http://loki.monitoring.svc.cluster.local:3100\n  editable: true\n"
+  dashboards.yml: "apiVersion: 1\nproviders:\n- name: WatooM\n  orgId: 1\n  folder: WatooM\n  type: file\n  disableDeletion:\
+    \ false\n  editable: true\n  updateIntervalSeconds: 60\n  options:\n    path: /var/lib/grafana/dashboards\n"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-router-ifmib
+  namespace: monitoring
+data:
+  watoom-router-ifmib.json: "{\n  \"annotations\": {\n    \"list\": []\n  },\n  \"editable\": true,\n  \"fiscalYearStartMonth\"\
+    : 0,\n  \"graphTooltip\": 0,\n  \"id\": null,\n  \"links\": [],\n  \"liveNow\": false,\n  \"panels\": [\n    {\n     \
+    \ \"datasource\": {\n        \"type\": \"prometheus\",\n        \"uid\": \"prometheus\"\n      },\n      \"fieldConfig\"\
+    : {\n        \"defaults\": {\n          \"mappings\": [\n            {\n              \"options\": {\n               \
+    \ \"0\": {\n                  \"text\": \"Down\"\n                },\n                \"1\": {\n                  \"text\"\
+    : \"Up\"\n                }\n              },\n              \"type\": \"value\"\n            }\n          ],\n      \
+    \    \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n             \
+    \   \"color\": \"red\",\n                \"value\": null\n              },\n              {\n                \"color\"\
+    : \"green\",\n                \"value\": 1\n              }\n            ]\n          },\n          \"unit\": \"short\"\
+    \n        },\n        \"overrides\": []\n      },\n      \"gridPos\": {\n        \"h\": 4,\n        \"w\": 4,\n      \
+    \  \"x\": 0,\n        \"y\": 0\n      },\n      \"id\": 1,\n      \"options\": {\n        \"colorMode\": \"background\"\
+    ,\n        \"graphMode\": \"none\",\n        \"justifyMode\": \"center\",\n        \"orientation\": \"auto\",\n      \
+    \  \"reduceOptions\": {\n          \"calcs\": [\n            \"lastNotNull\"\n          ],\n          \"fields\": \"\"\
+    ,\n          \"values\": false\n        },\n        \"showPercentChange\": false,\n        \"textMode\": \"auto\",\n \
+    \       \"wideLayout\": true\n      },\n      \"pluginVersion\": \"12.1.1\",\n      \"targets\": [\n        {\n      \
+    \    \"datasource\": {\n            \"type\": \"prometheus\",\n            \"uid\": \"prometheus\"\n          },\n   \
+    \       \"editorMode\": \"code\",\n          \"expr\": \"up{job=\\\"router-snmp\\\", instance=\\\"$instance\\\"}\",\n\
+    \          \"legendFormat\": \"{{instance}}\",\n          \"range\": false,\n          \"refId\": \"A\"\n        }\n \
+    \     ],\n      \"title\": \"SNMP Target\",\n      \"type\": \"stat\"\n    },\n    {\n      \"datasource\": {\n      \
+    \  \"type\": \"prometheus\",\n        \"uid\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"defaults\"\
+    : {\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n   \
+    \             \"color\": \"green\",\n                \"value\": null\n              }\n            ]\n          },\n \
+    \         \"unit\": \"short\"\n        },\n        \"overrides\": []\n      },\n      \"gridPos\": {\n        \"h\": 4,\n\
+    \        \"w\": 4,\n        \"x\": 4,\n        \"y\": 0\n      },\n      \"id\": 2,\n      \"options\": {\n        \"\
+    colorMode\": \"value\",\n        \"graphMode\": \"none\",\n        \"justifyMode\": \"center\",\n        \"orientation\"\
+    : \"auto\",\n        \"reduceOptions\": {\n          \"calcs\": [\n            \"lastNotNull\"\n          ],\n       \
+    \   \"fields\": \"\",\n          \"values\": false\n        },\n        \"showPercentChange\": false,\n        \"textMode\"\
+    : \"auto\",\n        \"wideLayout\": true\n      },\n      \"pluginVersion\": \"12.1.1\",\n      \"targets\": [\n    \
+    \    {\n          \"datasource\": {\n            \"type\": \"prometheus\",\n            \"uid\": \"prometheus\"\n    \
+    \      },\n          \"editorMode\": \"code\",\n          \"expr\": \"ifNumber{job=\\\"router-snmp\\\", instance=\\\"\
+    $instance\\\"}\",\n          \"legendFormat\": \"interfaces\",\n          \"range\": false,\n          \"refId\": \"A\"\
+    \n        }\n      ],\n      \"title\": \"Interfaces\",\n      \"type\": \"stat\"\n    },\n    {\n      \"datasource\"\
+    : {\n        \"type\": \"prometheus\",\n        \"uid\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"\
+    defaults\": {\n          \"custom\": {\n            \"drawStyle\": \"line\",\n            \"lineInterpolation\": \"linear\"\
+    ,\n            \"barAlignment\": 0,\n            \"lineWidth\": 1,\n            \"fillOpacity\": 10,\n            \"gradientMode\"\
+    : \"none\",\n            \"spanNulls\": false,\n            \"insertNulls\": false,\n            \"showPoints\": \"never\"\
+    ,\n            \"pointSize\": 5,\n            \"stacking\": {\n              \"mode\": \"none\",\n              \"group\"\
+    : \"A\"\n            },\n            \"axisPlacement\": \"auto\",\n            \"axisLabel\": \"\",\n            \"axisColorMode\"\
+    : \"text\",\n            \"axisBorderShow\": false,\n            \"scaleDistribution\": {\n              \"type\": \"\
+    linear\"\n            },\n            \"axisCenteredZero\": false,\n            \"hideFrom\": {\n              \"tooltip\"\
+    : false,\n              \"viz\": false,\n              \"legend\": false\n            },\n            \"thresholdsStyle\"\
+    : {\n              \"mode\": \"off\"\n            }\n          },\n          \"thresholds\": {\n            \"mode\":\
+    \ \"absolute\",\n            \"steps\": [\n              {\n                \"color\": \"green\",\n                \"\
+    value\": null\n              }\n            ]\n          },\n          \"unit\": \"bps\"\n        },\n        \"overrides\"\
+    : []\n      },\n      \"gridPos\": {\n        \"h\": 8,\n        \"w\": 16,\n        \"x\": 8,\n        \"y\": 0\n   \
+    \   },\n      \"id\": 3,\n      \"options\": {\n        \"legend\": {\n          \"calcs\": [\n            \"lastNotNull\"\
+    ,\n            \"max\"\n          ],\n          \"displayMode\": \"table\",\n          \"placement\": \"right\",\n   \
+    \       \"showLegend\": true\n        },\n        \"tooltip\": {\n          \"mode\": \"multi\",\n          \"sort\":\
+    \ \"desc\"\n        }\n      },\n      \"targets\": [\n        {\n          \"datasource\": {\n            \"type\": \"\
+    prometheus\",\n            \"uid\": \"prometheus\"\n          },\n          \"editorMode\": \"code\",\n          \"expr\"\
+    : \"rate(ifHCInOctets{job=\\\"router-snmp\\\", instance=\\\"$instance\\\", ifName=~\\\"$interface\\\"}[5m]) * 8\",\n\
+    \          \"legendFormat\": \"{{ifName}} in\",\n          \"range\": true,\n          \"refId\": \"A\"\n        },\n\
+    \        {\n          \"datasource\": {\n            \"type\": \"prometheus\",\n            \"uid\": \"prometheus\"\n\
+    \          },\n          \"editorMode\": \"code\",\n          \"expr\": \"rate(ifHCOutOctets{job=\\\"router-snmp\\\"\
+    , instance=\\\"$instance\\\", ifName=~\\\"$interface\\\"}[5m]) * 8\",\n          \"legendFormat\": \"{{ifName}} out\"\
+    ,\n          \"range\": true,\n          \"refId\": \"B\"\n        }\n      ],\n      \"title\": \"Interface Traffic\"\
+    ,\n      \"type\": \"timeseries\"\n    },\n    {\n      \"datasource\": {\n        \"type\": \"prometheus\",\n       \
+    \ \"uid\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"custom\": {\n    \
+    \        \"align\": \"auto\",\n            \"cellOptions\": {\n              \"type\": \"auto\"\n            },\n    \
+    \        \"inspect\": false\n          },\n          \"mappings\": [\n            {\n              \"options\": {\n  \
+    \              \"1\": {\n                  \"text\": \"Up\"\n                },\n                \"2\": {\n          \
+    \        \"text\": \"Down\"\n                },\n                \"3\": {\n                  \"text\": \"Testing\"\n \
+    \               },\n                \"4\": {\n                  \"text\": \"Unknown\"\n                },\n          \
+    \      \"5\": {\n                  \"text\": \"Dormant\"\n                },\n                \"6\": {\n             \
+    \     \"text\": \"Not Present\"\n                },\n                \"7\": {\n                  \"text\": \"Lower Layer\
+    \ Down\"\n                }\n              },\n              \"type\": \"value\"\n            }\n          ],\n      \
+    \    \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n             \
+    \   \"color\": \"green\",\n                \"value\": null\n              },\n              {\n                \"color\"\
+    : \"red\",\n                \"value\": 2\n              }\n            ]\n          },\n          \"unit\": \"short\"\n\
+    \        },\n        \"overrides\": []\n      },\n      \"gridPos\": {\n        \"h\": 8,\n        \"w\": 12,\n      \
+    \  \"x\": 0,\n        \"y\": 8\n      },\n      \"id\": 4,\n      \"options\": {\n        \"cellHeight\": \"sm\",\n  \
+    \      \"footer\": {\n          \"countRows\": false,\n          \"fields\": \"\",\n          \"reducer\": [\n       \
+    \     \"sum\"\n          ],\n          \"show\": false\n        },\n        \"showHeader\": true\n      },\n      \"pluginVersion\"\
+    : \"12.1.1\",\n      \"targets\": [\n        {\n          \"datasource\": {\n            \"type\": \"prometheus\",\n \
+    \           \"uid\": \"prometheus\"\n          },\n          \"editorMode\": \"code\",\n          \"expr\": \"ifOperStatus{job=\\\
+    \"router-snmp\\\", instance=\\\"$instance\\\", ifName=~\\\"$interface\\\"}\",\n          \"format\": \"table\",\n  \
+    \        \"instant\": true,\n          \"legendFormat\": \"{{ifName}}\",\n          \"range\": false,\n          \"refId\"\
+    : \"A\"\n        }\n      ],\n      \"title\": \"Interface Status\",\n      \"transformations\": [\n        {\n      \
+    \    \"id\": \"organize\",\n          \"options\": {\n            \"excludeByName\": {\n              \"Time\": true,\n\
+    \              \"__name__\": true,\n              \"device\": true,\n              \"ifAlias\": false,\n             \
+    \ \"ifDescr\": false,\n              \"ifIndex\": false,\n              \"instance\": true,\n              \"job\": true\n\
+    \            },\n            \"indexByName\": {},\n            \"renameByName\": {\n              \"Value\": \"Oper Status\"\
+    ,\n              \"ifDescr\": \"Description\",\n              \"ifName\": \"Interface\",\n              \"ifAlias\": \"\
+    Alias\",\n              \"ifIndex\": \"Index\"\n            }\n          }\n        }\n      ],\n      \"type\": \"table\"\
+    \n    },\n    {\n      \"datasource\": {\n        \"type\": \"prometheus\",\n        \"uid\": \"prometheus\"\n      },\n\
+    \      \"fieldConfig\": {\n        \"defaults\": {\n          \"custom\": {\n            \"drawStyle\": \"line\",\n  \
+    \          \"lineInterpolation\": \"linear\",\n            \"barAlignment\": 0,\n            \"lineWidth\": 1,\n     \
+    \       \"fillOpacity\": 10,\n            \"gradientMode\": \"none\",\n            \"spanNulls\": false,\n           \
+    \ \"insertNulls\": false,\n            \"showPoints\": \"never\",\n            \"pointSize\": 5,\n            \"stacking\"\
+    : {\n              \"mode\": \"none\",\n              \"group\": \"A\"\n            },\n            \"axisPlacement\"\
+    : \"auto\",\n            \"axisLabel\": \"\",\n            \"axisColorMode\": \"text\",\n            \"axisBorderShow\"\
+    : false,\n            \"scaleDistribution\": {\n              \"type\": \"linear\"\n            },\n            \"axisCenteredZero\"\
+    : false,\n            \"hideFrom\": {\n              \"tooltip\": false,\n              \"viz\": false,\n            \
+    \  \"legend\": false\n            },\n            \"thresholdsStyle\": {\n              \"mode\": \"off\"\n          \
+    \  }\n          },\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n     \
+    \         {\n                \"color\": \"green\",\n                \"value\": null\n              }\n            ]\n\
+    \          },\n          \"unit\": \"pps\"\n        },\n        \"overrides\": []\n      },\n      \"gridPos\": {\n  \
+    \      \"h\": 8,\n        \"w\": 12,\n        \"x\": 12,\n        \"y\": 8\n      },\n      \"id\": 5,\n      \"options\"\
+    : {\n        \"legend\": {\n          \"calcs\": [\n            \"lastNotNull\"\n          ],\n          \"displayMode\"\
+    : \"table\",\n          \"placement\": \"right\",\n          \"showLegend\": true\n        },\n        \"tooltip\": {\n\
+    \          \"mode\": \"multi\",\n          \"sort\": \"desc\"\n        }\n      },\n      \"targets\": [\n        {\n\
+    \          \"datasource\": {\n            \"type\": \"prometheus\",\n            \"uid\": \"prometheus\"\n          },\n\
+    \          \"editorMode\": \"code\",\n          \"expr\": \"rate(ifInErrors{job=\\\"router-snmp\\\", instance=\\\"$instance\\\
+    \", ifName=~\\\"$interface\\\"}[5m])\",\n          \"legendFormat\": \"{{ifName}} in errors\",\n          \"range\": true,\n\
+    \          \"refId\": \"A\"\n        },\n        {\n          \"datasource\": {\n            \"type\": \"prometheus\"\
+    ,\n            \"uid\": \"prometheus\"\n          },\n          \"editorMode\": \"code\",\n          \"expr\": \"rate(ifOutErrors{job=\\\
+    \"router-snmp\\\", instance=\\\"$instance\\\", ifName=~\\\"$interface\\\"}[5m])\",\n          \"legendFormat\": \"{{ifName}}\
+    \ out errors\",\n          \"range\": true,\n          \"refId\": \"B\"\n        },\n        {\n          \"datasource\"\
+    : {\n            \"type\": \"prometheus\",\n            \"uid\": \"prometheus\"\n          },\n          \"editorMode\"\
+    : \"code\",\n          \"expr\": \"rate(ifInDiscards{job=\\\"router-snmp\\\", instance=\\\"$instance\\\", ifName=~\\\
+    \"$interface\\\"}[5m])\",\n          \"legendFormat\": \"{{ifName}} in discards\",\n          \"range\": true,\n     \
+    \     \"refId\": \"C\"\n        },\n        {\n          \"datasource\": {\n            \"type\": \"prometheus\",\n  \
+    \          \"uid\": \"prometheus\"\n          },\n          \"editorMode\": \"code\",\n          \"expr\": \"rate(ifOutDiscards{job=\\\
+    \"router-snmp\\\", instance=\\\"$instance\\\", ifName=~\\\"$interface\\\"}[5m])\",\n          \"legendFormat\": \"{{ifName}}\
+    \ out discards\",\n          \"range\": true,\n          \"refId\": \"D\"\n        }\n      ],\n      \"title\": \"Errors\
+    \ and Discards\",\n      \"type\": \"timeseries\"\n    }\n  ],\n  \"refresh\": \"1m\",\n  \"schemaVersion\": 41,\n  \"\
+    tags\": [\n    \"watoom\",\n    \"router\",\n    \"snmp\",\n    \"if-mib\"\n  ],\n  \"templating\": {\n    \"list\"\
+    : [\n      {\n        \"current\": {},\n        \"datasource\": {\n          \"type\": \"prometheus\",\n          \"uid\"\
+    : \"prometheus\"\n        },\n        \"definition\": \"label_values(up{job=\\\"router-snmp\\\"}, instance)\",\n   \
+    \     \"hide\": 0,\n        \"includeAll\": false,\n        \"label\": \"Instance\",\n        \"multi\": false,\n    \
+    \    \"name\": \"instance\",\n        \"options\": [],\n        \"query\": {\n          \"query\": \"label_values(up{job=\\\
+    \"router-snmp\\\"}, instance)\",\n          \"refId\": \"PrometheusVariableQueryEditor-VariableQuery\"\n        },\n\
+    \        \"refresh\": 1,\n        \"regex\": \"\",\n        \"skipUrlSync\": false,\n        \"sort\": 1,\n        \"\
+    type\": \"query\"\n      },\n      {\n        \"current\": {\n          \"selected\": true,\n          \"text\": \"All\"\
+    ,\n          \"value\": \"$__all\"\n        },\n        \"datasource\": {\n          \"type\": \"prometheus\",\n     \
+    \     \"uid\": \"prometheus\"\n        },\n        \"definition\": \"label_values(ifHCInOctets{job=\\\"router-snmp\\\
+    \", instance=\\\"$instance\\\"}, ifName)\",\n        \"hide\": 0,\n        \"includeAll\": true,\n        \"label\": \"\
+    Interface\",\n        \"multi\": true,\n        \"name\": \"interface\",\n        \"options\": [],\n        \"query\"\
+    : {\n          \"query\": \"label_values(ifHCInOctets{job=\\\"router-snmp\\\", instance=\\\"$instance\\\"}, ifName)\"\
+    ,\n          \"refId\": \"PrometheusVariableQueryEditor-VariableQuery\"\n        },\n        \"refresh\": 2,\n       \
+    \ \"regex\": \"\",\n        \"skipUrlSync\": false,\n        \"sort\": 1,\n        \"type\": \"query\"\n      }\n    ]\n\
+    \  },\n  \"time\": {\n    \"from\": \"now-1h\",\n    \"to\": \"now\"\n  },\n  \"timepicker\": {},\n  \"timezone\": \"\
+    browser\",\n  \"title\": \"WatooM router Interfaces\",\n  \"uid\": \"watoom-router-ifmib\",\n  \"version\": 1,\n \
+    \ \"weekStart\": \"\"\n}\n"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: grafana
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/part-of: monitoring
+    app.kubernetes.io/managed-by: kubectl
+  name: grafana
+  namespace: monitoring
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: grafana
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: grafana
+        app.kubernetes.io/name: grafana
+        app.kubernetes.io/part-of: monitoring
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - env:
+        - name: GF_SECURITY_ADMIN_USER
+          valueFrom:
+            secretKeyRef:
+              key: GF_SECURITY_ADMIN_USER
+              name: grafana-secrets
+        - name: GF_SECURITY_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: GF_SECURITY_ADMIN_PASSWORD
+              name: grafana-secrets
+        - name: GF_USERS_ALLOW_SIGN_UP
+          value: 'false'
+        - name: GF_SECURITY_ALLOW_EMBEDDING
+          value: 'true'
+        - name: GF_AUTH_ANONYMOUS_ENABLED
+          value: 'false'
+        - name: GF_AUTH_ANONYMOUS_ORG_ROLE
+          value: Viewer
+        - name: GF_USERS_VIEWERS_CAN_EDIT
+          value: 'false'
+        - name: GF_SECURITY_COOKIE_SECURE
+          value: 'true'
+        - name: GF_SECURITY_COOKIE_SAMESITE
+          value: lax
+        - name: GF_SERVER_DOMAIN
+          value: grafana.internal.homelab.example
+        - name: GF_SERVER_ROOT_URL
+          value: https://grafana.internal.homelab.example/
+        image: docker.io/grafana/grafana@sha256:ab5cb380e3ff3172d6c8bd2e7cfd31cce977d2881b260e1f5bc089bf0b759b43
+        imagePullPolicy: Always
+        name: grafana
+        ports:
+        - containerPort: 3000
+          protocol: TCP
+        resources:
+          limits:
+            cpu: '2'
+            memory: 1Gi
+          requests:
+            cpu: 200m
+            memory: 256Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/lib/grafana
+          name: grafana-data
+        - mountPath: /etc/grafana/provisioning/datasources/datasources.yml
+          name: grafana-provisioning
+          subPath: datasources.yml
+        - mountPath: /etc/grafana/provisioning/dashboards/dashboards.yml
+          name: grafana-provisioning
+          subPath: dashboards.yml
+        - mountPath: /var/lib/grafana/dashboards/watoom-router-ifmib.json
+          name: grafana-dashboard-router-ifmib
+          subPath: watoom-router-ifmib.json
+        - mountPath: /var/lib/grafana/dashboards/router-mktxp-exporter.json
+          name: grafana-dashboard-mktxp-hostpath
+          readOnly: true
+        - mountPath: /var/lib/grafana/dashboards/qwen38-llm-metrics.json
+          name: grafana-dashboard-qwen38-llm-metrics-hostpath
+        - mountPath: /var/lib/grafana/dashboards/opencode-local-llm.json
+          name: grafana-dashboard-opencode-local-llm-hostpath
+          readOnly: true
+        - mountPath: /var/lib/grafana/dashboards/router-firewall-logs.json
+          name: grafana-dashboard-router-firewall-logs
+          readOnly: true
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - hostPath:
+          path: /app/grafana/data
+          type: ''
+        name: grafana-data
+      - configMap:
+          defaultMode: 420
+          name: grafana-provisioning
+        name: grafana-provisioning
+      - configMap:
+          defaultMode: 420
+          name: grafana-dashboard-router-ifmib
+        name: grafana-dashboard-router-ifmib
+      - hostPath:
+          path: /data/github/watoom-standardised-homelab/standardised_k3s_project/config/grafana/dashboards/router-mktxp-exporter.json
+          type: File
+        name: grafana-dashboard-mktxp-hostpath
+      - hostPath:
+          path: /data/github/watoom-standardised-homelab/standardised_k3s_project/config/grafana/dashboards/qwen38-llm-metrics.json
+          type: File
+        name: grafana-dashboard-qwen38-llm-metrics-hostpath
+      - hostPath:
+          path: /data/github/watoom-standardised-homelab/standardised_k3s_project/config/grafana/dashboards/opencode-local-llm.json
+          type: File
+        name: grafana-dashboard-opencode-local-llm-hostpath
+      - hostPath:
+          path: /data/github/watoom-standardised-homelab/standardised_k3s_project/config/grafana/dashboards/router-firewall-logs.json
+          type: File
+        name: grafana-dashboard-router-firewall-logs
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: prometheus
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: monitoring
+    app.kubernetes.io/managed-by: kubectl
+  name: prometheus
+  namespace: monitoring
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: prometheus
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: prometheus
+        app.kubernetes.io/name: prometheus
+        app.kubernetes.io/part-of: monitoring
+    spec:
+      containers:
+      - args:
+        - --config.file=/etc/prometheus/prometheus.yml
+        - --storage.tsdb.path=/prometheus
+        - --storage.tsdb.retention.time=30d
+        - --web.enable-lifecycle
+        image: docker.io/prom/prometheus@sha256:508729e0e2d18e11fd742a5a5ca70e557b940a93948c3c95fd0123a6fd538b69
+        imagePullPolicy: Always
+        name: prometheus
+        ports:
+        - containerPort: 9090
+          protocol: TCP
+        resources:
+          limits:
+            cpu: '2'
+            memory: 2Gi
+          requests:
+            cpu: 500m
+            memory: 512Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/prometheus
+          name: prometheus-config
+        - mountPath: /etc/prometheus/rules
+          name: prometheus-opencode-observability-rules
+          readOnly: true
+        - mountPath: /prometheus
+          name: prometheus-data
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: prometheus
+      serviceAccountName: prometheus
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: prometheus-config
+        name: prometheus-config
+      - configMap:
+          name: watoom-opencode-alert-rules
+        name: prometheus-opencode-observability-rules
+      - hostPath:
+          path: /app/prometheus/data
+          type: ''
+        name: prometheus-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: snmp-exporter
+    app.kubernetes.io/name: snmp-exporter
+    app.kubernetes.io/part-of: monitoring
+    app.kubernetes.io/managed-by: kubectl
+  name: snmp-exporter
+  namespace: monitoring
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: snmp-exporter
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: snmp-exporter
+        app.kubernetes.io/name: snmp-exporter
+        app.kubernetes.io/part-of: monitoring
+    spec:
+      automountServiceAccountToken: false
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      containers:
+      - image: docker.io/prom/snmp-exporter@sha256:272ff087c314fb1e384b7ba7e555f020cc0c072fb23f0dc1d1cb51b48067efdc
+        imagePullPolicy: Always
+        name: snmp-exporter
+        ports:
+        - containerPort: 9116
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app: node-exporter
+    app.kubernetes.io/name: node-exporter
+    app.kubernetes.io/part-of: monitoring
+    app.kubernetes.io/managed-by: kubectl
+  name: node-exporter
+  namespace: monitoring
+spec:
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: node-exporter
+  template:
+    metadata:
+      annotations:
+        prometheus.io/port: '9100'
+        prometheus.io/scrape: 'true'
+      labels:
+        app: node-exporter
+        app.kubernetes.io/name: node-exporter
+        app.kubernetes.io/part-of: monitoring
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - args:
+        - --path.procfs=/host/proc
+        - --path.sysfs=/host/sys
+        - --path.rootfs=/host
+        - --collector.textfile.directory=/host/var/lib/node_exporter/textfile
+        image: docker.io/prom/node-exporter@sha256:1b4e4438faca4dd7e001dd445d161a4a2091b0fededa84093b3a8dfeae1f1be0
+        imagePullPolicy: Always
+        name: node-exporter
+        ports:
+        - containerPort: 9100
+          hostPort: 9100
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 200m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /host/proc
+          name: proc
+          readOnly: true
+        - mountPath: /host/sys
+          name: sys
+          readOnly: true
+        - mountPath: /host
+          name: root
+          readOnly: true
+      dnsPolicy: ClusterFirst
+      hostNetwork: true
+      hostPID: true
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - hostPath:
+          path: /proc
+          type: ''
+        name: proc
+      - hostPath:
+          path: /sys
+          type: ''
+        name: sys
+      - hostPath:
+          path: /
+          type: ''
+        name: root
+  updateStrategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+    type: RollingUpdate
+---
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: grafana
+    namespace: monitoring
+  spec:
+    ports:
+    - port: 3000
+      protocol: TCP
+      targetPort: 3000
+    selector:
+      app: grafana
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: prometheus
+    namespace: monitoring
+  spec:
+    ports:
+    - port: 9090
+      protocol: TCP
+      targetPort: 9090
+    selector:
+      app: prometheus
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: snmp-exporter
+    namespace: monitoring
+  spec:
+    ports:
+    - port: 9116
+      protocol: TCP
+      targetPort: 9116
+    selector:
+      app: snmp-exporter
+    sessionAffinity: None
+    type: ClusterIP
+kind: List
+metadata:
+  labels: {}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: grafana
+  namespace: monitoring
+spec:
+  entryPoints:
+  - web
+  - websecure
+  routes:
+  - kind: Rule
+    match: Host(`grafana.internal.homelab.example`)
+    services:
+    - name: grafana
+      port: 3000
+      nativeLB: true
+  tls:
+    secretName: watoom-tls
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  entryPoints:
+  - web
+  - websecure
+  routes:
+  - kind: Rule
+    match: Host(`prometheus.internal.homelab.example`)
+    services:
+    - name: prometheus
+      port: 9090
+      nativeLB: true
+  tls:
+    secretName: watoom-tls

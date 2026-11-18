@@ -1,0 +1,23 @@
+# NOT applied by default. Apply only when watoom_code_godot_mcp_enabled is turned on.
+# Additive to watoom-code-egress: lets the agent pod reach exactly the rig's restricted SSH port
+# (tools/rig-godot-mcp). The underlying router rule (see that README) is a separate, manual,
+# narrowly-scoped hole in the router's existing TheHood->TRUSTED block; this policy is the
+# cluster-side half of the same narrow exception. The pod cannot reach the rest of the rig, the
+# rest of its VLAN, or anything else on the LAN.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: watoom-code-godot-mcp-egress
+  namespace: watoom-code
+spec:
+  podSelector:
+    matchLabels:
+      app: watoom-code
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 10.99.1.44/32
+      ports:
+        - {protocol: TCP, port: 2223}

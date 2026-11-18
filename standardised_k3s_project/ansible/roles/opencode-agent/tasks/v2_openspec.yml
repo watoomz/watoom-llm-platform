@@ -1,0 +1,26 @@
+---
+- name: OpenCode V2 OpenSpec | Ensure command directory exists
+  ansible.builtin.file:
+    path: "{{ opencode_agent_v2_canary_home_path }}/.config/opencode/commands"
+    state: directory
+    owner: "{{ opencode_agent_run_uid }}"
+    group: "{{ opencode_agent_run_gid }}"
+    mode: "0750"
+
+- name: OpenCode V2 OpenSpec | Deploy official generated skills
+  ansible.builtin.copy:
+    src: v2-native/openspec/skills/
+    dest: "{{ opencode_agent_v2_canary_home_path }}/.config/opencode/skills/"
+    owner: "{{ opencode_agent_run_uid }}"
+    group: "{{ opencode_agent_run_gid }}"
+    mode: preserve
+  register: opencode_v2_openspec_skills
+
+- name: OpenCode V2 OpenSpec | Deploy official generated commands
+  ansible.builtin.copy:
+    src: v2-native/openspec/commands/
+    dest: "{{ opencode_agent_v2_canary_home_path }}/.config/opencode/commands/"
+    owner: "{{ opencode_agent_run_uid }}"
+    group: "{{ opencode_agent_run_gid }}"
+    mode: preserve
+  register: opencode_v2_openspec_commands

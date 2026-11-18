@@ -1,0 +1,30 @@
+---
+- name: Apply reviewed WatooM Code production candidate
+  hosts: homelab
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Require explicit production approval
+      ansible.builtin.assert:
+        that:
+          - watoom_code_cutover_approved | default(false) | bool
+          - watoom_code_reviewed_manifest is defined
+    - name: Read the reviewed deployment
+      ansible.builtin.slurp:
+        src: "{{ watoom_code_reviewed_manifest }}"
+      register: watoom_code_candidate
+      no_log: true
+    - name: Fence ownership to the existing application deployment
+      ansible.builtin.assert:
+        that:
+          - (watoom_code_candidate.content | b64decode | from_json).kind == 'Deployment'
+          - (watoom_code_candidate.content | b64decode | from_json).metadata.namespace == 'opencode'
+          - (watoom_code_candidate.content | b64decode | from_json).metadata.name == 'opencode-v2-canary'
+    - name: Reconcile the existing application deployment
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ watoom_code_reviewed_manifest }}"
+    - name: Wait for the reviewed release
+      ansible.builtin.command:
+        argv: [kubectl, -n, opencode, rollout, status, deployment/opencode-v2-canary, --timeout=180s]
+      changed_when: false

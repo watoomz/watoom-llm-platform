@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Network, DNS and TLS · Agent Export</title><meta name="description" content="VLAN segmentation, host interfaces, name resolution, internal HTTPS and the two ways services reach the internet."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link active" aria-current="page" href="/guide/network.html">Network</a><div class="toc"><a class="toc-link" href="#segmentation">Segmentation</a><a class="toc-link" href="#host-interfaces">Host interfaces</a><a class="toc-link" href="#name-resolution">Name resolution</a><a class="toc-link" href="#internal-https">Internal HTTPS</a><a class="toc-link" href="#public-exposure">Public exposure</a><a class="toc-link" href="#remote-access">Remote access</a><a class="toc-link" href="#checks">Checks</a></div><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">Network</p><h1>Network, DNS and TLS</h1><p class="lede">VLAN segmentation, host interfaces, name resolution, internal HTTPS and the two ways services reach the internet.</p></header>
+<div class="content">
+<h2 id="segmentation">Segmentation</h2>
+<p>The router RB5009 is the edge router. Bridge VLAN filtering separates trust zones; management services are restricted to the management network. IPv6 is disabled.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Network</th>
+<th>Router interface</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VLAN 10 · <code>10.99.1.0/24</code></td>
+<td><code>vlan_internal</code></td>
+<td>Trusted management</td>
+</tr>
+<tr>
+<td>VLAN 20 · <code>10.99.20.0/24</code></td>
+<td><code>vlan_TheHood</code></td>
+<td>Homelab LAN; server default route</td>
+</tr>
+<tr>
+<td>VLAN 30 · <code>10.99.30.0/24</code></td>
+<td><code>vlan_wifi24</code></td>
+<td>Low-trust Wi-Fi (2.4 GHz)</td>
+</tr>
+<tr>
+<td>VLAN 40 · <code>10.99.40.0/24</code></td>
+<td><code>vlan_wifi5</code></td>
+<td>Low-trust Wi-Fi (5 GHz)</td>
+</tr>
+<tr>
+<td>VLAN 50 · <code>192.168.0.0/24</code></td>
+<td><code>vlan_dmz</code></td>
+<td>DMZ for public game traffic</td>
+</tr>
+<tr>
+<td><code>192.168.99.0/24</code></td>
+<td><code>emergency-mgmt</code></td>
+<td>Break-glass management</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="host-interfaces">Host interfaces</h2>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-text">enp34s0.20   10.99.20.225/24    default via 10.99.20.1     LAN, ingress, DNS, VPN
+enp35s0      192.168.250.225/24  no default route           DMZ, public game NAT target
+</code></pre></div>
+<p>The DMZ interface deliberately has no default route: replies to DMZ-originated flows leave through it, and nothing else does.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Kubernetes network</th>
+<th>Range</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pod CIDR</td>
+<td><code>10.242.0.0/24</code></td>
+</tr>
+<tr>
+<td>Service CIDR</td>
+<td><code>10.243.0.0/16</code></td>
+</tr>
+<tr>
+<td>Cluster DNS (CoreDNS)</td>
+<td><code>10.243.0.10</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="name-resolution">Name resolution</h2>
+<p>Pi-hole runs in k3s with <code>hostNetwork: true</code> and answers on <code>10.99.20.225:53</code>. It is the resolver for LAN and VPN clients and holds the local records for internal names:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-text">&lt;service&gt;.internal.homelab.example  →  10.99.20.225  (Traefik)
+</code></pre></div>
+<p>Inside the cluster, CoreDNS resolves <code>service.namespace.svc.cluster.local</code>. Pi-hole local records are maintained in Pi-hole itself, not in this repository; a new Traefik route also needs its A record there.</p>
+<h2 id="internal-https">Internal HTTPS</h2>
+<p>Traefik (namespace <code>kube-system</code>) is exposed by the k3s service load balancer on <code>10.99.20.225:80/443</code>. Routes are <code>IngressRoute</code> objects matching <code>Host(...)</code>, with optional <code>PathPrefix</code> for services that share the Glance host (<code>/guide</code>, <code>/guide-api</code>, <code>/model-manager/</code>, <code>/pi-lab</code>).</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Certificate</td>
+<td>Self-signed wildcard, <code>CN=*.internal.homelab.example</code></td>
+</tr>
+<tr>
+<td>SANs</td>
+<td><code>*.internal.homelab.example</code>, <code>internal.homelab.example</code>, <code>10.99.20.225</code>, <code>192.168.250.225</code></td>
+</tr>
+<tr>
+<td>Expiry</td>
+<td>24 November 2028</td>
+</tr>
+<tr>
+<td>Secret</td>
+<td><code>watoom-tls</code> in each namespace that terminates TLS</td>
+</tr>
+</tbody>
+</table></div>
+<p>Clients must trust the internal CA. There is no cert-manager in the cluster. <code>scripts/install-browser-trusted-tls.sh</code> implements an optional migration to Let's Encrypt via Cloudflare DNS-01; it is not active.</p>
+<p>Verify what Traefik is serving:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">echo | openssl s_client -connect 10.99.20.225:443 -servername glance.internal.homelab.example 2&gt;/dev/null \
+  | openssl x509 -noout -subject -enddate
+kubectl get ingressroute -A
+</code></pre></div>
+<h2 id="public-exposure">Public exposure</h2>
+<p>Two mechanisms exist, and they are kept independent of internal DNS and Traefik.</p>
+<p><strong>Cloudflare Tunnel (web).</strong> Outbound connectors publish selected origins without opening inbound ports.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Hostname</th>
+<th>Connector</th>
+<th>Origin</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>stream.homelab.example</code></td>
+<td>Docker <code>cloudflared-stream</code></td>
+<td><code>stream-nginx</code> (HLS)</td>
+</tr>
+<tr>
+<td><code>psytrance.homelab.example</code></td>
+<td>Docker <code>cloudflared-psytrance</code></td>
+<td>AzuraCast</td>
+</tr>
+<tr>
+<td>Other tunnel routes</td>
+<td>k3s <code>cloudflare/cloudflared</code></td>
+<td>configured in Cloudflare Zero Trust</td>
+</tr>
+</tbody>
+</table></div>
+<p>Tunnel tokens are mounted from secret files and never appear in Git or documentation.</p>
+<p><strong>Router dst-nat (games).</strong> Selected game ports are forwarded to the DMZ address <code>192.168.250.225</code>. Minecraft is intentionally not forwarded. See Game servers for the port list and router checks.</p>
+<h2 id="remote-access">Remote access</h2>
+<p>WireGuard runs as Docker <code>wg-easy</code>: UDP <code>51820</code> for tunnels, admin UI on <code>10.99.20.225:51821</code> and at <code>https://wireguard.internal.homelab.example</code>. Clients receive <code>10.9.0.x</code>, use Pi-hole for DNS and may reach <code>10.99.0.0/16</code> and <code>192.168.0.0/24</code>.</p>
+<h2 id="checks">Checks</h2>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">ip -br addr; ip route
+dig +short glance.internal.homelab.example @10.99.20.225
+kubectl -n kube-system get svc traefik
+curl -skI https://glance.internal.homelab.example/guide/
+</code></pre></div>
+<p>RouterOS (from the management VLAN):</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-routeros">/interface bridge vlan print detail
+/ip firewall nat print detail where chain=dstnat
+/ip firewall filter print detail where chain=forward
+</code></pre></div>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/network.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,464 @@
+#!/usr/bin/env python3
+import json
+import os
+import re
+import shutil
+import subprocess
+import tempfile
+import time
+import urllib.request
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+
+import yaml
+from policy_engine import evaluate as evaluate_policy_engine
+
+MAX_BODY = 300_000
+MAX_FILE = 120_000
+TIMEOUT = 60
+MAX_REPAIR_ITERATIONS = 3
+ANSIBLE_LINT = "{{ ansible_lint_api_ansible_lint_bin }}"
+ANSIBLE_PLAYBOOK = "{{ ansible_lint_api_ansible_playbook_bin }}"
+LLM_URL = os.environ.get("ANSIBLE_REPAIR_LLM_URL", "{{ ansible_lint_api_repair_llm_url }}")
+LLM_MODEL = os.environ.get("ANSIBLE_REPAIR_LLM_MODEL", "{{ ansible_lint_api_repair_llm_model }}")
+
+
+def safe_files(payload):
+    files = payload.get("files")
+    if isinstance(files, str):
+        files = json.loads(files)
+    if not isinstance(files, dict) or not files:
+        content = payload.get("content")
+        if not isinstance(content, str) or not content.strip():
+            raise ValueError("provide files object or content string")
+        files = {"playbook.yml": content}
+    checked = {}
+    for raw_name, raw_content in files.items():
+        if not isinstance(raw_name, str) or not isinstance(raw_content, str):
+            raise ValueError("files must map string paths to string content")
+        path = Path(raw_name)
+        if raw_name.startswith("/") or ".." in path.parts:
+            raise ValueError(f"unsafe path: {raw_name}")
+        if len(raw_content.encode("utf-8")) > MAX_FILE:
+            raise ValueError(f"file too large: {raw_name}; max_file_bytes={MAX_FILE}")
+        checked[raw_name] = raw_content
+    return checked
+
+
+def write_files(root, files):
+    for raw_name, raw_content in files.items():
+        dest = root / raw_name
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(raw_content, encoding="utf-8")
+
+
+def tool_env(root):
+    home = root / "home"
+    home.mkdir(parents=True, exist_ok=True)
+    env = os.environ.copy()
+    env["ANSIBLE_FORCE_COLOR"] = "false"
+    env["NO_COLOR"] = "1"
+    env["HOME"] = str(home)
+    env["ANSIBLE_LOCAL_TEMP"] = str(home / ".ansible" / "tmp")
+    env["ANSIBLE_REMOTE_TEMP"] = str(home / ".ansible" / "tmp")
+    env["XDG_CACHE_HOME"] = str(home / ".cache")
+    env["ANSIBLE_HOME"] = str(home / ".ansible")
+    return env
+
+
+def run_command(args, root, env):
+    proc = subprocess.run(
+        args,
+        cwd=root,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=TIMEOUT,
+        env=env,
+        check=False,
+    )
+    return {
+        "command": " ".join(args),
+        "ok": proc.returncode == 0,
+        "exit_code": proc.returncode,
+        "stdout": proc.stdout[-12000:],
+        "stderr": proc.stderr[-12000:],
+    }
+
+
+def yaml_check(root):
+    results = []
+    ok = True
+    for path in sorted(root.rglob("*.yml")) + sorted(root.rglob("*.yaml")):
+        rel = str(path.relative_to(root))
+        try:
+            list(yaml.safe_load_all(path.read_text(encoding="utf-8")))
+            results.append({"file": rel, "ok": True})
+        except Exception as exc:
+            ok = False
+            results.append({"file": rel, "ok": False, "error": str(exc)})
+    return {"ok": ok, "results": results}
+
+
+def playbook_candidates(root):
+    candidates = []
+    for path in sorted(root.rglob("*.yml")) + sorted(root.rglob("*.yaml")):
+        rel = path.relative_to(root)
+        if rel.parts and rel.parts[0] == "home":
+            continue
+        try:
+            documents = list(yaml.safe_load_all(path.read_text(encoding="utf-8")))
+        except Exception:
+            continue
+        if any(
+            isinstance(data, list)
+            and any(isinstance(item, dict) and ("hosts" in item or "import_playbook" in item) for item in data)
+            for data in documents
+        ):
+            candidates.append(str(rel))
+    return candidates
+
+
+def role_names(root):
+    roles = []
+    roles_dir = root / "roles"
+    if roles_dir.is_dir():
+        for role in sorted(roles_dir.iterdir()):
+            if (role / "tasks" / "main.yml").exists() or (role / "tasks" / "main.yaml").exists():
+                roles.append(role.name)
+    return roles
+
+
+def syntax_checks(root, env):
+    checks = []
+    for candidate in playbook_candidates(root):
+        checks.append(run_command([ANSIBLE_PLAYBOOK, "--syntax-check", candidate], root, env))
+    roles = role_names(root)
+    if roles:
+        smoke = root / "syntax_check_roles.yml"
+        smoke.write_text(
+            "---\n- name: Syntax check supplied roles\n  hosts: localhost\n  gather_facts: false\n  roles:\n" + "".join(f"    - {role}\n" for role in roles),
+            encoding="utf-8",
+        )
+        checks.append(run_command([ANSIBLE_PLAYBOOK, "--syntax-check", "syntax_check_roles.yml"], root, env))
+    return checks
+
+
+def static_ansible_checks(root):
+    return evaluate_policy_engine(Path(root))
+
+
+def validate_files(files, lint_only=False):
+    with tempfile.TemporaryDirectory(prefix="owui-ansible-validate-") as tmp:
+        root = Path(tmp)
+        write_files(root, files)
+        env = tool_env(root)
+        lint = run_command([ANSIBLE_LINT, "--format", "pep8", "."], root, env)
+        if lint_only:
+            return {"ok": lint["ok"], "ansible_lint": lint}
+        yml = yaml_check(root)
+        static = static_ansible_checks(root)
+        syntax = syntax_checks(root, env)
+        ok = yml["ok"] and static["ok"] and lint["ok"] and all(item["ok"] for item in syntax)
+        return {"ok": ok, "yaml": yml, "static_checks": static, "syntax_checks": syntax, "ansible_lint": lint, "repair_protocol": ["Fix YAML parse errors first.", "Fix ansible-playbook --syntax-check failures next.", "Fix ansible-lint findings last unless they identify a syntax or runtime risk.", "After changes, rerun validation until ok is true."]}
+
+
+def validate_payload(payload, lint_only=False):
+    return validate_files(safe_files(payload), lint_only=lint_only)
+
+
+def extract_json_object(text):
+    text = re.sub(r"```(?:json)?", "", text).replace("```", "").strip()
+    try:
+        return json.loads(text)
+    except Exception:
+        pass
+    start = text.find("{")
+    end = text.rfind("}")
+    if start >= 0 and end > start:
+        return json.loads(text[start:end + 1])
+    raise ValueError("model did not return a JSON object")
+
+
+def _trim_repair_text(value, limit=2000):
+    text = str(value or "").strip()
+    if len(text) <= limit:
+        return text
+    return text[: limit - 3] + "..."
+
+
+def validation_repair_constraints(validation):
+    """Return concise deterministic failures that must stay fixed across repair iterations."""
+    constraints = []
+
+    static = validation.get("static_checks") or {}
+    for item in static.get("findings") or []:
+        if item.get("severity") != "error":
+            continue
+        constraints.append(
+            {
+                "source": "static_checks",
+                "rule": item.get("rule") or "unknown-static-rule",
+                "file": item.get("file") or "",
+                "task": item.get("task") or "",
+                "message": _trim_repair_text(item.get("message")),
+            }
+        )
+
+    yaml_result = validation.get("yaml") or {}
+    for item in yaml_result.get("files") or yaml_result.get("results") or []:
+        if item.get("ok") is not False:
+            continue
+        constraints.append(
+            {
+                "source": "yaml",
+                "rule": "yaml-parse",
+                "file": item.get("file") or item.get("path") or "",
+                "task": "",
+                "message": _trim_repair_text(
+                    item.get("error") or item.get("stderr") or item.get("message")
+                ),
+            }
+        )
+
+    for item in validation.get("syntax_checks") or []:
+        if item.get("ok") is not False:
+            continue
+        constraints.append(
+            {
+                "source": "syntax_checks",
+                "rule": "ansible-playbook-syntax-check",
+                "file": item.get("playbook") or item.get("file") or "",
+                "task": "",
+                "message": _trim_repair_text(
+                    item.get("stderr") or item.get("stdout") or item.get("message")
+                ),
+            }
+        )
+
+    lint = validation.get("ansible_lint") or {}
+    if lint.get("ok") is False:
+        constraints.append(
+            {
+                "source": "ansible_lint",
+                "rule": "ansible-lint",
+                "file": "",
+                "task": "",
+                "message": _trim_repair_text(
+                    lint.get("stdout") or lint.get("stderr") or lint.get("message"),
+                    limit=4000,
+                ),
+            }
+        )
+
+    return constraints
+
+
+def merge_repair_constraints(existing, current):
+    """Deduplicate constraints while preserving first-seen order."""
+    merged = [dict(item) for item in existing]
+    seen = {
+        (
+            item.get("source"),
+            item.get("rule"),
+            item.get("file"),
+            item.get("task"),
+            item.get("message"),
+        )
+        for item in merged
+    }
+
+    for item in current:
+        key = (
+            item.get("source"),
+            item.get("rule"),
+            item.get("file"),
+            item.get("task"),
+            item.get("message"),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append(dict(item))
+
+    return merged
+
+
+def build_repair_prompt(goal, files, validation, cumulative_constraints):
+    file_text = json.dumps(files, indent=2)
+    validation_text = json.dumps(validation, indent=2)[:16000]
+    constraints_text = json.dumps(cumulative_constraints, indent=2)[:12000]
+
+    return f"""Repair this Ansible role/playbook content so validation passes.
+Goal: {goal or 'Make the supplied Ansible content valid, idempotent, and production-safe.'}
+
+Rules:
+- Return only a JSON object mapping relative file paths to complete file contents.
+- Keep paths relative and do not include absolute paths or parent paths.
+- Preserve the user's intent.
+- Use fully qualified collection names (FQCNs) for every module/action.
+- For Ansible conditional fields such as when, changed_when, failed_when, until, and ansible.builtin.assert that, use raw Jinja expressions without template delimiters. Do not wrap the complete condition in Jinja template delimiters.\n- Prefer ansible.builtin modules where appropriate.
+- Preserve read-only role semantics; do not turn a check/audit/health role into a mutating role to pass validation.
+- Prefer Ansible facts/modules over shell. When shell-safety is fixable by eliminating shell entirely, do that rather than switching ansible.builtin.command to ansible.builtin.shell.
+- For read-only checks, use changed_when: false and avoid shell pipelines; use ansible.builtin.command with argv plus Jinja/set_fact post-processing only when a native module/fact source is not available and validator policy permits the command.
+- Never use failed_when: false on ansible.builtin.command, ansible.builtin.shell, ansible.builtin.uri, ansible.builtin.get_url, or another operation whose execution can genuinely fail.
+- Distinguish health/status thresholds from execution failures: health threshold failures should be collected/reported rather than placed in failed_when; command/module execution failures require explicit deterministic failure semantics.
+- For an allowed read-only command, register its result, keep changed_when: false, and set failed_when from the registered result. When only rc=0 is successful, prefer failed_when: <registered_result>.rc != 0. If documented return codes other than zero are valid, encode that explicit accepted set.
+- Do not use a later ansible.builtin.assert task as a substitute for the command task's own deterministic failed_when.
+- If a collect-all workflow must continue after a genuine execution failure, use a deliberate validator-compliant recovery/error-capture design such as block/rescue; do not suppress the failure with failed_when: false.
+- Every previously observed validation failure listed below remains binding even if it is absent from the current validation result. Treat these as regression guards: do not recreate the same defect, but you do not need to preserve obsolete task/file names if functionality and intent are preserved. Do not reintroduce a previously fixed failure.
+- Do not remove functionality solely to pass validation.
+- Ensure every declared default variable that is part of the role contract is consumed by task logic.
+- Keep README claims consistent with the implementation.
+- Do not add placeholder comments.
+- Do not add validator bypasses such as noqa, skip_ansible_lint, validation exclusions, or policy downgrades.
+
+Current files:
+{file_text}
+
+Current validation result:
+{validation_text}
+
+Previously/currently observed validation failures that MUST NOT be reintroduced:
+{constraints_text}
+"""
+
+
+def call_repair_model(goal, files, validation, cumulative_constraints):
+    prompt = build_repair_prompt(
+        goal,
+        files,
+        validation,
+        cumulative_constraints,
+    )
+    payload = {
+        "model": LLM_MODEL,
+        "messages": [
+            {
+                "role": "system",
+                "content": (
+                    "You repair Ansible Automation Platform role/playbook files. "
+                    "Output only strict JSON. Preserve all already-fixed validation "
+                    "constraints while fixing the current failures."
+                ),
+            },
+            {"role": "user", "content": prompt},
+        ],
+        "temperature": 0.05,
+        "top_p": 0.85,
+        "max_tokens": 4096,
+    }
+    req = urllib.request.Request(
+        LLM_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=240) as response:
+        data = json.loads(response.read().decode("utf-8"))
+    content = data["choices"][0]["message"].get("content") or ""
+    repaired = extract_json_object(content)
+    if not isinstance(repaired, dict):
+        raise ValueError("repair model returned non-object JSON")
+    return safe_files({"files": repaired})
+
+
+def repair_payload(payload):
+    files = safe_files(payload)
+    goal = payload.get("goal", "")
+    iterations = min(
+        max(int(payload.get("max_iterations", 3)), 1),
+        MAX_REPAIR_ITERATIONS,
+    )
+    history = []
+    cumulative_constraints = []
+
+    for step in range(iterations + 1):
+        validation = validate_files(files)
+        current_constraints = validation_repair_constraints(validation)
+        cumulative_constraints = merge_repair_constraints(
+            cumulative_constraints,
+            current_constraints,
+        )
+
+        history.append(
+            {
+                "iteration": step,
+                "ok": validation["ok"],
+                "files": dict(files),
+                "validation": validation,
+                "constraints": [dict(item) for item in current_constraints],
+                "cumulative_constraints": [
+                    dict(item) for item in cumulative_constraints
+                ],
+            }
+        )
+
+        if validation["ok"] or step == iterations:
+            return {
+                "ok": validation["ok"],
+                "iterations": step,
+                "files": files,
+                "history": history,
+            }
+
+        files = call_repair_model(
+            goal,
+            files,
+            validation,
+            cumulative_constraints,
+        )
+
+    return {
+        "ok": False,
+        "iterations": iterations,
+        "files": files,
+        "history": history,
+    }
+
+
+class Handler(BaseHTTPRequestHandler):
+    server_version = "watoom-ansible-lint-api/1.2"
+
+    def _send(self, code, payload):
+        data = json.dumps(payload, indent=2).encode("utf-8")
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def do_GET(self):
+        if self.path == "/health":
+            self._send(200, {"status": "ok", "ansible_lint": shutil.which("ansible-lint") or ANSIBLE_LINT, "ansible_playbook": shutil.which("ansible-playbook") or ANSIBLE_PLAYBOOK, "llm_url": LLM_URL, "llm_model": LLM_MODEL, "endpoints": ["/lint", "/validate", "/repair"]})
+        else:
+            self._send(404, {"error": "not found"})
+
+    def do_POST(self):
+        if self.path not in ("/lint", "/validate", "/repair"):
+            self._send(404, {"error": "not found"})
+            return
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            if length <= 0 or length > MAX_BODY:
+                self._send(413, {"error": "request too large or empty", "max_bytes": MAX_BODY})
+                return
+            payload = json.loads(self.rfile.read(length).decode("utf-8"))
+            if self.path == "/repair":
+                self._send(200, repair_payload(payload))
+            else:
+                self._send(200, validate_payload(payload, lint_only=self.path == "/lint"))
+        except subprocess.TimeoutExpired:
+            self._send(504, {"error": "validation timed out", "timeout_seconds": TIMEOUT})
+        except ValueError as exc:
+            self._send(400, {"error": str(exc)})
+        except Exception as exc:
+            self._send(500, {"error": str(exc)})
+
+    def log_message(self, fmt, *args):
+        print("%s - %s" % (self.address_string(), fmt % args), flush=True)
+
+
+if __name__ == "__main__":
+    host = os.environ.get("ANSIBLE_LINT_API_HOST", "{{ ansible_lint_api_host }}")
+    port = int(os.environ.get("ANSIBLE_LINT_API_PORT", "{{ ansible_lint_api_port }}"))
+    ThreadingHTTPServer((host, port), Handler).serve_forever()

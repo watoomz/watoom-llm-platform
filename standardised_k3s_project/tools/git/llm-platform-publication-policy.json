@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "reviewed_nonsecret_files": {
+    "standardised_k3s_project/tools/language-knowledge/tests/test_procedures.py": "6befa4a160ca0adc33a4f206242f05020b1fa598e23e84ce976e44ca84fc0c8d",
+    "application/packages/ai/test/provider/bedrock-converse.test.ts": "0f14c0774a35c1ad774e16f16b2eb177155e481487cd88d4af4e23b4654d9222",
+    "application/packages/ai/test/provider/bedrock-mantle.test.ts": "911f18076bbd1a02c758f3121bde14355c5621e6513d48c3826781e03d81b39b",
+    "application/packages/cli/test/cors.test.ts": "ba83fccc22d4b131cd20c344fd1c2ec459a8640f013620d27338cad5ffd54777",
+    "application/packages/http-recorder/test/redaction.test.ts": "9114c5f813918cb05d6c75d619310620c5ca90f52cb757b2e139e51cca3302e3",
+    "application/packages/web/src/content/docs/ar/gitlab.mdx": "cf10e377c57617919cae570e4ebda05be6f79cdd10537e4319a973bde3251834",
+    "application/packages/web/src/content/docs/ar/network.mdx": "96f19d90d5a4a44d008ebc201337c79463023c67afd49f8b09684f4898ce77b3",
+    "application/packages/web/src/content/docs/bs/gitlab.mdx": "0e7160fcb3bb564d8b6f0fdfc5f647ed6f852a32dc0196633daf11d2fd684584",
+    "application/packages/web/src/content/docs/bs/network.mdx": "b4e1cbe8a5031a1a40f67f3f20a98b9f7f1a49dd543b99a45048746372a14c4d",
+    "application/packages/web/src/content/docs/da/gitlab.mdx": "d50c699544405978969d1f4037c28104d565527befa83a98361dfa9a9ddd5f51",
+    "application/packages/web/src/content/docs/da/network.mdx": "6f48c9fa84336c2f59d579265d4ec1760621501f2c5cd90eeb4257ee56daf28f",
+    "application/packages/web/src/content/docs/de/gitlab.mdx": "1970da987fd8793db96594f8bd213b60a9681c98856bc8bbb2fdb27dba461300",
+    "application/packages/web/src/content/docs/de/network.mdx": "7a2496975619f8ab71e0e3529cf44e0ca936852d053651361f579ede6fc6a6e6",
+    "application/packages/web/src/content/docs/es/gitlab.mdx": "ef7e51fb7143696b838f1d0b14810f7e7d41ce889652e6fd13fc504b42377bcf",
+    "application/packages/web/src/content/docs/es/network.mdx": "c1cd9aaced39b1bb813c30a5669bf49b2b2b19bb02ff2960988d67587e8b66f9",
+    "application/packages/web/src/content/docs/fr/gitlab.mdx": "d2e0842c6a6b02231c636ec78e91b8a198b633019b7685599016273af58ce659",
+    "application/packages/web/src/content/docs/fr/network.mdx": "3480d3d04ec00d4a82b7dd05effe988cb78d4e8df38bdb213acadda6caed7af2",
+    "application/packages/web/src/content/docs/gitlab.mdx": "e03edeed17566d997a5b89d7771a472b8486da959dd33a071a17c375e0cb6311",
+    "application/packages/web/src/content/docs/it/gitlab.mdx": "95a277a9f064747dd944dee97072d44e868b53ae96602a88c0cf35882eaa7a13",
+    "application/packages/web/src/content/docs/it/network.mdx": "9b7555c676e8d066047063798c1184e78cfd666ccc4b4612396d5dd0341ddc03",
+    "application/packages/web/src/content/docs/ja/gitlab.mdx": "3d3cb585d59bd32850c3b162d91e592499e53ea2320fe6fecdfba7863ffb7d87",
+    "application/packages/web/src/content/docs/ja/network.mdx": "4aab295adbf3873957b419c8210fd081ded867996150fc33e39c8b8152ba9035",
+    "application/packages/web/src/content/docs/ko/gitlab.mdx": "ff1ffc9084d83a4b0dbcf7b193a60d26a072ffa03d65072febc9ad62f52e4ec6",
+    "application/packages/web/src/content/docs/ko/network.mdx": "9649430d7cc136aa6c751d5ddebda7b6c7f5dc5f579ab6e62e1d316db6b76db9",
+    "application/packages/web/src/content/docs/nb/gitlab.mdx": "a3f6c36f7d70ea1b0f2b1f0038cfd2d4e967a868186ef20c7cd940cd4f526d32",
+    "application/packages/web/src/content/docs/nb/network.mdx": "c039f05bfb3843460fdcd4f67b59627b163b7d5dc2c7f1c19ea52687f6133dc3",
+    "application/packages/web/src/content/docs/network.mdx": "3fe58939d928838b9944a215e090f093dd12032ca3d58583cd4c00197174f2d6",
+    "application/packages/web/src/content/docs/pl/gitlab.mdx": "4bb7370f589ae6c7a6e009f7f39ec04ebbaa4da8335ea8bc1f61f54204aa07d0",
+    "application/packages/web/src/content/docs/pl/network.mdx": "766b3ece236cafe971163a4e739aa50d6cb209aa451991d7806b3e38613c4a93",
+    "application/packages/web/src/content/docs/pt-br/gitlab.mdx": "23090c0eef7ef74a98925834e91468dcbde552481ebc4a36da60cd6d02b6cfe2",
+    "application/packages/web/src/content/docs/pt-br/network.mdx": "ee4fddad6d089bfdbc5f42c7ae3de5ee9840709234f72b5573a32897cb8a2dcc",
+    "application/packages/web/src/content/docs/ru/gitlab.mdx": "da4ae055217cad758525d89e154adda3341e101925f8fce6ccdf069f9e141bba",
+    "application/packages/web/src/content/docs/ru/network.mdx": "52472ea656f1717edecb6dc622931f8fa913f641524af24652471b56a9a3f13c",
+    "application/packages/web/src/content/docs/th/gitlab.mdx": "7905664229cbd20f55b3c6972454495f0509059e3d314816e9c186071ccf1ac8",
+    "application/packages/web/src/content/docs/th/network.mdx": "ec69f402dd579ffcc90afe01d1f2bdcaa5d6370ef11bfe2ff1c21095c8cf44f8",
+    "application/packages/web/src/content/docs/tr/gitlab.mdx": "bd8e39b236ad7b9515ef80ee2ca2369cb5913ee4d82f1c17673d38a619dc31b4",
+    "application/packages/web/src/content/docs/tr/network.mdx": "cd807f35e7decd4ba8ced1d9d2dfcc02b24d54a86a402e3bdf8ac8e4dbfe9cf1",
+    "application/packages/web/src/content/docs/zh-cn/gitlab.mdx": "f433991bee9c27dfe6b2ed09822dfd949a39b50c0389b0ba4b6856dac710c35c",
+    "application/packages/web/src/content/docs/zh-cn/network.mdx": "c53cfdfee7b5e1dc4cd5495830c79fb65ac74879e9974668d1b842879d560853",
+    "application/packages/web/src/content/docs/zh-tw/gitlab.mdx": "819da66e2833a78f6eff9b213306a8c17f9f25302ab4f51506c5213b29d53310",
+    "application/packages/web/src/content/docs/zh-tw/network.mdx": "da0bfa58e22ee92e5f2af4bc7b39da123ebb6d996e3beb8352bbf1bc34f38847",
+    "application/services/www/src/docs/content/network.mdx": "e70878768a50d5aefe5e9b18c78ae53296e40c8b7c679c66ccf0675589ab2b2c"
+  },
+  "sanitise_searxng_secret": true,
+  "review_notes": {
+    "test_fixture_patterns": "Pattern-denial and redaction tests use synthetic credentials, not deployed credentials.",
+    "upstream_docs": "Proxy/GitLab docs demonstrate variable references and example credentials.",
+    "literal_candidates": "Remaining hits are secret object/key names, paths, environment-variable references, or upstream test literals. SearXNG embedded secret is replaced only in the distribution."
+  },
+  "scope": {
+    "description": "Keep the AI platform (LLM serving, agents, memory, search, observability, game/creative workers) and the k3s/host base it needs. Everything else stays in the private homelab repo.",
+    "overlay_dir": "tools/git/llm-scope-overlay",
+    "exclude_prefixes": [
+      "manifests/20-media/",
+      "manifests/30-games/",
+      "manifests/90-optional/",
+      "manifests/40-rbac/k8s-dashboard-skip-login-patch.yml",
+      "manifests/10-infrastructure/cs2-observability/",
+      "manifests/10-infrastructure/flaresolverr/",
+      "manifests/10-infrastructure/homepage/",
+      "manifests/10-infrastructure/pihole/",
+      "manifests/10-infrastructure/wireguard/",
+      "manifests/10-infrastructure/vaultwarden/",
+      "manifests/10-infrastructure/iac-web-console/",
+      "ansible/roles/arma_profile_control/",
+      "ansible/roles/cloudflare_control/",
+      "ansible/roles/dispatcharr_control/",
+      "ansible/roles/game_control/",
+      "ansible/roles/esp32/",
+      "ansible/roles/docker_stacks/",
+      "ansible/roles/pi-kali-agent/",
+      "ansible/roles/watoom-kali-agent-gateway/",
+      "ansible/roles/watoom-kali-console/",
+      "ansible/roles/watoom-kali-control-image/",
+      "ansible/roles/watoom-kali-mcp/",
+      "ansible/roles/watoom-kali-workbench-mcp/",
+      "ansible/playbooks/arma-profile.yml",
+      "ansible/playbooks/cloudflare.yml",
+      "ansible/playbooks/dispatcharr.yml",
+      "ansible/playbooks/docker-stack.yml",
+      "ansible/playbooks/game.yml",
+      "ansible/playbooks/kali-metasploit-db.yml",
+      "ansible/playbooks/pi-kali-agent.yml",
+      "ansible/playbooks/watoom-esp32.yml",
+      "ansible/playbooks/watoom-code-esp32.yml",
+      "ansible/playbooks/watoom-code-sims-intake.yml",
+      "ansible/playbooks/watoom-code-ts4-codec.yml",
+      "ansible/playbooks/watoom-kali-",
+      "ansible/playbooks/watoom-security-",
+      "ansible/playbooks/watoom-docker-storage-retention.yml",
+      "tools/esp32/",
+      "tools/kali/",
+      "tools/ts4-animation/",
+      "tools/iac-web-console/",
+      "tools/docker-storage-retention/",
+      "tools/assets/sims_library.py",
+      "config/dispatcharr/",
+      "config/esp32/",
+      "config/kali/",
+      "config/retired/",
+      "scripts/games/",
+      "scripts/kali-tools/",
+      "scripts/opencode-kali/",
+      "scripts/lotce-tools/",
+      "scripts/watoom-kali-rules/",
+      "scripts/audit-kali-resource-limits.sh",
+      "scripts/verify-opencode-kali-security.py",
+      "scripts/build-iac-web-console.sh",
+      "scripts/fresh-install-runbook.sh",
+      "docker/",
+      "infrastructure/",
+      "profiles/",
+      "retired/",
+      "archive/",
+      "openspec/",
+      "docs/07_MEDIA_STREAMING.md",
+      "docs/08_GAME_SERVERS.md",
+      "docs/17_LEGACY_RETIRED.md",
+      "docs/router_METRICS.md",
+      "docs/WATOOM_OPENCODE_KALI_",
+      "docs/SIMS_ASSET_LIBRARY.md",
+      "docs/GAME_EXPOSURE.md",
+      "docs/rebuild-reference/",
+      "docs/guide/media.md",
+      "docs/guide/games.md",
+      "config/glance/guide/media.html",
+      "config/glance/guide/games.html",
+      "config/glance/guide/padkontrol-v18.html",
+      "tools/git/llm-scope-overlay/",
+      "ansible/playbooks/docker.yml",
+      "scripts/watoom-menu.sh",
+      "config/grafana/internet-security/",
+      "config/grafana/dashboards/watoom-internet-security.json",
+      "docs/CURRENT_STATE.md",
+      "docs/05_DOCKER_COMPOSE.md",
+      "docs/06_SERVICE_CATALOGUE.md",
+      "docs/11_SECURITY_REMOTE_ACCESS.md",
+      "docs/guide/services.md",
+      "config/glance/guide/services.html"
+    ]
+  },
+  "placeholders": {
+    "description": "Environment-identifying values are replaced in the exported copy only. The private homelab repository keeps the real values. tools/set-domain.py in the export maps the placeholders to a destination's own values.",
+    "apply_to_prefixes": [
+      "standardised_k3s_project/"
+    ],
+    "rules": [
+      {
+        "name": "domain",
+        "pattern": "\\bwatoom\\.au\\b",
+        "replace": "homelab.example"
+      },
+      {
+        "name": "lan-subnet",
+        "pattern": "\\b10\\.5\\.(\\d{1,3})\\.(\\d{1,3})\\b",
+        "replace": "10.99.\\1.\\2"
+      },
+      {
+        "name": "dmz-address",
+        "pattern": "\\b192\\.168\\.0\\.225\\b",
+        "replace": "192.168.250.225"
+      },
+      {
+        "name": "github-owner",
+        "pattern": "\\bwatoom[z]\\b",
+        "replace": "YOUR_GITHUB_USER"
+      },
+      {
+        "name": "k3s-pod-network",
+        "pattern": "\\b10\\.42\\.0\\.(\\d{1,3})\\b",
+        "replace": "10.242.0.\\1"
+      },
+      {
+        "name": "k3s-service-network",
+        "pattern": "\\b10\\.43\\.(\\d{1,3})\\.(\\d{1,3})\\b",
+        "replace": "10.243.\\1.\\2"
+      },
+      {
+        "name": "agent-identity-domain",
+        "pattern": "\\bwatoom\\.(?:internal|local)\\b",
+        "replace": "agent.example"
+      },
+      {
+        "name": "agent-identity-name",
+        "pattern": "\\bWatooM Homelab\\b",
+        "replace": "Agent Export"
+      },
+      {
+        "name": "router-vendor",
+        "pattern": "(?i)router",
+        "replace": "router"
+      },
+      {
+        "name": "gpu-model",
+        "pattern": "\\bRTX ?3080\\b",
+        "replace": "GPU"
+      }
+    ],
+    "forbidden_after": [
+      "\\bwatoom\\.au\\b",
+      "\\b10\\.5\\.\\d{1,3}\\.\\d{1,3}\\b",
+      "\\b192\\.168\\.0\\.225\\b",
+      "\\bwatoom[z]\\b",
+      "\\b10\\.42\\.0\\.\\d{1,3}\\b",
+      "\\b10\\.43\\.\\d{1,3}\\.\\d{1,3}\\b",
+      "\\bwatoom\\.(?:internal|local)\\b",
+      "\\bWatooM Homelab\\b",
+      "(?i)router",
+      "\\bRTX ?3080\\b"
+    ]
+  },
+  "regenerate": {
+    "commands": [
+      [
+        "scripts/render-glance-configmaps.py",
+        "python3"
+      ],
+      [
+        "scripts/render-server-catalogue.py",
+        "python3"
+      ],
+      [
+        "scripts/render-glance-guide.py",
+        "/data/ai/toolchains/docs-render/bin/python3"
+      ]
+    ],
+    "verifier": [
+      "scripts/verify-homelab-documentation.py",
+      "python3"
+    ]
+  },
+  "prune_missing_paths": [
+    "ansible/inventories/homelab/group_vars/all.yml"
+  ],
+  "prune_glance": true,
+  "prune_manifests": true
+}

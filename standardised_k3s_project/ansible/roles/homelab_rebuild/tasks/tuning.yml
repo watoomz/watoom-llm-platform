@@ -1,0 +1,100 @@
+---
+- name: "Homelab Rebuild | Configure sysctl tuning"
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.d/90-watoom-homelab.conf
+    reload: true
+    state: present
+  loop:
+    - { name: net.ipv4.ip_forward, value: "1" }
+    - { name: net.ipv4.conf.all.rp_filter, value: "0" }
+    - { name: net.ipv4.conf.default.rp_filter, value: "2" }
+    - { name: net.ipv4.tcp_congestion_control, value: bbr }
+    - { name: net.core.default_qdisc, value: fq }
+    # zram (zstd, ~3:1) makes swapping cheap: compress idle anon pages rather than drop file cache.
+    - { name: vm.swappiness, value: "100" }
+    # Absolute limits instead of 15%/5% of RAM (4.6 GB / 1.5 GB): the llama prompt cache writes 1.6-3.4 GB files per
+    # turn, which filled the page cache and then flushed in one burst that stalled the whole host (load 100+).
+    - { name: vm.dirty_background_bytes, value: "268435456" }
+    - { name: vm.dirty_bytes, value: "1073741824" }
+    - { name: fs.inotify.max_user_watches, value: "1048576" }
+    - { name: fs.file-max, value: "2097152" }
+
+- name: "Homelab Rebuild | Keep the legacy 99-watoom-tuning.conf from overriding swappiness"
+  # That as-built file sorts after 90-watoom-homelab.conf, so its value wins at boot.
+  ansible.builtin.lineinfile:
+    path: /etc/sysctl.d/99-watoom-tuning.conf
+    regexp: '^vm\.swappiness\s*='
+    line: "vm.swappiness = 100"
+  failed_when: false
+
+- name: "Homelab Rebuild | Keep the legacy 99-watoom-tuning.conf from re-enabling the dirty ratios"
+  # Writing vm.dirty_ratio at boot (that file loads after 90-) would zero the vm.dirty_bytes limits set above.
+  ansible.builtin.replace:
+    path: /etc/sysctl.d/99-watoom-tuning.conf
+    regexp: '^(vm\.dirty_(?:background_)?ratio\s*=.*)$'
+    replace: '# \1  (replaced by vm.dirty_bytes limits in 90-watoom-homelab.conf)'
+  failed_when: false
+
+- name: "Homelab Rebuild | Compress zram swap with zstd"
+  # Fedora's default zram0 uses lzo-rle (~2.8:1 on this host's swap); zstd packs the
+  # same pages tighter, leaving more real RAM free. Size stays min(ram, 8 GiB).
+  # Takes effect at the next boot (live switch: swap to a temporary zstd device,
+  # then rebuild zram0).
+  ansible.builtin.copy:
+    dest: /etc/systemd/zram-generator.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [zram0]
+      zram-size = min(ram, 8192)
+      compression-algorithm = zstd
+
+- name: "Homelab Rebuild | Stop desktop services a server does not use"
+  # Printing, modem, mDNS and smart-card daemons (and their socket/path activators).
+  # rsyslog stays: the security log retention pipeline reads its files.
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+  loop:
+    - cups.path
+    - cups.socket
+    - cups.service
+    - ModemManager.service
+    - avahi-daemon.socket
+    - avahi-daemon.service
+    - pcscd.socket
+    - pcscd.service
+    - abrt-xorg.service
+  failed_when: false
+
+- name: "Homelab Rebuild | Cap journald disk usage"
+  ansible.builtin.copy:
+    dest: /etc/systemd/journald.conf.d/90-watoom-limits.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [Journal]
+      SystemMaxUse=512M
+      RuntimeMaxUse=128M
+      MaxRetentionSec=30day
+  notify: "Service systemd-journald | Restart"
+
+- name: "Homelab Rebuild | Check active tuned profile"
+  ansible.builtin.command:
+    cmd: tuned-adm active
+  register: homelab_tuned_active
+  changed_when: false
+  failed_when: false
+
+- name: "Homelab Rebuild | Use throughput-performance tuned profile when available"
+  ansible.builtin.command:
+    cmd: tuned-adm profile throughput-performance
+  register: homelab_tuned
+  changed_when: true
+  when: "'throughput-performance' not in homelab_tuned_active.stdout"
+  failed_when: false

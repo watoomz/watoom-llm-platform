@@ -1,0 +1,45 @@
+{
+  "website": "https://www.redhat.com/en/agentic-skills",
+  "bootstrap_sha256": "bf5356e8f5d47f7f1c82229a1b4ab879ecb7043beb235fdbbe79e450efe19b8c",
+  "repository": "https://github.com/RHEcosystemAppEng/agentic-plugins",
+  "commit": "53fa7d8ec99b613eaaf929524de7e391850d9e80",
+  "skills": [
+    {
+      "name": "red-hat-cve-explainer",
+      "source": "https://raw.githubusercontent.com/RHEcosystemAppEng/agentic-plugins/53fa7d8ec99b613eaaf929524de7e391850d9e80/rh-basic/skills/red-hat-cve-explainer/SKILL.md",
+      "sha256": "a7c7ae70bf8fc5bcdd9ef89f6f282cf5ca9a64d2a3f3e80af4a7fa81ff9bc69d",
+      "bytes": 3874
+    },
+    {
+      "name": "red-hat-diagnostics",
+      "source": "https://raw.githubusercontent.com/RHEcosystemAppEng/agentic-plugins/53fa7d8ec99b613eaaf929524de7e391850d9e80/rh-basic/skills/red-hat-diagnostics/SKILL.md",
+      "sha256": "f8f81b9ad6a65ec1e2d39a7e0bcbf942cab9778d989a966a06cfadb158b92b16",
+      "bytes": 3563
+    },
+    {
+      "name": "red-hat-product-lifecycle",
+      "source": "https://raw.githubusercontent.com/RHEcosystemAppEng/agentic-plugins/53fa7d8ec99b613eaaf929524de7e391850d9e80/rh-basic/skills/red-hat-product-lifecycle/SKILL.md",
+      "sha256": "441c1e7bfc2df67e96ff51baecbd99956b3ac0f0b7f14ea3d58b7cbe242f35cf",
+      "bytes": 5165
+    },
+    {
+      "name": "red-hat-security-mcp-setup",
+      "source": "https://raw.githubusercontent.com/RHEcosystemAppEng/agentic-plugins/53fa7d8ec99b613eaaf929524de7e391850d9e80/rh-basic/skills/red-hat-security-mcp-setup/SKILL.md",
+      "sha256": "6f5aae7a2706df11462df0d76bc900b287f28310fe74d1ca3eba293a059245cd",
+      "bytes": 2589
+    },
+    {
+      "name": "red-hat-support-severity",
+      "source": "https://raw.githubusercontent.com/RHEcosystemAppEng/agentic-plugins/53fa7d8ec99b613eaaf929524de7e391850d9e80/rh-basic/skills/red-hat-support-severity/SKILL.md",
+      "sha256": "6a59fc559b42b333ae9cc54a2c30c5b1142fdcda65040b1c9f5489ce131a8589",
+      "bytes": 3292
+    }
+  ],
+  "resources": [
+    {
+      "path": "red-hat-product-lifecycle/scripts/rh_lifecycle.py",
+      "source": "https://raw.githubusercontent.com/RHEcosystemAppEng/agentic-plugins/53fa7d8ec99b613eaaf929524de7e391850d9e80/rh-basic/skills/red-hat-product-lifecycle/scripts/rh_lifecycle.py",
+      "sha256": "f2f518080d98c41d56f127434e95e3fb67a3d302ae7a1a59b85301fe4557fefe"
+    }
+  ]
+}

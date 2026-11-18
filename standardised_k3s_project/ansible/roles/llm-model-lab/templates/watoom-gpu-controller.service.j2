@@ -1,0 +1,22 @@
+[Unit]
+Description=Exclusive WatooM GPU controller
+After=k3s.service watoom-gpu-controller-credentials.service
+Requires=k3s.service watoom-gpu-controller-credentials.service
+[Service]
+Type=simple
+User=root
+UMask=0077
+ExecStart=/usr/bin/python3 /data/ai/helper-scripts/gpu-controller/g3h_service.py --config /data/ai/helper-scripts/config/gpu-controller.json
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/data/ai/helper-scripts/state/gpu-controller-observability /data/ai/helper-scripts/state/gpu-controller /data/ai/helper-scripts/state/gpu-controller-router /data/ai/helper-scripts/state/gpu-controller-private
+InaccessiblePaths=/etc/rancher/k3s /root/.kube
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+TimeoutStopSec=1600
+KillMode=control-group
+[Install]
+WantedBy=multi-user.target

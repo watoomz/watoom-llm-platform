@@ -1,0 +1,21 @@
+.cr-main { max-width: 1100px; margin: 0 auto; padding: 14px; display: grid; gap: 14px; }
+.cr-pin { display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--ink-2); }
+.cr-pin input { background: var(--plane); color: var(--ink); border: 1px solid var(--hair); border-radius: 6px; padding: 7px 10px; font: 13px var(--mono); min-width: 280px; }
+.cr-note { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+#msg { margin-top: 8px; font-size: 13px; min-height: 1em; }
+#msg.ok { color: var(--good); } #msg.err { color: var(--critical); }
+.cr-card { border: 1px solid var(--hair); border-radius: 8px; background: var(--surface); margin-top: 10px; overflow: hidden; }
+.cr-top { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; padding: 10px 12px; }
+.cr-top .id { font: 600 13px var(--mono); } .cr-top .meta { font: 11px var(--mono); color: var(--muted); }
+.cr-reason { padding: 0 12px 10px; font-size: 13px; color: var(--ink-2); white-space: pre-wrap; overflow-wrap: anywhere; }
+.cr-diff { margin: 0; padding: 8px 0; background: var(--plane); font: 12px/1.5 var(--mono); overflow-x: auto; border-top: 1px solid var(--hair); }
+.cr-diff span { display: block; padding: 0 12px; white-space: pre; }
+.cr-diff .add { background: rgba(12,163,12,.16); color: #9be29b; } .cr-diff .del { background: rgba(208,59,59,.18); color: #f1a0a0; } .cr-diff .hunk { color: var(--accent); }
+.cr-actions { display: flex; gap: 10px; padding: 10px 12px; border-top: 1px solid var(--hair); }
+.cr-actions button { font: inherit; font-size: 13px; padding: 7px 18px; border-radius: 6px; border: 1px solid var(--hair); background: var(--surface-2); color: var(--ink); cursor: pointer; }
+.cr-actions .approve { background: var(--accent-dim); border-color: var(--accent); }
+.cr-actions button:disabled { opacity: .5; cursor: not-allowed; }
+.cr-empty { color: var(--muted); font-size: 13px; padding: 8px 0; }
+.cr-row { display: grid; grid-template-columns: 150px 130px minmax(120px, 1fr) minmax(120px, 2fr); gap: 8px; padding: 6px 0; border-top: 1px solid var(--hair); font: 12px var(--mono); color: var(--ink-2); overflow-wrap: anywhere; }
+.cr-row .APPLIED { color: var(--good); } .cr-row .REJECTED, .cr-row .CHECK_FAILED { color: var(--serious); }
+@media (max-width: 700px) { .cr-row { grid-template-columns: 1fr 1fr; } .cr-pin input { min-width: 0; width: 100%; } }

@@ -1,0 +1,675 @@
+{
+ "_comment": "Vertical slice for the ZAS battle royale (T-0063): ONE character model animated for every combat style (UE5 Manny from Hyper Combat Framework: Sword, Rifle and Staff stances), sword + rifle + staff + fireball, target dummies on team 2, in a small arena map. Owner 2026-11-18: 'get a model with animations that suits all the different types of combat'. game_mode.pawn picks the player in the arena: BP_ZAS_WizardHero (Polyart wizard, own staff animations; T-0024) or BP_ZAS_CombatWizard (UE5 Manny with Hyper sets; sword/rifle/staff). Playables: BP_ZAS_WizardHero (game_mode.pawn) BP_ZAS_RPGHero and BP_ZAS_Gunslinger (Hyper pistol + shotgun; set game_mode.pawn to play one); BP_ZAS_RogueNPC is a friendly (team 1) wandering NPC.",
+ "content_root": "/Game/ZAS/Combat",
+ "input": {
+  "base_imc": "/Game/ZAS/Player/Input/IMC_Wizard",
+  "imc": "IMC_ZAS_Combat",
+  "actions": {
+   "Move": "/Game/ZAS/Player/Input/IA_Move",
+   "Look": "/Game/ZAS/Player/Input/IA_Look",
+   "Jump": "/Game/ZAS/Player/Input/IA_Jump",
+   "Primary": "/Game/ZAS/Player/Input/IA_Attack"
+  },
+  "new_actions": {
+   "Reload": "R",
+   "NextWeapon": "Q"
+  },
+  "spell_keys": [
+   "One",
+   "Two",
+   "Three"
+  ]
+ },
+ "anim_sets": {
+  "Manny": {
+   "skeleton": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Meshes/SK_Mannequin",
+   "speed": 400,
+   "default_stance": "Unarmed",
+   "air": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Unarmed/MM_Unarmed_Jump_Fall_Loop",
+   "stances": {
+    "Unarmed": {
+     "idle": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Unarmed/MM_Unarmed_Idle_Ready",
+     "fwd": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Unarmed/MM_Unarmed_Jog_Fwd",
+     "bwd": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Unarmed/MM_Unarmed_Jog_Bwd",
+     "left": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Unarmed/MM_Unarmed_Jog_Left",
+     "right": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Unarmed/MM_Unarmed_Jog_Right"
+    },
+    "Sword": {
+     "idle": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Sword/Idle/Anim_Sword_Idle",
+     "fwd": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Sword/Jog/Anim_Sword_Jog_Fwd",
+     "bwd": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Sword/Jog/Anim_Sword_Jog_Bwd",
+     "left": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Sword/Jog/Anim_Sword_Jog_Left",
+     "right": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Sword/Jog/Anim_Sword_Jog_Right"
+    },
+    "Rifle": {
+     "idle": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Rifle/MM_Rifle_Idle_Hipfire",
+     "fwd": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Rifle/MM_Rifle_Jog_Fwd",
+     "bwd": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Rifle/MM_Rifle_Jog_Bwd",
+     "left": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Rifle/MM_Rifle_Jog_Left",
+     "right": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Rifle/MM_Rifle_Jog_Right"
+    },
+    "Staff": {
+     "idle": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Staff/Idle/Anim_Staff_Idle",
+     "fwd": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Unarmed/MM_Unarmed_Jog_Fwd",
+     "bwd": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Unarmed/MM_Unarmed_Jog_Bwd",
+     "left": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Unarmed/MM_Unarmed_Jog_Left",
+     "right": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Unarmed/MM_Unarmed_Jog_Right"
+    }
+   }
+  },
+  "Wizard": {
+   "skeleton": "/Game/BattleWizardPolyart/Meshes/UE4_Mannequin_Skeleton",
+   "speed": 220,
+   "default_stance": "Staff",
+   "air": "/Game/BattleWizardPolyart/Animations/JumpAirAnim",
+   "stances": {
+    "Staff": {
+     "idle": "/Game/BattleWizardPolyart/Animations/Idle01Anim",
+     "fwd": "/Game/BattleWizardPolyart/Animations/BattleWalkForwardAnim",
+     "bwd": "/Game/BattleWizardPolyart/Animations/BattleWalkBackwardAnim",
+     "left": "/Game/BattleWizardPolyart/Animations/BattleWalkLeftAnim",
+     "right": "/Game/BattleWizardPolyart/Animations/BattleWalkRightAnim"
+    }
+   }
+  },
+  "RPGHero": {
+   "skeleton": "/Game/RPGHeroSquad/Mesh/Character/PhysicsAssetAndSkeleton/RPGHero_Skeleton",
+   "speed": 220,
+   "default_stance": "Sword",
+   "stances": {
+    "Sword": {
+     "idle": "/Game/RPGHeroSquad/Animation/RPGHero/Anim_Idle_RPGHero",
+     "fwd": "/Game/RPGHeroSquad/Animation/RPGHero/InPlace/Anim_Walk_IP_RPGHero"
+    }
+   }
+  },
+  "Rogue": {
+   "skeleton": "/Game/RogueCharacter/Meshes/SK_Rogue_Main",
+   "speed": 220,
+   "default_stance": "Unarmed",
+   "air": "/Game/RogueCharacter/Animations/RogueAnimations/MM_Fall_Loop",
+   "stances": {
+    "Unarmed": {
+     "idle": "/Game/RogueCharacter/Animations/RogueAnimations/MM_Idle",
+     "fwd": "/Game/RogueCharacter/Animations/RogueAnimations/MM_Walk_Fwd"
+    }
+   }
+  },
+  "MannyGuns": {
+   "skeleton": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Meshes/SK_Mannequin",
+   "speed": 400,
+   "default_stance": "Pistol",
+   "air": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Unarmed/MM_Unarmed_Jump_Fall_Loop",
+   "stances": {
+    "Pistol": {
+     "idle": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Pistol/MM_Pistol_Idle_Hipfire",
+     "fwd": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Pistol/MM_Pistol_Jog_Fwd",
+     "bwd": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Pistol/MM_Pistol_Jog_Bwd",
+     "left": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Pistol/MM_Pistol_Jog_Left",
+     "right": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Pistol/MM_Pistol_Jog_Right"
+    },
+    "Shotgun": {
+     "idle": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Shotgun/MM_Shotgun_Idle_Hipfire",
+     "fwd": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Rifle/MM_Rifle_Jog_Fwd",
+     "bwd": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Rifle/MM_Rifle_Jog_Bwd",
+     "left": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Rifle/MM_Rifle_Jog_Left",
+     "right": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Rifle/MM_Rifle_Jog_Right"
+    }
+   }
+  }
+ },
+ "retarget": [
+  {
+   "retargeter": "/Game/AncientRuins/Demo/Characters/Mannequin_UE4/Rigs/RTG_UE4Manny_UE5Manny",
+   "source_mesh": "/Game/BattleWizardPBR/Meshes/WizardSM",
+   "target_mesh": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Meshes/SKM_Manny",
+   "anims": [
+    "/Game/BattleWizardPBR/Animations/Attack01Anim",
+    "/Game/BattleWizardPBR/Animations/Attack04Anim",
+    "/Game/BattleWizardPBR/Animations/Attack02StartAnim",
+    "/Game/BattleWizardPBR/Animations/Attack03StartAnim"
+   ],
+   "output": "Manny/FromWizard",
+   "prefix": "MM_Wizard_"
+  }
+ ],
+ "montages": {
+  "AM_Manny_CastA": {
+   "anim": "/Game/ZAS/Combat/Anim/Manny/FromWizard/MM_Wizard_Attack01Anim_Retargeted",
+   "slot": "DefaultSlot",
+   "blendIn": 0.1,
+   "blendOut": 0.2
+  },
+  "AM_Manny_CastQuick": {
+   "anim": "/Game/ZAS/Combat/Anim/Manny/FromWizard/MM_Wizard_Attack04Anim_Retargeted",
+   "slot": "DefaultSlot",
+   "blendIn": 0.1,
+   "blendOut": 0.2
+  },
+  "AM_Wizard_Cast": {
+   "anim": "/Game/BattleWizardPolyart/Animations/Attack01Anim",
+   "slot": "DefaultSlot",
+   "blendIn": 0.1,
+   "blendOut": 0.2
+  },
+  "AM_Wizard_CastQuick": {
+   "anim": "/Game/BattleWizardPolyart/Animations/Attack03StartAnim",
+   "slot": "DefaultSlot",
+   "blendIn": 0.1,
+   "blendOut": 0.2
+  },
+  "AM_Wizard_Strike": {
+   "anim": "/Game/BattleWizardPolyart/Animations/Attack04Anim",
+   "slot": "DefaultSlot",
+   "blendIn": 0.1,
+   "blendOut": 0.2
+  },
+  "AM_RPGHero_Attack01": {
+   "anim": "/Game/RPGHeroSquad/Animation/RPGHero/Anim_NormalAttack01_RPGHero",
+   "slot": "DefaultSlot",
+   "blendIn": 0.1,
+   "blendOut": 0.2
+  },
+  "AM_RPGHero_Attack02": {
+   "anim": "/Game/RPGHeroSquad/Animation/RPGHero/Anim_NormalAttack02_RPGHero",
+   "slot": "DefaultSlot",
+   "blendIn": 0.1,
+   "blendOut": 0.2
+  }
+ },
+ "fx": {
+  "NS_Fireball_Trail": {
+   "recipe": "projectile",
+   "element": "Fire"
+  },
+  "NS_Fireball_Impact": {
+   "recipe": "impact",
+   "element": "Fire",
+   "scale": 1.5
+  },
+  "NS_Rifle_Muzzle": {
+   "recipe": "muzzle",
+   "element": [
+    6,
+    4,
+    1.5
+   ]
+  },
+  "NS_Hit_Physical": {
+   "recipe": "impact",
+   "element": "Physical",
+   "scale": 0.6
+  },
+  "NS_FrostNova": {
+   "recipe": "area",
+   "element": "Frost",
+   "radius": 400
+  },
+  "NS_Heal_Aura": {
+   "recipe": "aura",
+   "element": "Holy"
+  }
+ },
+ "weapons": {
+  "Sword": {
+   "Kind": "Melee",
+   "Stance": "Sword",
+   "DisplayName": "Steel Longsword",
+   "StaticMesh": "/Game/Hyper/ResourcePack/Weapons/Swords/SM_LongSword_Steel",
+   "AttachSocket": "weapon_r",
+   "Damage": 35,
+   "DamageType": "Damage.Type.Physical",
+   "StaminaCost": 10,
+   "Cooldown": 0.6,
+   "AttackMontage": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Sword/Attack/AM_Sword_Attack_A_Med_Montage",
+   "TraceRadius": 18,
+   "HitWindowStart": 0.18,
+   "HitWindowEnd": 0.42,
+   "ImpactFx": {
+    "Niagara": "NS_Hit_Physical",
+    "Scale": 1
+   }
+  },
+  "Rifle": {
+   "Kind": "Gun",
+   "Stance": "Rifle",
+   "DisplayName": "Assault Rifle",
+   "StaticMesh": "/Game/Hyper/ResourcePack/Weapons/Rifle_Basic/Mesh/SM_Rifle_Basic",
+   "AttachSocket": "rangedweapon_r",
+   "Damage": 18,
+   "DamageType": "Damage.Type.Physical",
+   "FireMode": "Auto",
+   "RoundsPerMinute": 600,
+   "Range": 12000,
+   "FalloffStart": 3000,
+   "FalloffEnd": 9000,
+   "FalloffMinMultiplier": 0.6,
+   "HeadshotMultiplier": 2.0,
+   "HeadBone": "head",
+   "SpreadDegrees": 1.2,
+   "MagazineSize": 30,
+   "StartingReserveAmmo": 90,
+   "ReloadSeconds": 2.0,
+   "AttackFx": {
+    "Niagara": "NS_Rifle_Muzzle",
+    "Scale": 1
+   },
+   "ImpactFx": {
+    "Niagara": "NS_Hit_Physical",
+    "Scale": 0.6
+   }
+  },
+  "Staff": {
+   "Kind": "Melee",
+   "Stance": "Staff",
+   "DisplayName": "Epic Staff",
+   "StaticMesh": "/Game/Hyper/ResourcePack/Weapons/Staff/Epic/Mesh/SM_Staff_Epic",
+   "AttachSocket": "weapon_r",
+   "Damage": 25,
+   "DamageType": "Damage.Type.Physical",
+   "StaminaCost": 8,
+   "Cooldown": 0.8,
+   "AttackMontage": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Staff/Melee/AM_Staff_Primary_Melee_A_Slow_Montage",
+   "TraceRadius": 20,
+   "HitWindowStart": 0.3,
+   "HitWindowEnd": 0.6,
+   "ImpactFx": {
+    "Niagara": "NS_Hit_Physical",
+    "Scale": 1
+   }
+  },
+  "WizardStaff": {
+   "Kind": "Melee",
+   "Stance": "Staff",
+   "DisplayName": "Wizard staff",
+   "StaticMesh": "/Game/BattleWizardPolyart/Meshes/MagicStaffs/Staff01SM",
+   "AttachSocket": "Weapon",
+   "Damage": 25,
+   "DamageType": "Damage.Type.Physical",
+   "StaminaCost": 8,
+   "Cooldown": 0.8,
+   "AttackMontage": "AM_Wizard_Strike",
+   "TraceRadius": 25,
+   "HitWindowStart": 0.27,
+   "HitWindowEnd": 0.5,
+   "ImpactFx": {
+    "Niagara": "NS_Hit_Physical",
+    "Scale": 1
+   }
+  },
+  "HeroSword": {
+   "Kind": "Melee",
+   "Stance": "Sword",
+   "DisplayName": "Hero sword",
+   "StaticMesh": "/Game/RPGHeroSquad/Mesh/Weapon/SM_RPGHero_Sword01_Polyart",
+   "AttachSocket": "Sword",
+   "Damage": 35,
+   "DamageType": "Damage.Type.Physical",
+   "StaminaCost": 10,
+   "Cooldown": 0.7,
+   "AttackMontage": "AM_RPGHero_Attack01",
+   "TraceRadius": 20,
+   "HitWindowStart": 0.2,
+   "HitWindowEnd": 0.45,
+   "ImpactFx": {
+    "Niagara": "NS_Hit_Physical",
+    "Scale": 1
+   }
+  },
+  "Pistol": {
+   "Kind": "Gun",
+   "Stance": "Pistol",
+   "DisplayName": "Pistol",
+   "StaticMesh": "/Game/Hyper/ResourcePack/Weapons/Pistol_Basic/Mesh/SM_Pistol_Basic",
+   "AttachSocket": "rangedweapon_r",
+   "Damage": 22,
+   "DamageType": "Damage.Type.Physical",
+   "FireMode": "Semi",
+   "RoundsPerMinute": 300,
+   "Range": 6000,
+   "FalloffStart": 1500,
+   "FalloffEnd": 5000,
+   "FalloffMinMultiplier": 0.5,
+   "HeadshotMultiplier": 2.0,
+   "HeadBone": "head",
+   "SpreadDegrees": 1.5,
+   "MagazineSize": 12,
+   "StartingReserveAmmo": 48,
+   "ReloadSeconds": 1.5,
+   "AttackMontage": "/Game/Hyper/ResourcePack/Weapons/Pistol_Basic/Animations/AM_MM_Pistol_Fire",
+   "AttackFx": {
+    "Niagara": "NS_Rifle_Muzzle",
+    "Scale": 0.6
+   },
+   "ImpactFx": {
+    "Niagara": "NS_Hit_Physical",
+    "Scale": 0.5
+   }
+  },
+  "Shotgun": {
+   "Kind": "Gun",
+   "Stance": "Shotgun",
+   "DisplayName": "Shotgun",
+   "StaticMesh": "/Game/Hyper/ResourcePack/Weapons/Shotgun_Basic/Mesh/SM_Shotgun_Basic",
+   "AttachSocket": "rangedweapon_r",
+   "Damage": 9,
+   "PelletsPerShot": 8,
+   "DamageType": "Damage.Type.Physical",
+   "FireMode": "Semi",
+   "RoundsPerMinute": 70,
+   "Range": 3000,
+   "FalloffStart": 800,
+   "FalloffEnd": 2500,
+   "FalloffMinMultiplier": 0.3,
+   "HeadshotMultiplier": 1.5,
+   "HeadBone": "head",
+   "SpreadDegrees": 6,
+   "MagazineSize": 6,
+   "StartingReserveAmmo": 24,
+   "ReloadSeconds": 2.5,
+   "AttackMontage": "/Game/Hyper/ResourcePack/Weapons/Shotgun_Basic/Animations/AM_MM_Shotgun_Fire",
+   "AttackFx": {
+    "Niagara": "NS_Rifle_Muzzle",
+    "Scale": 1.4
+   },
+   "ImpactFx": {
+    "Niagara": "NS_Hit_Physical",
+    "Scale": 0.4
+   }
+  }
+ },
+ "spells": {
+  "Fireball": {
+   "DisplayName": "Fireball",
+   "Delivery": "Projectile",
+   "ManaCost": 20,
+   "Cooldown": 1.5,
+   "Damage": 30,
+   "DamageType": "Damage.Type.Fire",
+   "Radius": 250,
+   "Range": 4000,
+   "ProjectileSpeed": 2500,
+   "ReleaseDelay": 0.55,
+   "CastMontage": "AM_Manny_CastA",
+   "CastSocket": "hand_r",
+   "ProjectileFx": "NS_Fireball_Trail",
+   "ImpactFx": {
+    "Niagara": "NS_Fireball_Impact",
+    "Scale": 1
+   }
+  },
+  "FrostNova": {
+   "DisplayName": "Frost Nova",
+   "Delivery": "Area",
+   "ManaCost": 35,
+   "Cooldown": 6,
+   "Damage": 25,
+   "DamageType": "Damage.Type.Frost",
+   "Radius": 400,
+   "Range": 0,
+   "ReleaseDelay": 0.35,
+   "CastMontage": "AM_Manny_CastQuick",
+   "CastSocket": "hand_r",
+   "ImpactFx": {
+    "Niagara": "NS_FrostNova",
+    "Scale": 1
+   }
+  },
+  "Heal": {
+   "DisplayName": "Heal",
+   "Delivery": "Self",
+   "ManaCost": 30,
+   "Cooldown": 8,
+   "Damage": 0,
+   "Healing": 40,
+   "ReleaseDelay": 0.3,
+   "CastMontage": "AM_Manny_CastQuick",
+   "CastSocket": "hand_r",
+   "CastFx": {
+    "Niagara": "NS_Heal_Aura",
+    "Scale": 1
+   }
+  },
+  "WizardFireball": {
+   "DisplayName": "Fireball",
+   "Delivery": "Projectile",
+   "ManaCost": 20,
+   "Cooldown": 1.5,
+   "Damage": 30,
+   "DamageType": "Damage.Type.Fire",
+   "Radius": 250,
+   "Range": 4000,
+   "ProjectileSpeed": 2500,
+   "ReleaseDelay": 0.55,
+   "CastMontage": "AM_Wizard_Cast",
+   "CastSocket": "hand_r",
+   "ProjectileFx": "NS_Fireball_Trail",
+   "ImpactFx": {
+    "Niagara": "NS_Fireball_Impact",
+    "Scale": 1
+   }
+  },
+  "WizardFrostNova": {
+   "DisplayName": "Frost Nova",
+   "Delivery": "Area",
+   "ManaCost": 35,
+   "Cooldown": 6,
+   "Damage": 25,
+   "DamageType": "Damage.Type.Frost",
+   "Radius": 400,
+   "Range": 0,
+   "ReleaseDelay": 0.35,
+   "CastMontage": "AM_Wizard_CastQuick",
+   "CastSocket": "hand_r",
+   "ImpactFx": {
+    "Niagara": "NS_FrostNova",
+    "Scale": 1
+   }
+  },
+  "WizardHeal": {
+   "DisplayName": "Heal",
+   "Delivery": "Self",
+   "ManaCost": 30,
+   "Cooldown": 8,
+   "Damage": 0,
+   "Healing": 40,
+   "ReleaseDelay": 0.3,
+   "CastMontage": "AM_Wizard_CastQuick",
+   "CastSocket": "hand_r",
+   "CastFx": {
+    "Niagara": "NS_Heal_Aura",
+    "Scale": 1
+   }
+  }
+ },
+ "items": {
+  "Medkit": {
+   "Kind": "Consumable",
+   "DisplayName": "Medkit",
+   "RestoreHealth": 50,
+   "PickupMesh": "/Engine/BasicShapes/Cube"
+  },
+  "RifleAmmo": {
+   "Kind": "Ammo",
+   "DisplayName": "Rifle ammo",
+   "Ammo": 60,
+   "AmmoFor": "Rifle",
+   "PickupMesh": "/Engine/BasicShapes/Cylinder"
+  },
+  "RiflePickup": {
+   "Kind": "Weapon",
+   "DisplayName": "Assault Rifle",
+   "Weapon": "Rifle",
+   "PickupMesh": "/Game/Hyper/ResourcePack/Weapons/Rifle_Basic/Mesh/SM_Rifle_Basic"
+  },
+  "ManaPotion": {
+   "Kind": "Consumable",
+   "DisplayName": "Mana potion",
+   "RestoreMana": 50,
+   "PickupMesh": "/Engine/BasicShapes/Sphere"
+  }
+ },
+ "bodies_file": "bodies.zas.json",
+ "characters": {
+  "BP_ZAS_CombatWizard": {
+   "defaults": {
+    "TeamId": 1,
+    "Mesh.SkeletalMeshAsset": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Meshes/SKM_Manny"
+   },
+   "weapons": [
+    "Sword",
+    "Rifle",
+    "Staff"
+   ],
+   "spells": [
+    "Fireball",
+    "FrostNova",
+    "Heal"
+   ],
+   "player": true,
+   "anim_set": "Manny"
+  },
+  "BP_ZAS_TargetDummy": {
+   "defaults": {
+    "TeamId": 2,
+    "StartingMaxShield": 50,
+    "StartingShield": 50,
+    "Mesh.SkeletalMeshAsset": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Meshes/SKM_Manny"
+   },
+   "anim_set": "Manny"
+  },
+  "BP_ZAS_WizardHero": {
+   "defaults": {
+    "TeamId": 1,
+    "Mesh.SkeletalMeshAsset": "/Game/BattleWizardPolyart/Meshes/WizardSM"
+   },
+   "weapons": [
+    "WizardStaff"
+   ],
+   "spells": [
+    "WizardFireball",
+    "WizardFrostNova",
+    "WizardHeal"
+   ],
+   "player": true,
+   "anim_set": "Wizard"
+  },
+  "BP_ZAS_RPGHero": {
+   "defaults": {
+    "TeamId": 1,
+    "Mesh.SkeletalMeshAsset": "/Game/RPGHeroSquad/Mesh/Character/SK_RPGHeroPolyart"
+   },
+   "weapons": [
+    "HeroSword"
+   ],
+   "spells": [],
+   "player": true,
+   "anim_set": "RPGHero"
+  },
+  "BP_ZAS_RogueNPC": {
+   "defaults": {
+    "TeamId": 1,
+    "Mesh.SkeletalMeshAsset": "/Game/RogueCharacter/Meshes/SKM_Rogue_Main",
+    "Wander.bEnabled": true,
+    "Wander.Radius": 800,
+    "Wander.SpeedScale": 1.0
+   },
+   "anim_set": "Rogue"
+  },
+  "BP_ZAS_Gunslinger": {
+   "defaults": {
+    "TeamId": 1,
+    "Mesh.SkeletalMeshAsset": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Meshes/SKM_Manny"
+   },
+   "weapons": [
+    "Pistol",
+    "Shotgun"
+   ],
+   "spells": [],
+   "player": true,
+   "anim_set": "MannyGuns"
+  }
+ },
+ "game_mode": {
+  "name": "BP_ZAS_CombatGameMode",
+  "pawn": "BP_ZAS_WizardHero"
+ },
+ "map": {
+  "path": "/Game/ZAS/Combat/Maps/L_CombatArena",
+  "template": "/Engine/Maps/Templates/Template_Default"
+ },
+ "place": [
+  {
+   "character": "BP_ZAS_TargetDummy",
+   "label": "ZAS_Dummy_1",
+   "location": [
+    600,
+    0,
+    100
+   ],
+   "rotation": [
+    0,
+    180,
+    0
+   ]
+  },
+  {
+   "character": "BP_ZAS_TargetDummy",
+   "label": "ZAS_Dummy_2",
+   "location": [
+    1500,
+    300,
+    100
+   ],
+   "rotation": [
+    0,
+    180,
+    0
+   ]
+  },
+  {
+   "item": "Medkit",
+   "label": "ZAS_Pickup_Medkit",
+   "location": [
+    0,
+    300,
+    60
+   ],
+   "respawn": 30
+  },
+  {
+   "item": "RifleAmmo",
+   "label": "ZAS_Pickup_RifleAmmo",
+   "location": [
+    0,
+    -300,
+    60
+   ],
+   "respawn": 30
+  },
+  {
+   "item": "ManaPotion",
+   "label": "ZAS_Pickup_Mana",
+   "location": [
+    -300,
+    300,
+    60
+   ],
+   "respawn": 30
+  },
+  {
+   "character": "BP_ZAS_RogueNPC",
+   "label": "ZAS_Rogue_1",
+   "location": [
+    -600,
+    -600,
+    100
+   ],
+   "rotation": [
+    0,
+    45,
+    0
+   ]
+  }
+ ]
+}

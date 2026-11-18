@@ -1,0 +1,8 @@
+{
+ "socket": {{ (tickets_board_socket_dir + '/broker.sock') | to_json }},
+ "ui_uid": {{ tickets_board_uid }},
+ "ui_gid": {{ tickets_board_gid }},
+ "store_dir": {{ tickets_board_store_dir | to_json }},
+ "agents_file": {{ tickets_board_agents_file | to_json }},
+ "webhook_file": {{ tickets_board_webhook_file | to_json }}
+}

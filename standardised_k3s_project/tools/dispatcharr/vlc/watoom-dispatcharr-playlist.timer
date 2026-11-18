@@ -1,0 +1,10 @@
+[Unit]
+Description=Refresh the Dispatcharr Web_stream playlist for VLC every 5 minutes
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=5min
+AccuracySec=30s
+
+[Install]
+WantedBy=timers.target

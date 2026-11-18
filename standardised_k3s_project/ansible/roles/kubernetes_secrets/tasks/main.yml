@@ -1,0 +1,163 @@
+---
+- name: "Kubernetes Secrets | Check decrypted environment file exists"
+  ansible.builtin.stat:
+    path: "{{ kubernetes_secrets_env_file }}"
+  register: kubernetes_secrets_env_stat
+  changed_when: false
+
+- name: "Kubernetes Secrets | Assert decrypted environment file exists"
+  ansible.builtin.assert:
+    that:
+      - kubernetes_secrets_env_stat.stat.exists
+      - kubernetes_secrets_env_stat.stat.isreg
+    fail_msg: >-
+      Missing {{ kubernetes_secrets_env_file }}.
+      Run the vault_secrets role first.
+
+- name: "Kubernetes Secrets | Read decrypted environment into JSON"
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - |
+        import json
+        import pathlib
+
+        path = pathlib.Path("{{ kubernetes_secrets_env_file }}")
+        env = {}
+
+        for raw in path.read_text().splitlines():
+            line = raw.strip()
+
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip()
+
+            if (
+                len(value) >= 2
+                and value[0] == value[-1]
+                and value[0] in ("'", '"')
+            ):
+                value = value[1:-1]
+
+            env[key] = value
+
+        print(json.dumps(env))
+  register: kubernetes_secret_environment_raw
+  changed_when: false
+  no_log: true
+
+- name: "Kubernetes Secrets | Store parsed secret environment"
+  ansible.builtin.set_fact:
+    kubernetes_secret_environment: >-
+      {{ kubernetes_secret_environment_raw.stdout | from_json }}
+  no_log: true
+
+- name: "Kubernetes Secrets | Build required environment variable list"
+  ansible.builtin.set_fact:
+    kubernetes_required_secret_variables: >-
+      {{
+        kubernetes_managed_secrets
+        | selectattr('required', 'equalto', true)
+        | map(attribute='data')
+        | map('dict2items')
+        | flatten
+        | map(attribute='value')
+        | unique
+        | list
+      }}
+  no_log: true
+
+- name: "Kubernetes Secrets | Validate required secret variables"
+  ansible.builtin.assert:
+    that:
+      - item in kubernetes_secret_environment
+      - kubernetes_secret_environment[item] | length > 0
+    fail_msg: "A required secret variable is missing from secrets/.env.local"
+  loop: "{{ kubernetes_required_secret_variables }}"
+  loop_control:
+    label: "(secret variable censored)"
+  no_log: true
+
+- name: "Kubernetes Secret namespaces | Reconcile configured namespace"
+  ansible.builtin.include_tasks: namespace.yml
+  loop: >-
+    {{
+      kubernetes_managed_secrets
+      | map(attribute='namespace')
+      | unique
+      | list
+    }}
+  loop_control:
+    loop_var: kubernetes_secret_namespace_target
+    label: "{{ kubernetes_secret_namespace_target }}"
+
+- name: "Kubernetes required Secrets | Reconcile configured Secret"
+  ansible.builtin.include_tasks: required_secret.yml
+  loop: "{{ kubernetes_managed_secrets | selectattr('required', 'equalto', true) | list }}"
+  loop_control:
+    loop_var: kubernetes_secret_target
+    label: "{{ kubernetes_secret_target.namespace }}/{{ kubernetes_secret_target.name }}"
+
+- name: "Kubernetes optional Secrets | Reconcile configured Secret"
+  ansible.builtin.include_tasks: optional_secret.yml
+  loop: "{{ kubernetes_managed_secrets | rejectattr('required', 'equalto', true) | list }}"
+  loop_control:
+    loop_var: kubernetes_secret_target
+    label: "{{ kubernetes_secret_target.namespace }}/{{ kubernetes_secret_target.name }}"
+  when: >-
+    kubernetes_secret_target.data.values()
+    | difference(kubernetes_secret_environment.keys() | list)
+    | length == 0
+
+- name: "Namespace dispatcharr | Ensure present for PIA Secret"
+  kubernetes.core.k8s:
+    kubeconfig: "{{ k3s_kubeconfig }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: dispatcharr
+  when:
+    - "'PIA_USERNAME_B64' in kubernetes_secret_environment"
+    - "'PIA_PASSWORD_B64' in kubernetes_secret_environment"
+
+- name: "Secret dispatcharr/dispatcharr-pia | Reconcile"
+  kubernetes.core.k8s:
+    kubeconfig: "{{ k3s_kubeconfig }}"
+    state: present
+    apply: true
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: dispatcharr-pia
+        namespace: dispatcharr
+        labels:
+          app.kubernetes.io/managed-by: ansible
+      type: Opaque
+      stringData:
+        username: >-
+          {{
+            kubernetes_secret_environment['PIA_USERNAME_B64']
+            | b64decode
+          }}
+        password: >-
+          {{
+            kubernetes_secret_environment['PIA_PASSWORD_B64']
+            | b64decode
+          }}
+  when:
+    - "'PIA_USERNAME_B64' in kubernetes_secret_environment"
+    - "'PIA_PASSWORD_B64' in kubernetes_secret_environment"
+  no_log: true
+
+- name: "Kubernetes Secrets | Clear parsed secret variables"
+  ansible.builtin.set_fact:
+    kubernetes_secret_environment: {}
+    kubernetes_secret_environment_raw: {}
+  no_log: true

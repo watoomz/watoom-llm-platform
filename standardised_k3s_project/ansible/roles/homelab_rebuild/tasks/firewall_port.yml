@@ -1,0 +1,8 @@
+---
+- name: "Firewall port | Open in configured zone"
+  ansible.posix.firewalld:
+    zone: "{{ homelab_firewall_zone }}"
+    port: "{{ firewall_port_target }}"
+    permanent: true
+    immediate: true
+    state: enabled

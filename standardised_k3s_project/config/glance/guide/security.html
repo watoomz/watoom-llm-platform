@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Security and secrets · Agent Export</title><meta name="description" content="Trust boundaries, how secrets are stored and rendered, agent isolation and the controls that changes must not weaken."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link active" aria-current="page" href="/guide/security.html">Security</a><div class="toc"><a class="toc-link" href="#trust-boundaries">Trust boundaries</a><a class="toc-link" href="#secrets">Secrets</a><a class="toc-link" href="#host-accounts-and-identities">Host accounts and identities</a><a class="toc-link" href="#projects-share-for-the-rig">Projects share for the rig</a><a class="toc-link" href="#agent-isolation">Agent isolation</a><a class="toc-link" href="#change-control-controls">Change-control controls</a></div><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">Security</p><h1>Security and secrets</h1><p class="lede">Trust boundaries, how secrets are stored and rendered, agent isolation and the controls that changes must not weaken.</p></header>
+<div class="content">
+<h2 id="trust-boundaries">Trust boundaries</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Control</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Internet → services</td>
+<td>No inbound web ports; web publication only through Cloudflare Tunnel. Game ports dst-nat to the DMZ address only</td>
+</tr>
+<tr>
+<td>VLANs</td>
+<td>Router VLAN filtering; management services reachable only from management networks; low-trust Wi-Fi separated</td>
+</tr>
+<tr>
+<td>Remote users</td>
+<td>WireGuard (<code>wg-easy</code>), clients limited to <code>10.99.0.0/16</code> and <code>192.168.0.0/24</code></td>
+</tr>
+<tr>
+<td>Internal HTTPS</td>
+<td>Traefik with wildcard TLS; clients trust the internal CA</td>
+</tr>
+<tr>
+<td>GPU and models</td>
+<td>Only the GPU controller scales model Deployments; router and agents request access through admission</td>
+</tr>
+<tr>
+<td>Agents → filesystem</td>
+<td>WatooM Code mounts project groups read-write, the rest of <code>/data/ai</code> read-only</td>
+</tr>
+<tr>
+<td>Agents → security tools</td>
+<td>Kali tools hidden from development agents; only a top-level <code>watoom-kali</code> session can use them</td>
+</tr>
+</tbody>
+</table></div>
+<p>Do not flatten VLANs, open router ports or widen mounts to make a service reachable. Find the owning route instead.</p>
+<h2 id="secrets">Secrets</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Location</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Encrypted source (committed)</td>
+<td><code>secrets-vault/env.local.vault</code></td>
+</tr>
+<tr>
+<td>Vault password (not committed)</td>
+<td><code>/data/secrets/watoom-homelab/ansible-vault-password.txt</code> (mode <code>0640</code>, group <code>wheel</code>)</td>
+</tr>
+<tr>
+<td>Decrypted working copy (ignored)</td>
+<td><code>secrets/.env.local</code></td>
+</tr>
+<tr>
+<td>Rendered Kubernetes Secrets (ignored)</td>
+<td><code>manifests/05-secrets/*-generated.yml</code></td>
+</tr>
+<tr>
+<td>Tunnel tokens</td>
+<td>Local secret files, bind-mounted read-only</td>
+</tr>
+<tr>
+<td>Local service passwords</td>
+<td><code>.private/</code> in the checkout (excluded from Git)</td>
+</tr>
+<tr>
+<td>Change-request approval PIN</td>
+<td>Plain PIN: <code>CHANGE_REQUEST_PIN</code> inside the vault and the root-only <code>/root/.watoom-change-request-pin</code>. Cluster copy: the <code>glance-change-approval</code> Secret holds only its salted hash (<code>GLANCE_CHANGE_APPROVAL_PIN_HASH</code> in the vault). Create or rotate with <code>scripts/set-change-approval-pin.sh</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Restore and apply:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">scripts/restore-vault-secrets.sh          # needs the vault password file
+scripts/render-secrets.sh
+kubectl apply -f manifests/05-secrets/
+scripts/check-required-secrets.sh         # checks names exist, never prints values
+</code></pre></div>
+<p>Required Secret names:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Namespace</th>
+<th>Secret</th>
+<th>Used by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cs2</code></td>
+<td><code>cs2-secrets</code></td>
+<td>Steam token, RCON</td>
+</tr>
+<tr>
+<td><code>dayz</code></td>
+<td><code>dayz-secrets</code></td>
+<td>Admin and server passwords</td>
+</tr>
+<tr>
+<td><code>valheim</code></td>
+<td><code>valheim-secrets</code></td>
+<td>Server password</td>
+</tr>
+<tr>
+<td><code>arma-reforger</code></td>
+<td><code>arma-manager-secret</code></td>
+<td>Manager database, auth, API</td>
+</tr>
+<tr>
+<td><code>immich</code></td>
+<td><code>immich-secrets</code></td>
+<td>Database credentials</td>
+</tr>
+<tr>
+<td><code>monitoring</code></td>
+<td><code>grafana-secrets</code></td>
+<td>Grafana admin</td>
+</tr>
+<tr>
+<td><code>vaultwarden</code></td>
+<td><code>vaultwarden-secret</code></td>
+<td>Admin token</td>
+</tr>
+<tr>
+<td><code>cloudflare</code></td>
+<td><code>cloudflared-token</code></td>
+<td>Tunnel token</td>
+</tr>
+<tr>
+<td><code>glance</code></td>
+<td><code>glance-secrets</code></td>
+<td>Dashboard keys: Arr apps, Jellyfin, qBittorrent, SABnzbd, Seerr, Dispatcharr, Grafana, Steam</td>
+</tr>
+<tr>
+<td><code>glance</code></td>
+<td><code>glance-change-approval</code></td>
+<td>Salted hash of the operator PIN that lets the Change requests page approve model change requests</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote class="callout callout-rule" data-kind="Rule">
+<p>Secret values never go into Git, documentation, command lines or logs. Refer to Secrets by name. Ansible tasks that handle secrets use <code>no_log</code>.</p>
+</blockquote>
+<h2 id="host-accounts-and-identities">Host accounts and identities</h2>
+<p>Three numeric identities are kept apart: <code>opencode</code> (uid/gid 1001) is the WatooM Code application, which runs as uid 1001 in its container; <code>codex</code> (uid/gid 1011) is the Codex CLI account used for delegated hands-on work, with wheel, docker and passwordless sudo; the toolkit and asset workers use uid 1009, and <code>watoom</code> (1000) is the interactive desktop account. Project folders grant each identity access through named extended ACLs on its numeric uid, so a container identity never inherits the Codex account's rights. Grant access to a new identity by adding an ACL entry for its uid, not by sharing an account.</p>
+<h2 id="projects-share-for-the-rig">Projects share for the rig</h2>
+<p><code>playbooks/projects-share.yml</code> (role <code>projects_share</code>) exposes <code>/data/ai/projects</code> as an SMB share named <code>projects</code> so the rig can map it as a drive. The rig still only initiates connections. The share is read-only, SMB3 with encryption and signing required, bound to the LAN address only, reachable only from <code>network.rig_host</code> (the firewall rich rule and <code>hosts allow</code> both name it), and served through a dedicated <code>rigshare</code> login that has no shell and no unix privileges (files are read as the <code>watoom</code> user). Symlinks and wide links are off, and <code>.env</code>, <code>*.pem</code>, <code>*.key</code>, SSH key and password-vault files are never served. The login has no password until the operator runs <code>sudo smbpasswd -a rigshare</code>; the password is not stored in Git. Making the share writable (<code>projects_share_read_only: false</code>) lets the rig change project files, so do that only on purpose. To remove it: stop and disable <code>smb</code>, remove the <code>samba</code> rich rule from the firewall zone, and restore <code>/etc/samba/smb.conf.distribution</code>.</p>
+<h2 id="agent-isolation">Agent isolation</h2>
+<ul>
+<li>The coordinator routes work and cannot implement directly; delegation follows fixed handoff rules, and only the critic may be called as a child by builder, investigator and reviewer.</li>
+<li>Every project write is checked against the project groups by the coordinator guard.</li>
+<li>Kali MCP access is denied in the native, main and project configuration layers for development agents.</li>
+<li>Toolkit jobs read only hash-pinned inputs, run in bounded pods and write to their own output directory.</li>
+</ul>
+<h2 id="change-control-controls">Change-control controls</h2>
+<p><code>scripts/watoom-ansible-validate.sh</code> enforces the WatooM policy on Ansible content: secret handling and <code>no_log</code>, TLS verification, download integrity, idempotency, handler discipline and anti-bypass checks. A required check that cannot run is a failure, not a pass. Never weaken a control to make a change pass.</p>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/security.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

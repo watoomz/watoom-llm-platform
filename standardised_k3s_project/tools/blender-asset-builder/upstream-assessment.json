@@ -1,0 +1,26 @@
+{
+  "EL4CTEO": {
+    "commit": "71d031dab8bc6729504d11a78cbe91945401045f",
+    "license": "MIT",
+    "adopted": "All 22 native skills pinned and ported in authoritative IaC; supported scripts are the execution foundation. Original skill bodies retained as on-demand references.",
+    "compatibility": "20 isolated Blender 4.2.23 test modules: 46 PASS, zero FAIL, four explicit GPU/5.2-only skips. Additional actual Cycles CPU lookdev/turntable render PASS; direct GPU refusal PASS."
+  },
+  "arjun988": {
+    "license": "MIT",
+    "adopted": "Selected silhouette-first anatomy and movement-informed topology design guidance; no addon/MCP runtime installed."
+  },
+  "nicceasy": {
+    "license": "MIT",
+    "adopted": "Selected bounded scene budgets, early visual iteration and measured stage records; no film/cloud/software dependency installed."
+  },
+  "kevinbadi": {
+    "license": "not found",
+    "adopted": "No source code or text redistributed. Camera orbit and looping preview concepts implemented independently with Blender APIs.",
+    "restriction": "assessment only"
+  },
+  "marketplace": {
+    "url": "https://mcpmarket.com/tools/skills/blender-toolkit",
+    "review": "requires live WebSocket addon/server, UI animation workflow and new transport. Optional only; not installed; existing headless Blender route sufficient",
+    "scope": "Historical assessment only; no new transport/runtime installed or relied upon"
+  }
+}

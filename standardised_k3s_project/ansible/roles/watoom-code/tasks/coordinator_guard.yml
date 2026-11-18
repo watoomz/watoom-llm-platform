@@ -1,0 +1,48 @@
+---
+- name: Derive exact immutable guard source version
+  ansible.builtin.set_fact:
+    watoom_code_guard_hash: "{{ lookup('ansible.builtin.file', role_path + '/files/coordinator-guard/index.js', rstrip=false) | hash('sha256') }}"
+  tags: [agent_roster]
+- name: Install versioned coordinator guard without touching running sessions
+  ansible.builtin.copy:
+    src: coordinator-guard/
+    dest: "{{ watoom_code_root }}/config/watoom-tools/coordinator-guard-{{ watoom_code_guard_hash }}/"
+    owner: '1001'
+    group: '1001'
+    mode: '0644'
+    directory_mode: '0750'
+  tags: [agent_roster]
+- name: Select immutable native guard and retain verified capability settings
+  ansible.builtin.script:
+    cmd: enable-coordinator-guard.py {{ watoom_code_root }}/config/opencode.json /config/watoom-tools/coordinator-guard-{{ watoom_code_guard_hash }}
+    executable: /usr/bin/python3
+  register: watoom_code_coordinator_guard
+  changed_when: "'CHANGED' == watoom_code_coordinator_guard.stdout | trim"
+  tags: [agent_roster]
+- name: Declare externally provided capability routes for profile availability
+  ansible.builtin.copy:
+    dest: "{{ watoom_code_root }}/config/watoom-routes.json"
+    owner: "{{ watoom_code_uid }}"
+    group: "{{ watoom_code_gid }}"
+    mode: '0644'
+    content: "{{ {'routes': watoom_code_declared_routes} | to_nice_json }}\n"
+- name: Validate project spaces map to known project groups
+  ansible.builtin.assert:
+    that:
+      - (watoom_code_project_spaces | map(attribute='id') | list | difference(watoom_code_project_groups + ['images'])) | length == 0
+    fail_msg: "watoom_code_project_spaces ids must each be a configured project group or 'images'"
+- name: Compose project spaces with their derived roots
+  ansible.builtin.set_fact:
+    watoom_code_project_spaces_rendered: >-
+      {{ (watoom_code_project_spaces_rendered | default([]))
+         + [item | combine({'root': watoom_code_project_groups_root ~ '/' ~ item.id})] }}
+  loop: "{{ watoom_code_project_spaces }}"
+  loop_control:
+    label: "{{ item.id }}"
+- name: Publish project spaces for the new-session picker
+  ansible.builtin.copy:
+    dest: "{{ watoom_code_root }}/config/watoom-spaces.json"
+    owner: "{{ watoom_code_uid }}"
+    group: "{{ watoom_code_gid }}"
+    mode: '0644'
+    content: "{{ {'spaces': watoom_code_project_spaces_rendered} | to_nice_json }}\n"

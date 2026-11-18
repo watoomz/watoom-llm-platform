@@ -1,0 +1,10 @@
+{
+  "upstream_commit": "71d031dab8bc6729504d11a78cbe91945401045f",
+  "original_skill_sha256": "13dac79bcdd6350f7a5cf52fce8951de9c409fd3fcf6beab762782053001a6ba",
+  "files": {
+    "SKILL.md": "c5f9c518392995374881784c65506061e07fbd3f0fed6f8d7148bc9e7b844501",
+    "scripts/_bpyx.py": "a3339ba8a678469e8ed29510e32a7331e0235202191ca4edb977af4720819b4b",
+    "scripts/turntable.py": "08b89607028fa3608b64f6be7d43683274dab954796865ea62d2e741de679875",
+    "references/upstream-SKILL.md": "13dac79bcdd6350f7a5cf52fce8951de9c409fd3fcf6beab762782053001a6ba"
+  }
+}

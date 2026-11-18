@@ -1,0 +1,12 @@
+{
+  "verified_date": "2026-11-03",
+  "timezone": "Australia/Brisbane",
+  "repository_commit": "ab8e2ac56701484067c479a1edd00166ac24ed78",
+  "application_source_commit": "786682b1489e92cba4e4b5a277bd49c565c94e4f",
+  "native_openapi_sha256": "8ab6ec800922fc68890c68134320b4063fb317e0d944252d232083e12d32f4e9",
+  "native_openapi_paths": 113,
+  "inference_image": "127.0.0.1:5000/watoom-llamampere@sha256:7c3043826d435ce79afe68c0f7a60acd91007935f7ecba57b1316e6fbf14df83",
+  "application_image": "127.0.0.1:5000/watoom-code@sha256:6e097b0967e0ac8e42ebeb0cf9945d4e8278627dba6fa0d961e6e9a01b716c2d",
+  "baseline": "owner-adopted combined-turbo-01, main a823447",
+  "scope": "Complete homelab LLM platform; documentation and Glance only"
+}

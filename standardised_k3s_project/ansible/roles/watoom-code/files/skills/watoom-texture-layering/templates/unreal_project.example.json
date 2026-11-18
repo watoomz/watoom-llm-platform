@@ -1,0 +1,18 @@
+{
+ "_comment": "Copy to your game's folder, fill in the values, then pass --project FILE (or export UE_PROJECT=FILE) to every unreal_*.py / ue_*.py helper. Flags on the command line win. Read z0, raw_per_cm, size_m from `unreal_landscape_export.py` meta or the landscape actor; sea_cm is the water surface Z. Values below are the WatooM test game (2026-11-16). Who reads what: z0, raw_per_cm, size_m, sea_cm and landscape reach every script that has those flags (unreal_scene_scatter.py takes only size_m and wants --min-z / --max-z); water_material is the Water-plugin river material for ue_place_river.py only; plane_water_material is the plain-plane water material for unreal_creeks.py only; label_prefix is read by unreal_village.py only; content_root by ue_village_build.py only; rig_content_dir by rig_copy_pack.py only. Creek_, CreekRibbon_, Lake_, Ocean and Village_House_ labels and the layer names grass, dry_grass, dirt, mud, rock are fixed in the scripts. post_process_label, sun_label, sky_dome_label (\"\" = no nebula dome) and exposure (locked auto exposure, measured per game with ue_look_probe.py) are read by unreal_atmosphere.py. underground_label_prefixes (comma separated) names actors that belong below the ground, e.g. the unreal_dungeon.py dungeon: ue_stray_check.py never reports or moves them.",
+ "landscape": "ZAS_Landscape",
+ "z0": 3677.7,
+ "raw_per_cm": 4.4387,
+ "size_m": 4000,
+ "sea_cm": 4849.26,
+ "label_prefix": "ZAS_",
+ "content_root": "/Game/ZAS",
+ "water_material": "/Game/ZAS/Water/MI_ZAS_River.MI_ZAS_River",
+ "plane_water_material": "/Game/AdvancedVillagePack/Materials/M_Inst_Water",
+ "rig_content_dir": "F:/Documents/Unreal Projects/WatooM_UEMCP_Test/Content/",
+ "post_process_label": "ZAS_PostProcess",
+ "sun_label": "ZAS_Sun",
+ "sky_dome_label": "ZAS_StarDome",
+ "exposure": 0.45,
+ "underground_label_prefixes": "ZAS_Dgn_"
+}

@@ -1,0 +1,57 @@
+workers:
+  - name: iii-http
+    config:
+      port: 3111
+      host: 0.0.0.0
+      default_timeout: 180000
+      cors:
+        allowed_origins:
+          - "http://localhost:3111"
+          - "http://localhost:3113"
+          - "http://127.0.0.1:3111"
+          - "http://127.0.0.1:3113"
+        allowed_methods: [GET, POST, PUT, DELETE, OPTIONS]
+  - name: iii-state
+    config:
+      adapter:
+        name: kv
+        config:
+          store_method: file_based
+          file_path: /data/state_store.db
+  - name: iii-queue
+    config:
+      adapter:
+        name: builtin
+  - name: iii-pubsub
+    config:
+      adapter:
+        name: local
+  - name: iii-cron
+    config:
+      adapter:
+        name: kv
+  - name: iii-stream
+    config:
+      port: 3112
+      host: 0.0.0.0
+      adapter:
+        name: kv
+        config:
+          store_method: file_based
+          file_path: /data/stream_store
+  - name: iii-observability
+    config:
+      enabled: true
+      service_name: agentmemory
+      # Fixed 2026-11-09: exporter: memory with sampling_ratio 1.0 and logs_enabled retains every single
+      # trace/log event in the process's own heap with no eviction visible in this config -- a classic
+      # unbounded-growth pattern. Matched the observed symptom exactly: agentmemory OOMKilled roughly hourly
+      # (9 restarts in ~9h), its own `iii` worker process alone measured at 2.6GB+ RSS shortly before a kill.
+      # Cut sampling by ~100x and stopped retaining full log bodies in memory; logs_console_output already
+      # gives stdout visibility without accumulating in-process. metrics_enabled is left on: aggregated
+      # counters/gauges, not raw per-event retention, so bounded by design.
+      exporter: memory
+      sampling_ratio: 0.01
+      metrics_enabled: true
+      logs_enabled: false
+      logs_console_output: true

@@ -1,0 +1,12 @@
+---
+- name: Manage one WatooM Kubernetes application
+  hosts: k3s_servers
+  become: true
+  gather_facts: false
+
+  roles:
+    - role: preflight
+      tags: [always, preflight]
+
+    - role: kubernetes_app_control
+      tags: [application]

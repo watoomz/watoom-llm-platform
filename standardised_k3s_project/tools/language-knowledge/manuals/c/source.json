@@ -1,0 +1,1173 @@
+{
+  "schema": 1,
+  "product": "c",
+  "version": "GCC 16.2.1-2; Linux man-pages 6.13-3.fc44; glibc 2.43-8.fc44",
+  "language": "c",
+  "license": "GPL-2.0-or-later (Linux man-pages); GFDL (GCC manuals)",
+  "trust_tier": "vendor_doc",
+  "note": "Verified on 2026-11-13 (Australia/Queensland): GCC 16.2.1-2, Linux man-pages 6.13-3.fc44, glibc 2.43. Verbatim GCC preprocessor/compiler info manuals and selected Linux man-pages 2/3 covering formatted and file I/O, allocation/conversion, strings and memory, character handling, time, math, process/file operations, signals, and POSIX threads/synchronization. Selected reference, not exhaustive.",
+  "pages": [
+    {
+      "title": "GCC C Preprocessor Info",
+      "file": "gcc-cpp.info",
+      "uri": "file:///usr/share/info/cpp.info.gz (GCC 16.2.1-2)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "GCC Info",
+      "file": "gcc.info",
+      "uri": "file:///usr/share/info/gcc.info.gz (GCC 16.2.1-2)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages printf(3)",
+      "file": "man3-printf.md",
+      "uri": "file:///usr/share/man/man3/printf.3.gz (man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages malloc(3)",
+      "file": "man3-malloc.md",
+      "uri": "file:///usr/share/man/man3/malloc.3.gz (man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages string(3)",
+      "file": "man3-string.md",
+      "uri": "file:///usr/share/man/man3/string.3.gz (man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages memcpy(3)",
+      "file": "man3-memcpy.md",
+      "uri": "file:///usr/share/man/man3/memcpy.3.gz (man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strlen(3)",
+      "file": "man3-strlen.md",
+      "uri": "file:///usr/share/man/man3/strlen.3.gz (man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strncpy(3)",
+      "file": "man3-strncpy.md",
+      "uri": "file:///usr/share/man/man3/strncpy.3.gz (man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strcmp(3)",
+      "file": "man3-strcmp.md",
+      "uri": "file:///usr/share/man/man3/strcmp.3.gz (man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages fopen(3)",
+      "file": "man3-fopen.md",
+      "uri": "file:///usr/share/man/man3/fopen.3.gz (man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages fgets(3)",
+      "file": "man3-fgets.md",
+      "uri": "file:///usr/share/man/man3/fgets.3.gz (man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages pthread_create(3)",
+      "file": "man3-pthread_create.md",
+      "uri": "file:///usr/share/man/man3/pthread_create.3.gz (man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages scanf.3",
+      "file": "manscanf.3.md",
+      "uri": "file:///usr/share/man/man3/scanf.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages sscanf.3",
+      "file": "mansscanf.3.md",
+      "uri": "file:///usr/share/man/man3/sscanf.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages fclose.3",
+      "file": "manfclose.3.md",
+      "uri": "file:///usr/share/man/man3/fclose.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages fflush.3",
+      "file": "manfflush.3.md",
+      "uri": "file:///usr/share/man/man3/fflush.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages fseek.3",
+      "file": "manfseek.3.md",
+      "uri": "file:///usr/share/man/man3/fseek.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages perror.3",
+      "file": "manperror.3.md",
+      "uri": "file:///usr/share/man/man3/perror.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages atoi.3",
+      "file": "manatoi.3.md",
+      "uri": "file:///usr/share/man/man3/atoi.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages atof.3",
+      "file": "manatof.3.md",
+      "uri": "file:///usr/share/man/man3/atof.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strtol.3",
+      "file": "manstrtol.3.md",
+      "uri": "file:///usr/share/man/man3/strtol.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strtoul.3",
+      "file": "manstrtoul.3.md",
+      "uri": "file:///usr/share/man/man3/strtoul.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strtod.3",
+      "file": "manstrtod.3.md",
+      "uri": "file:///usr/share/man/man3/strtod.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages qsort.3",
+      "file": "manqsort.3.md",
+      "uri": "file:///usr/share/man/man3/qsort.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages bsearch.3",
+      "file": "manbsearch.3.md",
+      "uri": "file:///usr/share/man/man3/bsearch.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages abs.3",
+      "file": "manabs.3.md",
+      "uri": "file:///usr/share/man/man3/abs.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages rand.3",
+      "file": "manrand.3.md",
+      "uri": "file:///usr/share/man/man3/rand.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages exit.3",
+      "file": "manexit.3.md",
+      "uri": "file:///usr/share/man/man3/exit.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages abort.3",
+      "file": "manabort.3.md",
+      "uri": "file:///usr/share/man/man3/abort.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages getenv.3",
+      "file": "mangetenv.3.md",
+      "uri": "file:///usr/share/man/man3/getenv.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages system.3",
+      "file": "mansystem.3.md",
+      "uri": "file:///usr/share/man/man3/system.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strcpy.3",
+      "file": "manstrcpy.3.md",
+      "uri": "file:///usr/share/man/man3/strcpy.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strncat.3",
+      "file": "manstrncat.3.md",
+      "uri": "file:///usr/share/man/man3/strncat.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strchr.3",
+      "file": "manstrchr.3.md",
+      "uri": "file:///usr/share/man/man3/strchr.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strstr.3",
+      "file": "manstrstr.3.md",
+      "uri": "file:///usr/share/man/man3/strstr.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strtok.3",
+      "file": "manstrtok.3.md",
+      "uri": "file:///usr/share/man/man3/strtok.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages memset.3",
+      "file": "manmemset.3.md",
+      "uri": "file:///usr/share/man/man3/memset.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages memmove.3",
+      "file": "manmemmove.3.md",
+      "uri": "file:///usr/share/man/man3/memmove.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages memcmp.3",
+      "file": "manmemcmp.3.md",
+      "uri": "file:///usr/share/man/man3/memcmp.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strdup.3",
+      "file": "manstrdup.3.md",
+      "uri": "file:///usr/share/man/man3/strdup.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strcasecmp.3",
+      "file": "manstrcasecmp.3.md",
+      "uri": "file:///usr/share/man/man3/strcasecmp.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages isalpha.3",
+      "file": "manisalpha.3.md",
+      "uri": "file:///usr/share/man/man3/isalpha.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages toupper.3",
+      "file": "mantoupper.3.md",
+      "uri": "file:///usr/share/man/man3/toupper.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages difftime.3",
+      "file": "mandifftime.3.md",
+      "uri": "file:///usr/share/man/man3/difftime.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strftime.3",
+      "file": "manstrftime.3.md",
+      "uri": "file:///usr/share/man/man3/strftime.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages ctime.3",
+      "file": "manctime.3.md",
+      "uri": "file:///usr/share/man/man3/ctime.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages clock.3",
+      "file": "manclock.3.md",
+      "uri": "file:///usr/share/man/man3/clock.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages nanosleep.2",
+      "file": "mannanosleep.2.md",
+      "uri": "file:///usr/share/man/man2/nanosleep.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages pthread_join.3",
+      "file": "manpthread_join.3.md",
+      "uri": "file:///usr/share/man/man3/pthread_join.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages pthread_mutex_init.3",
+      "file": "manpthread_mutex_init.3.md",
+      "uri": "file:///usr/share/man/man3/pthread_mutex_init.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages pthread_cond_init.3",
+      "file": "manpthread_cond_init.3.md",
+      "uri": "file:///usr/share/man/man3/pthread_cond_init.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages sem_wait.3",
+      "file": "mansem_wait.3.md",
+      "uri": "file:///usr/share/man/man3/sem_wait.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages sem_post.3",
+      "file": "mansem_post.3.md",
+      "uri": "file:///usr/share/man/man3/sem_post.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages raise.3",
+      "file": "manraise.3.md",
+      "uri": "file:///usr/share/man/man3/raise.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages sigprocmask.2",
+      "file": "mansigprocmask.2.md",
+      "uri": "file:///usr/share/man/man2/sigprocmask.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages getopt.3",
+      "file": "mangetopt.3.md",
+      "uri": "file:///usr/share/man/man3/getopt.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages opendir.3",
+      "file": "manopendir.3.md",
+      "uri": "file:///usr/share/man/man3/opendir.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages readdir.3",
+      "file": "manreaddir.3.md",
+      "uri": "file:///usr/share/man/man3/readdir.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages closedir.3",
+      "file": "manclosedir.3.md",
+      "uri": "file:///usr/share/man/man3/closedir.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages stat.2",
+      "file": "manstat.2.md",
+      "uri": "file:///usr/share/man/man2/stat.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages access.2",
+      "file": "manaccess.2.md",
+      "uri": "file:///usr/share/man/man2/access.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages chdir.2",
+      "file": "manchdir.2.md",
+      "uri": "file:///usr/share/man/man2/chdir.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages getcwd.3",
+      "file": "mangetcwd.3.md",
+      "uri": "file:///usr/share/man/man3/getcwd.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages unlink.2",
+      "file": "manunlink.2.md",
+      "uri": "file:///usr/share/man/man2/unlink.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages rename.2",
+      "file": "manrename.2.md",
+      "uri": "file:///usr/share/man/man2/rename.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages mkdir.2",
+      "file": "manmkdir.2.md",
+      "uri": "file:///usr/share/man/man2/mkdir.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages rmdir.2",
+      "file": "manrmdir.2.md",
+      "uri": "file:///usr/share/man/man2/rmdir.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages chmod.2",
+      "file": "manchmod.2.md",
+      "uri": "file:///usr/share/man/man2/chmod.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages chown.2",
+      "file": "manchown.2.md",
+      "uri": "file:///usr/share/man/man2/chown.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages setenv.3",
+      "file": "mansetenv.3.md",
+      "uri": "file:///usr/share/man/man3/setenv.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages mkstemp.3",
+      "file": "manmkstemp.3.md",
+      "uri": "file:///usr/share/man/man3/mkstemp.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages realpath.3",
+      "file": "manrealpath.3.md",
+      "uri": "file:///usr/share/man/man3/realpath.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages basename.3",
+      "file": "manbasename.3.md",
+      "uri": "file:///usr/share/man/man3/basename.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages getline.3",
+      "file": "mangetline.3.md",
+      "uri": "file:///usr/share/man/man3/getline.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages ferror.3",
+      "file": "manferror.3.md",
+      "uri": "file:///usr/share/man/man3/ferror.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages tmpfile.3",
+      "file": "mantmpfile.3.md",
+      "uri": "file:///usr/share/man/man3/tmpfile.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages tmpnam.3",
+      "file": "mantmpnam.3.md",
+      "uri": "file:///usr/share/man/man3/tmpnam.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages puts.3",
+      "file": "manputs.3.md",
+      "uri": "file:///usr/share/man/man3/puts.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages gets.3",
+      "file": "mangets.3.md",
+      "uri": "file:///usr/share/man/man3/gets.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages fgetc.3",
+      "file": "manfgetc.3.md",
+      "uri": "file:///usr/share/man/man3/fgetc.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strspn.3",
+      "file": "manstrspn.3.md",
+      "uri": "file:///usr/share/man/man3/strspn.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strpbrk.3",
+      "file": "manstrpbrk.3.md",
+      "uri": "file:///usr/share/man/man3/strpbrk.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages memchr.3",
+      "file": "manmemchr.3.md",
+      "uri": "file:///usr/share/man/man3/memchr.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages memccpy.3",
+      "file": "manmemccpy.3.md",
+      "uri": "file:///usr/share/man/man3/memccpy.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages memmem.3",
+      "file": "manmemmem.3.md",
+      "uri": "file:///usr/share/man/man3/memmem.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages wcscpy.3",
+      "file": "manwcscpy.3.md",
+      "uri": "file:///usr/share/man/man3/wcscpy.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages wcslen.3",
+      "file": "manwcslen.3.md",
+      "uri": "file:///usr/share/man/man3/wcslen.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages wcscmp.3",
+      "file": "manwcscmp.3.md",
+      "uri": "file:///usr/share/man/man3/wcscmp.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strcoll.3",
+      "file": "manstrcoll.3.md",
+      "uri": "file:///usr/share/man/man3/strcoll.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strxfrm.3",
+      "file": "manstrxfrm.3.md",
+      "uri": "file:///usr/share/man/man3/strxfrm.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strsignal.3",
+      "file": "manstrsignal.3.md",
+      "uri": "file:///usr/share/man/man3/strsignal.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strerror.3",
+      "file": "manstrerror.3.md",
+      "uri": "file:///usr/share/man/man3/strerror.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages div.3",
+      "file": "mandiv.3.md",
+      "uri": "file:///usr/share/man/man3/div.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages read.2",
+      "file": "manread.2.md",
+      "uri": "file:///usr/share/man/man2/read.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages write.2",
+      "file": "manwrite.2.md",
+      "uri": "file:///usr/share/man/man2/write.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages open.2",
+      "file": "manopen.2.md",
+      "uri": "file:///usr/share/man/man2/open.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages close.2",
+      "file": "manclose.2.md",
+      "uri": "file:///usr/share/man/man2/close.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages fork.2",
+      "file": "manfork.2.md",
+      "uri": "file:///usr/share/man/man2/fork.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages execve.2",
+      "file": "manexecve.2.md",
+      "uri": "file:///usr/share/man/man2/execve.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages wait.2",
+      "file": "manwait.2.md",
+      "uri": "file:///usr/share/man/man2/wait.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages pipe.2",
+      "file": "manpipe.2.md",
+      "uri": "file:///usr/share/man/man2/pipe.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages dup.2",
+      "file": "mandup.2.md",
+      "uri": "file:///usr/share/man/man2/dup.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages lseek.2",
+      "file": "manlseek.2.md",
+      "uri": "file:///usr/share/man/man2/lseek.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages readv.2",
+      "file": "manreadv.2.md",
+      "uri": "file:///usr/share/man/man2/readv.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages select.2",
+      "file": "manselect.2.md",
+      "uri": "file:///usr/share/man/man2/select.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages poll.2",
+      "file": "manpoll.2.md",
+      "uri": "file:///usr/share/man/man2/poll.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages mmap.2",
+      "file": "manmmap.2.md",
+      "uri": "file:///usr/share/man/man2/mmap.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages socket.2",
+      "file": "mansocket.2.md",
+      "uri": "file:///usr/share/man/man2/socket.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages bind.2",
+      "file": "manbind.2.md",
+      "uri": "file:///usr/share/man/man2/bind.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages listen.2",
+      "file": "manlisten.2.md",
+      "uri": "file:///usr/share/man/man2/listen.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages accept.2",
+      "file": "manaccept.2.md",
+      "uri": "file:///usr/share/man/man2/accept.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages connect.2",
+      "file": "manconnect.2.md",
+      "uri": "file:///usr/share/man/man2/connect.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages send.2",
+      "file": "mansend.2.md",
+      "uri": "file:///usr/share/man/man2/send.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages recv.2",
+      "file": "manrecv.2.md",
+      "uri": "file:///usr/share/man/man2/recv.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages shutdown.2",
+      "file": "manshutdown.2.md",
+      "uri": "file:///usr/share/man/man2/shutdown.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages kill.2",
+      "file": "mankill.2.md",
+      "uri": "file:///usr/share/man/man2/kill.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages sigaction.2",
+      "file": "mansigaction.2.md",
+      "uri": "file:///usr/share/man/man2/sigaction.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages signal.2",
+      "file": "mansignal.2.md",
+      "uri": "file:///usr/share/man/man2/signal.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages sigqueue.3",
+      "file": "mansigqueue.3.md",
+      "uri": "file:///usr/share/man/man3/sigqueue.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages pause.2",
+      "file": "manpause.2.md",
+      "uri": "file:///usr/share/man/man2/pause.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages alarm.2",
+      "file": "manalarm.2.md",
+      "uri": "file:///usr/share/man/man2/alarm.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages getpid.2",
+      "file": "mangetpid.2.md",
+      "uri": "file:///usr/share/man/man2/getpid.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages getuid.2",
+      "file": "mangetuid.2.md",
+      "uri": "file:///usr/share/man/man2/getuid.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages getgid.2",
+      "file": "mangetgid.2.md",
+      "uri": "file:///usr/share/man/man2/getgid.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages setuid.2",
+      "file": "mansetuid.2.md",
+      "uri": "file:///usr/share/man/man2/setuid.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages setgid.2",
+      "file": "mansetgid.2.md",
+      "uri": "file:///usr/share/man/man2/setgid.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages umask.2",
+      "file": "manumask.2.md",
+      "uri": "file:///usr/share/man/man2/umask.2.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strnlen.3",
+      "file": "manstrnlen.3.md",
+      "uri": "file:///usr/share/man/man3/strnlen.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strverscmp.3",
+      "file": "manstrverscmp.3.md",
+      "uri": "file:///usr/share/man/man3/strverscmp.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strfry.3",
+      "file": "manstrfry.3.md",
+      "uri": "file:///usr/share/man/man3/strfry.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages getpass.3",
+      "file": "mangetpass.3.md",
+      "uri": "file:///usr/share/man/man3/getpass.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages getentropy.3",
+      "file": "mangetentropy.3.md",
+      "uri": "file:///usr/share/man/man3/getentropy.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages arc4random.3",
+      "file": "manarc4random.3.md",
+      "uri": "file:///usr/share/man/man3/arc4random.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages posix_memalign.3",
+      "file": "manposix_memalign.3.md",
+      "uri": "file:///usr/share/man/man3/posix_memalign.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages malloc_usable_size.3",
+      "file": "manmalloc_usable_size.3.md",
+      "uri": "file:///usr/share/man/man3/malloc_usable_size.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages mallopt.3",
+      "file": "manmallopt.3.md",
+      "uri": "file:///usr/share/man/man3/mallopt.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages getw.3",
+      "file": "mangetw.3.md",
+      "uri": "file:///usr/share/man/man3/getw.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages asprintf.3",
+      "file": "manasprintf.3.md",
+      "uri": "file:///usr/share/man/man3/asprintf.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages flockfile.3",
+      "file": "manflockfile.3.md",
+      "uri": "file:///usr/share/man/man3/flockfile.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages fmemopen.3",
+      "file": "manfmemopen.3.md",
+      "uri": "file:///usr/share/man/man3/fmemopen.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages open_memstream.3",
+      "file": "manopen_memstream.3.md",
+      "uri": "file:///usr/share/man/man3/open_memstream.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages fwide.3",
+      "file": "manfwide.3.md",
+      "uri": "file:///usr/share/man/man3/fwide.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages setbuf.3",
+      "file": "mansetbuf.3.md",
+      "uri": "file:///usr/share/man/man3/setbuf.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages wcstombs.3",
+      "file": "manwcstombs.3.md",
+      "uri": "file:///usr/share/man/man3/wcstombs.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages mbstowcs.3",
+      "file": "manmbstowcs.3.md",
+      "uri": "file:///usr/share/man/man3/mbstowcs.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages mbrtowc.3",
+      "file": "manmbrtowc.3.md",
+      "uri": "file:///usr/share/man/man3/mbrtowc.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages wcrtomb.3",
+      "file": "manwcrtomb.3.md",
+      "uri": "file:///usr/share/man/man3/wcrtomb.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages iswalpha.3",
+      "file": "maniswalpha.3.md",
+      "uri": "file:///usr/share/man/man3/iswalpha.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages iswdigit.3",
+      "file": "maniswdigit.3.md",
+      "uri": "file:///usr/share/man/man3/iswdigit.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages towupper.3",
+      "file": "mantowupper.3.md",
+      "uri": "file:///usr/share/man/man3/towupper.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages towlower.3",
+      "file": "mantowlower.3.md",
+      "uri": "file:///usr/share/man/man3/towlower.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages wcwidth.3",
+      "file": "manwcwidth.3.md",
+      "uri": "file:///usr/share/man/man3/wcwidth.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages newlocale.3",
+      "file": "mannewlocale.3.md",
+      "uri": "file:///usr/share/man/man3/newlocale.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages uselocale.3",
+      "file": "manuselocale.3.md",
+      "uri": "file:///usr/share/man/man3/uselocale.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages getdate.3",
+      "file": "mangetdate.3.md",
+      "uri": "file:///usr/share/man/man3/getdate.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages strptime.3",
+      "file": "manstrptime.3.md",
+      "uri": "file:///usr/share/man/man3/strptime.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages pthread_once.3",
+      "file": "manpthread_once.3.md",
+      "uri": "file:///usr/share/man/man3/pthread_once.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages pthread_self.3",
+      "file": "manpthread_self.3.md",
+      "uri": "file:///usr/share/man/man3/pthread_self.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages pthread_equal.3",
+      "file": "manpthread_equal.3.md",
+      "uri": "file:///usr/share/man/man3/pthread_equal.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages pthread_detach.3",
+      "file": "manpthread_detach.3.md",
+      "uri": "file:///usr/share/man/man3/pthread_detach.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages pthread_cancel.3",
+      "file": "manpthread_cancel.3.md",
+      "uri": "file:///usr/share/man/man3/pthread_cancel.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages sem_init.3",
+      "file": "mansem_init.3.md",
+      "uri": "file:///usr/share/man/man3/sem_init.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages sem_destroy.3",
+      "file": "mansem_destroy.3.md",
+      "uri": "file:///usr/share/man/man3/sem_destroy.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages dlopen.3",
+      "file": "mandlopen.3.md",
+      "uri": "file:///usr/share/man/man3/dlopen.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages dlsym.3",
+      "file": "mandlsym.3.md",
+      "uri": "file:///usr/share/man/man3/dlsym.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    },
+    {
+      "title": "Linux man-pages dlerror.3",
+      "file": "mandlerror.3.md",
+      "uri": "file:///usr/share/man/man3/dlerror.3.gz (Linux man-pages 6.13-3.fc44)",
+      "retrieved_utc": "2026-11-13T00:00:00Z",
+      "verbatim": true
+    }
+  ]
+}

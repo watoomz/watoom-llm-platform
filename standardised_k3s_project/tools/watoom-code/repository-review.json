@@ -1,0 +1,31 @@
+{
+  "status": "PASS_SCOPED_REVIEW",
+  "baseline": "origin/main at d4aabd3",
+  "reviewed_unpublished_history": "53 commits before retirement follow-up; current runtime sources and deployment ownership checked",
+  "credential_pattern_scan": {
+    "current_changed_files": 1889,
+    "high_confidence_matches": 0,
+    "limitation": "Pattern scan; not a claim that every possible secret format is detectable"
+  },
+  "retired_additional_files": 8,
+  "retained": [
+    "Current WatooM Code/AgentMemory/Kali/Toolkit sources",
+    "Controller-managed dormant LLM candidates",
+    "Pi bridge vendored runtime still referenced by role",
+    "Working and rollback immutable application images",
+    "Running isolated Unreal build and backups"
+  ],
+  "checks": {
+    "release_guard": "PASS",
+    "maintenance_recovery": "PASS",
+    "gpu_controller_offline": "PASS",
+    "all_archived_restore_roundtrip": "PASS",
+    "live_authenticated_audit": "PASS",
+    "initial_gpu_test_invocation": "Import path missing; corrected PYTHONPATH for the existing modules"
+  },
+  "full_app_repository_check": "Previously failed TypeScript preview compiler SIGBUS/SIGSEGV; not repeated. Focused app checks remain recorded.",
+  "live_changes": "None during repository review",
+  "open_webui": "REMOVED after dependency verification; user data deleted as explicitly requested; definitions archived; authenticated WatooM Code, memory commands, Kali and router verified healthy",
+  "evidence": "/data/ai/helper-scripts/reports/repository-review-20261016T225757Z",
+  "open_webui_evidence": "/data/ai/helper-scripts/reports/openwebui-retirement-20261016T225957Z"
+}

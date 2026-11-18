@@ -1,0 +1,80 @@
+---
+- name: "Homelab Rebuild | Check k3s version"
+  ansible.builtin.command: k3s --version
+  register: homelab_k3s_version_check
+  changed_when: false
+  failed_when: false
+
+- name: "Homelab Rebuild | Install or repair k3s"
+  ansible.builtin.shell: |
+    set -euo pipefail
+    install_exec="server"
+    install_exec="$install_exec --node-name {{ homelab_k3s_node_name }}"
+    install_exec="$install_exec --node-ip {{ homelab_k3s_node_ip }}"
+    install_exec="$install_exec --advertise-address {{ homelab_k3s_node_ip }}"
+    install_exec="$install_exec --tls-san {{ homelab_k3s_node_ip }}"
+    {% for item in homelab_k3s_disable %}
+    install_exec="$install_exec --disable {{ item }}"
+    {% endfor %}
+    curl -sfL https://get.k3s.io | \
+      INSTALL_K3S_VERSION="{{ homelab_k3s_version }}" \
+      INSTALL_K3S_EXEC="$install_exec" \
+      sh -
+  args:
+    executable: /bin/bash
+  changed_when: true
+  when: homelab_k3s_version_check.rc != 0 or homelab_k3s_version not in homelab_k3s_version_check.stdout
+
+- name: "Homelab Rebuild | Enable k3s"
+  ansible.builtin.systemd:
+    name: k3s
+    enabled: true
+    state: started
+
+- name: "Homelab Rebuild Kubeconfig | Reconcile homelab users"
+  ansible.builtin.include_role:
+    name: user_kubeconfig
+
+- name: "Homelab Rebuild | Wait for k3s API"
+  ansible.builtin.command: kubectl get nodes
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  register: homelab_kubectl_nodes
+  changed_when: false
+  retries: 20
+  delay: 6
+  until: homelab_kubectl_nodes.rc == 0
+
+# BEGIN WATOOM K3S MEMORY SAFETY
+- name: Ensure K3s configuration drop-in directory exists
+  ansible.builtin.file:
+    path: /etc/rancher/k3s/config.yaml.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: homelab_k3s_memory_safety_enabled | bool
+
+- name: Configure K3s kubelet memory safety
+  ansible.builtin.copy:
+    dest: /etc/rancher/k3s/config.yaml.d/90-watoom-memory-safety.yaml
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # WATOOM MANAGED K3S MEMORY SAFETY
+      kubelet-arg:
+        - "system-reserved=memory={{ homelab_k3s_system_reserved_memory }}"
+        - "kube-reserved=memory={{ homelab_k3s_kube_reserved_memory }}"
+        - "eviction-hard=memory.available<{{ homelab_k3s_eviction_memory_available }},nodefs.available<{{ homelab_k3s_eviction_nodefs_available }},nodefs.inodesFree<{{ homelab_k3s_eviction_nodefs_inodes_free }},imagefs.available<{{ homelab_k3s_eviction_imagefs_available }},imagefs.inodesFree<{{ homelab_k3s_eviction_imagefs_inodes_free }}"
+  register: homelab_k3s_memory_safety_config
+  when: homelab_k3s_memory_safety_enabled | bool
+
+- name: Restart K3s after memory-safety configuration changes
+  ansible.builtin.service:
+    name: k3s
+    state: restarted
+  when:
+    - homelab_k3s_memory_safety_enabled | bool
+    - homelab_k3s_memory_safety_config is changed
+# END WATOOM K3S MEMORY SAFETY

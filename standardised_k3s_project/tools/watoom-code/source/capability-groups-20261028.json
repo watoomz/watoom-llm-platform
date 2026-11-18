@@ -1,0 +1,19 @@
+{
+  "sourceCommit": "240150d96e544d1cc39a64493f3bf9817162a3ce",
+  "baseCommit": "6a04b48e4f2a82ae30cda2d4e2ca9b20075733bb",
+  "image": "127.0.0.1:5000/watoom-code@sha256:18b04987cd15e806d606c772af25b99a9a14b886a95b8fbcaf12a6eb958a352b",
+  "bundle": "watoom-code-capability-groups-20261028.bundle",
+  "bundleSha256": "e90b14fa6279c530a5858c161f83f4189e5017b9d3603add31f4dc9cd78b4a5a",
+  "applicationOnly": true,
+  "updatesCapabilities": false,
+  "stageWorkerSkill": true,
+  "checks": {
+    "coreTests": 34,
+    "coreAssertions": 135,
+    "frontendModelTests": 6,
+    "frontendAssertions": 26,
+    "coreTypecheck": "PASS",
+    "appTypecheck": "PASS",
+    "applicationBuild": "PASS"
+  }
+}

@@ -1,0 +1,47 @@
+---
+- name: Publish WatooM host health metrics to node-exporter
+  hosts: homelab
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Create the node-exporter textfile directories (readable by nobody)
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop: [/var/lib/node_exporter, /var/lib/node_exporter/textfile]
+    - name: Install the failed-unit metric writer
+      ansible.builtin.copy:
+        src: ../../scripts/watoom-node-textfile.sh
+        dest: /usr/local/libexec/watoom-node-textfile.sh
+        mode: '0755'
+    - name: Install the metric writer service and timer
+      ansible.builtin.copy:
+        dest: "/etc/systemd/system/{{ item.name }}"
+        mode: '0644'
+        content: "{{ item.content }}"
+      loop:
+        - name: watoom-node-textfile.service
+          content: |
+            [Unit]
+            Description=Publish WatooM host health metrics for node-exporter
+            [Service]
+            Type=oneshot
+            ExecStart=/usr/local/libexec/watoom-node-textfile.sh
+            Nice=10
+        - name: watoom-node-textfile.timer
+          content: |
+            [Unit]
+            Description=Refresh WatooM host health metrics
+            [Timer]
+            OnBootSec=1min
+            OnUnitActiveSec=2min
+            [Install]
+            WantedBy=timers.target
+      loop_control: {label: "{{ item.name }}"}
+    - name: Enable the metric writer timer
+      ansible.builtin.systemd_service:
+        name: watoom-node-textfile.timer
+        enabled: true
+        state: started
+        daemon_reload: true

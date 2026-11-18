@@ -1,0 +1,19 @@
+[configuration]
+
+entry_symbol = "terrain_3d_init"
+compatibility_minimum = 4.5
+
+[icons]
+
+Terrain3D = "res://addons/terrain_3d/icons/terrain3d.svg"
+
+[libraries]
+; Trimmed by WatooM to the two platforms this homelab actually targets (Linux
+; lab/headless bakes, Windows rig editor/export). See vendor/terrain_3d/PROVENANCE.md
+; for the full upstream platform list and how to restore any of them.
+
+windows.debug.x86_64 = "res://addons/terrain_3d/bin/libterrain.windows.debug.x86_64.dll"
+windows.release.x86_64 = "res://addons/terrain_3d/bin/libterrain.windows.release.x86_64.dll"
+
+linux.debug.x86_64 = "res://addons/terrain_3d/bin/libterrain.linux.debug.x86_64.so"
+linux.release.x86_64 = "res://addons/terrain_3d/bin/libterrain.linux.release.x86_64.so"

@@ -1,0 +1,9 @@
+---
+- name: Update only native coordinator guard source and configuration
+  hosts: homelab
+  gather_facts: false
+  tasks:
+  - name: Apply maintained versioned guard
+    ansible.builtin.include_role:
+      name: watoom-code
+      tasks_from: coordinator_guard.yml

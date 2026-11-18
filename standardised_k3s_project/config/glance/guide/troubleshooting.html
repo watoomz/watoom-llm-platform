@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Troubleshooting · Agent Export</title><meta name="description" content="Symptom-first diagnostics. Collect evidence before restarting anything, and work from the lowest layer upward — network, DNS, node, route, service, application."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link active" aria-current="page" href="/guide/troubleshooting.html">Troubleshooting</a><div class="toc"><a class="toc-link" href="#host-or-network-unreachable">Host or network unreachable</a><a class="toc-link" href="#name-does-not-resolve">Name does not resolve</a><a class="toc-link" href="#https-returns-404-502-or-503">HTTPS returns 404, 502 or 503</a><a class="toc-link" href="#pod-not-starting">Pod not starting</a><a class="toc-link" href="#glance-widget-shows-an-error">Glance widget shows an error</a><a class="toc-link" href="#ai-request-fails-or-stalls">AI request fails or stalls</a><a class="toc-link" href="#watoom-code-job-did-not-complete">WatooM Code job did not complete</a><a class="toc-link" href="#stream-or-radio-down">Stream or radio down</a><a class="toc-link" href="#game-server-unreachable">Game server unreachable</a><a class="toc-link" href="#wireguard-fails-remotely">WireGuard fails remotely</a><a class="toc-link" href="#heavy-watoom-code-work-stays-queued">Heavy WatooM Code work stays queued</a><a class="toc-link" href="#metahuman-export-or-rig-skin-job-fails">MetaHuman export or RIG skin job fails</a><a class="toc-link" href="#language-reference-note-missing-or-unhelpful">Language reference note missing or unhelpful</a><a class="toc-link" href="#agentmemory-is-slow-saves-are-refused-workflow-backpressure-memory-says-delivery-uncertain">AgentMemory is slow, saves are refused (&quot;workflow backpressure&quot;), memory says &quot;delivery uncertain&quot;</a></div><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">Troubleshooting</p><h1>Troubleshooting</h1><p class="lede">Symptom-first diagnostics. Collect evidence before restarting anything, and work from the lowest layer upward — network, DNS, node, route, service, application.</p></header>
+<div class="content">
+<h2 id="host-or-network-unreachable">Host or network unreachable</h2>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">ip -br addr
+ip route                         # default via 10.99.20.1 dev enp34s0.20
+nmcli connection show --active
+ping -c 4 10.99.20.1
+</code></pre></div>
+<p>The DMZ link <code>enp35s0</code> has a connected route only. A default route on it is a misconfiguration.</p>
+<h2 id="name-does-not-resolve">Name does not resolve</h2>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">dig +short &lt;name&gt;.internal.homelab.example @10.99.20.225        # Pi-hole
+dig +short kubernetes.default.svc.cluster.local @10.243.0.10   # CoreDNS
+kubectl -n pihole get pod -o wide
+</code></pre></div>
+<p>If Traefik has a route but Pi-hole returns nothing, add the local DNS record in Pi-hole. Never add <code>*.agent.example</code> overrides.</p>
+<h2 id="https-returns-404-502-or-503">HTTPS returns 404, 502 or 503</h2>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">curl -skI --resolve &lt;name&gt;.internal.homelab.example:443:10.99.20.225 https://&lt;name&gt;.internal.homelab.example/
+kubectl get ingressroute -A | grep &lt;name&gt;
+kubectl -n &lt;ns&gt; get deploy,endpoints
+</code></pre></div>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Usual cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>404</td>
+<td>No route matches the host or path prefix</td>
+</tr>
+<tr>
+<td>502</td>
+<td>The backend refused the connection: wrong port or not ready</td>
+</tr>
+<tr>
+<td>503</td>
+<td>Route matches but the Service has no endpoints (often an intentionally scaled-down app)</td>
+</tr>
+<tr>
+<td>Certificate warning</td>
+<td>Client does not trust the internal CA</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="pod-not-starting">Pod not starting</h2>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">kubectl -n &lt;ns&gt; describe pod &lt;pod&gt; | sed -n &#x27;/Events/,$p&#x27;
+kubectl -n &lt;ns&gt; logs &lt;pod&gt; --previous --tail=100
+</code></pre></div>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hostPath type check failed … is not a directory</code></td>
+<td>A mounted project or data path was moved or deleted. Restore it to that path (or update the owning manifest) rather than creating an empty directory</td>
+</tr>
+<tr>
+<td><code>Insufficient nvidia.com/gpu</code></td>
+<td>Another model holds the GPU. This is expected; the controller arbitrates</td>
+</tr>
+<tr>
+<td><code>Evicted</code> / disk pressure</td>
+<td><code>df -h / /app /data</code>; remove unused images explicitly</td>
+</tr>
+<tr>
+<td><code>ImagePullBackOff</code> for <code>127.0.0.1:5000/…</code></td>
+<td><code>docker ps --filter name=watoom-local-registry</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="glance-widget-shows-an-error">Glance widget shows an error</h2>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">kubectl -n glance logs deploy/glance -c glance --tail=100
+kubectl -n glance logs deploy/glance -c helper-api --tail=100
+kubectl -n glance exec deploy/glance -c helper-api -- \
+  python3 -c &quot;import urllib.request;print(urllib.request.urlopen(&#x27;http://127.0.0.1:9000/&lt;endpoint&gt;&#x27;).read()[:400])&quot;
+</code></pre></div>
+<p>Helper endpoints return JSON. An <code>error</code> field names the upstream that failed. A rejected API key is reported as such and needs a new value in <code>glance-secrets</code>.</p>
+<h2 id="ai-request-fails-or-stalls">AI request fails or stalls</h2>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">cat /data/ai/helper-scripts/state/gpu-controller/state.json
+systemctl status watoom-gpu-controller --no-pager
+kubectl -n llama-cpp get deploy | awk &#x27;$2!=&quot;0/0&quot;&#x27;
+kubectl -n llama-cpp logs deploy/llm-router --tail=100
+nvidia-smi
+</code></pre></div>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Observation</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Target model <code>0/0</code> before a request</td>
+<td>Normal; the controller starts it on demand</td>
+</tr>
+<tr>
+<td><code>owner</code> not null</td>
+<td>A switch, Mesh job or operator task is running. Wait for it</td>
+</tr>
+<tr>
+<td><code>uncertain: true</code></td>
+<td>An interrupted transition. Use the controller's reconciliation, never manual scaling</td>
+</tr>
+<tr>
+<td>CUDA out of memory</td>
+<td>The model, context and KV profile exceed 20 GiB. Revisit the placement policy</td>
+</tr>
+</tbody>
+</table></div>
+<p>Do not restart a healthy controller, edit its state or scale model Deployments.</p>
+<h2 id="watoom-code-job-did-not-complete">WatooM Code job did not complete</h2>
+<ol>
+<li>Read the job's status file and the receipt it references before resubmitting. RIG jobs report in <code>&lt;project&gt;/.opencode/rig-worker-requests/&lt;request&gt;.status.json</code>. Duplicate submissions are refused by design.</li>
+<li>For render and RIG jobs, check the broker queue state and the dispatcher journal: <code>journalctl -u watoom-rig-async-stage.service -n 50</code>.</li>
+<li>For Toolkit jobs, check the worker pod in <code>watoom-code</code> and its output receipt.</li>
+<li>Stored session history is not an active execution. Confirm active owners before interrupting anything.</li>
+</ol>
+<h2 id="stream-or-radio-down">Stream or radio down</h2>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">docker ps -a --filter name=stream- --filter name=cloudflared --filter name=azuracast
+docker logs --tail=200 stream-app
+docker logs --tail=100 cloudflared-stream
+curl -sI http://10.99.20.225:8888/
+</code></pre></div>
+<p>Check Dispatcharr's source and HLS freshness before restarting the tunnel connector.</p>
+<h2 id="game-server-unreachable">Game server unreachable</h2>
+<ol>
+<li>Deployment running and ready (<code>kubectl -n &lt;game&gt; get deploy,pod</code>).</li>
+<li>Service ports bound on the host (<code>ss -lunp | grep &lt;port&gt;</code>).</li>
+<li>Reachable from the LAN on <code>10.99.20.225</code>.</li>
+<li>Router dst-nat counters increase for the port.</li>
+<li>Forward-chain counters; hairpin NAT only matters when testing via the public IP from inside.</li>
+</ol>
+<h2 id="wireguard-fails-remotely">WireGuard fails remotely</h2>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">ss -lunp | grep 51820
+docker logs --tail=100 wg-easy
+</code></pre></div>
+<p>Then check router NAT for UDP 51820 and the peer's last handshake in the admin UI.</p>
+<h2 id="heavy-watoom-code-work-stays-queued">Heavy WatooM Code work stays queued</h2>
+<p>Read the existing job status and request ID first. Bazzite is the first route for heavy Blender, conversion, Godot capture and declarative asset capture. <code>QUEUED</code> with an unreachable reason does not authorize a duplicate. Check the remote SSH reachability, staged runtime and free-RAM gate through the owning operator diagnostics. Once the recorded wait reaches 600 seconds, status may say <code>rig_eligible</code>; the agent can then submit the equivalent RIG request. The bridge cannot submit it automatically. Local fallback is opt-in and normally disabled because it reserves production GPU headroom.</p>
+<p>If SSH exits 255, current status should report Bazzite unreachable rather than a missing toolkit. Godot capture requires the additive Xvfb/Mesa capture image; a missing image is a staging/preflight failure. A plain error string containing “OOM” does not prove memory exhaustion. If a capture deadline follows a script error, use the script error as the cause. Do not adjust memory or replay until the actual receipt/status identifies the failure stage.</p>
+<p>On Bazzite, the rootless Podman user service must not set <code>PrivateDevices=yes</code> or <code>NoNewPrivileges=yes</code>; either can block <code>newuidmap</code> when a fresh helper process is needed. Intermittent <code>unable to create a new pause process ... Operation not permitted</code> points to that user-unit restriction. Wi-Fi power-save can also produce high latency/dropouts and requests that remain queued with unreachable reasons; check the network path and power-save state before changing worker limits. The owning sources are <code>tools/watoom-code/bazzite_wait.py</code>, worker scripts under <code>tools/watoom-code/</code>, <code>tools/bazzite-render-worker/</code>, and the Bazzite unit configuration.</p>
+<h2 id="metahuman-export-or-rig-skin-job-fails">MetaHuman export or RIG skin job fails</h2>
+<p>Separate the geometry and skin stages. Geometry export uses the full Unreal Editor and an 8 GiB Bazzite job; a commandlet Slate assertion is the wrong execution path. A shutdown crash can be accepted only when the native export result itself verifies as passed. The DCC skin stage requires a real GPU renderer because Epic TextureGraph does not complete headlessly; use the fixed <code>metahuman-skin</code> RIG operation. The tested 12 GiB Job Object limit was insufficient and failed with commit exhaustion/D3D12 E_OUTOFMEMORY; check the installed worker setting (read at worker start) and available RAM/disk before retrying. The engine's MetaHuman optional content must also be installed. Follow the existing job ID and collect/reconcile evidence instead of resubmitting. Source and limits are in the <a href="/guide/llm-extensions.html#metahuman-package-conversion">extension guide</a> and RIG lane README.</p>
+<h2 id="language-reference-note-missing-or-unhelpful">Language reference note missing or unhelpful</h2>
+<p>Check <code>wlk_status</code> for card-load and vector errors, and confirm the deployed plugin package and configured card path. Lexical lookup does not require the optional embedding service; vector search does. The live production dataset covers Godot and Blender, but a card is versioned (Godot 4.7.2, Blender 5.2.3): a differing tool version is flagged, not silently used. Triggers recognize only supported error patterns and uncertainty near API-looking names, and only insert an answer when a card can support it. Unit tests plus simulated plugin-context exercise are not evidence of a live-session trigger; verify an actual session before claiming that behavior is operational.</p>
+<h2 id="agentmemory-is-slow-saves-are-refused-workflow-backpressure-memory-says-delivery-uncertain">AgentMemory is slow, saves are refused (&quot;workflow backpressure&quot;), memory says &quot;delivery uncertain&quot;</h2>
+<p>Seen 2026-11-16 (ticket T-0046). Symptoms: <code>/remember</code> returns &quot;saved locally; AgentMemory delivery uncertain&quot; or the app answers 500 with <code>workflow backpressure</code> in its log; <code>kubectl -n watoom-code logs deploy/agentmemory</code> shows <code>supersession candidate lookup failed ... Invocation timeout after 180000ms: state::list</code> and <code>[iii] Reconnecting</code> every 3 minutes; <code>[agentmemory] vector-index add batch: embed failed ... fetch failed</code>.</p>
+<ol>
+<li><strong>Size of the store.</strong> <code>du -sh /data/ai/watoom-code/memory/state_store.db/mem%3Amemories.bin</code> and count entries from the REST list (<code>/agentmemory/memories?latest=true</code>, <code>total</code>). The file-based store keeps each collection as one blob and a full list must finish inside 180 s: at 56,810 entries / 107 MB it never did, so the search index could not become ready and every save did two full scans. A healthy store is a few MB.</li>
+<li><strong>What fills it.</strong> The app records every session event as a <code>kind: checkpoint</code> memory (job <code>ses_&lt;id&gt;[:child]:evt_&lt;id&gt;</code>). <code>/data/github/watoom-standardised-homelab/standardised_k3s_project/tools/agentmemory/prune_checkpoints.js</code> (CronJob <code>agentmemory-retention</code>, hourly, <code>manifests/10-infrastructure/llm/agentmemory-retention.yml</code>) deletes those older than <code>RETENTION_HOURS</code> (12); explicit <code>/remember</code> saves, knowledge revisions, completions and compactions are kept. Run <code>kubectl -n watoom-code create job --from=cronjob/agentmemory-retention x</code> and read its log (<code>DRY_RUN=1</code> only counts).</li>
+<li><strong>Shrinking a store that is already huge.</strong> Deleting one by one costs O(store size) per delete (3.3 s each at 100 MB: days). Instead: back up <code>/data/ai/watoom-code/memory</code>; scale a scratch copy of the Deployment (same image, hostPath on a copy of the data) up; <code>POST /agentmemory/import</code> <code>{&quot;exportData&quot;:{&quot;version&quot;:&quot;0.9.29&quot;,&quot;sessions&quot;:[],&quot;observations&quot;:{},&quot;memories&quot;:[&lt;keepers&gt;],&quot;summaries&quot;:[],&quot;accessLogs&quot;:[]},&quot;strategy&quot;:&quot;merge&quot;}</code> into an EMPTY data dir (1,500 memories took 45 s); verify every kept record is identical; scale production to 0, replace only <code>mem%3Amemories.bin</code>, delete <code>mem%3Aindex*</code>, scale to 1. Never hand-edit the <code>.bin</code> files: the trailer is not a plain length. <code>mv</code> and <code>cp</code> are interactive aliases here: use <code>/bin/mv -f</code>.</li>
+<li><strong>Embeddings.</strong> <code>kubectl -n watoom-code exec deploy/agentmemory -- node -e &quot;fetch('http://bge-embeddings.llama-cpp.svc.cluster.local:8000/v1/models').then(r=&gt;console.log(r.status))&quot;</code> must not say ECONNREFUSED. The ingress policy <code>bge-embeddings-clients</code> (in <code>manifests/10-infrastructure/llm/llama-cpp-network-policy.yml</code>) must name namespace <code>watoom-code</code>, not the retired <code>opencode-watoom-stage</code>.</li>
+<li><strong>Stranded outbox.</strong> The app marks an item <code>uncertain</code> when delivery times out (1 s) and refuses new explicit saves while more than 128 outbox items are unresolved. After the store is healthy run <code>tools/watoom-code/memory_outbox.py --evidence DIR --apply --i-approve</code> (items AgentMemory confirms become observed; the rest become pending). Pending items are delivered by the app, 32 per processed session event (a session created, a tool call, a step ended), so an idle system does not drain: create empty sessions in a hidden validation directory until <code>SELECT count(*) FROM _watoom_outbox WHERE state IN ('pending','sending','uncertain')</code> is under 128. <strong>Draining re-delivers the old event telemetry into the store</strong> (2026-11-16: 10,000 items took the 1.5 MB store back to 22 MB and the list failed again with <code>Invocation stopped</code> in under a second, on a copy too, so it is not load: a list of that size is refused, plausibly over the engine's message size). If that happens, rebuild again exactly as in step 3, but read the backed-up <code>mem%3Amemories.bin</code> offline instead of listing (it begins with one JSON object <code>{id: memory}</code>: <code>json.JSONDecoder().raw_decode(open(f,'rb').read().decode('utf-8','ignore'))[0]</code>), keep everything the retention classifier does not call telemetry, import that into an empty scratch instance and swap the file in. The CronJob keeps <code>RETENTION_HOURS</code> at 6 so the live store stays a few MB. This is also what blocks <code>deploy-platform.py</code>, whose fixture does a <code>/remember</code>.</li>
+</ol>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/troubleshooting.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

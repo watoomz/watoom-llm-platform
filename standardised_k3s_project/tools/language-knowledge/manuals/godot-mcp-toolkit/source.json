@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "product": "godot-mcp-toolkit",
+  "version": "snapshot-2026-11-13",
+  "language": "mcp",
+  "license": "MIT (NPGameDev/godot-mcp-toolkit and NPGameDev/godot-mcp-server)",
+  "trust_tier": "vendor_doc",
+  "note": "NPGameDev Godot MCP toolkit (editor addon addons/godot_mcp_toolkit plus the npm bridge @npgamedev/godot-mcp-server) -- the server behind the watoom-godot MCP route. The four source files are byte-for-byte copies downloaded on 2026-11-13 from the main branch of the upstream repositories (raw.githubusercontent.com); no release commit was recorded, so the snapshot date is the only revision. Per-tool cards come from the generated tool reference; the access label (read-only / destructive / idempotent) is the upstream label, and a tool with no label is NOT promised to be read-only. Which of these tools the WatooM route actually allows is a separate, internal fact: see the watoom-godot-route product.",
+  "pages": [
+    {"file": "tool-reference.md", "uri": "https://github.com/NPGameDev/godot-mcp-server/blob/main/docs/tool-reference/README.md"},
+    {"file": "security-recommendations.md", "uri": "https://github.com/NPGameDev/godot-mcp-toolkit/blob/main/addons/godot_mcp_toolkit/docs/security-recommendations.md"},
+    {"file": "advanced-configuration.md", "uri": "https://github.com/NPGameDev/godot-mcp-toolkit/blob/main/addons/godot_mcp_toolkit/docs/advanced_configuration.md"},
+    {"file": "readme.md", "uri": "https://github.com/NPGameDev/godot-mcp-toolkit/blob/main/README.md"}
+  ]
+}

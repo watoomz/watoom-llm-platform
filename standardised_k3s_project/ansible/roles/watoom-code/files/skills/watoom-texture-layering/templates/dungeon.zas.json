@@ -1,0 +1,12 @@
+{
+ "_comment": "T-0015: the small dungeon under the mountain-top arch (ZAS_MountainArtifact, SM_Main_Arch_01 x3 at 218254,190476,15304, opening east-west) of L_ZAS_Terrain. Layout: dungeon_layout.zas.json (tools/watoom-toolkit/dungeon_layout.py --seed 15 --rooms 6 --grid 4 --cell-size 2000 --room-size 1500). Pieces: AncientRuins (measured with asset.get_mesh_bounds: SM_Wall_01 501 x 155 x 753, SM_Medium_Arch_01_A 500 x 154 x 750 = same footprint with an opening, SM_Cube_01 100 cm, SM_Column_02 h 500). Floor 31 m under the arch's base; unreal_dungeon.py --heights checks the cover. Portal in: across the arch opening; out: from the exit room to 10 m east of the arch, facing it.",
+ "map": "/Game/Maps/L_ZAS_Terrain",
+ "origin": [218254, 190476, 12200],
+ "modules": {"wall": "/Game/AncientRuins/Meshes/SM_Wall_01", "door": "/Game/AncientRuins/Meshes/SM_Medium_Arch_01_A",
+             "floor": "/Game/AncientRuins/Meshes/SM_Cube_01", "floor_size": 100, "column": "/Game/AncientRuins/Meshes/SM_Column_02",
+             "column_inset": 150, "wall_len": 500, "wall_thick": 155, "wall_height": 753},
+ "light": {"intensity": 8000, "color": [255, 170, 90], "radius": 1600},
+ "entrance": {"location": [218254, 190476, 15604], "yaw": 0, "extent": [150, 300, 300], "arrive_yaw": 0},
+ "exit_to": [219254, 190476, 15444, 180],
+ "clearance_cm": 300
+}

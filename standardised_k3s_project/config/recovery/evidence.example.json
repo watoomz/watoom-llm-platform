@@ -1,0 +1,47 @@
+{
+  "source-snapshot": {
+    "verified": false,
+    "location": "/secure/replace-with-real-source-snapshot-report.json",
+    "sha256": "REPLACE_WITH_ACTUAL_SHA256"
+  },
+  "private-environment-bundle": {
+    "verified": false,
+    "location": "/secure/replace-with-real-private-environment-bundle-report.json",
+    "sha256": "REPLACE_WITH_ACTUAL_SHA256"
+  },
+  "offhost-projects-state": {
+    "verified": false,
+    "location": "/secure/replace-with-real-offhost-projects-state-report.json",
+    "sha256": "REPLACE_WITH_ACTUAL_SHA256"
+  },
+  "local-registry-or-image-archives": {
+    "verified": false,
+    "location": "/secure/replace-with-real-local-registry-or-image-archives-report.json",
+    "sha256": "REPLACE_WITH_ACTUAL_SHA256"
+  },
+  "secrets-and-vault-unlock": {
+    "verified": false,
+    "location": "/secure/replace-with-real-secrets-and-vault-unlock-report.json",
+    "sha256": "REPLACE_WITH_ACTUAL_SHA256"
+  },
+  "model-toolchain-reacquisition": {
+    "verified": false,
+    "location": "/secure/replace-with-real-model-toolchain-reacquisition-report.json",
+    "sha256": "REPLACE_WITH_ACTUAL_SHA256"
+  },
+  "replacement-host-bootstrap": {
+    "verified": false,
+    "location": "/secure/replace-with-real-replacement-host-bootstrap-report.json",
+    "sha256": "REPLACE_WITH_ACTUAL_SHA256"
+  },
+  "application-consistent-data-restore": {
+    "verified": false,
+    "location": "/secure/replace-with-real-application-consistent-data-restore-report.json",
+    "sha256": "REPLACE_WITH_ACTUAL_SHA256"
+  },
+  "controller-reprovision-and-admission": {
+    "verified": false,
+    "location": "/secure/replace-with-real-controller-reprovision-and-admission-report.json",
+    "sha256": "REPLACE_WITH_ACTUAL_SHA256"
+  }
+}

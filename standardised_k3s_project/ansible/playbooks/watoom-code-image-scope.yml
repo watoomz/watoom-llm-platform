@@ -1,0 +1,10 @@
+---
+- name: Maintain only deterministic production image prompt transport
+  hosts: homelab
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Install versioned image-scope package and merge its native plugin entry
+      ansible.builtin.import_role:
+        name: watoom-code
+        tasks_from: image_scope

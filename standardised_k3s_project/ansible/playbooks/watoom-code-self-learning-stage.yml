@@ -1,0 +1,70 @@
+---
+- name: Deploy only the isolated WatooM learning candidate
+  hosts: watoom-homelab
+  become: true
+  gather_facts: false
+  vars:
+    watoom_learning_root: /data/ai/helper-scripts/watoom-self-learning-20261023T000524Z/staging
+    watoom_learning_namespace: watoom-code-learning-20261023
+  tasks:
+    - name: Require explicitly scoped staging inputs
+      ansible.builtin.assert:
+        that:
+          - watoom_learning_root is match('^/data/ai/helper-scripts/watoom-self-learning-[0-9TZ]+/staging$')
+          - watoom_learning_namespace is match('^watoom-code-learning-[a-z0-9-]+$')
+    - name: Create only the explicitly named isolated learning namespace
+      ansible.builtin.command:
+        argv: [kubectl, apply, -f, '-']
+        stdin: "{{ {'apiVersion':'v1','kind':'Namespace','metadata':{'name':watoom_learning_namespace,'labels':{'watoom-owner':'self-learning'}}} | to_json }}"
+      register: watoom_learning_namespace_apply
+      changed_when: "'created' in watoom_learning_namespace_apply.stdout or 'configured' in watoom_learning_namespace_apply.stdout"
+
+    - name: Provide the isolated application Service for maintenance acceptance
+      ansible.builtin.command:
+        argv: [kubectl, apply, -f, '-']
+        stdin: '{{ watoom_learning_application_service | to_json }}'
+      vars:
+        watoom_learning_application_service:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: learning-app
+            namespace: '{{ watoom_learning_namespace }}'
+            labels:
+              watoom-owner: self-learning
+          spec:
+            selector:
+              app: learning-app
+            ports:
+              - port: 4096
+                targetPort: 4096
+      register: watoom_learning_app_service
+      changed_when: "'created' in watoom_learning_app_service.stdout or 'configured' in watoom_learning_app_service.stdout"
+      when: watoom_learning_namespace is match('^watoom-code-learning-[a-z0-9-]+$')
+      tags: [learning_app_service]
+    - name: Persist labels only for isolated candidate data
+      community.general.sefcontext:
+        target: '{{ watoom_learning_root }}(/.*)?'
+        setype: container_file_t
+        state: present
+    - name: Restore isolated data labels
+      ansible.builtin.command:
+        argv: [restorecon, -R, -v, '{{ watoom_learning_root }}']
+      register: watoom_learning_labels
+      changed_when: "'Relabeled' in watoom_learning_labels.stdout"
+    - name: Apply reviewed candidate manifest
+      ansible.builtin.command:
+        argv: [kubectl, apply, -f, '{{ watoom_learning_root }}/manifests.json']
+      register: watoom_learning_apply
+      changed_when: "'created' in watoom_learning_apply.stdout or 'configured' in watoom_learning_apply.stdout"
+      no_log: true
+    - name: Verify candidate memory readiness
+      ansible.builtin.command:
+        argv: [kubectl, -n, '{{ watoom_learning_namespace }}', rollout, status, deployment/learning-memory, --timeout=180s]
+      changed_when: false
+    - name: Verify candidate application readiness
+      ansible.builtin.command:
+        argv: [kubectl, -n, '{{ watoom_learning_namespace }}', rollout, status, deployment/learning-app, --timeout=180s]
+      changed_when: false
+    - name: Install independently scheduled release recovery
+      ansible.builtin.import_tasks: ../roles/watoom-code/tasks/self_learning_recovery.yml

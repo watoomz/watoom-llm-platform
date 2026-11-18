@@ -1,0 +1,27 @@
+---
+- name: Check installed host mesh controller
+  ansible.builtin.stat:
+    path: "{{ llm_model_lab_root }}/helper-scripts/llama_mesh_pipeline.py"
+  register: llm_model_lab_mesh_controller
+
+- name: Require the validated host mesh controller
+  ansible.builtin.assert:
+    that:
+      - llm_model_lab_mesh_controller.stat.isreg | default(false)
+    fail_msg: Install and validate the host mesh pipeline helpers before enabling boot recovery.
+
+- name: Persist mesh pipeline boot recovery unit
+  ansible.builtin.template:
+    src: watoom-llama-mesh-recovery.service.j2
+    dest: /etc/systemd/system/watoom-llama-mesh-recovery.service
+    owner: root
+    group: root
+    mode: "0644"
+  register: llm_model_lab_mesh_recovery_unit
+
+- name: Enable mesh queue boot recovery
+  ansible.builtin.systemd_service:
+    name: watoom-llama-mesh-recovery.service
+    daemon_reload: "{{ llm_model_lab_mesh_recovery_unit.changed }}"
+    enabled: true
+    state: started

@@ -1,0 +1,12 @@
+#!/bin/sh
+# WatooM dev-clone guard: nothing in a dev clone may create, move or delete refs/heads/main or master.
+# This is a guardrail, not a security boundary (a user with write access to this clone could unset core.hooksPath).
+[ "$1" = "prepared" ] || exit 0
+while read -r old new ref; do
+  case "$ref" in
+    refs/heads/main|refs/heads/master)
+      echo "BLOCKED: $ref is protected in this dev clone. Work on a non-main branch; the owner publishes to main from /data/github." >&2
+      exit 1;;
+  esac
+done
+exit 0

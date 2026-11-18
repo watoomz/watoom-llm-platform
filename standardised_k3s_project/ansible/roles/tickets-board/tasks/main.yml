@@ -1,0 +1,211 @@
+---
+# Tickets board: same order and safety checks as the skill-editor role (kanban-design.md 7).
+- name: Check the agent registry (one owner, unique safe ids)
+  ansible.builtin.assert:
+    that:
+      - tickets_board_agents | selectattr('role', 'equalto', 'owner') | list | length == 1
+      - tickets_board_agents | map(attribute='id') | unique | list | length == tickets_board_agents | length
+      - tickets_board_agents | map(attribute='id') | reject('match', '^[A-Za-z0-9][A-Za-z0-9:._-]{0,59}$') | list | length == 0
+    fail_msg: "tickets_board_agents needs exactly one role: owner entry and unique ids of letters, digits and : . _ -"
+
+- name: Refuse a foreign same-name application
+  ansible.builtin.command:
+    argv: [kubectl, -n, "{{ tickets_board_namespace }}", get, deployment, tickets-board, --ignore-not-found, -o, json]
+  register: tickets_board_existing
+  changed_when: false
+- name: Protect resources not owned by the tickets board
+  ansible.builtin.assert:
+    that: >-
+      tickets_board_existing.stdout == '' or
+      (tickets_board_existing.stdout | from_json).metadata.labels['watoom.io/owner'] | default('') == 'tickets-board'
+
+- name: Create application source directory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop: ["{{ tickets_board_app_root }}", "{{ tickets_board_app_root }}/web"]
+# One task installs ticket.py for the broker AND as the CLI, so the CLI, the timers and the broker never run different versions.
+- name: Install tickets board source and the shared ticket.py CLI
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../tools/tickets/{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: "{{ item.mode | default('0644') }}"
+  loop:
+    - {src: ticket.py, dest: "{{ tickets_board_app_root }}/ticket.py"}
+    - {src: ticket.py, dest: "{{ tickets_board_cli }}", mode: "0755"}
+    - {src: board/broker.py, dest: "{{ tickets_board_app_root }}/broker.py"}
+    - {src: board/server.py, dest: "{{ tickets_board_app_root }}/server.py"}
+    - {src: board/web/index.html, dest: "{{ tickets_board_app_root }}/web/index.html"}
+    - {src: board/web/login.html, dest: "{{ tickets_board_app_root }}/web/login.html"}
+    - {src: board/web/app.js, dest: "{{ tickets_board_app_root }}/web/app.js"}
+    - {src: board/web/style.css, dest: "{{ tickets_board_app_root }}/web/style.css"}
+  loop_control: {label: "{{ item.dest }}"}
+  notify: Restart tickets board broker
+
+# The ingest/digest timers were installed by hand; install the same unit files from source. Schedules are unchanged.
+- name: Install ticket timer units
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../tools/tickets/{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: [watoom-tickets-ingest.service, watoom-tickets-ingest.timer, watoom-tickets-digest.service, watoom-tickets-digest.timer]
+  register: tickets_board_units
+- name: Enable ticket timers
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+    daemon_reload: "{{ tickets_board_units is changed }}"
+  loop: [watoom-tickets-ingest.timer, watoom-tickets-digest.timer]
+  when: not ansible_check_mode
+
+- name: Create broker state
+  ansible.builtin.file:
+    path: "{{ tickets_board_state }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+- name: Create broker socket directory shared only with the UI group
+  ansible.builtin.file:
+    path: "{{ tickets_board_socket_dir }}"
+    state: directory
+    owner: root
+    group: "{{ tickets_board_gid }}"
+    mode: "0750"
+- name: Create private credential directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "{{ item.mode }}"
+  loop:
+    - {path: "{{ tickets_board_private_dir }}", mode: "0755"}
+    - {path: "{{ tickets_board_private_dir }}/tokens", mode: "0700"}
+- name: Check for an existing board password
+  ansible.builtin.stat:
+    path: "{{ tickets_board_private_dir }}/password"
+  register: tickets_board_password
+- name: Generate the owner password once (never overwritten)
+  ansible.builtin.shell: |
+    umask 077
+    python3 -c 'import secrets;print(secrets.token_urlsafe(36))' > {{ (tickets_board_private_dir + '/password') | quote }}
+  args:
+    creates: "{{ tickets_board_private_dir }}/password"
+  no_log: true
+- name: Let only the UI group read the password
+  ansible.builtin.file:
+    path: "{{ tickets_board_private_dir }}/password"
+    owner: root
+    group: "{{ tickets_board_gid }}"
+    mode: "0640"
+  when: not ansible_check_mode or tickets_board_password.stat.exists
+- name: Generate one API token per agent once (never overwritten; hand tokens/<id> to that agent)
+  ansible.builtin.shell: |
+    umask 077
+    python3 -c 'import secrets;print(secrets.token_urlsafe(32))' > {{ (tickets_board_private_dir + '/tokens/' + item.id) | quote }}
+  args:
+    creates: "{{ tickets_board_private_dir }}/tokens/{{ item.id }}"
+  loop: "{{ tickets_board_agents | selectattr('role', 'equalto', 'agent') | list }}"
+  loop_control: {label: "{{ item.id }}"}
+  no_log: true
+# Only hashes reach the pod. Written in place (same inode), so the running pod's single-file mount sees new tokens without a
+# restart; an agent removed from the registry loses its token here.
+- name: Render token hashes for the UI pod
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - |
+        import hashlib, json, os, sys
+        d, out, gid, ids = sys.argv[1], sys.argv[2], int(sys.argv[3]), json.loads(sys.argv[4])
+        m = {}
+        for i in ids:
+            t = open(os.path.join(d, i)).read().strip()
+            if t:
+                m[hashlib.sha256(t.encode()).hexdigest()] = i
+        new = json.dumps(m, indent=1, sort_keys=True) + "\n"
+        try:
+            old, st = open(out).read(), os.stat(out)
+        except OSError:
+            old, st = None, None
+        if old == new and st.st_uid == 0 and st.st_gid == gid and st.st_mode & 0o777 == 0o640:
+            print("unchanged")
+            sys.exit()
+        fd = os.open(out, os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+        os.fchown(fd, 0, gid)
+        os.fchmod(fd, 0o640)
+        os.ftruncate(fd, 0)
+        os.write(fd, new.encode())
+        os.close(fd)
+        print("changed")
+      - "{{ tickets_board_private_dir }}/tokens"
+      - "{{ tickets_board_private_dir }}/tokens.json"
+      - "{{ tickets_board_gid }}"
+      - "{{ tickets_board_agents | selectattr('role', 'equalto', 'agent') | map(attribute='id') | list | to_json }}"
+  register: tickets_board_tokens
+  changed_when: "'changed' in tickets_board_tokens.stdout"
+  when: not ansible_check_mode
+- name: Render the agent registry
+  ansible.builtin.template:
+    src: agents.json.j2
+    dest: "{{ tickets_board_agents_file }}"
+    owner: root
+    group: root
+    mode: "0644"
+- name: Install broker configuration
+  ansible.builtin.template:
+    src: config.json.j2
+    dest: "{{ tickets_board_state }}/config.json"
+    owner: root
+    group: root
+    mode: "0600"
+  notify: Restart tickets board broker
+- name: Install broker service
+  ansible.builtin.template:
+    src: broker.service.j2
+    dest: "/etc/systemd/system/{{ tickets_board_service_name }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart tickets board broker
+- name: Start broker
+  ansible.builtin.systemd:
+    name: "{{ tickets_board_service_name }}"
+    state: started
+    enabled: true
+    daemon_reload: true
+  when: not ansible_check_mode
+- name: Apply pending broker restarts before the UI starts
+  ansible.builtin.meta: flush_handlers
+
+- name: Fingerprint source so the pod restarts when it changes
+  ansible.builtin.set_fact:
+    tickets_board_source_digest: >-
+      {{ (tickets_board_source_digest | default('')) ~ item ~ ':' ~
+         (lookup('ansible.builtin.file', role_path + '/../../../tools/tickets/' + item) | hash('sha256')) ~ ';' }}
+  loop: [board/server.py, board/web/index.html, board/web/login.html, board/web/app.js, board/web/style.css]
+- name: Render tickets board application, Service and route
+  ansible.builtin.template:
+    src: resources.yml.j2
+    dest: "{{ tickets_board_state }}/resources.yml"
+    owner: root
+    group: root
+    mode: "0644"
+- name: Apply tickets board resources
+  ansible.builtin.command:
+    argv: [kubectl, apply, -f, "{{ tickets_board_state }}/resources.yml"]
+  register: tickets_board_apply
+  changed_when: "'configured' in tickets_board_apply.stdout or 'created' in tickets_board_apply.stdout"
+- name: Wait for the board to become ready
+  ansible.builtin.command:
+    argv: [kubectl, -n, "{{ tickets_board_namespace }}", rollout, status, deployment/tickets-board, --timeout=120s]
+  changed_when: false

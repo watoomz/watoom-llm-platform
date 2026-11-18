@@ -1,0 +1,23 @@
+---
+# Directories the LLM platform mounts as hostPath volumes (see manifests/). Created before k3s manifests are applied.
+# These use the default roots /data/ai and /app; run tools/set-paths.py to move them to your own disks.
+homelab_host_paths:
+  # Models, memory and agent state
+  - /data/ai
+  - /data/ai/models/gguf
+  - /data/ai/agentmemory
+  - /data/ai/private
+  - /data/ai/projects
+  - /data/ai/artifacts
+  - /data/ai/helper-scripts/state
+  - /data/ai/helper-scripts/reports
+  - /data/llama-cpp
+
+  # Service state
+  - /app/ai/cache/llamampere/prompt-cache
+  - /app/ai/services/opencode/observability-vector
+  - /app/glance
+  - /app/grafana/data
+  - /app/prometheus/data
+  - /app/loki/data
+  - /app/platform-workers/vector-data

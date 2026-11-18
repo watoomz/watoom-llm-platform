@@ -1,0 +1,27 @@
+# Live Image Lock
+
+Known-good images observed from the running Kubernetes cluster and Docker edge stacks.
+
+Use this report when converting floating tags into digest pins or auditing rebuild drift.
+
+## Kubernetes
+
+| Namespace | Pod | Container | Manifest Image | Live Image Digest |
+|---|---|---|---|---|
+{% for pod in image_audit_pods.resources | sort(attribute='metadata.namespace') %}
+{% for container in pod.spec.containers %}
+{% set matches = pod.status.containerStatuses | default([]) | selectattr('name', 'equalto', container.name) | list %}
+| {{ pod.metadata.namespace }} | {{ pod.metadata.name }} | {{ container.name }} | {{ container.image }} | {{ matches[0].imageID | default('') if matches | length > 0 else '' }} |
+{% endfor %}
+{% endfor %}
+
+## Docker
+
+| Container | Compose Image | Live Image ID |
+|---|---|---|
+{% for result in image_audit_docker_inspect.results | default([]) %}
+{% if result.stdout is defined and result.stdout | length > 0 %}
+{% set info = (result.stdout | from_json)[0] %}
+| {{ info.Name | regex_replace('^/', '') }} | {{ info.Config.Image }} | {{ info.Image }} |
+{% endif %}
+{% endfor %}

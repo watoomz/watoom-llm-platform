@@ -1,0 +1,14 @@
+{
+  "upstream_commit": "71d031dab8bc6729504d11a78cbe91945401045f",
+  "original_skill_sha256": "b118b488f99bd5a2c45572bc78d76cb14cb6884d6fc00f8a7112a7b18f35896e",
+  "files": {
+    "SKILL.md": "5ec45a997282035bdb1d62a941dafbc4f3fb5ab1424f10df2a2fcd423571cdd8",
+    "scripts/_bpyx.py": "a3339ba8a678469e8ed29510e32a7331e0235202191ca4edb977af4720819b4b",
+    "scripts/export_asset.py": "3baed3fe4ed56fa5f5050f680e39cf83e6a8be5927f7797ee1df852c0eaf3882",
+    "references/unreal.md": "377e784aa26bf0f634039f31d33b8d47800708f5d280cc518030db4e0d7005bc",
+    "references/upstream-SKILL.md": "b118b488f99bd5a2c45572bc78d76cb14cb6884d6fc00f8a7112a7b18f35896e",
+    "references/godot-web.md": "a1de232e3abb1622968f7d531dc6d62aa5a5a7b6d4b97e0b18dd16dc52d6ff30",
+    "references/roblox.md": "9079cd534349ce5ea0034abd983cf849a19c0a08676b88486393fe8caab7e263",
+    "references/unity.md": "6ed7fbaa57f6d8d0bdf87438bfc442bb536465b05459ffebf72b75dfa238d080"
+  }
+}

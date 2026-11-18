@@ -1,0 +1,21 @@
+---
+- name: "Host Repair {{ host_repair_action | default('unspecified') }} | Validate requested action"
+  ansible.builtin.assert:
+    that:
+      - host_repair_action in ['ca_trust', 'audio', 'chrome']
+    fail_msg: "host_repair_action must be one of: ca_trust, audio, chrome"
+
+- name: "Host Repair ca_trust | Reconcile"
+  ansible.builtin.include_tasks:
+    file: "{{ role_path }}/tasks/ca_trust.yml"
+  when: host_repair_action == 'ca_trust'
+
+- name: "Host Repair audio | Reconcile"
+  ansible.builtin.include_tasks:
+    file: "{{ role_path }}/tasks/audio.yml"
+  when: host_repair_action == 'audio'
+
+- name: "Host Repair chrome | Reconcile"
+  ansible.builtin.include_tasks:
+    file: "{{ role_path }}/tasks/chrome.yml"
+  when: host_repair_action == 'chrome'

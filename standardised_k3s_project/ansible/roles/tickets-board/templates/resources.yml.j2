@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tickets-board
+  namespace: {{ tickets_board_namespace }}
+  labels: {app: tickets-board, watoom.io/owner: tickets-board}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app: tickets-board}
+  template:
+    metadata:
+      labels: {app: tickets-board}
+      annotations: {watoom.io/tickets-board-source: "{{ tickets_board_source_digest | hash('sha256') }}"}
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsUser: {{ tickets_board_uid }}
+        runAsGroup: {{ tickets_board_gid }}
+        runAsNonRoot: true
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: board
+        image: {{ tickets_board_image }}
+        command: [python3, /app/server.py, --listen, 0.0.0.0, --port, "{{ tickets_board_port }}", --password-file, /private/password, --tokens-file, /private/tokens.json, --origin, "{{ tickets_board_origin }}", --broker-socket, /socket/broker.sock, --prefix, "{{ tickets_board_prefix }}", --owner-id, "{{ (tickets_board_agents | selectattr('role', 'equalto', 'owner') | first).id }}"]
+        env: [{name: PYTHONDONTWRITEBYTECODE, value: "1"}]
+        ports: [{containerPort: {{ tickets_board_port }}}]
+        resources:
+          requests: {cpu: 20m, memory: 32Mi}
+          limits: {cpu: 500m, memory: 128Mi}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: [ALL]}
+        readinessProbe:
+          tcpSocket: {port: {{ tickets_board_port }}}
+        volumeMounts:
+        - {name: app, mountPath: /app, readOnly: true}
+        - {name: password, mountPath: /private/password, readOnly: true}
+        - {name: tokens, mountPath: /private/tokens.json, readOnly: true}
+        - {name: socket, mountPath: /socket}
+      volumes:
+      - name: app
+        hostPath: {path: "{{ tickets_board_app_root }}", type: Directory}
+      - name: password
+        hostPath: {path: "{{ tickets_board_private_dir }}/password", type: File}
+      - name: tokens
+        hostPath: {path: "{{ tickets_board_private_dir }}/tokens.json", type: File}
+      - name: socket
+        hostPath: {path: "{{ tickets_board_socket_dir }}", type: Directory}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tickets-board
+  namespace: {{ tickets_board_namespace }}
+  labels: {watoom.io/owner: tickets-board}
+spec:
+  selector: {app: tickets-board}
+  ports: [{port: {{ tickets_board_port }}, targetPort: {{ tickets_board_port }}}]
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: tickets-board
+  namespace: {{ tickets_board_namespace }}
+  labels: {watoom.io/owner: tickets-board}
+spec:
+  entryPoints: [websecure]
+  routes:
+  - kind: Rule
+    match: Host(`{{ tickets_board_host }}`) && PathPrefix(`{{ tickets_board_prefix }}/`)
+    priority: 110
+    services:
+    - name: tickets-board
+      port: {{ tickets_board_port }}
+      nativeLB: true
+  tls:
+    secretName: watoom-tls

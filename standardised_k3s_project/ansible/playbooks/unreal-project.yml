@@ -1,0 +1,7 @@
+---
+- name: Stage an explicitly selected Unreal complete-project starter
+  hosts: all
+  become: true
+  gather_facts: false
+  roles:
+    - unreal-project

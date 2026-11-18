@@ -1,0 +1,14 @@
+# Managed by Ansible: host_ollama role.
+# This file prepares the model alias only; it does not download model weights.
+# After the GPU is installed, pull {{ item.source }} and create {{ item.name }}
+# with: ollama create {{ item.name }} -f {{ host_ollama_model_dir }}/{{ item.file }}
+FROM {{ item.source }}
+
+PARAMETER num_ctx {{ item.num_ctx }}
+PARAMETER temperature {{ item.temperature }}
+{% if item.repeat_penalty is defined %}
+PARAMETER repeat_penalty {{ item.repeat_penalty }}
+{% endif %}
+{% if item.system is defined %}
+SYSTEM """{{ item.system }}"""
+{% endif %}

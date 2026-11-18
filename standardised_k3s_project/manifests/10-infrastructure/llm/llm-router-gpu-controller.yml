@@ -1,0 +1,223 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llm-router-app
+  namespace: llama-cpp
+data:
+  router.py: "import json\nfrom client import GPUClient\ndef gpu_controller_check(model_id=\"swift-qwen38-coder\",allow_switch=False):\n    canonical=MODEL_ALIASES.get(model_id,model_id)\n    target=MODELS[canonical]\n    result=GPUClient('/gpu-controller/router.sock',timeout=1500 if allow_switch else 10).call('request-model',deployment=target['deployment'],allow_switch=allow_switch)\n    if result.get('allowed') is not True:raise RuntimeError('GPU owned or controller unavailable')\nimport os\nimport ssl\nfrom collections import deque\nimport time\nimport threading\nimport urllib.error\nimport urllib.parse\nimport urllib.request\nimport uuid\nfrom http.server import BaseHTTPRequestHandler, ThreadingHTTPServer\n\nNAMESPACE = os.environ.get(\"POD_NAMESPACE\", \"llama-cpp\")\nTOKEN_PATH = \"/var/run/secrets/kubernetes.io/serviceaccount/token\"\nCA_PATH = \"/var/run/secrets/kubernetes.io/serviceaccount/ca.crt\"\nAPI = \"https://kubernetes.default.svc\"\nMODELS = {\n    \"swift-qwen38-coder\"\
+    : {\n        \"deployment\": \"llama-cpp-swift-qwen38-coder\",\n        \"url\": \"http://llama-cpp-swift-qwen38-coder.llama-cpp.svc.cluster.local:8000\",\n        \"name\": \"Swift Qwen3.8 27B Coder 32K Stable\",\n    },\n    \"qwen38-27b-ad-iq4-xs\": {\n        \"deployment\": \"llama-cpp-qwen38-atomic\",\n        \"url\": \"http://llama-cpp-qwen38-atomic.llama-cpp.svc.cluster.local:8000\",\n        \"name\": \"Qwen3.8 General Atomic AD-IQ4_XS\",\n    },\n    \"qwen38-uncensored-mtp-iq4-xs\": {\n        \"deployment\": \"llama-cpp-qwen38-uncensored-mtp\",\n        \"url\": \"http://llama-cpp-qwen38-uncensored-mtp.llama-cpp.svc.cluster.local:8000\",\n        \"name\": \"Qwen3.8 Uncensored MTP IQ4_XS\",\n    },\n    \"ornith-1.5-9b-q8\": {\n        \"deployment\": \"llama-cpp-ornith-15-9b\",\n        \"url\": \"http://llama-cpp-ornith-15-9b.llama-cpp.svc.cluster.local:8000\",\n        \"name\": \"Ornith 1.5 9B Uncensored\",\n    },\n    \"qwen35-defiant-fable-9b-q8\": {\n        \"deployment\"\
+    : \"llama-cpp-qwen35-defiant-fable-9b\",\n        \"url\": \"http://llama-cpp-qwen35-defiant-fable-9b.llama-cpp.svc.cluster.local:8000\",\n        \"name\": \"Qwen3.5 9B Defiant Fable plusIQ-TOOLS\",\n    },\n    \"gemma-4-e4b-q8-k-p\": {\n        \"deployment\": \"llama-cpp-gemma-4-e4b\",\n        \"url\": \"http://llama-cpp-gemma-4-e4b.llama-cpp.svc.cluster.local:8000\",\n        \"name\": \"Gemma 4 E4B Uncensored HauhauCS Aggressive\",\n    },\n    \"tiel-coder-35b-a3b-mtp\": {\n        \"deployment\": \"llama-cpp-tiel-coder-35b-a3b-mtp\",\n        \"url\": \"http://llama-cpp-tiel-coder-35b-a3b-mtp.llama-cpp.svc.cluster.local:8000\",\n        \"name\": \"CyberTiel Coder 35B-A3B MTP IQ4_XS\",\n    },\n}\nDEFAULT_MODEL = \"active-model\"\nACTIVE_MODEL_ALIAS = \"active-model\"\n\nMODEL_ALIASES = {\n    \"qwen38-general\": \"qwen38-27b-ad-iq4-xs\",\n    \"qwen38-uncensored-mtp\": \"qwen38-uncensored-mtp-iq4-xs\",\n    \"ornith-1.5-9b\": \"ornith-1.5-9b-q8\",\n    \"qwen35-defiant-fable-9b\"\
+    : \"qwen35-defiant-fable-9b-q8\",\n    \"gemma-4-e4b\": \"gemma-4-e4b-q8-k-p\",\n}\nVISIBLE_MODELS = {\n    ACTIVE_MODEL_ALIAS: \"Active Homelab Model / Loaded Backend\",\n    \"swift-qwen38-coder\": \"Swift Qwen3.8 27B Coder / 32K Stable\",\n    \"qwen38-general\": \"Qwen3.8 General Atomic AD-IQ4_XS\",\n    \"qwen38-uncensored-mtp\": \"Qwen3.8 Uncensored MTP IQ4_XS\",\n    \"ornith-1.5-9b\": \"Ornith 1.5 9B Uncensored\",\n    \"qwen35-defiant-fable-9b\": \"Qwen3.5 9B Defiant Fable plusIQ-TOOLS\",\n    \"gemma-4-e4b\": \"Gemma 4 E4B Uncensored HauhauCS Aggressive\",\n    \"tiel-coder-35b-a3b-mtp\": \"CyberTiel Coder 35B-A3B MTP IQ4_XS\",\n}\nSTART_TIMEOUT = int(os.environ.get(\"START_TIMEOUT_SECONDS\", \"240\"))\nSTOP_TIMEOUT = int(os.environ.get(\"STOP_TIMEOUT_SECONDS\", \"120\"))\nSWITCH_LOCK_TIMEOUT = int(os.environ.get(\"SWITCH_LOCK_TIMEOUT_SECONDS\", \"300\"))\n\n# ThreadingHTTPServer processes requests concurrently. GPU model lifecycle\n# changes must therefore be serialized independently\
+    \ of inference traffic.\nMODEL_SWITCH_LOCK = threading.Lock()\nMODEL_SWITCH_STATE_LOCK = threading.Lock()\nMODEL_SWITCH_STATE = {\n    \"switching\": False,\n    \"requested_model\": None,\n    \"target_deployment\": None,\n    \"started_at\": None,\n    \"last_error\": None,\n}\n\nMODEL_CALL_LIMIT = int(os.environ.get(\"WATOOM_MODEL_MAX_CALLS\", \"3\"))\nMODEL_CALL_TTL_SECONDS = int(os.environ.get(\"WATOOM_MODEL_CALL_TTL_SECONDS\", \"900\"))\nMODEL_CALL_COUNTS = {}\nMODEL_CALL_LOCK = threading.Lock()\n\ndef register_model_call(request_id):\n    \"\"\"Count one HTTP model call for a Pi correlation id.\n\n    Requests without the WatooM correlation header are not rate-limited here;\n    normal Open WebUI/direct router traffic remains unaffected.  The counter is\n    intentionally independent of the client-supplied model-call number.\n    \"\"\"\n    if not request_id or request_id == \"-\":\n        return None\n    now = time.time()\n    with MODEL_CALL_LOCK:\n        stale = [key for\
+    \ key, item in MODEL_CALL_COUNTS.items()\n                 if now - item[\"last_seen\"] > MODEL_CALL_TTL_SECONDS]\n        for key in stale:\n            MODEL_CALL_COUNTS.pop(key, None)\n        item = MODEL_CALL_COUNTS.setdefault(request_id, {\"count\": 0, \"last_seen\": now})\n        item[\"count\"] += 1\n        item[\"last_seen\"] = now\n        return item[\"count\"]\ndef token():\n    with open(TOKEN_PATH, \"r\", encoding=\"utf-8\") as handle:\n        return handle.read().strip()\n\ndef k8s(path, method=\"GET\", body=None):\n    data = None if body is None else json.dumps(body).encode(\"utf-8\")\n    req = urllib.request.Request(API + path, data=data, method=method)\n    req.add_header(\"Authorization\", \"Bearer \" + token())\n    req.add_header(\"Accept\", \"application/json\")\n    if body is not None:\n        req.add_header(\"Content-Type\", \"application/merge-patch+json\")\n    ctx = ssl.create_default_context(cafile=CA_PATH)\n    with urllib.request.urlopen(req, timeout=20,\
+    \ context=ctx) as response:\n        return json.loads(response.read().decode(\"utf-8\"))\n\ndef deploy(name):\n    return k8s(f\"/apis/apps/v1/namespaces/{NAMESPACE}/deployments/{name}\")\n\ndef scale(name, replicas):\n    raise RuntimeError('Direct scaling retired; GPU controller is the sole writer')\n\n\ndef is_available(name):\n    d = deploy(name)\n    status = d.get(\"status\", {})\n    return status.get(\"readyReplicas\", 0) >= 1 and status.get(\"availableReplicas\", 0) >= 1\n\ndef active_deployment():\n    for model in MODELS.values():\n        try:\n            if is_available(model[\"deployment\"]):\n                return model[\"deployment\"]\n        except Exception:\n            pass\n    return None\n\ndef active_model():\n    \"\"\"Return (canonical_model_id, model_spec) for the already-active backend.\n\n    This helper is intentionally read-only. It never scales deployments.\n    \"\"\"\n    deployment = active_deployment()\n    if not deployment:\n        return None,\
+    \ None\n\n    for canonical_model_id, model_spec in MODELS.items():\n        if model_spec[\"deployment\"] == deployment:\n            return canonical_model_id, model_spec\n\n    return None, None\n\n\ndef desired_replicas(name):\n    d = deploy(name)\n    return int(\n        (d.get(\"spec\") or {}).get(\"replicas\") or 0\n    )\n\ndef deployment_pods(name):\n    \"\"\"Return pods selected by a model Deployment.\"\"\"\n    d = deploy(name)\n\n    selector = (\n        (d.get(\"spec\") or {})\n        .get(\"selector\", {})\n        .get(\"matchLabels\", {})\n    )\n\n    if not selector:\n        return []\n\n    label_selector=\",\".join(\n        f\"{key}={value}\"\n        for key,value in sorted(selector.items())\n    )\n\n    path=(\n        f\"/api/v1/namespaces/{NAMESPACE}/pods\"\n        \"?labelSelector=\"\n        + urllib.parse.quote(label_selector)\n    )\n\n    result=k8s(path)\n\n    return result.get(\"items\") or []\n\ndef deployment_has_live_pods(name):\n    \"\"\"\
+    True until all pods for the deployment have fully terminated.\"\"\"\n    for pod in deployment_pods(name):\n        metadata=pod.get(\"metadata\") or {}\n        status=pod.get(\"status\") or {}\n\n        # A deleting pod can still own the GPU until its containers exit.\n        if metadata.get(\"deletionTimestamp\"):\n            return True\n\n        phase=status.get(\"phase\")\n\n        if phase not in (\"Succeeded\",\"Failed\"):\n            return True\n\n    return False\n\ndef wait_stopped(name, timeout):\n    \"\"\"Wait for replicas=0 AND disappearance of live deployment pods.\"\"\"\n    deadline=time.time()+timeout\n    last=None\n\n    while time.time() < deadline:\n        try:\n            replicas=desired_replicas(name)\n            live=deployment_has_live_pods(name)\n\n            last={\n                \"replicas\": replicas,\n                \"live_pods\": live,\n            }\n\n            if replicas == 0 and not live:\n                return True\n\n        except\
+    \ Exception as exc:\n            last={\"error\":str(exc)}\n\n        time.sleep(2)\n\n    raise TimeoutError(\n        f\"deployment {name} did not fully stop \"\n        f\"within {timeout}s; last={last}\"\n    )\n\ndef wait_available(name, timeout):\n    deadline=time.time()+timeout\n    last_error=None\n\n    while time.time() < deadline:\n        try:\n            if is_available(name):\n                return True\n        except Exception as exc:\n            last_error=exc\n\n        time.sleep(3)\n\n    raise TimeoutError(\n        f\"deployment {name} was not ready \"\n        f\"within {timeout}s; \"\n        f\"last_error={last_error}\"\n    )\n\ndef wait_health(base_url, timeout):\n    deadline=time.time()+timeout\n    last_error=None\n\n    while time.time() < deadline:\n        try:\n            with urllib.request.urlopen(\n                base_url+\"/health\",\n                timeout=10,\n            ) as response:\n                if response.status == 200:\n     \
+    \               return True\n\n        except Exception as exc:\n            last_error=exc\n\n        time.sleep(3)\n\n    raise TimeoutError(\n        f\"service {base_url} was not healthy \"\n        f\"within {timeout}s; \"\n        f\"last_error={last_error}\"\n    )\n\ndef set_switch_state(**updates):\n    with MODEL_SWITCH_STATE_LOCK:\n        MODEL_SWITCH_STATE.update(updates)\n\ndef switch_state():\n    with MODEL_SWITCH_STATE_LOCK:\n        return dict(MODEL_SWITCH_STATE)\n\ndef ensure_model(model_id, allow_switch=False):\n    model_id=MODEL_ALIASES.get(model_id,model_id)\n    if model_id not in MODELS:raise ValueError('unknown model: '+model_id)\n    target=MODELS[model_id]\n    target_deploy=target['deployment']\n    if not MODEL_SWITCH_LOCK.acquire(timeout=SWITCH_LOCK_TIMEOUT):\n        raise TimeoutError('Router lifecycle lock timeout')\n    # WATOOM_MESH_EXTERNAL_GUARD_V1: protect host-owned Mesh jobs against router-triggered switches.\n    # No new RBAC: the existing\
+    \ router role already has deployments GET.\n    # Checked after acquiring the router lock; host worker may own Mesh independently.\n    try:\n        mesh_external_active = (\n            target_deploy != \"llama-cpp-llama-mesh\"\n            and desired_replicas(\"llama-cpp-llama-mesh\") > 0\n        )\n    except Exception:\n        MODEL_SWITCH_LOCK.release()\n        raise\n    if mesh_external_active:\n        MODEL_SWITCH_LOCK.release()\n        print(\"[MODEL-SWITCH] action=blocked-external-mesh requested=\" + model_id, flush=True)\n        raise RuntimeError(\"model switch temporarily blocked: LLaMA-Mesh owns GPU\")\n\n    try:\n        gpu_controller_check(model_id,allow_switch)\n        wait_available(target_deploy,START_TIMEOUT)\n        wait_health(target['url'],30)\n        return target\n    finally:\n        MODEL_SWITCH_LOCK.release()\n\n\n\n\ndef model_list():\n    data = []\n    for model_id, name in VISIBLE_MODELS.items():\n        data.append({\n            \"id\"\
+    : model_id,\n            \"object\": \"model\",\n            \"created\": 0,\n            \"owned_by\": \"llm-router\",\n            \"name\": name,\n            \"context_limit\": MODELS.get(model_id,{}).get(\"context_limit\"),\n            \"application_context\": MODELS.get(model_id,{}).get(\"application_context\",100000),\n        })\n    return {\"object\": \"list\", \"data\": data}\n\ndef lifecycle_catalog():\n    models = []\n\n    for model_id, spec in MODELS.items():\n        aliases = sorted(\n            alias\n            for alias, canonical in MODEL_ALIASES.items()\n            if canonical == model_id\n        )\n        models.append({\n            \"id\": model_id,\n            \"aliases\": aliases,\n            \"deployment\": spec[\"deployment\"],\n            \"llama_cpp_alias\": model_id,\n        })\n\n    return {\n        \"models\": models,\n        \"available_model_ids\": sorted(\n            set(MODELS) | set(MODEL_ALIASES)\n        ),\n    }\n\ndef lifecycle_status():\n\
+    \    model_id, spec = active_model()\n\n    if not model_id or not spec:\n        return {\n            \"active_model\": None,\n            \"active_aliases\": [],\n            \"active_deployment\": None,\n        }\n\n    aliases = sorted(\n        alias\n        for alias, canonical in MODEL_ALIASES.items()\n        if canonical == model_id\n    )\n\n    return {\n        \"active_model\": model_id,\n        \"active_aliases\": aliases,\n        \"active_deployment\": spec[\"deployment\"],\n        \"llama_cpp_alias\": model_id,\n    }\n\nMODELS[\"llama-mesh-q8\"] = {\"deployment\": \"llama-cpp-llama-mesh\", \"url\": \"http://llama-cpp-llama-mesh.llama-cpp.svc.cluster.local:8000\", \"name\": \"LLaMA-Mesh 8B Q8_0\"}\nMODEL_ALIASES[\"llama-mesh\"] = \"llama-mesh-q8\"\nVISIBLE_MODELS[\"llama-mesh\"] = \"LLaMA-Mesh 8B Q8_0 / Text-to-3D\"\n\n_MANAGED_IDS=set()\ndef refresh_managed_catalog():\n    \"\"\"Read only the root broker's derived view; never accepts a URL from clients.\"\"\"\n\
+    \    global _MANAGED_IDS, MODELS, VISIBLE_MODELS\n    path=os.environ.get(\"WATOOM_MANAGED_CATALOG\")\n    if not path:return\n    from pathlib import Path\n    try:\n        doc=json.loads(Path(path).read_text())\n        if doc.get(\"version\")!=1:raise ValueError(\"Invalid managed view\")\n        current=doc[\"models\"]\n        import re\n        for alias,entry in current.items():\n            if not re.fullmatch(r\"mm-[a-f0-9]{16}\",alias) or entry[\"deployment\"]!=\"llama-cpp-\"+alias:\n                raise ValueError(\"Invalid managed route identity\")\n            expected=\"http://\"+entry[\"deployment\"]+\".\"+NAMESPACE+\".svc.cluster.local:8080\"\n            if entry[\"url\"]!=expected:raise ValueError(\"Invalid managed backend URL\")\n        models={key:value for key,value in MODELS.items() if key not in _MANAGED_IDS}\n        visible={key:value for key,value in VISIBLE_MODELS.items() if key not in _MANAGED_IDS}\n        for alias,entry in current.items():\n        \
+    \    models[alias]=entry\n            if entry[\"backend\"]==\"gguf\":visible[alias]=entry[\"name\"]\n        MODELS,VISIBLE_MODELS=models,visible\n        _MANAGED_IDS=set(current)\n    except FileNotFoundError:\n        if _MANAGED_IDS:raise RuntimeError(\"Managed catalog disappeared\")\n\nPERF_WINDOW_SECONDS = 86400\nPERF_EVENTS = deque(maxlen=10000)\nPERF_LOCK = threading.Lock()\n\ndef sse_has_generated_output(line):\n    if not line.startswith(b\"data:\"):\n        return False\n    raw = line.partition(b\":\")[2].strip()\n    if not raw or raw == b\"[DONE]\":\n        return False\n    try:\n        event = json.loads(raw)\n        for choice in event.get(\"choices\", []):\n            delta = choice.get(\"delta\") or {}\n            if any(delta.get(key) for key in (\"content\", \"reasoning_content\", \"tool_calls\", \"function_call\")) or choice.get(\"text\"):\n                return True\n    except (ValueError, AttributeError, TypeError):\n        return False\n    return False\n\
+    \n\ndef record_perf(effort, status, latency_ms, ttft_ms):\n    row = {\"at\": time.time(), \"effort\": effort, \"status\": int(status),\n           \"latency_ms\": round(latency_ms, 1), \"ttft_ms\": round(ttft_ms, 1) if ttft_ms is not None else None}\n    with PERF_LOCK:\n        PERF_EVENTS.append(row)\n\ndef performance_summary(now=None):\n    now = time.time() if now is None else now\n    with PERF_LOCK:\n        rows = [r.copy() for r in PERF_EVENTS if now - r[\"at\"] <= PERF_WINDOW_SECONDS]\n    result = {}\n    for effort in (\"low\", \"medium\", \"high\", \"xhigh\", \"unset\", \"other\"):\n        group = [r for r in rows if (r[\"effort\"] if r[\"effort\"] in (\"low\", \"medium\", \"high\", \"xhigh\", \"unset\") else \"other\") == effort]\n        if not group:\n            result[effort] = {\"requests\": 0, \"latency_p50_ms\": None, \"latency_p95_ms\": None, \"ttft_p50_ms\": None,\n                              \"errors\": 0, \"http_503\": 0, \"generation_tokens_per_second\"\
+    : None,\n                              \"prompt_tokens_per_second\": None}\n            continue\n        latencies = sorted(r[\"latency_ms\"] for r in group)\n        ttfts = sorted(r[\"ttft_ms\"] for r in group if r[\"ttft_ms\"] is not None)\n        percentile = lambda values, q: values[max(0, min(len(values)-1, int(q*len(values)+.999999)-1))] if values else None\n        result[effort] = {\"requests\": len(group), \"latency_p50_ms\": round(percentile(latencies, .50), 1),\n                          \"latency_p95_ms\": round(percentile(latencies, .95), 1),\n                          \"ttft_p50_ms\": round(percentile(ttfts, .50), 1) if ttfts else None,\n                          \"errors\": sum(r[\"status\"] >= 400 for r in group),\n                          \"http_503\": sum(r[\"status\"] == 503 for r in group),\n                          \"generation_tokens_per_second\": None, \"prompt_tokens_per_second\": None}\n    return {\"window_seconds\": PERF_WINDOW_SECONDS, \"generated\":\
+    \ now, \"levels\": result}\n\n\nclass Handler(BaseHTTPRequestHandler):\n    protocol_version = \"HTTP/1.1\"\n\n    def log_message(self, fmt, *args):\n        print(f\"{self.address_string()} {self.command} {self.path} \" + (fmt % args), flush=True)\n\n    def send_json(self, status, payload):\n        data = json.dumps(payload).encode(\"utf-8\")\n        self.send_response(status)\n        self.send_header(\"Content-Type\", \"application/json\")\n        self.send_header(\"Content-Length\", str(len(data)))\n        self.end_headers()\n        self.wfile.write(data)\n\n    def do_GET(self):\n        refresh_managed_catalog()\n        if self.path == \"/performance\":\n            self.send_json(200, performance_summary())\n            return\n        if self.path == \"/healthz\":\n            self.send_json(200, {\"status\": \"ok\"})\n            return\n        if self.path in (\"/health\", \"/\"):\n            self.send_json(200, {\"status\": \"ok\", \"active_deployment\": active_deployment()})\n            return\n        if self.path == \"/v1/models\":\n            self.send_json(200, model_list())\n\
+    \            return\n        if self.path == \"/models\":\n            self.send_json(200, lifecycle_catalog())\n            return\n        if self.path == \"/models/status\":\n            self.send_json(200, lifecycle_status())\n            return\n        self.proxy(\"GET\")\n\n    def do_POST(self):\n        refresh_managed_catalog()\n        if self.path == \"/models/load\":\n            length = int(self.headers.get(\"Content-Length\", \"0\"))\n            body = self.rfile.read(length) if length else b\"{}\"\n\n            try:\n                payload = json.loads(body.decode(\"utf-8\"))\n                requested_model = str(payload.get(\"model\") or \"\").strip()\n                resolved_model = MODEL_ALIASES.get(\n                    requested_model,\n                    requested_model,\n                )\n\n                if resolved_model not in MODELS:\n                    self.send_json(\n                        404,\n                        {\n                    \
+    \        \"error\": \"unknown model\",\n                            \"requested_model\": requested_model,\n                            \"mapped_router_model\": resolved_model,\n                            \"available_model_ids\": lifecycle_catalog()[\"available_model_ids\"],\n                        },\n                    )\n                    return\n\n                target = ensure_model(requested_model, allow_switch=True)\n                self.send_json(\n                    200,\n                    {\n                        \"status\": \"loaded\",\n                        \"requested_model\": requested_model,\n                        \"model\": resolved_model,\n                        \"deployment\": target[\"deployment\"],\n                    },\n                )\n            except Exception as exc:\n                self.send_json(\n                    503,\n                    {\n                        \"error\": str(exc),\n                        \"requested_model\":\
+    \ locals().get(\"requested_model\"),\n                    },\n                )\n            return\n        self.proxy(\"POST\")\n\n    def proxy(self, method):\n        performance_started = time.monotonic()\n        performance_effort = \"unset\"\n        performance_enabled = False\n        performance_status = 503\n        performance_ttft = None\n        length = int(self.headers.get(\"Content-Length\", \"0\"))\n        body = self.rfile.read(length) if length else b\"\"\n        model_id = DEFAULT_MODEL\n        stream_requested = False\n        # Defaults keep non-JSON/GET proxy paths safe and make the guard state\n        # explicit outside the metadata try/except.\n        tools = []\n        payload = {}\n        request_id = \"-\"\n        model_call = \"-\"\n        router_call = None\n        active_only_target = None\n        allow_request_switch = False\n        if body:\n            try:\n                payload = json.loads(body.decode(\"utf-8\"))\n                model_id\
+    \ = payload.get(\"model\") or DEFAULT_MODEL\n                # OpenCode dropdown selection is carried in the inference model ID.\n                allow_request_switch = (\n                    method == \"POST\"\n                    and self.path in (\"/v1/chat/completions\", \"/v1/completions\")\n                    and bool(payload.get(\"model\"))\n                    and model_id != ACTIVE_MODEL_ALIAS\n                )\n                stream_requested = payload.get(\"stream\") is True\n                performance_enabled = method == \"POST\" and self.path in (\"/v1/chat/completions\", \"/v1/completions\")\n                raw_effort = payload.get(\"reasoning_effort\")\n                performance_effort = str(raw_effort).lower() if raw_effort is not None else \"unset\"\n\n\n                if model_id == ACTIVE_MODEL_ALIAS:\n                    active_model_id, active_only_target = active_model()\n                    if not active_model_id or not active_only_target:\n           \
+    \             self.send_json(\n                            503,\n                            {\n                                \"error\": {\n                                    \"message\": \"No LLM backend is currently active\",\n                                    \"type\": \"model_not_available\",\n                                    \"code\": \"no_active_model\",\n                                }\n                            },\n                        )\n                        if performance_enabled:\n                            record_perf(performance_effort, 503, (time.monotonic() - performance_started) * 1000, None)\n                        return\n                    model_id = active_model_id\n\n                # The public router aliases are not necessarily the aliases\n                # exposed by the individual llama-server process. Select the\n                # backend using MODEL_ALIASES and forward that same canonical\n                # model id in the OpenAI request\
+    \ body.\n                backend_model_id = MODEL_ALIASES.get(model_id, model_id)\n                payload[\"model\"] = backend_model_id\n                body = json.dumps(payload).encode(\"utf-8\")\n\n                # Preserve every tool supplied by the calling client.\n                #\n                # The router does not maintain its own tool allowlist,\n                # silently remove tools, impose a tool-count restriction,\n                # or downgrade tool_choice.\n                #\n                # A generated tool call must still be validated against\n                # this request's supplied tool definitions before it is\n                # normalized/exposed to the client.\n                # Fix captured instrumentation defect: `messages` was iterated below\n                # without first being assigned, and the broad exception swallowed the\n                # resulting NameError. Keep metadata content-free.\n                messages = payload.get(\"messages\") or\
+    \ []\n                request_id = self.headers.get(\"X-Watoom-Request-Id\") or \"-\"\n                model_call = self.headers.get(\"X-Watoom-Model-Call\") or \"-\"\n                router_call = register_model_call(request_id)\n                tools = payload.get(\"tools\") or []\n\n                tool_names = []\n                for tool in tools:\n                    try:\n                        if tool.get(\"type\") == \"function\":\n                            tool_names.append(\n                                (tool.get(\"function\") or {}).get(\"name\", \"<unnamed>\")\n                            )\n                        else:\n                            tool_names.append(tool.get(\"type\", \"<unknown>\"))\n                    except Exception:\n                        tool_names.append(\"<parse-error>\")\n\n                message_chars = 0\n                for message in messages:\n                    content = message.get(\"content\", \"\")\n                    if isinstance(content,\
+    \ str):\n                        message_chars += len(content)\n                    else:\n                        message_chars += len(str(content))\n\n                print(\n                    \"[REQMETA]\"\n                    f\" request_id={request_id}\"\n                    f\" model_call={model_call}\"\n                    f\" router_call={router_call if router_call is not None else '-'}\"\n                    f\" path={self.path}\"\n                    f\" model={model_id}\"\n                    f\" backend_model={backend_model_id}\"\n                    f\" messages={len(messages)}\"\n                    f\" message_chars={message_chars}\"\n                    f\" tools={len(tools)}\"\n                    f\" tool_names={tool_names}\"\n                    f\" tool_choice={payload.get('tool_choice')}\"\n                    f\" stream={payload.get('stream')}\"\n                    f\" max_tokens={payload.get('max_tokens')}\"\n                    f\" response_format={payload.get('response_format')}\"\
+    \n                    f\" reasoning_effort={payload.get('reasoning_effort')}\"\n                    f\" thinking_budget_tokens={payload.get('thinking_budget_tokens')}\",\n                    flush=True,\n                )\n            except Exception:\n                pass\n        if router_call is not None and router_call > MODEL_CALL_LIMIT:\n            print(\n                \"[WATOOM_MODEL_GUARD]\"\n                f\" request_id={request_id}\"\n                f\" client_model_call={model_call}\"\n                f\" router_call={router_call}\"\n                f\" max_calls={MODEL_CALL_LIMIT}\"\n                \" action=reject\",\n                flush=True,\n            )\n            self.send_json(\n                429,\n                {\n                    \"error\": {\n                        \"type\": \"watoom_model_call_limit\",\n                        \"message\": f\"model-call limit exceeded: {router_call} > {MODEL_CALL_LIMIT}\",\n                        \"request_id\"\
+    : request_id,\n                        \"router_call\": router_call,\n                        \"max_calls\": MODEL_CALL_LIMIT,\n                    }\n                },\n            )\n            if performance_enabled:\n                record_perf(performance_effort, 429, (time.monotonic() - performance_started) * 1000, None)\n            return\n\n        lease=None\n        try:\n            canonical=MODEL_ALIASES.get(model_id,model_id)\n            request_account=GPUClient('/gpu-controller/router.sock',timeout=1500 if allow_request_switch else 10)\n            lease=request_account.call('begin-inference',deployment=MODELS[canonical]['deployment'],allow_switch=allow_request_switch)['lease']\n            gpu_controller_check(model_id,allow_request_switch)\n            target = active_only_target or ensure_model(\n                model_id, allow_switch=allow_request_switch\n            )\n            if target.get(\"backend\")==\"sdxl\":\n                raise RuntimeError(\"Use\
+    \ the model manager image-generation workflow for SDXL; chat is not supported\")\n            url = target[\"url\"] + self.path\n            req = urllib.request.Request(url, data=body if method != \"GET\" else None, method=method)\n            for key, value in self.headers.items():\n                if key.lower() not in (\"host\", \"content-length\", \"connection\"):\n                    req.add_header(key, value)\n            if target.get(\"backend\"):\n                from pathlib import Path\n                key_file=os.environ.get(\"WATOOM_MANAGED_KEY\")\n                if not key_file:raise RuntimeError(\"Managed backend credentials unavailable\")\n                req.remove_header(\"Authorization\")\n                req.add_header(\"Authorization\",\"Bearer \"+Path(key_file).read_text().strip())\n            with urllib.request.urlopen(req, timeout=600) as response:\n                performance_status = response.status\n                content_type = response.headers.get(\n\
+    \                    \"Content-Type\",\n                    \"\",\n                )\n\n                backend_is_streaming = (\n                    content_type\n                    .lower()\n                    .startswith(\"text/event-stream\")\n                )\n\n                #\n                #\n                #\n                #\n                if backend_is_streaming:\n                    self.send_response(response.status)\n\n                    for key, value in response.headers.items():\n                        if key.lower() not in (\n                            \"transfer-encoding\",\n                            \"connection\",\n                            \"content-length\",\n                        ):\n                            self.send_header(key, value)\n\n                    self.send_header(\n                        \"Transfer-Encoding\",\n                        \"chunked\",\n                    )\n                    self.end_headers()\n\n           \
+    \         event_buffer = b\"\"\n                    while True:\n                        chunk = response.read(8192)\n                        if not chunk:\n                            break\n                        event_buffer += chunk\n                        while b\"\\n\" in event_buffer:\n                            line, event_buffer = event_buffer.split(b\"\\n\", 1)\n                            if performance_ttft is None and sse_has_generated_output(line):\n                                performance_ttft = (time.monotonic() - performance_started) * 1000\n                        if performance_ttft is None and sse_has_generated_output(event_buffer):\n                            performance_ttft = (time.monotonic() - performance_started) * 1000\n\n                        self.wfile.write(\n                            f\"{len(chunk):X}\\r\\n\".encode(\"ascii\")\n                        )\n                        self.wfile.write(chunk)\n                        self.wfile.write(b\"\
+    \\r\\n\")\n                        self.wfile.flush()\n\n                    self.wfile.write(b\"0\\r\\n\\r\\n\")\n                    self.wfile.flush()\n\n                #\n                # Standard non-streaming response.\n                #\n                else:\n                    data = response.read()\n\n\n                    self.send_response(response.status)\n\n                    for key, value in response.headers.items():\n                        if key.lower() not in (\n                            \"transfer-encoding\",\n                            \"connection\",\n                            \"content-length\",\n                        ):\n                            self.send_header(key, value)\n\n                    self.send_header(\n                        \"Content-Length\",\n                        str(len(data)),\n                    )\n\n                    self.end_headers()\n                    self.wfile.write(data)\n\n        except urllib.error.HTTPError\
+    \ as exc:\n            performance_status = exc.code\n            self.send_response(exc.code)\n            data = exc.read()\n            self.send_header(\"Content-Type\", exc.headers.get(\"Content-Type\", \"application/json\"))\n            self.send_header(\"Content-Length\", str(len(data)))\n            self.end_headers()\n            self.wfile.write(data)\n        except Exception as exc:\n            performance_status = 503\n            try:\n                self.send_json(503, {\"error\": str(exc), \"model\": model_id})\n            except (BrokenPipeError, ConnectionResetError):\n                pass\n        finally:\n            if performance_enabled:\n                record_perf(performance_effort, performance_status,\n                            (time.monotonic() - performance_started) * 1000, performance_ttft)\n            if lease:\n                try:request_account.call('end-inference',lease=lease)\n                except Exception:\n                    # Durable\
+    \ lease intentionally survives uncertain cancellation.\n                    print(\"[WATOOM_REQUEST_ACCOUNTING] completion unverified\",flush=True)\n\nif __name__ == \"__main__\":\n    port = int(os.environ.get(\"PORT\", \"8000\"))\n    print(f\"llm-router listening on :{port}\", flush=True)\n    ThreadingHTTPServer((\"0.0.0.0\", port), Handler).serve_forever()\n"
+  client.py: "\"\"\"G3F client contracts. No Kubernetes calls or fallback to kubectl.\"\"\"\nimport socket\n\
+    import json\n\nclass ControllerUnavailable(RuntimeError):\n    pass\n\nclass ControllerRejected(RuntimeError):\n\
+    \    pass\n\nclass GPUClient:\n    def __init__(self, socket_path, timeout=10):\n        self.socket_path\
+    \ = str(socket_path)\n        self.timeout = timeout\n\n    def call(self, action, **fields):\n  \
+    \      req = {'action': action, **fields}\n        payload = json.dumps(req, separators=(',', ':')).encode()\
+    \ + b'\\n'\n        if len(payload) > 65536:\n            raise ValueError('request too large')\n\
+    \        try:\n            with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:\n     \
+    \           sock.settimeout(self.timeout)\n                sock.connect(self.socket_path)\n      \
+    \          sock.sendall(payload)\n                stream = sock.makefile('rb')\n                raw\
+    \ = stream.readline(65537)\n                if not raw or len(raw) > 65536 or not raw.endswith(b'\\\
+    n'):\n                    raise ControllerUnavailable('missing or oversized response')\n        except\
+    \ (OSError, TimeoutError) as exc:\n            raise ControllerUnavailable('controller unreachable;\
+    \ do not switch models independently') from exc\n        try:\n            response = json.loads(raw)\n\
+    \        except ValueError as exc:\n            raise ControllerUnavailable('invalid controller response')\
+    \ from exc\n        if not isinstance(response, dict):\n            raise ControllerUnavailable('unexpected\
+    \ controller response')\n        if 'error' in response:\n            raise ControllerRejected(str(response['error'])+':\
+    \ '+str(response.get('detail','controller rejected'))) \n        if 'result' not in response:\n  \
+    \          raise ControllerUnavailable('controller response missing result')\n        return response['result']\n\
+    \nclass RouterAdapter:\n    \"\"\"Router may check eligibility, but has NO direct scaling fallback.\"\
+    \"\"\n    def __init__(self, client):\n        self.client = client\n\n    def ensure_primary_available(self):\n\
+    \        result = self.client.call('can-use-qwen')\n        if result.get('allowed') is not True:\n\
+    \            raise ControllerRejected('primary GPU not available')\n        return True\n\n    def\
+    \ ensure_specialist(self):\n        raise ControllerRejected('specialist activation is worker-only;\
+    \ router must not scale')\n\nclass MeshWorkerAdapter:\n    \"\"\"Only bounded lifecycle calls; the\
+    \ host worker owns the job ID.\n\n    No retry of activate/restore after uncertain transport outcome.\n\
+    \    \"\"\"\n    def __init__(self, client):\n        self.client = client\n\n    def begin(self,\
+    \ job_id):\n        result = self.client.call('begin', job=job_id)\n        if not isinstance(result.get('generation'),\
+    \ int):\n            raise ControllerUnavailable('invalid generation acknowledgement')\n        return\
+    \ result['generation']\n\n    def activate(self, job_id, generation):\n        return self.client.call('activate',\
+    \ job=job_id, generation=generation)\n\n    def restore(self, job_id, generation):\n        return\
+    \ self.client.call('restore', job=job_id, generation=generation)\n\n    def status(self):\n      \
+    \  return self.client.call('status')\n"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: llm-router-scale
+  namespace: llama-cpp
+rules:
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llm-router
+  namespace: llama-cpp
+  labels:
+    app: llm-router
+    app.kubernetes.io/managed-by: kubectl
+    app.kubernetes.io/name: llm-router
+    app.kubernetes.io/part-of: llama-cpp
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: llm-router
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: llm-router
+        app.kubernetes.io/name: llm-router
+        app.kubernetes.io/part-of: llama-cpp
+    spec:
+      containers:
+      - command:
+        - python3
+        - /app/router.py
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        - name: PORT
+          value: '8000'
+        - name: WATOOM_MODEL_MAX_CALLS
+          value: '3'
+        - name: WATOOM_MODEL_CALL_TTL_SECONDS
+          value: '900'
+        - name: START_TIMEOUT_SECONDS
+          value: '240'
+        - name: STOP_TIMEOUT_SECONDS
+          value: '120'
+        - name: SWITCH_LOCK_TIMEOUT_SECONDS
+          value: '300'
+        - name: WATOOM_MANAGED_CATALOG
+          value: /managed-models/catalog.json
+        - name: WATOOM_MANAGED_KEY
+          value: /private/backend-key
+        image: docker.io/library/python@sha256:6d43704baacd1bfbe7c295d7f13079d5d8104ed33568873133f8fc69980419df
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 4
+          httpGet:
+            path: /healthz
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 20
+          periodSeconds: 30
+          successThreshold: 1
+          timeoutSeconds: 5
+        name: router
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 6
+          httpGet:
+            path: /healthz
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 50m
+            memory: 128Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /app
+          name: app
+          readOnly: true
+        - name: gpu-controller
+          mountPath: /gpu-controller
+          readOnly: true
+        - name: managed-models
+          mountPath: /managed-models
+          readOnly: true
+        - name: managed-key
+          mountPath: /private/backend-key
+          readOnly: true
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: llm-router
+      serviceAccountName: llm-router
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: llm-router-app
+        name: app
+      - name: gpu-controller
+        hostPath:
+          path: /data/ai/helper-scripts/state/gpu-controller-router
+          type: Directory
+      - name: managed-models
+        hostPath:
+          path: /data/ai/helper-scripts/state/model-manager-router
+          type: Directory
+      - name: managed-key
+        hostPath:
+          path: /data/ai/private/model-manager/backend-key
+          type: File

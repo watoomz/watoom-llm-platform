@@ -1,0 +1,39 @@
+---
+- name: Read legacy canary replica state
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - -n
+      - "{{ opencode_agent_v2_canary_namespace }}"
+      - get
+      - deployment
+      - "{{ opencode_agent_v2_canary_deployment }}"
+      - --ignore-not-found
+      - -o
+      - json
+  register: opencode_canary_before_suspend
+  changed_when: false
+
+- name: Suspend a running legacy canary through the approved idle drain
+  when:
+    - opencode_canary_before_suspend.stdout | trim | length > 0
+    - (opencode_canary_before_suspend.stdout | from_json).spec.replicas | default(1) | int > 0
+  block:
+    - name: Require explicit approval before stopping a running canary
+      ansible.builtin.assert:
+        that: opencode_agent_suspend_i_approve | bool
+        fail_msg: "Set opencode_agent_suspend_i_approve=true for the guarded --i-approve shutdown; active work is never interrupted."
+    - name: Apply canary-only suspension with saved recovery evidence
+      ansible.builtin.command:
+        argv:
+          - python3
+          - "{{ role_path }}/../../../tools/watoom-code/suspend-canary.py"
+          - --evidence
+          - "{{ opencode_agent_suspend_evidence }}"
+          - --i-approve
+      register: opencode_canary_suspend
+      changed_when: (opencode_canary_suspend.stdout_lines[-1] | from_json).changed | bool
+
+- name: Report legacy canary policy
+  ansible.builtin.debug:
+    msg: "Legacy canary remains at zero replicas or absent. Production is watoom-code/watoom-code."

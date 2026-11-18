@@ -1,0 +1,909 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "watoom-code",
+        "namespace": "{{ watoom_code_namespace }}",
+        "labels": {
+          "app.kubernetes.io/managed-by": "watoom-code-ansible"
+        }
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "watoom-toolkit-controller",
+        "namespace": "{{ watoom_code_namespace }}",
+        "labels": {
+          "app.kubernetes.io/managed-by": "watoom-code-ansible"
+        }
+      }
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "Role",
+      "metadata": {
+        "name": "watoom-toolkit-workers",
+        "namespace": "{{ watoom_code_namespace }}"
+      },
+      "rules": [
+        {
+          "apiGroups": [
+            "batch"
+          ],
+          "resources": [
+            "jobs"
+          ],
+          "verbs": [
+            "create",
+            "get",
+            "delete"
+          ]
+        },
+        {
+          "apiGroups": [
+            ""
+          ],
+          "resources": [
+            "pods"
+          ],
+          "verbs": [
+            "get",
+            "list"
+          ]
+        },
+        {
+          "apiGroups": [
+            ""
+          ],
+          "resources": [
+            "pods/log"
+          ],
+          "verbs": [
+            "get"
+          ]
+        }
+      ]
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "RoleBinding",
+      "metadata": {
+        "name": "watoom-toolkit-workers",
+        "namespace": "{{ watoom_code_namespace }}"
+      },
+      "roleRef": {
+        "apiGroup": "rbac.authorization.k8s.io",
+        "kind": "Role",
+        "name": "watoom-toolkit-workers"
+      },
+      "subjects": [
+        {
+          "kind": "ServiceAccount",
+          "name": "watoom-toolkit-controller",
+          "namespace": "{{ watoom_code_namespace }}"
+        }
+      ]
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "agentmemory",
+        "namespace": "{{ watoom_code_namespace }}",
+        "labels": {
+          "app.kubernetes.io/managed-by": "watoom-code-ansible"
+        }
+      },
+      "spec": {
+        "replicas": 1,
+        "revisionHistoryLimit": 10,
+        "selector": {
+          "matchLabels": {
+            "app": "agentmemory"
+          }
+        },
+        "strategy": {
+          "type": "Recreate"
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "agentmemory"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "containers": [
+              {
+                "env": [
+                  {
+                    "name": "AGENTMEMORY_DATA_DIR",
+                    "value": "/data"
+                  },
+                  {
+                    "name": "AGENTMEMORY_SECRET",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "key": "AGENTMEMORY_SECRET",
+                        "name": "watoom-code-auth"
+                      }
+                    }
+                  },
+                  {
+                    "name": "AGENTMEMORY_INJECT_CONTEXT",
+                    "value": "false"
+                  },
+                  {
+                    "name": "AGENTMEMORY_AUTO_COMPRESS",
+                    "value": "false"
+                  },
+                  {
+                    "name": "TOKEN_BUDGET",
+                    "value": "2000"
+                  }{% if watoom_code_memory_embeddings | bool %}{% for e in watoom_code_memory_embedding_env %},
+                  {{ e | to_json }}{% endfor %}{% endif %}
+                ],
+                "image": "{{ watoom_code_memory_image }}",
+                "imagePullPolicy": "IfNotPresent",
+                "livenessProbe": {
+                  "failureThreshold": 6,
+                  "httpGet": {
+                    "path": "/agentmemory/livez",
+                    "port": "http",
+                    "scheme": "HTTP"
+                  },
+                  "initialDelaySeconds": 20,
+                  "periodSeconds": 20,
+                  "successThreshold": 1,
+                  "timeoutSeconds": 5
+                },
+                "name": "agentmemory",
+                "ports": [
+                  {
+                    "containerPort": 3111,
+                    "name": "http",
+                    "protocol": "TCP"
+                  }
+                ],
+                "readinessProbe": {
+                  "failureThreshold": 24,
+                  "httpGet": {
+                    "path": "/agentmemory/livez",
+                    "port": "http",
+                    "scheme": "HTTP"
+                  },
+                  "initialDelaySeconds": 5,
+                  "periodSeconds": 5,
+                  "successThreshold": 1,
+                  "timeoutSeconds": 3
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "1Gi"
+                  },
+                  "limits": {
+                    "cpu": "2",
+                    "memory": "{{ watoom_code_agentmemory_memory_limit | default('2Gi') }}"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "terminationMessagePath": "/dev/termination-log",
+                "terminationMessagePolicy": "File",
+                "volumeMounts": [
+
+                  {
+                    "mountPath": "/data",
+                    "name": "data"
+                  }
+                ]
+              }
+            ],
+            "dnsPolicy": "ClusterFirst",
+            "restartPolicy": "Always",
+            "schedulerName": "default-scheduler",
+            "securityContext": {
+              "fsGroup": 1000,
+              "runAsGroup": 1000,
+              "runAsUser": 1000,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              },
+              "seLinuxOptions": null
+            },
+            "terminationGracePeriodSeconds": 30,
+            "volumes": [
+
+              {
+                "hostPath": {
+                  "path": "{{ watoom_code_root }}/memory",
+                  "type": "Directory"
+                },
+                "name": "data"
+              }
+            ],
+            "nodeSelector": {}
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "agentmemory",
+        "namespace": "{{ watoom_code_namespace }}",
+        "labels": {
+          "app.kubernetes.io/managed-by": "watoom-code-ansible"
+        }
+      },
+      "spec": {
+        "selector": {
+          "app": "agentmemory"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 3111,
+            "targetPort": 3111
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "watoom-toolkit",
+        "namespace": "{{ watoom_code_namespace }}",
+        "labels": {
+          "app.kubernetes.io/managed-by": "watoom-code-ansible"
+        }
+      },
+      "spec": {
+        "replicas": 1,
+        "revisionHistoryLimit": 10,
+        "selector": {
+          "matchLabels": {
+            "app": "watoom-toolkit"
+          }
+        },
+        "strategy": {
+          "type": "Recreate"
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "watoom-toolkit"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": true,
+            "containers": [
+              {
+                "env": [
+                  {
+                    "name": "WATOOM_TOKEN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "key": "token",
+                        "name": "watoom-code-auth"
+                      }
+                    }
+                  },
+                  {
+                    "name": "WATOOM_STATE",
+                    "value": "/state"
+                  },
+                  {
+                    "name": "WATOOM_WORKSPACE",
+                    "value": "/workspace"
+                  },
+                  {
+                    "name": "WATOOM_WORKER_IMAGE",
+                    "value": "{{ watoom_code_toolkit_image }}"
+                  },
+                  {
+                    "name": "WATOOM_DUNGEON_ENABLED",
+                    "value": "{{ '1' if watoom_code_dungeon_enabled else '0' }}"
+                  },
+                  {
+                    "name": "WATOOM_UNREAL_EDITOR_SHA256",
+                    "value": "{{ watoom_code_unreal_editor_sha256 }}"
+                  },
+                  {
+                    "name": "WATOOM_HOST_UNREAL_ENGINE",
+                    "value": "{{ watoom_code_unreal_root }}"
+                  },
+                  {
+                    "name": "WATOOM_HOST_STATE",
+                    "value": "{{ watoom_code_root }}/toolkit-state"
+                  },
+                  {
+                    "name": "WATOOM_HOST_WORKSPACE",
+                    "value": "{{ watoom_code_root }}/workspace"
+                  },
+                  {
+                    "name": "WATOOM_WORKER_NAMESPACE",
+                    "value": "{{ watoom_code_namespace }}"
+                  },
+                  {
+                    "name": "WATOOM_3D_PUBLISH",
+                    "value": "/generated"
+                  },
+                  {
+                    "name": "WATOOM_HOST_PUBLISH",
+                    "value": "{{ watoom_code_root }}/generated/generated/watoom-toolkit-3d/v1"
+                  },
+                  {
+                    "name": "WATOOM_3D_PUBLIC_REFERENCE",
+                    "value": "generated/watoom-toolkit-3d/v1"
+                  }
+                ],
+                "image": "{{ watoom_code_toolkit_image }}",
+                "imagePullPolicy": "IfNotPresent",
+                "livenessProbe": {
+                  "failureThreshold": 3,
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8879,
+                    "scheme": "HTTP"
+                  },
+                  "initialDelaySeconds": 10,
+                  "periodSeconds": 20,
+                  "successThreshold": 1,
+                  "timeoutSeconds": 1
+                },
+                "name": "toolkit",
+                "ports": [
+                  {
+                    "containerPort": 8879,
+                    "name": "http",
+                    "protocol": "TCP"
+                  }
+                ],
+                "readinessProbe": {
+                  "failureThreshold": 3,
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8879,
+                    "scheme": "HTTP"
+                  },
+                  "initialDelaySeconds": 3,
+                  "periodSeconds": 10,
+                  "successThreshold": 1,
+                  "timeoutSeconds": 1
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "128Mi"
+                  },
+                  "limits": {
+                    "cpu": "2",
+                    "memory": "1Gi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  },
+                  "readOnlyRootFilesystem": true,
+                  "seccompProfile": {
+                    "type": "RuntimeDefault"
+                  }
+                },
+                "terminationMessagePath": "/dev/termination-log",
+                "terminationMessagePolicy": "File",
+                "volumeMounts": [
+                  {
+                    "mountPath": "/workspace",
+                    "name": "workspace"
+                  },
+                  {
+                    "mountPath": "/assets",
+                    "name": "assets",
+                    "readOnly": true
+                  },
+                  {
+                    "mountPath": "/unreal-engine",
+                    "name": "unreal",
+                    "readOnly": true
+                  },
+                  {
+                    "mountPath": "/state",
+                    "name": "state"
+                  },
+                  {
+                    "mountPath": "/tmp",
+                    "name": "tmp"
+                  },
+                  {
+                    "mountPath": "/home/toolkit",
+                    "name": "home"
+                  },
+                  {
+                    "mountPath": "/generated",
+                    "name": "generated-3d"
+                  },
+                  {
+                    "name": "ai-library",
+                    "mountPath": "/data/ai",
+                    "readOnly": true
+                  }
+                ]
+              }
+            ],
+            "dnsPolicy": "ClusterFirst",
+            "restartPolicy": "Always",
+            "schedulerName": "default-scheduler",
+            "securityContext": {
+              "runAsUser": 1009,
+              "runAsGroup": 1009,
+              "fsGroup": 1009,
+              "seLinuxOptions": null
+            },
+            "serviceAccount": "watoom-toolkit-controller",
+            "serviceAccountName": "watoom-toolkit-controller",
+            "terminationGracePeriodSeconds": 30,
+            "volumes": [
+              {
+                "hostPath": {
+                  "path": "{{ watoom_code_root }}/workspace",
+                  "type": "Directory"
+                },
+                "name": "workspace"
+              },
+              {
+                "hostPath": {
+                  "path": "/data/ai/assets",
+                  "type": "Directory"
+                },
+                "name": "assets"
+              },
+              {
+                "hostPath": {
+                  "path": "{{ watoom_code_unreal_root }}",
+                  "type": "Directory"
+                },
+                "name": "unreal"
+              },
+              {
+                "hostPath": {
+                  "path": "{{ watoom_code_root }}/toolkit-state",
+                  "type": "Directory"
+                },
+                "name": "state"
+              },
+              {
+                "emptyDir": {
+                  "sizeLimit": "1Gi"
+                },
+                "name": "tmp"
+              },
+              {
+                "emptyDir": {
+                  "sizeLimit": "256Mi"
+                },
+                "name": "home"
+              },
+              {
+                "hostPath": {
+                  "path": "{{ watoom_code_root }}/generated/generated/watoom-toolkit-3d/v1",
+                  "type": "Directory"
+                },
+                "name": "generated-3d"
+              },
+              {
+                "name": "ai-library",
+                "hostPath": {
+                  "path": "/data/ai",
+                  "type": "Directory"
+                }
+              }
+            ],
+            "nodeSelector": {}
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "watoom-toolkit",
+        "namespace": "{{ watoom_code_namespace }}",
+        "labels": {
+          "app.kubernetes.io/managed-by": "watoom-code-ansible"
+        }
+      },
+      "spec": {
+        "selector": {
+          "app": "watoom-toolkit"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8879,
+            "targetPort": 8879
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "watoom-code",
+        "namespace": "{{ watoom_code_namespace }}",
+        "labels": {
+          "app.kubernetes.io/managed-by": "watoom-code-ansible"
+        }
+      },
+      "spec": {
+        "replicas": 1,
+        "strategy": {
+          "type": "Recreate"
+        },
+        "selector": {
+          "matchLabels": {
+            "app": "watoom-code"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "watoom-code"
+            }
+          },
+          "spec": {
+            "serviceAccountName": "watoom-code",
+            "automountServiceAccountToken": false,
+            "securityContext": {
+              "runAsUser": 1001,
+              "runAsGroup": 1001,
+              "fsGroup": 1001,
+              "supplementalGroups": [
+                1009
+              ],
+              "seLinuxOptions": null
+            },
+            "containers": [
+              {
+                "name": "app",
+                "image": "{{ watoom_code_image }}",
+                "imagePullPolicy": "IfNotPresent",
+                "args": [
+                  "serve",
+                  "--hostname",
+                  "0.0.0.0",
+                  "--port",
+                  "4096"
+                ],
+                "workingDir": "/workspace",
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 4096
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "HOME",
+                    "value": "/home/opencode"
+                  },
+                  {
+                    "name": "OPENCODE_CONFIG_DIR",
+                    "value": "/config"
+                  },
+                  {
+                    "name": "OPENCODE_DISABLE_MODELS_FETCH",
+                    "value": "1"
+                  },
+                  {"name":"WATOOM_MEMORY_REQUIRED","value":"{{ watoom_code_memory_required | default(true) | ternary('true','false') }}"},
+                  {"name":"WATOOM_GPU_OBSERVATION_FILE","value":"/run/watoom-ownership/status.json"},
+                  {
+                    "name": "AGENTMEMORY_URL",
+                    "value": "http://agentmemory.{{ watoom_code_namespace }}.svc.cluster.local:3111"
+                  },
+                  {
+                    "name": "WATOOM_TOKEN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "watoom-code-auth",
+                        "key": "token"
+                      }
+                    }
+                  },
+                  {
+                    "name": "OPENCODE_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "watoom-code-auth",
+                        "key": "OPENCODE_PASSWORD"
+                      }
+                    }
+                  },
+                  {
+                    "name": "AGENTMEMORY_SECRET",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "watoom-code-auth",
+                        "key": "AGENTMEMORY_SECRET"
+                      }
+                    }
+                  },
+                  {
+                    "name": "OPENCODE_DB",
+                    "value": "/state/application.sqlite"
+                  },
+                  {
+                    "name": "WATOOM_DEPLOYMENT_GATE_FILE",
+                    "value": "/state/watoom-release-guard.json"
+                  }
+                ],
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "3Gi"
+                  },
+                  "limits": {
+                    "cpu": "2",
+                    "memory": "5Gi"
+                  }
+                },
+                "startupProbe": {
+                  "tcpSocket": {
+                    "port": 4096
+                  },
+                  "periodSeconds": 5,
+                  "failureThreshold": 36
+                },
+                "readinessProbe": {
+                  "exec": {
+                    "command": [
+                      "sh",
+                      "-c",
+                      "wget -q -O /dev/null --header=\"Authorization: Basic $(printf \"opencode:%s\" \"$OPENCODE_PASSWORD\" | base64 | tr -d \"\\n\")\" http://127.0.0.1:4096/api/info"
+                    ]
+                  },
+                  "periodSeconds": 10,
+                  "timeoutSeconds": 5
+                },
+                "livenessProbe": {
+                  "tcpSocket": {
+                    "port": 4096
+                  },
+                  "periodSeconds": 20
+                },
+                "volumeMounts": [
+{% if watoom_code_gpu_observability_enabled | default(true) %}
+                  {"name":"gpu-observation","mountPath":"/run/watoom-ownership","readOnly":true},
+{% endif %}
+{% if watoom_code_mesh_enabled | default(false) %}
+                  {"name": "mesh-bridge", "mountPath": "/home/opencode/.config/opencode/mesh-bridge", "readOnly": true},
+{% endif %}
+                  {
+                    "name": "home",
+                    "mountPath": "/home/opencode"
+                  },
+                  {
+                    "name": "config",
+                    "mountPath": "/config"{% if watoom_code_config_read_only | default(false) | bool %},
+                    "readOnly": true
+                  },
+                  {# The RW /state mount is the whole stage root; shadow its config subtree. #}
+                  {
+                    "name": "config",
+                    "mountPath": "/state/config",
+                    "readOnly": true{% endif %}
+                  },
+                  {
+                    "name": "workspace",
+                    "mountPath": "/workspace"
+                  },
+                  {"name":"uploads","mountPath":"/tmp/opencode"},
+                  {
+                    "name": "state",
+                    "mountPath": "/state"
+                  },
+                  {
+                    "name": "generated",
+                    "mountPath": "/generated"
+                  },
+                  {
+                    "name": "ai-library",
+                    "mountPath": "/data/ai",
+                    "readOnly": true
+                  },
+                  {"name":"server-repositories","mountPath":"/data/github","readOnly":true},
+{% for group in watoom_code_project_groups %}
+                  {"name":"projects-{{ group }}","mountPath":"{{ watoom_code_project_groups_root }}/{{ group }}"},
+{% endfor %}
+                  {"name":"image-projects","mountPath":"{{ watoom_code_image_projects_root }}","readOnly":false},
+                  {"name":"image-output","mountPath":"/generated/model-manager","readOnly":true}
+                ]
+              }
+            ],
+            "volumes": [
+{% if watoom_code_gpu_observability_enabled | default(true) %}
+              {"name":"gpu-observation","hostPath":{"path":"{{ watoom_code_gpu_observability_root }}","type":"Directory"}},
+{% endif %}
+{% if watoom_code_mesh_enabled | default(false) %}
+              {"name": "mesh-bridge", "hostPath": {"path": "{{ watoom_code_mesh_bridge_host }}", "type": "Directory"}},
+{% endif %}
+              {
+                "name": "home",
+                "hostPath": {
+                  "path": "{{ watoom_code_root }}/home",
+                  "type": "Directory"
+                }
+              },
+              {
+                "name": "config",
+                "hostPath": {
+                  "path": "{{ watoom_code_root }}/config",
+                  "type": "Directory"
+                }
+              },
+              {
+                "name": "workspace",
+                "hostPath": {
+                  "path": "{{ watoom_code_root }}/workspace",
+                  "type": "Directory"
+                }
+              },
+              {"name":"uploads","hostPath":{"path":"{{ watoom_code_root }}/uploads","type":"Directory"}},
+              {
+                "name": "state",
+                "hostPath": {
+                  "path": "{{ watoom_code_root }}/",
+                  "type": "Directory"
+                }
+              },
+              {
+                "name": "generated",
+                "hostPath": {
+                  "path": "{{ watoom_code_root }}/generated",
+                  "type": "Directory"
+                }
+              },
+              {
+                "name": "ai-library",
+                "hostPath": {
+                  "path": "/data/ai",
+                  "type": "Directory"
+                }
+              },
+              {"name":"server-repositories","hostPath":{"path":"/data/github","type":"Directory"}},
+{% for group in watoom_code_project_groups %}
+              {"name":"projects-{{ group }}","hostPath":{"path":"{{ watoom_code_project_groups_root }}/{{ group }}","type":"Directory"}},
+{% endfor %}
+              {
+                "name":"image-projects","hostPath":{"path":"{{ watoom_code_image_projects_root }}","type":"Directory"}
+              },
+              {
+                "name":"image-output","hostPath":{"path":"{{ watoom_code_image_output_root }}","type":"Directory"}
+              }
+            ]
+          }
+        }
+      }
+    },
+{% if watoom_code_egress_policy_enabled | default(false) | bool %}
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "watoom-code-egress",
+        "namespace": "{{ watoom_code_namespace }}"
+      },
+      "spec": {
+        "podSelector": {"matchLabels": {"app": "watoom-code"}},
+        "policyTypes": ["Egress"],
+        "egress": [
+          {"to": [{"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "kube-system"}}, "podSelector": {"matchLabels": {"k8s-app": "kube-dns"}}}],
+           "ports": [{"protocol": "UDP", "port": 53}, {"protocol": "TCP", "port": 53}]},
+          {"to": [{"podSelector": {"matchLabels": {"app": "agentmemory"}}}], "ports": [{"protocol": "TCP", "port": 3111}]},
+          {"to": [{"podSelector": {"matchLabels": {"app": "watoom-toolkit"}}}], "ports": [{"protocol": "TCP", "port": 8879}]},
+          {"to": [{"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "llama-cpp"}}, "podSelector": {"matchLabels": {"app": "llm-router"}}}],
+           "ports": [{"protocol": "TCP", "port": 8000}]},
+          {"to": [{"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "llama-cpp"}}, "podSelector": {"matchLabels": {"app": "bge-embeddings"}}}],
+           "ports": [{"protocol": "TCP", "port": 8000}]},
+          {"to": [{"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "glance"}}, "podSelector": {"matchLabels": {"app": "model-manager"}}}],
+           "ports": [{"protocol": "TCP", "port": 8787}]},
+          {"to": [{"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "kali-agent"}}, "podSelector": {"matchLabels": {"app": "watoom-kali-workbench-mcp"}}}],
+           "ports": [{"protocol": "TCP", "port": 8088}]},
+          {"to": [{"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "searxng"}}, "podSelector": {"matchLabels": {"app": "searxng"}}}],
+           "ports": [{"protocol": "TCP", "port": 8080}]},
+          {"to": [{"ipBlock": {"cidr": "0.0.0.0/0", "except": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "100.64.0.0/10", "169.254.0.0/16"]}}]}
+        ]
+      }
+    },
+{% if watoom_code_godot_mcp_enabled | default(false) | bool %}
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {"name": "watoom-code-godot-mcp-egress", "namespace": "{{ watoom_code_namespace }}"},
+      "spec": {
+        "podSelector": {"matchLabels": {"app": "watoom-code"}},
+        "policyTypes": ["Egress"],
+        "egress": [{"to": [{"ipBlock": {"cidr": "{{ watoom_code_godot_mcp_host }}/32"}}], "ports": [{"protocol": "TCP", "port": 2223}]}]
+      }
+    },
+{% endif %}
+{% if watoom_code_ue_mcp_enabled | default(false) | bool %}
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {"name": "watoom-code-ue-mcp-egress", "namespace": "{{ watoom_code_namespace }}"},
+      "spec": {
+        "podSelector": {"matchLabels": {"app": "watoom-code"}},
+        "policyTypes": ["Egress"],
+        "egress": [{"to": [{"ipBlock": {"cidr": "{{ watoom_code_ue_mcp_host }}/32"}}], "ports": [{"protocol": "TCP", "port": 2224}]}]
+      }
+    },
+{% endif %}
+{% if watoom_code_unreal_mcp_enabled | default(false) | bool %}
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {"name": "watoom-code-unreal-mcp-egress", "namespace": "{{ watoom_code_namespace }}"},
+      "spec": {
+        "podSelector": {"matchLabels": {"app": "watoom-code"}},
+        "policyTypes": ["Egress"],
+        "egress": [{"to": [{"ipBlock": {"cidr": "10.242.0.1/32"}}], "ports": [{"protocol": "TCP", "port": 15354}]}]
+      }
+    },
+{% endif %}
+{% endif %}
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "watoom-code",
+        "namespace": "{{ watoom_code_namespace }}",
+        "labels": {
+          "app.kubernetes.io/managed-by": "watoom-code-ansible"
+        }
+      },
+      "spec": {
+        "selector": {
+          "app": "watoom-code"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 4096,
+            "targetPort": 4096
+          }
+        ]
+      }
+    }
+  ]
+}

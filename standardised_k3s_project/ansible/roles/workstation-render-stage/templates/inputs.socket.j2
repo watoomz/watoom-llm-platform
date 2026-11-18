@@ -1,0 +1,11 @@
+[Unit]
+Description=Scoped workstation asset snapshot socket
+[Socket]
+ListenStream=/run/watoom-workstation-inputs.sock
+SocketUser={{ workstation_stage_user }}
+SocketGroup={{ workstation_stage_user }}
+SocketMode=0600
+Accept=yes
+MaxConnections=4
+[Install]
+WantedBy=sockets.target

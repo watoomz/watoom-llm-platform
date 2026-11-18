@@ -1,0 +1,7 @@
+---
+- name: Restart tickets board broker
+  ansible.builtin.systemd:
+    name: "{{ tickets_board_service_name }}"
+    state: restarted
+    daemon_reload: true
+  when: not ansible_check_mode

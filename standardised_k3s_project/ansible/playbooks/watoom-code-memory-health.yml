@@ -1,0 +1,25 @@
+---
+- name: Restore WatooM Code AgentMemory within bounded host capacity
+  hosts: homelab
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Set the evidenced AgentMemory startup memory ceiling
+      kubernetes.core.k8s:
+        state: patched
+        merge_type: strategic-merge
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata: {name: agentmemory, namespace: watoom-code}
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: agentmemory
+                    resources:
+                      limits: {memory: "{{ watoom_code_agentmemory_memory_limit | default('2Gi') }}"}
+    - name: Verify AgentMemory readiness
+      ansible.builtin.command:
+        argv: [kubectl, -n, watoom-code, rollout, status, deployment/agentmemory, --timeout=180s]
+      changed_when: false

@@ -1,0 +1,18 @@
+{
+  "sourceCommit": "35552bba66c647e49dd2b776e7c430b8b5ca863e",
+  "baseCommit": "9038e9b8c43932721d147d5478eee01dc6c82cd2",
+  "image": "127.0.0.1:5000/watoom-code@sha256:9386ef9a2f8c29c0651e532bf23c8582e3759e0f1cf0326d2104e212fbe50092",
+  "bundle": "watoom-code-loop-input-recovery-20261026.bundle",
+  "bundleSha256": "563745e6b975985878ddd7a20a6f3be0da6a206696ad8c0ea22d6c602bf6703d",
+  "applicationOnly": true,
+  "updatesCapabilities": false,
+  "stageWorkerSkill": true,
+  "checks": {
+    "runnerAndLoopTests": 228,
+    "lint": "PASS",
+    "coreTypecheck": "PASS",
+    "externalSyntheticRecovery": "PASS",
+    "queuedNativeJobs": "PASS",
+    "internalHandoffProtection": "PASS"
+  }
+}

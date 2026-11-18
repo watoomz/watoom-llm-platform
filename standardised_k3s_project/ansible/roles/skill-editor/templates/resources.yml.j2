@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skill-editor
+  namespace: {{ skill_editor_namespace }}
+  labels: {app: skill-editor, watoom.io/owner: skill-editor}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app: skill-editor}
+  template:
+    metadata:
+      labels: {app: skill-editor}
+      annotations: {watoom.io/skill-editor-source: "{{ skill_editor_source_digest | hash('sha256') }}"}
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsUser: {{ skill_editor_uid }}
+        runAsGroup: {{ skill_editor_gid }}
+        runAsNonRoot: true
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: editor
+        image: {{ skill_editor_image }}
+        command: [python3, /app/server.py, --listen, 0.0.0.0, --port, "{{ skill_editor_port }}", --password-file, /private/password, --origin, "{{ skill_editor_origin }}", --broker-socket, /socket/broker.sock, --prefix, "{{ skill_editor_prefix }}"]
+        env: [{name: PYTHONDONTWRITEBYTECODE, value: "1"}]
+        ports: [{containerPort: {{ skill_editor_port }}}]
+        resources:
+          requests: {cpu: 20m, memory: 32Mi}
+          limits: {cpu: 500m, memory: 128Mi}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: [ALL]}
+        readinessProbe:
+          tcpSocket: {port: {{ skill_editor_port }}}
+        volumeMounts:
+        - {name: app, mountPath: /app, readOnly: true}
+        - {name: password, mountPath: /private/password, readOnly: true}
+        - {name: socket, mountPath: /socket}
+      volumes:
+      - name: app
+        hostPath: {path: "{{ skill_editor_app_root }}", type: Directory}
+      - name: password
+        hostPath: {path: "{{ skill_editor_password_file }}", type: File}
+      - name: socket
+        hostPath: {path: "{{ skill_editor_socket_dir }}", type: Directory}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: skill-editor
+  namespace: {{ skill_editor_namespace }}
+  labels: {watoom.io/owner: skill-editor}
+spec:
+  selector: {app: skill-editor}
+  ports: [{port: {{ skill_editor_port }}, targetPort: {{ skill_editor_port }}}]
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: skill-editor
+  namespace: {{ skill_editor_namespace }}
+  labels: {watoom.io/owner: skill-editor}
+spec:
+  entryPoints: [websecure]
+  routes:
+  - kind: Rule
+    match: Host(`glance.internal.homelab.example`) && PathPrefix(`{{ skill_editor_prefix }}/`)
+    priority: 110
+    services:
+    - name: skill-editor
+      port: {{ skill_editor_port }}
+      nativeLB: true
+  tls:
+    secretName: watoom-tls

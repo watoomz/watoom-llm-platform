@@ -1,0 +1,110 @@
+{
+  "schema": 1,
+  "asset_assistant": {
+    "url": "https://github.com/jhodges0845/Asset-Assistant",
+    "revision": "76780c798562ef63786bc75debe3ec084d1025f2",
+    "license": "GPL-3.0-or-later",
+    "source_archive_sha256": "ad000e0a322783b7c23ecac9ebdb60f00eb81578a7212727d1b1ab2f3222f732"
+  },
+  "native_provider_compatibility": "Blender 5.2.3 API subset verified; full Blender UI addon is not compatibility-certified",
+  "files": [
+    {
+      "path": "agent.py",
+      "sha256": "a9569ca864f3f1f20a03fc591e71645d30df18dcc3bf42fdc12849f5859d3ecc"
+    },
+    {
+      "path": "asset_catalog.py",
+      "sha256": "1707ffb5518281a8a0a408e63f734cc7824569c5d8b9cafc2ca5277942e80e80"
+    },
+    {
+      "path": "blender_3d.py",
+      "sha256": "024950c2a4972c2e4aaf10cd7a7571f3fe234b223e76c5caae16d905c7ddd38e"
+    },
+    {
+      "path": "catalog.json",
+      "sha256": "fc04ec7204d87145f4ed0582dff6affc718cedc512f9dd03ff1f547e106344ee"
+    },
+    {
+      "path": "creative.py",
+      "sha256": "c2eb0c535cf67de74e956d067b69536179a670b4c6b7743c5176017cf2d10e10"
+    },
+    {
+      "path": "creative_blender.py",
+      "sha256": "3f1d5aa5544781c4c92fccb6b7c3b3eb08c1aee8f1e5b3bb0998da6735a7c840"
+    },
+    {
+      "path": "creative_blender_common.py",
+      "sha256": "e55f82bff63be26bdfbc255dff3a8f59a2443a9bdda96cc6b30ae7659797a3cd"
+    },
+    {
+      "path": "creative_character.py",
+      "sha256": "cf71c51883c84f7c7b3c9fab977b53bde39b7f7bbae742caf08db19a0d4b8974"
+    },
+    {
+      "path": "creative_material.py",
+      "sha256": "ad02a0fb6ea550f878b0b7d6b9cddf75a2074050671504beb33964f291d48c4c"
+    },
+    {
+      "path": "creative_verify.gd",
+      "sha256": "adb1e9e17b96713a41ab084ad1a15b8ae1756ad67f44b390f5dfa8922c7dd006"
+    },
+    {
+      "path": "creative_world.py",
+      "sha256": "25fd927a0ca87d37fd1807e7af70f10bbef6202677bc1597877b9cd15eb2e3fb"
+    },
+    {
+      "path": "dungeon_blender.py",
+      "sha256": "fae1cc68fd2be99672c2fec5a5463f3859fe7d328f6b09938005be9c0ca3f2a7"
+    },
+    {
+      "path": "dungeon_layout.py",
+      "sha256": "cfdb770cfbbd26b2a0554996a2ea20b226d646e27dce214d7c19a0b2dfa27b96"
+    },
+    {
+      "path": "dungeon_pipeline.py",
+      "sha256": "884261bfb24fb75443e9b10681b54a179ce1bfe5ea2dc7f9ae80852da05b06a3"
+    },
+    {
+      "path": "dungeon_recipes.py",
+      "sha256": "0f7d13fa0b9c41840218b2512c774bb153eeac0f025135b28037d4a8150bb563"
+    },
+    {
+      "path": "dungeon_unreal.py",
+      "sha256": "71f2b652087f4397a70b9f5c2f0d9c2896eb5e7ea644b9b5afc23c4754635756"
+    },
+    {
+      "path": "dungeon_verify.gd",
+      "sha256": "c8dc1b5ee67db74a1d241b50869b695bd9259779aa955b5e2a95b3f93621d175"
+    },
+    {
+      "path": "dungeon_worker.py",
+      "sha256": "cbab028a4e0cb7a7a95f2c6aad66ac9bbf666baa39d25fdf3e059ac56eab1671"
+    },
+    {
+      "path": "fixed_layout.py",
+      "sha256": "18836856722550e23f8d909ea97beef89bc9efda6753dab3aa3e07fd75be35f9"
+    },
+    {
+      "path": "job_admission.py",
+      "sha256": "20564312cee8ee54c6fee3da5aee8d7b0ca83acb3efa3b38253b88a8978933e5"
+    },
+    {
+      "path": "kube_worker.py",
+      "sha256": "cef3066738015fc474c49b1489c68ad57bef194e386871be5d48e447c7df3a11"
+    },
+    {
+      "path": "publish_3d.py",
+      "sha256": "023433e4292315f598cfbf0c08ab47d08baf6dbe30624dde35ccdeba068fe97e"
+    },
+    {
+      "path": "three_d.py",
+      "sha256": "db3e5131c672b443d993c80654ff21a7384a1d9e5490b2b0c2fbf62f247f1805"
+    }
+  ],
+  "production_baseline_image": "127.0.0.1:5000/watoom-toolkit@sha256:5a90f8c767d3ee28851976e6aab2fcfd75052ea184313b214b19fcb1a8c5e3d3",
+  "source_state": "NATIVE_DUNGEON_SEMI_PRODUCTION_VERIFIED",
+  "deployed_image": "127.0.0.1:5000/watoom-toolkit@sha256:3b2368f5c45c8ebced2644ac6f316ef499512de912afa4c6be85a3e37212ef39",
+  "deployed_source_commit": "b201f68e6cc95e251c7fe9dfed0ea000e5b792b7",
+  "acceptance_evidence": "/data/ai/helper-scripts/reports/dungeon-integration-20261017T140618Z/native-candidate/candidate-acceptance.json",
+  "fixed_layout_candidate": "Explicit bounded2D board in existing world.compose; isolated native collision/navigation/textured GLB/Godot/two-view preview passed; production activation pending."
+}

@@ -1,0 +1,15 @@
+{
+  "sourceCommit": "520aca54ea4a49640f91ebe819983c89dc30e558",
+  "baseCommit": "4f64b0e38ac22652907f48029beb12fae5f7a4c9",
+  "image": "127.0.0.1:5000/watoom-code@sha256:66e2ca21794c483b72be4f5c7fc63face4ac010b61ae606d5e13a55bd3c7a976",
+  "bundle": "watoom-code-catalogue-input-fix-20261026.bundle",
+  "bundleSha256": "4cd29d322a0bcb44d0b38a5f92e6de263f1905b57196f158457bd939fdb784b9",
+  "stageWorkerSkill": true,
+  "approval": "User authorized pausing active sessions and deploying on 2026-10-26",
+  "checks": {
+    "routingTests": 8,
+    "invalidInputRegression": "numeric string 15 accepted; invalid/out-of-range limits rejected",
+    "coreTypecheck": "PASS",
+    "immutableBuild": "PASS"
+  }
+}

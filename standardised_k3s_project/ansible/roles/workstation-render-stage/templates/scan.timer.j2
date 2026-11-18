@@ -1,0 +1,8 @@
+[Unit]
+Description=Poll only the workstation staging inbox
+[Timer]
+OnBootSec=15s
+OnUnitInactiveSec=10s
+Unit=watoom-workstation-render-stage-scan.service
+[Install]
+WantedBy=timers.target

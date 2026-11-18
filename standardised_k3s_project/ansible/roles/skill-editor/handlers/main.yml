@@ -1,0 +1,7 @@
+---
+- name: Restart skill editor broker
+  ansible.builtin.systemd:
+    name: "{{ skill_editor_service_name }}"
+    state: restarted
+    daemon_reload: true
+  when: not ansible_check_mode

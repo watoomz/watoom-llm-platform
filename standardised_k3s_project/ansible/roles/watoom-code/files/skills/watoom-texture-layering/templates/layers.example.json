@@ -1,0 +1,12 @@
+{
+  "seed": 1,
+  "sharpness": 4,
+  "layers": [
+    {"name": "grass", "fallback": true, "color": [0.26, 0.38, 0.16]},
+    {"name": "rock",  "slope_deg": [34, 90, 8], "noise": {"scale_m": 60, "amount": 0.2}, "color": [0.45, 0.44, 0.42]},
+    {"name": "dirt",  "slope_deg": [10, 28, 6], "noise": {"scale_m": 25, "amount": 0.45}, "color": [0.36, 0.27, 0.16]},
+    {"name": "mud",   "curvature": {"kind": "concave", "strength": 2.0}, "slope_deg": [0, 14, 4], "noise": {"scale_m": 15, "amount": 0.3}, "color": [0.24, 0.19, 0.13]},
+    {"name": "sand",  "height_norm": [0.0, 0.03, 0.02], "slope_deg": [0, 12, 4], "color": [0.76, 0.69, 0.5]},
+    {"name": "snow",  "height_norm": [0.88, 1.0, 0.04], "slope_deg": [0, 38, 8], "noise": {"scale_m": 40, "amount": 0.25}, "color": [0.94, 0.95, 0.98]}
+  ]
+}

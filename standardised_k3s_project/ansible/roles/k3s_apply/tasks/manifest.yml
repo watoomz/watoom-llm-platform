@@ -1,0 +1,19 @@
+---
+- name: "Kubernetes {{ k3s_manifest_target }} | Verify manifest exists"
+  ansible.builtin.stat:
+    path: "{{ project_root }}/{{ k3s_manifest_target }}"
+  register: k3s_manifest_target_stat
+
+- name: "Kubernetes {{ k3s_manifest_target }} | Assert manifest exists"
+  ansible.builtin.assert:
+    that:
+      - k3s_manifest_target_stat.stat.exists
+      - k3s_manifest_target_stat.stat.isreg
+    fail_msg: "Declared manifest missing: {{ k3s_manifest_target }}"
+
+- name: "Kubernetes {{ k3s_manifest_target }} | Apply manifest"
+  kubernetes.core.k8s:
+    state: present
+    src: "{{ project_root }}/{{ k3s_manifest_target }}"
+    kubeconfig: "{{ k3s_kubeconfig }}"
+    apply: true

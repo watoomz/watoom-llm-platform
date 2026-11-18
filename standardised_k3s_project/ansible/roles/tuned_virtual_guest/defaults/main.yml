@@ -1,0 +1,4 @@
+---
+# TuneD profile used by virtual machine guests to bias kernel and I/O defaults
+# for a hypervisor-backed workload.
+tuned_virtual_guest_profile: virtual-guest

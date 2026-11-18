@@ -1,0 +1,8 @@
+[Unit]
+Description=Refresh the Dispatcharr Web_stream playlist used by VLC
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=watoom
+ExecStart=/usr/local/bin/watoom-dispatcharr-playlist-refresh

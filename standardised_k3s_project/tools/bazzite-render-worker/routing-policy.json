@@ -1,0 +1,35 @@
+{
+  "preferred": "bazzite",
+  "fallback": "rig-stage",
+  "activation": "qualification-required",
+  "fallback_on": [
+    "unreachable-before-start",
+    "unsupported-capability",
+    "operator-paused-before-claim"
+  ],
+  "never_replay": [
+    "running",
+    "uncertain",
+    "failed-after-start"
+  ],
+  "blender": "5.2.1 LTS",
+  "build": "9e2066aef7ef",
+  "godot": "4.7.2",
+  "resources": {
+    "memory_max_gib": 10,
+    "memory_high_gib": 8,
+    "cpu_threads": 6,
+    "host_reserve_gib": 2,
+    "minimum_job_memory_gib": 6,
+    "deadline_seconds": 900
+  },
+  "delivery": {
+    "protocol": "SFTP",
+    "resume_partial_files": true,
+    "verify": "SHA-256 and exact byte size",
+    "atomic_acceptance": true,
+    "stable_ack_id": true,
+    "rerender_on_network_error": false,
+    "fallback_after_start": false
+  }
+}

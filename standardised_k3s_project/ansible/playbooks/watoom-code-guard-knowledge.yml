@@ -1,0 +1,22 @@
+---
+# Install the reviewed coordinator guard AND the rebuilt language-knowledge cards in one idle-window restart
+# (run through tools/watoom-code/recover-idle-admission.py --playbook watoom-code-guard-knowledge.yml).
+- name: Deploy the native coordinator guard and language-knowledge cards under the held release fence
+  hosts: homelab
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../vars/watoom-code.yml
+  tasks:
+    - name: Require native idle deployment guard
+      ansible.builtin.assert:
+        that:
+          - watoom_coordinator_release_guard_held | default(false) | bool
+    - name: Install and select the immutable coordinator guard
+      ansible.builtin.include_role:
+        name: watoom-code
+        tasks_from: coordinator_guard.yml
+    - name: Install and select the language-knowledge package and cards
+      ansible.builtin.include_role:
+        name: watoom-code
+        tasks_from: language_knowledge.yml

@@ -1,0 +1,134 @@
+---
+# Lab side of the reverse-SSH route to the Nwiro Unreal MCP server (see tools/rig-unreal-mcp/README.md).
+#   * a tunnel-only account (no shell, may only listen on 127.0.0.1:{{ tunnel_port }}),
+#   * a token + tool-policy gated proxy on the cluster bridge address (default read-only tools),
+#   * nothing is exposed on the LAN, and nothing reaches watoom-code until watoom_code_unreal_mcp_enabled is turned on.
+# Add the rig's public key with:  -e "rig_tunnel_public_key='ssh-ed25519 AAAA... watoom-unreal-tunnel'"
+- name: Install the Unreal MCP tunnel endpoint and proxy
+  hosts: homelab
+  become: true
+  gather_facts: false
+  vars:
+    tunnel_user: rigtunnel
+    tunnel_port: 15353
+    proxy_listen: 10.242.0.1
+    proxy_port: 15354
+    state_dir: /data/ai/unreal-mcp
+    proxy_src: "{{ playbook_dir }}/../../tools/rig-unreal-mcp/mcp_proxy.py"
+    proxy_dest: /usr/local/libexec/watoom/unreal_mcp_proxy.py
+    rig_tunnel_public_key: ""
+  tasks:
+    - name: Tunnel-only account
+      ansible.builtin.user:
+        name: "{{ tunnel_user }}"
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+        home: /nonexistent
+        password: "!"
+
+    - name: Authorized keys directory
+      ansible.builtin.file: {path: /etc/ssh/authorized_keys, state: directory, owner: root, group: root, mode: "0755"}
+
+    - name: Rig tunnel key, restricted to the single reverse forward
+      ansible.builtin.copy:
+        dest: "/etc/ssh/authorized_keys/{{ tunnel_user }}"
+        owner: root
+        group: root
+        mode: "0644"
+        content: 'restrict,port-forwarding,permitlisten="127.0.0.1:{{ tunnel_port }}" {{ rig_tunnel_public_key }}'
+      when: rig_tunnel_public_key | length > 0
+
+    - name: sshd rules for the tunnel account
+      block:
+        - name: Install the drop-in
+          ansible.builtin.copy:
+            dest: /etc/ssh/sshd_config.d/60-rigtunnel.conf
+            owner: root
+            group: root
+            mode: "0644"
+            content: |
+              # Reverse tunnel for the Unreal MCP route only. No shell, no other forwarding.
+              Match User {{ tunnel_user }}
+                  AuthorizedKeysFile /etc/ssh/authorized_keys/{{ tunnel_user }}
+                  AuthenticationMethods publickey
+                  PasswordAuthentication no
+                  KbdInteractiveAuthentication no
+                  AllowTcpForwarding remote
+                  PermitListen 127.0.0.1:{{ tunnel_port }}
+                  PermitOpen none
+                  GatewayPorts no
+                  AllowAgentForwarding no
+                  X11Forwarding no
+                  PermitTTY no
+                  ForceCommand /usr/sbin/nologin
+              Match all
+          register: sshd_dropin
+        - name: Validate sshd configuration
+          ansible.builtin.command: /usr/sbin/sshd -t
+          changed_when: false
+      rescue:
+        - name: Remove the drop-in again if sshd rejects it
+          ansible.builtin.file: {path: /etc/ssh/sshd_config.d/60-rigtunnel.conf, state: absent}
+        - name: Stop here
+          ansible.builtin.fail: {msg: sshd rejected the tunnel drop-in; it was removed and sshd was not reloaded}
+
+    - name: Reload sshd
+      ansible.builtin.service: {name: sshd, state: reloaded}
+      when: sshd_dropin is changed
+
+    - name: State directory (root-owned so the agent cannot loosen the policy)
+      ansible.builtin.file: {path: "{{ state_dir }}", state: directory, owner: root, group: root, mode: "0755"}
+
+    - name: Bearer token (generated once; readable by the opencode group so watoom-code can send it)
+      ansible.builtin.shell: umask 077 && openssl rand -hex 32 > "{{ state_dir }}/token"
+      args: {creates: "{{ state_dir }}/token"}
+
+    - name: Token permissions
+      ansible.builtin.file: {path: "{{ state_dir }}/token", owner: root, group: opencode, mode: "0640"}
+
+    - name: Tool policy (read-only by default; add names to allow_names to open specific tools)
+      ansible.builtin.copy:
+        dest: "{{ state_dir }}/policy.json"
+        owner: root
+        group: root
+        mode: "0644"
+        force: false
+        content: |
+          {"allow_prefixes": ["list_", "read_", "find_", "get_"], "allow_names": [], "deny_names": []}
+
+    - name: Proxy script
+      ansible.builtin.copy: {src: "{{ proxy_src }}", dest: "{{ proxy_dest }}", owner: root, group: root, mode: "0755"}
+      notify: Restart proxy
+
+    - name: Proxy service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/watoom-unreal-mcp-proxy.service
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Token and tool-policy gate for the Unreal MCP tunnel
+          After=network-online.target k3s.service
+          [Service]
+          ExecStart=/usr/bin/python3 -I {{ proxy_dest }} --listen {{ proxy_listen }} --port {{ proxy_port }} --upstream http://127.0.0.1:{{ tunnel_port }}/mcp --token-file {{ state_dir }}/token --policy-file {{ state_dir }}/policy.json
+          User=nobody
+          SupplementaryGroups=opencode
+          Restart=always
+          RestartSec=5
+          NoNewPrivileges=true
+          ProtectSystem=strict
+          ProtectHome=true
+          PrivateTmp=true
+          RestrictAddressFamilies=AF_INET
+          [Install]
+          WantedBy=multi-user.target
+      notify: Restart proxy
+
+    - name: Enable and start the proxy
+      ansible.builtin.systemd: {name: watoom-unreal-mcp-proxy.service, enabled: true, state: started, daemon_reload: true}
+
+  handlers:
+    - name: Restart proxy
+      ansible.builtin.systemd: {name: watoom-unreal-mcp-proxy.service, state: restarted, daemon_reload: true}

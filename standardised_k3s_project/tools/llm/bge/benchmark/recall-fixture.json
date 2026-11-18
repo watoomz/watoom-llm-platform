@@ -1,0 +1,23 @@
+{"description":"Paraphrased-query recall fixture from real WatooM homelab incidents. Each query avoids the record's key wording.",
+ "records":[
+ {"id":"r01","text":"Grafana unified alerting overwrote alertname with the rule title; fixed with label_replace into prom_alert and group_by prom_alert so Discord notifications show the Prometheus alert name.","query":"why did the Discord notifications all show the same alert name"},
+ {"id":"r02","text":"node-exporter could not read the textfile collector because the parent directory was created 0700 under umask 077; create each level 0755.","query":"host metrics missing because exporter lacked permission on the directory"},
+ {"id":"r03","text":"SQLite backups left -wal and -shm files; set journal_mode=delete on the copy before gzip so the archive is self-contained.","query":"database backup archive had extra write-ahead log files"},
+ {"id":"r04","text":"Metasploit database failed to start because the kali data root was mode 0750; set the root to 0751 while subdirectories stay 0750.","query":"pentest framework database would not start due to folder permissions"},
+ {"id":"r05","text":"The AgentMemory outbox stranded 1354 uncertain items after ambiguous acknowledgments; reconcile by verified search then requeue absent items to pending.","query":"memory items stuck and never delivered after timeouts"},
+ {"id":"r06","text":"The GPU controller refuses to start a model unless nvidia-smi memory.used is below released_gpu_max_mib after the previous model stops.","query":"switching models fails because video memory still looks occupied"},
+ {"id":"r07","text":"kube-router network policy: host traffic to ClusterIP services is SNATed to the cni0 address 10.242.0.1, so allow that /32 for probes and host tools.","query":"node health checks blocked after adding pod firewall rules"},
+ {"id":"r08","text":"The rig cannot accept inbound connections, so off-host backups use a jailed key-only SFTP pull account and receipts verified against manifests.","query":"how does the gaming PC get copies of the homelab backups"},
+ {"id":"r09","text":"Pre-push hook rejects pushes to protected branches; push to dev then fast-forward main in the canonical checkout before pushing to GitHub.","query":"git refused my push to the feature branch"},
+ {"id":"r10","text":"A Jinja comment opening with {{# broke template parsing; put the {# #} comment on its own line.","query":"ansible template failed to parse because of a comment"},
+ {"id":"r11","text":"llama-server rejects embedding inputs longer than the physical batch with 'input is too large to process'; split into 510-token windows and average.","query":"embedding request fails for long documents"},
+ {"id":"r12","text":"The game worker race was caused by concurrent runs; a non-blocking fcntl flock returns early when another run holds the lock.","query":"two copies of the background job ran at the same time"},
+ {"id":"r13","text":"Swift Qwen 3.8 runs at 131072 context with q4_0 KV cache, the vision projector on CPU and MTP drafting of four tokens.","query":"what context length and cache precision does the coding model use"},
+ {"id":"r14","text":"Cloudflared tunnel tokens are owned 65532:65532 with mode 0400 and RouterOS backups are root 0600 via secure-sensitive-files.","query":"locking down the tunnel credentials on disk"},
+ {"id":"r15","text":"Stale Failed pods remained after node pressure eviction; delete them only after confirming no controller still references them.","query":"evicted pods left behind in error state"},
+ {"id":"r16","text":"Agent permissions use last-match-wins evaluation, so a later allow rule overrides an earlier deny for the same tool.","query":"why could the agent still use a tool I had denied"},
+ {"id":"r17","text":"A nested volumeMount at /state/config shadowed the parent mount; mount the config volume separately read-only.","query":"files disappeared inside the container because of overlapping mounts"},
+ {"id":"r18","text":"The release ledger records image digest, OCI revision label and IaC commit so verify-iac proves the running image equals the reviewed commit.","query":"how do we prove which source commit is running in production"},
+ {"id":"r19","text":"The rig async completion outbox looped because enqueue conflicted on body text; conflict only on application or session.","query":"completion notifications kept repeating for the same request"},
+ {"id":"r20","text":"BGE small v1.5 on llama.cpp used 307 MiB VRAM idle beside Swift; the controller threshold stays satisfied.","query":"how much graphics memory does the embedding model take"}
+ ]}

@@ -1,0 +1,9 @@
+{
+    "release": "/data/ai/helper-scripts/watoom-blender-unified/releases/v3.2-godot-path",
+    "package_sha256": "1e42a8908b6ba1b065af5bb05ed54564f7feca331ec2f217886284ff45f5b021",
+    "manifest_sha256": "92e1d6a66a78284be94de688dd0a2c4c67887766eebc2d2cce1eae68866202cd",
+    "archive": "/data/ai/helper-scripts/watoom-blender-unified/snapshots/unified-v3.2-godot-path.tar.gz",
+    "archive_sha256": "50c05bf23b212d2fdcba324d27527ea25c800396185b7d6e82e7f576143aab82",
+    "validation": "/data/ai/helper-scripts/watoom-blender-unified/reports/suite-20261105T004611Z/runtime/validation.json",
+    "baseline_git": "ae92274fbac98c8e8156fadd15bc05787571d2e3"
+}

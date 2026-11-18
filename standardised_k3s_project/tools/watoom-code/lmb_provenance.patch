@@ -1,0 +1,111 @@
+--- a/tools/watoom-code/game_worker_bridge.py
++++ b/tools/watoom-code/game_worker_bridge.py
+@@ -5,6 +5,8 @@
+ sys.path.insert(0,str(pathlib.Path(__file__).resolve().parent))
+ from maintenance_guard import Maintenance
+ from game_validation import atomic
++from lmb_provenance import ALGORITHM, receipt_report
++import datetime
+ CONFIG=pathlib.Path('/etc/watoom-game-worker.json')
+ PRIVATE=pathlib.Path('/data/ai/private/game-worker')
+ REPORTS=pathlib.Path('/data/ai/helper-scripts/reports/game-worker')
+@@ -13,18 +15,22 @@
+ def fingerprint(project):
+  rows=[]
+  for root,dirs,files in os.walk(project,followlinks=False):
+-  dirs[:]=[x for x in dirs if x not in {'.godot','.opencode','.git','magpie-final'}]
+   for name in list(dirs)+files:
+    p=pathlib.Path(root)/name
+    if p.is_symlink():raise ValueError('Source symlink refused')
++  dirs[:]=[x for x in dirs if x not in {'.godot','.opencode','.git','magpie-final'}]
+   for name in files:
+    if name.endswith('.import'):continue
+-   p=pathlib.Path(root)/name;s=p.stat();rows.append([str(p.relative_to(project)),str(s.st_size),str(s.st_mtime_ns)])
++   p=pathlib.Path(root)/name;s=p.stat()
++   if not stat.S_ISREG(s.st_mode):continue
++   rows.append([str(p.relative_to(project)),str(s.st_size),str(s.st_mtime_ns)])
+    if len(rows)>20000:raise ValueError('Source limit')
+  for name in ['.opencode/validation/p6-env-capture/p6_env_capture.gd','.opencode/validation/p6-env-capture/p6_env_capture.tscn','.opencode/validation/p7-poo-capture/p7_poo_capture.gd','.opencode/validation/p7-poo-capture/p7_poo_capture.tscn']:
+   p=project/name
++  if p.is_symlink():raise ValueError('Indirect capture source')
++  if p.parent.exists() and p.parent.resolve()!=p.parent:raise ValueError('Indirect capture source')
+   if p.exists():
+-   if p.is_symlink() or not p.is_file():raise ValueError('Indirect capture source')
++   if p.resolve()!=p or p.is_symlink() or not p.is_file():raise ValueError('Indirect capture source')
+    s=p.stat();rows.append([name,str(s.st_size),str(s.st_mtime_ns)])
+  rows.append(['.watoom-worker-contract','cache-mount-v1','0'])
+  rows.sort(key=lambda x:x[0].encode());return hashlib.sha256(canonical(rows).encode()).hexdigest()
+@@ -37,7 +43,7 @@
+   if s.get('status')=='completed' and i=={'action':'request','operation':v['operation'],'job':v['job']} and all(md.get(k)==v[k] for k in ['request_id','project','operation','source_fingerprint','job']):return True
+  return False
+ def publish(v,status,**extra):
+- public={k:v[k] for k in ['request_id','project','operation','source_fingerprint']};public.update(status=status,**extra)
++ public={k:v[k] for k in ['request_id','project','operation','source_fingerprint','job']};public.update(status=status,**extra)
+  # Only root-owned, regular, non-writable-by-others status files are trusted by the native tool.
+  private=PRIVATE/(v['request_id']+'.json');atomic(private,public)
+  parent=os.open(v['project'],os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+@@ -153,12 +159,20 @@
+       if v['operation']=='capture-p7':cmd+=['--profile','p7']
+       elif p85_capture:cmd+=['--profile','p85']
+       try:
++       execution_started_at=datetime.datetime.now(datetime.timezone.utc).isoformat()
+        r=subprocess.run(cmd,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=900);(REPORTS/(ident+'.operator.log')).write_text(r.stdout)
+        receipt=json.loads((out/'result.json').read_text()) if (out/'result.json').is_file() else {'status':'FAIL','reason':'Helper did not produce result; operator log retained'}
++       if v['operation']=='lmb-qualify':
++        identity_check=receipt_report(receipt,v)
++        if identity_check['errors']:raise ValueError('Native receipt identity/provenance mismatch: '+str(identity_check['errors']))
++        receipt.update({k:v[k] for k in ['request_id','project','job','operation','source_fingerprint']})
++        receipt.update(source_fingerprint_algorithm=ALGORITHM,executed_at=execution_started_at,receipt_path=str(out/'result.json'))
++        atomic(out/'result.json',receipt)
++        (out/'result.json').chmod(0o644)
+        same=fingerprint(project)==v['source_fingerprint'] and receipt.get('live_source_still_matches_snapshot',True)
+        terminal='COMPLETED' if same and r.returncode==0 else 'STALE_RESULT' if not same else 'FAILED'
+        # Publish bounded actual result fields, no arbitrary raw logs or prompt content.
+-       summary={k:receipt[k] for k in ['status','profile','scene','summary','runtime_error_count','errors','images','memory_limit','cgroup_memory_max','cgroup_limit_verified','source_unchanged','failed_tests','runtime_error_examples','scope','engine','class_counts','loaded','assets','godot_adaptation_confirmed'] if k in receipt}
++       summary={k:receipt[k] for k in ['status','profile','scene','summary','runtime_error_count','errors','images','memory_limit','cgroup_memory_max','cgroup_limit_verified','source_unchanged','failed_tests','runtime_error_examples','scope','engine','class_counts','loaded','assets','godot_adaptation_confirmed','native_status','source_fingerprint_algorithm','native_input_sha256','native_input_algorithm','receipt_path','executed_at'] if k in receipt}
+        app_receipt=receipt.get('app_receipt')
+        if not app_receipt:
+         candidates=list((project/'.opencode/validation/operator-godot').glob('*'+str(receipt.get('unit','missing'))+'*.json'));app_receipt=str(candidates[0]) if candidates else None
+--- a/tools/watoom-code/lmb_qualify.py
++++ b/tools/watoom-code/lmb_qualify.py
+@@ -32,8 +32,9 @@
+ try: cgroup_memory_max=cgroup_file.read_text().strip()
+ except OSError: cgroup_memory_max='NOT RECORDED'
+ cgroup_verified=cgroup_memory_max=='4294967296'
+-status='QUALIFIED_NATIVE_COMPILE_ONLY' if rc==0 and native.get('status')=='NATIVE_COMPILE_PASS' and native.get('source_unchanged') is True and cgroup_verified else 'FAIL'
++status='QUALIFIED_NATIVE_COMPILE_ONLY' if rc==0 and native.get('status')=='NATIVE_COMPILE_PASS' and native.get('source_unchanged') is True and cgroup_verified and native.get('native_input_files') and native.get('native_input_sha256') else 'FAIL'
+ result={'status':status,'scope':'Native Blueprint compile only; landscape/creek generation, geometry and visual acceptance NOT TESTED',
++ 'native_input_files':native.get('native_input_files'),'native_input_sha256':native.get('native_input_sha256'),'native_input_algorithm':native.get('native_input_algorithm'),'native_provenance_scope':native.get('native_provenance_scope'),
+  'native_status':native.get('status'),'source_unchanged':native.get('source_unchanged'),
+  'memory_limit':'4GiB','cgroup_memory_max':cgroup_memory_max,'cgroup_limit_verified':cgroup_verified,'evidence':str(child),'exit':rc,'live_source_still_matches_snapshot':True}
+ (out/'result.json').write_text(json.dumps(result,indent=2))
+--- a/tools/fab/qualify-landscape.py
++++ b/tools/fab/qualify-landscape.py
+@@ -1,11 +1,13 @@
+ #!/usr/bin/env python3
+ """Landscape Mesh Builder: bounded native load/compile qualification, no generation."""
+-import pathlib,json,subprocess,hashlib,time,os,argparse,shutil
++import pathlib,json,subprocess,hashlib,time,os,argparse,shutil,sys
++sys.path.insert(0,str(pathlib.Path(__file__).resolve().parents[1]/'watoom-code'))
++from lmb_provenance import native_input_files,native_input_sha256,compare_native_inputs,NATIVE_ALGORITHM
+ p=argparse.ArgumentParser();p.add_argument('--evidence',type=pathlib.Path,required=True);p.add_argument('--memory-gib',type=int,choices=[3,4],default=3);a=p.parse_args();out=a.evidence.resolve();assert out.is_relative_to('/data/ai/helper-scripts/reports') and not out.exists()
+-source=pathlib.Path('/data/ai/assets/fab/landscape-mesh-builder-48364dff');assert (source/'LandscapeMeshBuilder.uproject').is_file()
++source=pathlib.Path('/data/ai/assets/fab/landscape-mesh-builder-48364dff');assert (source/'LandscapeMeshBuilder.uproject').is_file();assert (source/'Content/LandscapeMeshBuilder/Blueprints/BP_LandscapeMeshBuilder.uasset').is_file(),'Required native Blueprint missing'
+ mem=int(next(x.split()[1] for x in pathlib.Path('/proc/meminfo').read_text().splitlines() if x.startswith('MemAvailable:')))*1024
+ assert mem>=(a.memory_gib+2)*1024**3,'Worker plus2GiB reserve unavailable; do not alter inference'
+-out.mkdir(mode=0o770);before={str(x.relative_to(source)):hashlib.sha256(x.read_bytes()).hexdigest() for x in source.rglob('*') if x.is_file()};(out/'source-hashes.json').write_text(json.dumps(before,indent=2))
++out.mkdir(mode=0o770);native_before=native_input_files(source);before={str(x.relative_to(source)):hashlib.sha256(x.read_bytes()).hexdigest() for x in source.rglob('*') if x.is_file()};(out/'source-hashes.json').write_text(json.dumps(before,indent=2))
+ project=json.loads((source/'LandscapeMeshBuilder.uproject').read_text());project['EngineAssociation']='';project['Plugins'].append({'Name':'PythonScriptPlugin','Enabled':True});(out/'LandscapeMeshBuilder.uproject').write_text(json.dumps(project));shutil.copytree(source/'Config',out/'Config')
+ probe="""import unreal,json,pathlib,traceback
+ r={'status':'FAIL','scope':'Native Blueprint load/compile only; terrain generation/export/visual fidelity NOT TESTED'}
+@@ -35,5 +37,8 @@
+  if j.get('status',{}).get('succeeded') or j.get('status',{}).get('failed'):break
+  time.sleep(5)
+ logs=subprocess.run(['kubectl','-n','watoom-code','logs','job/'+name],capture_output=True,text=True);(out/'native.private.log').write_text(logs.stdout+logs.stderr);os.chmod(out/'native.private.log',0o600)
+-after={str(x.relative_to(source)):hashlib.sha256(x.read_bytes()).hexdigest() for x in source.rglob('*') if x.is_file()};assert after==before,'Purchased source changed'
+-result=json.loads((out/'native-result.json').read_text()) if (out/'native-result.json').exists() else {'status':'NATIVE_QUALIFICATION_FAILED','job':name};result['source_unchanged']=True;result['job']=name;(out/'qualification.json').write_text(json.dumps(result,indent=2));print(json.dumps(result));raise SystemExit(0 if result['status']=='NATIVE_COMPILE_PASS' else 1)
++native_after=native_input_files(source);native_changes=compare_native_inputs(native_before,native_after)
++after={str(x.relative_to(source)):hashlib.sha256(x.read_bytes()).hexdigest() for x in source.rglob('*') if x.is_file()};source_unchanged=after==before and not any(native_changes.values())
++result=json.loads((out/'native-result.json').read_text()) if (out/'native-result.json').exists() else {'status':'NATIVE_QUALIFICATION_FAILED','job':name};result['source_unchanged']=source_unchanged;result['job']=name;result.update(native_input_files=native_before,native_input_sha256=native_input_sha256(native_before),native_input_algorithm=NATIVE_ALGORITHM,native_input_changes=native_changes,native_provenance_scope='Declared purchased source pack, not an actual-open trace; engine and plugin dependencies excluded');
++if not source_unchanged:result.update(status='NATIVE_SOURCE_CHANGED')
++(out/'qualification.json').write_text(json.dumps(result,indent=2));print(json.dumps(result));raise SystemExit(0 if result['status']=='NATIVE_COMPILE_PASS' else 1)

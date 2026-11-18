@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "templates": [
+    {
+      "id": "unreal-complete-rpg",
+      "category": "rpg",
+      "name": "Complete RPG",
+      "download_url": "https://mega.nz/file/CDJ3nCoC#d0nSNiYud-rePbMZba1bqR_bWnLrIAYk4MfyDhWOSpo",
+      "source_url": "https://www.unrealengine.com/marketplace/en-US/product/complete-rpg",
+      "description": "RPG project template; inspect bundled documentation before choosing systems or adapting content.",
+      "tags": [
+        "unreal",
+        "rpg",
+        "blueprint",
+        "template"
+      ],
+      "engine": "unreal"
+    },
+    {
+      "id": "unreal-damage-resource-stat-system",
+      "category": "rpg",
+      "name": "Damage, Resource and Stat System",
+      "download_url": "https://mega.nz/file/vS4CUCbS#1nL4CcaWYWO2dqM76Jam4LnkR_KU36LU8LSGzq0KxYU",
+      "source_url": "https://www.unrealengine.com/marketplace/en-US/product/damage-resource-and-stat-system",
+      "description": "Reusable damage, resource and character-stat systems; a component pack rather than a standalone RPG game.",
+      "tags": [
+        "unreal",
+        "rpg",
+        "damage",
+        "resource",
+        "stats",
+        "system"
+      ],
+      "engine": "unreal"
+    },
+    {
+      "id": "unreal-fps-multiplayer-template",
+      "category": "fps",
+      "name": "FPS Multiplayer Template 4.0",
+      "download_url": "https://mega.nz/file/qfBSGRwZ#tI7OpwWuvpwVwpshUha6gnYkwpif9xbVpeLE9H56vic",
+      "source_url": "https://www.unrealengine.com/marketplace/en-US/product/fps-multiplayer-template",
+      "description": "Multiplayer first-person shooter template labelled version 4.0 for UE 4.26\u20134.27; newer-engine compatibility requires qualification.",
+      "tags": [
+        "unreal",
+        "fps",
+        "multiplayer",
+        "shooter",
+        "template"
+      ],
+      "engine": "unreal"
+    }
+  ]
+}

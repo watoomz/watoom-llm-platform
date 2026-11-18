@@ -1,0 +1,34 @@
+---
+# Install the engineering-discipline skills ported from obra/superpowers (MIT): plain skill-directory copies,
+# no app change, no runtime download. WatooM Code needs a fresh session to see them.
+# Remove: delete the seven directories and the two superpowers-* files under config/skills.
+- name: Install engineering-discipline skills
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    engineering_skills: [verification-before-completion, systematic-debugging, test-driven-development, writing-plans, brainstorming, requesting-code-review, receiving-code-review]
+    skills_dest: /data/ai/watoom-code/config/skills
+  tasks:
+    - name: Install skill directories
+      ansible.builtin.copy:
+        src: "../roles/watoom-code/files/skills/{{ item }}/"
+        dest: "{{ skills_dest }}/{{ item }}/"
+        owner: '1001'
+        group: '1001'
+        mode: '0644'
+        directory_mode: '0755'
+      loop: "{{ engineering_skills }}"
+    - name: Install licence and source record
+      ansible.builtin.copy:
+        src: "../roles/watoom-code/files/skills/{{ item }}"
+        dest: "{{ skills_dest }}/{{ item }}"
+        owner: '1001'
+        group: '1001'
+        mode: '0644'
+      loop: [superpowers-LICENSE, superpowers-source.json]
+    - name: Restore skill labels
+      ansible.builtin.command:
+        argv: [restorecon, -R, "{{ skills_dest }}/{{ item }}"]
+      loop: "{{ engineering_skills + ['superpowers-LICENSE', 'superpowers-source.json'] }}"
+      changed_when: false

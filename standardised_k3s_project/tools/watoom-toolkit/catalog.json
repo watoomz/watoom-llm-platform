@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "profiles": {
+    "base": {
+      "description": "Essential Python, Git and process tools",
+      "packages": [
+        "python3",
+        "python3-pip",
+        "git",
+        "git-lfs",
+        "curl",
+        "ca-certificates",
+        "jq",
+        "unzip",
+        "zip",
+        "tar",
+        "findutils",
+        "procps-ng",
+        "which",
+        "file",
+        "shadow-utils",
+        "openssh-clients"
+      ]
+    },
+    "development": {
+      "description": "C/C++, Go, Rust, Node.js, Java and build systems",
+      "packages": [
+        "gcc",
+        "gcc-c++",
+        "clang",
+        "lld",
+        "cmake",
+        "ninja-build",
+        "make",
+        "pkgconf-pkg-config",
+        "nodejs",
+        "npm",
+        "golang",
+        "rust",
+        "cargo",
+        "java-25-openjdk-devel"
+      ]
+    },
+    "modeling": {
+      "description": "Blender, Godot, asset conversions and imaging",
+      "packages": [
+        "godot",
+        "assimp",
+        "python3-pillow",
+        "python3-numpy",
+        "libX11",
+        "libXrender",
+        "libXxf86vm",
+        "libXfixes",
+        "libXi",
+        "libxkbcommon",
+        "libSM",
+        "libICE",
+        "libglvnd-glx",
+        "zlib-ng-compat",
+        "libstdc++"
+      ],
+      "native_runtime": {
+        "tool": "blender",
+        "version": "5.2.3",
+        "source": "https://download.blender.org/release/Blender5.2/blender-5.2.3-linux-x64.tar.xz",
+        "archive_sha256": "78486c018b4443efe5e75ab54c290ed8c15abafd249b862c2c9ce2530a918eec",
+        "binary_sha256": "b8b07a190fb25db76aae6de08dbc6c2b3d64e22e82bed6ba90de9545859f3431",
+        "reason": "official build with bundled OCIO and Python; opens Blender 5.2 pipeline sources"
+      }
+    },
+    "infrastructure": {
+      "description": "Ansible and infrastructure linting; no kube credentials",
+      "packages": [
+        "ansible-core",
+        "ansible-lint",
+        "python3-PyYAML"
+      ]
+    },
+    "media": {
+      "description": "Fedora-compatible media processing utilities",
+      "packages": [
+        "ffmpeg-free"
+      ]
+    },
+    "unreal-bridge": {
+      "description": "Connect to existing read-only Unreal source/build; needs development profile",
+      "packages": [],
+      "requires": [
+        "development"
+      ]
+    }
+  },
+  "default_profiles": [
+    "base",
+    "development",
+    "modeling",
+    "infrastructure",
+    "unreal-bridge"
+  ]
+}

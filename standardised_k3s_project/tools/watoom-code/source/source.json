@@ -1,0 +1,13 @@
+{
+  "repository": "https://github.com/anomalyco/opencode.git",
+  "base_tag": "v2.0.18",
+  "base_commit": "cd9a14a6b688d4021bee381dfd39d2cef9c0f862",
+  "application_commit": "cf92b54c43811f492fdf04c00bf151d95a182878",
+  "tree": "0656874b6b91c251452b6ad02fc83e35e679a3c2",
+  "bundle_sha256": "e4200f7d83a6f84f0b5a0384fb4b608148ec816d580de6a4aaee0a46a66c5a60",
+  "deployed_image": "127.0.0.1:5000/watoom-code@sha256:0df8af462c9114d39576e1dd77cc1badadc41a009061697992c11079433effd2",
+  "deployed_toolkit_image": "127.0.0.1:5000/watoom-toolkit@sha256:3e8ac07deb09b4e3011c818386027bab7a604991c86f18b588a1f89bd5f3f748",
+  "toolkit_iac_commit": "fe37aa5ea85d9489c7fa39f80a3722a941919cbe",
+  "application_branch": "codex/prompt-builder",
+  "bundle": "watoom-code-prompt-builder.bundle"
+}

@@ -1,0 +1,11 @@
+"use strict";
+const cards=[...document.querySelectorAll(".prompt-card")];
+const search=document.querySelector("#search"),project=document.querySelector("#project"),feedback=document.querySelector("#feedback");
+const groups=(project.dataset.groups||"").split(" ").filter(Boolean);
+function filter(){const term=search.value.toLowerCase().trim();let visible=0;for(const card of cards){card.hidden=!card.textContent.toLowerCase().includes(term)&&!card.querySelector("textarea").value.toLowerCase().includes(term);if(!card.hidden)visible++;}document.querySelector("#count").textContent=visible+" of "+cards.length+" templates";document.querySelector("#empty").hidden=visible!==0;}
+search.addEventListener("input",filter);filter();
+// A project is a named folder inside a live group: /data/ai/projects/<group>/<project>[/...], no traversal.
+function projectPath(){const value=project.value.trim().replace(/\/+$/,"");if(!value)return {path:"[PROJECT_PATH]",valid:true};const parts=value.split("/");const valid=value.startsWith("/data/ai/projects/")&&parts.length>=6&&groups.includes(parts[4])&&parts.slice(5).every(p=>p&&p!=="."&&p!=="..");return {path:valid?value:"[PROJECT_PATH]",valid};}
+function checkProject(){const {valid}=projectPath();project.setAttribute("aria-invalid",String(!valid));feedback.textContent=valid?"":"Project path must be a folder under /data/ai/projects/<group>/ ("+groups.join(", ")+"). Copied prompts keep [PROJECT_PATH] until it is valid.";}
+project.addEventListener("input",checkProject);
+for(const card of cards){const template=card.querySelector("textarea").value;card.querySelector(".copy").addEventListener("click",async()=>{const area=card.querySelector("textarea");const {path,valid}=projectPath();const text=template.replaceAll("[PROJECT_PATH]",path);const note=valid?"":" The project path was not used: choose a folder in a project group.";try{if(!navigator.clipboard)throw new Error("Clipboard unavailable");await navigator.clipboard.writeText(text);feedback.textContent="Copied "+card.querySelector("h2").textContent+". Replace remaining square-bracket fields before running."+note;}catch{card.querySelector("details").open=true;area.value=text;area.focus();area.select();feedback.textContent="Clipboard access unavailable. The prompt is selected; copy it manually."+note;}});}

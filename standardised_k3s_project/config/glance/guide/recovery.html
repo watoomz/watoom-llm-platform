@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Backup and recovery · Agent Export</title><meta name="description" content="What is backed up, how to bring the host back after a reboot, and the ordered rebuild from bare metal."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link active" aria-current="page" href="/guide/recovery.html">Recovery</a><div class="toc"><a class="toc-link" href="#what-protects-what">What protects what</a><a class="toc-link" href="#before-a-planned-reboot">Before a planned reboot</a><a class="toc-link" href="#after-a-reboot">After a reboot</a><a class="toc-link" href="#rebuild-sequence">Rebuild sequence</a><a class="toc-link" href="#restoring-watoom-code-state">Restoring WatooM Code state</a><a class="toc-link" href="#environment-disaster-recovery">Environment disaster recovery</a></div><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">Recovery</p><h1>Backup and recovery</h1><p class="lede">What is backed up, how to bring the host back after a reboot, and the ordered rebuild from bare metal.</p></header>
+<div class="content">
+<h2 id="what-protects-what">What protects what</h2>
+<p>The repository rebuilds <strong>desired state</strong>. It does not contain application data. Full recovery needs both:</p>
+<ol>
+<li>the Git checkout plus the vault password, and</li>
+<li>the persistent data under <code>/app</code> and <code>/data</code>.</li>
+</ol>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Data</th>
+<th>Protection</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Repository and manifests</td>
+<td>Git remote; encrypted secrets in <code>secrets-vault/</code></td>
+</tr>
+<tr>
+<td>Vault password</td>
+<td><code>/data/secrets/watoom-homelab/</code> and the owner's password manager</td>
+</tr>
+<tr>
+<td>WatooM Code database, config, AgentMemory</td>
+<td>Daily verified backup (03:30, 14 kept) in <code>/data/backups/watoom-code</code>, plus an off-host copy pulled by the workstation</td>
+</tr>
+<tr>
+<td>Protected AI baseline</td>
+<td>Read-only recovery bundle in <code>/data/ai/backups/baselines/</code></td>
+</tr>
+<tr>
+<td>RouterOS</td>
+<td>Redacted <code>.rsc</code> exports (reviewable) and password-protected binary backups, kept outside this repository</td>
+</tr>
+<tr>
+<td>Media libraries, <code>/app</code> service state</td>
+<td><strong>No automated off-host backup</strong></td>
+</tr>
+</tbody>
+</table></div>
+<blockquote class="callout callout-warning" data-kind="Warning">
+<p>Only WatooM Code state has an automated off-host copy. A disk failure on <code>/app</code> or <code>/data</code> loses media, service configuration and models. File presence is not a tested restore.</p>
+</blockquote>
+<p>Check backup health:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">systemctl list-timers watoom-code-backup.timer watoom-backup-offhost-check.timer --no-pager
+ls -lt /data/backups/watoom-code | head -3
+</code></pre></div>
+<p><code>WatoomBackupStale</code> and <code>WatoomOffhostBackupStale</code> fire when either falls behind.</p>
+<h2 id="before-a-planned-reboot">Before a planned reboot</h2>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">git -C /data/github/watoom-standardised-homelab status --short
+kubectl get pods -A | grep -v -E &#x27;Running|Completed&#x27;
+docker compose ls
+df -h / /app /data
+cat /data/ai/helper-scripts/state/gpu-controller/state.json   # expect qwen-ready, owner null
+</code></pre></div>
+<p>Do not reboot while the GPU controller has an owner or a WatooM Code job is active.</p>
+<h2 id="after-a-reboot">After a reboot</h2>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">ip -br addr; ip route                      # enp34s0.20 and enp35s0 up, default via 10.99.20.1
+systemctl --failed --no-pager
+kubectl get nodes -o wide
+kubectl get pods -A | grep -v -E &#x27;Running|Completed&#x27;
+docker compose ls
+nvidia-smi
+cd /data/github/watoom-standardised-homelab/standardised_k3s_project
+./ansible-run playbooks/health.yml
+./ansible-run playbooks/validate.yml
+</code></pre></div>
+<p>The GPU controller starts the primary model on its own. Wait for <code>qwen-ready</code> rather than scaling anything by hand. Zero-replica games and utilities stay down by design.</p>
+<h2 id="rebuild-sequence">Rebuild sequence</h2>
+<p>Preconditions: <code>/app</code> and <code>/data</code> mounted; checkout at <code>/data/github/watoom-standardised-homelab</code>; vault password restored; network interfaces match <a href="/guide/network.html">Network</a>; application data restored before stateful workloads start.</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">cd /data/github/watoom-standardised-homelab/standardised_k3s_project
+./ansible-run playbooks/rebuild-homelab.yml --tags audit
+./ansible-run playbooks/foundation.yml
+./ansible-run playbooks/secrets.yml
+./ansible-run playbooks/kubernetes.yml
+./ansible-run playbooks/docker.yml
+./ansible-run playbooks/validate.yml
+</code></pre></div>
+<p>Then bring up the dedicated stacks, which the broad registry does not cover:</p>
+<ol>
+<li>GPU controller and model lab: <code>gpu-controller.yml</code>, <code>llm-model-lab.yml</code></li>
+<li>WatooM Code: <code>watoom-code.yml</code>, then the guard, agents and <code>watoom-native-skills.yml</code></li>
+<li>Host dispatchers and the render stage roles</li>
+</ol>
+<h3 id="priority-order">Priority order</h3>
+<ol>
+<li>Network, default route, DNS</li>
+<li>Storage mounts</li>
+<li>k3s and Docker runtimes</li>
+<li>Secrets</li>
+<li>Core infrastructure: Traefik, Pi-hole, Glance, monitoring</li>
+<li>Stateful media services</li>
+<li>Docker edge stacks</li>
+<li>On-demand games</li>
+<li>AI stack and WatooM Code</li>
+<li>Validation and external checks (tunnels, public game ports)</li>
+</ol>
+<h2 id="restoring-watoom-code-state">Restoring WatooM Code state</h2>
+<p>Stop the app through its owner, restore the database and config from the newest verified backup in <code>/data/backups/watoom-code</code>, then start it through the owner. Check that open sessions and checkpoints are as expected before resuming work. The protected baseline in <code>/data/ai/backups/baselines/</code> carries its own <code>ROLLBACK.md</code>; restore into an isolated checkout first and apply only the reviewed fields.</p>
+<h2 id="environment-disaster-recovery">Environment disaster recovery</h2>
+<p>The <a href="/guide/disaster-recovery.html">disaster recovery guide</a> defines the environment/project/service-state scope, private capture, off-host verification, isolated restoration and guarded replacement-host phases. Git alone is not a full backup; readiness remains blocked until the required recovery evidence exists. Media and purchased libraries may be reacquired, while private state and authored projects need independent protection.</p>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/recovery.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

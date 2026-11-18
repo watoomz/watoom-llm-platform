@@ -1,0 +1,38 @@
+---
+- name: Enable durable WatooM Code uploads
+  hosts: homelab
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Require native idle admission fence
+      ansible.builtin.assert:
+        that: [watoom_context_guard_held | default(false) | bool]
+    - name: Create private persistent upload staging
+      ansible.builtin.file:
+        path: /data/ai/watoom-code/uploads
+        state: directory
+        owner: '1001'
+        group: '1001'
+        mode: '0700'
+    - name: Apply existing production SELinux policy
+      ansible.builtin.command:
+        argv: [restorecon, -R, /data/ai/watoom-code/uploads]
+      changed_when: false
+    - name: Mount the writable upload staging directory
+      kubernetes.core.k8s:
+        state: patched
+        merge_type: strategic-merge
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata: {name: watoom-code, namespace: watoom-code}
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: app
+                    volumeMounts:
+                      - {name: uploads, mountPath: /tmp/opencode}
+                volumes:
+                  - name: uploads
+                    hostPath: {path: /data/ai/watoom-code/uploads, type: Directory}

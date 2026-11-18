@@ -1,0 +1,14 @@
+---
+- name: Deploy only reviewed agent routing and coordinator guard
+  hosts: homelab
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Require native idle deployment guard
+      ansible.builtin.assert:
+        that:
+          - watoom_coordinator_release_guard_held | default(false) | bool
+    - name: Install scoped agent routing
+      ansible.builtin.include_role:
+        name: watoom-code
+        tasks_from: agent_routing.yml

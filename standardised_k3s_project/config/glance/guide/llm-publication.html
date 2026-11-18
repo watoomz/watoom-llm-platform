@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>GitHub distribution and source provenance · Agent Export</title><meta name="description" content="How the private LLM/WatooM-Code repository packages application source, custom extensions and infrastructure without runtime data or private history."><link rel="stylesheet" href="/guide/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a><div class="shell">
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link active" aria-current="page" href="/guide/llm-publication.html">GitHub publication</a><div class="toc"><a class="toc-link" href="#publication-model">Publication model</a><a class="toc-link" href="#package-contents-and-provenance">Package contents and provenance</a><a class="toc-link" href="#exclusions">Exclusions</a><a class="toc-link" href="#before-the-first-push">Before the first push</a><a class="toc-link" href="#reproducing-and-updating">Reproducing and updating</a></div><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link" href="/guide/server-roles.html">Roles</a><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<main class="main" id="content">
+<header class="hero"><p class="eyebrow">GitHub publication</p><h1>GitHub distribution and source provenance</h1><p class="lede">How the private LLM/WatooM-Code repository packages application source, custom extensions and infrastructure without runtime data or private history.</p></header>
+<div class="content">
+<h2 id="publication-model">Publication model</h2>
+<p>The LLM environment is packaged in a separate private repository. The existing homelab repository remains private and authoritative for production IaC. The distribution is a reviewed current-source snapshot; it does not import the homelab or application's complete Git history. History may contain private instructions or data even when the current file tree appears safe.</p>
+<p>The distribution includes the pinned application source and the platform project tree so custom plugins, skills, workers, UI changes, manifests, configuration inputs and deployment tooling stay together. Including a file is not an instruction to run it.</p>
+<h2 id="package-contents-and-provenance">Package contents and provenance</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Included source</th>
+<th>Provenance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Application</td>
+<td>Exact clean source snapshot behind the deployed application pin</td>
+<td>Source commit, upstream URL, tracked file hashes and upstream license</td>
+</tr>
+<tr>
+<td>Platform/IaC</td>
+<td>Tracked files under <code>standardised_k3s_project/</code>, subject to exclusions</td>
+<td>Homelab HEAD plus explicit current working-tree differences</td>
+</tr>
+<tr>
+<td>Plugins, skills and workers</td>
+<td>Role payloads, tooling, configuration templates and their tests</td>
+<td>Original relative paths retained in catalogue and file manifest</td>
+</tr>
+<tr>
+<td>Documentation</td>
+<td>Project guide, software design, API/user guides, automation catalogue and generated Glance pages</td>
+<td>Rebuild commands and drift/link checks</td>
+</tr>
+<tr>
+<td>Publication metadata</td>
+<td>File manifest, exclusions, scan findings and external prerequisites</td>
+<td>Private operator report; publish only the sanitised report</td>
+</tr>
+</tbody>
+</table></div>
+<p>Use the independent pins in <code>ansible/vars/watoom-code.yml</code> for application, Toolkit and AgentMemory. A matching application source pin does not establish that a separately built dependency's source is bundled. Record each independently and mark unavailable source/build recipes explicitly.</p>
+<h2 id="exclusions">Exclusions</h2>
+<ul>
+<li>Secret stores, generated Kubernetes Secrets, plaintext credential files, private keys, kubeconfigs, private deployment evidence and recovery grants.</li>
+<li>Runtime databases, session/prompt histories, caches, uploaded files, active jobs, receipts containing private inputs and application-state backups.</li>
+<li>Model weights, purchased asset libraries, Unreal Engine source and other redistribution-restricted inputs.</li>
+<li>Existing Git object stores, bundles, backup archives and unrelated project workspaces.</li>
+<li>The private source explicitly named by <code>tools/git/private-publication-excludes.json</code>, including its history. Its source body stays in the existing private mechanism.</li>
+<li>Dependency/build caches and generated large binaries; retained lockfiles and original license notices support rebuilding.</li>
+</ul>
+<p>Private GitHub visibility is not a substitute for excluding credentials. A static scanner is an aid, not proof that no secret or personal information exists. Never print matched secret values into documentation or a console log; findings should identify only paths, lines and rule IDs.</p>
+<h2 id="before-the-first-push">Before the first push</h2>
+<ol>
+<li>Establish exact source roots and clean application source/image identity. Record platform dirty paths without staging unrelated work.</li>
+<li>Build a fresh export from explicit source file lists, apply exclusions and preserve third-party notices.</li>
+<li>Generate a per-file SHA-256 manifest and a provenance document; verify no links escape the export and no files exceed GitHub limits.</li>
+<li>Scan the exported bytes and inspect credential-bearing/configuration and license findings. Keep unresolved findings out of the published tree.</li>
+<li>Run documentation catalogue drift, rendering, local links and package-specific static checks.</li>
+<li>Initialise a new Git repository with no source ancestry, review its staged paths, and commit only the prepared snapshot.</li>
+<li>Create the destination as private, push a normal initial branch and verify repository visibility, branch/commit and key files through GitHub.</li>
+</ol>
+<p>Do not use <code>publish-private-safe.py --publish-main</code> for this task: that helper targets the existing homelab <code>main</code>, requires a clean tree and has its own specific ancestry checks. The separate distribution does not change that repository's visibility or production branch.</p>
+<h2 id="reproducing-and-updating">Reproducing and updating</h2>
+<p>The README links to the project guide for prerequisites, configuration, component deployment and smoke checks. The distribution retains environment-specific guards and private-image references honestly; do not describe it as a clean-machine installer until a separate clean-room deployment has passed.</p>
+<p>For an update, regenerate the export from reviewed source roots and compare manifests. Review added/removed files, source/image pins, third-party notices and publication findings. Re-run documentation and focused component checks, then push only the prepared distribution changes. Do not merge runtime state back into IaC.</p>
+<p>When changing scripts, playbooks, roles or tooling, update source comments/contracts and run:</p>
+<div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">python3 scripts/render-server-catalogue.py
+python3 scripts/render-server-catalogue.py --check
+/data/ai/toolchains/docs-render/bin/python scripts/render-glance-guide.py
+/data/ai/toolchains/docs-render/bin/python scripts/render-glance-guide.py --check
+python3 scripts/verify-homelab-documentation.py
+</code></pre></div>
+<p>Glance serves generated guide files from the operator checkout by hostPath; documentation updates need no application restart. Keep catalogue output and software design cross-links in the same reviewed change.</p>
+</div>
+<footer class="page-foot"><span>Source <code>docs/guide/llm-publication.md</code></span><span>Rendered by <code>scripts/render-glance-guide.py</code></span></footer>
+</main>
+</div>
+<script src="/guide/assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+From ec7866cb8dfdbcf9e28f9cd7406239c1e59da2e5 Mon Sep 17 00:00:00 2001
+From: Agent Export <codex@agent.example>
+Date: Sat, 17 Oct 2026 21:10:48 +1000
+Subject: [PATCH] feat(core): add bounded native dungeon world contracts
+
+---
+ packages/core/src/watoom/creative-contract.ts | 10 +++++++-
+ packages/core/src/watoom/dungeon-contract.ts  | 18 ++++++++++++++
+ .../core/test/watoom-dungeon-contract.test.ts | 24 +++++++++++++++++++
+ 3 files changed, 51 insertions(+), 1 deletion(-)
+ create mode 100644 packages/core/src/watoom/dungeon-contract.ts
+ create mode 100644 packages/core/test/watoom-dungeon-contract.test.ts
+
+diff --git a/packages/core/src/watoom/creative-contract.ts b/packages/core/src/watoom/creative-contract.ts
+index 2705b4a..ab07749 100644
+--- a/packages/core/src/watoom/creative-contract.ts
++++ b/packages/core/src/watoom/creative-contract.ts
+@@ -1,3 +1,4 @@
++import {validateDungeon,dungeonOutputs} from "./dungeon-contract"
+ /** Additive typed contracts for the existing native Toolkit specialist. */
+ export const operations: Record<string, string> = {
+  "asset.index":"asset-index", "asset.search":"asset-search",
+@@ -10,7 +11,7 @@ export function validate(input: Record<string,unknown>, capability: string) {
+  if (!operation) throw Error("Unknown creative capability")
+  const catalog = operation.startsWith("asset-")
+  if (input.task !== (catalog ? operation : "3d-creative") || (!catalog && input.operation !== operation)) throw Error("Creative capability/task mismatch")
+- const allowed = ["task","timeout", ...(operation === "asset-index" ? ["limit"] : operation === "asset-search" ? ["query","category","format","limit"] : ["operation","asset_id","asset_ids","seed","parameters"])]
++ const allowed = ["task","timeout", ...(operation === "asset-index" ? ["limit"] : operation === "asset-search" ? ["query","category","format","limit"] : ["operation","asset_id","asset_ids","seed","parameters","dungeon"])]
+  if (Object.keys(input).some(key=>!allowed.includes(key))) throw Error("Unsupported creative input")
+  if (input.timeout !== undefined && (!Number.isInteger(input.timeout) || Number(input.timeout)<1 || Number(input.timeout)>180)) throw Error("Invalid creative timeout")
+  if (operation === "asset-index") {
+@@ -27,6 +28,12 @@ export function validate(input: Record<string,unknown>, capability: string) {
+  if (input.asset_ids !== undefined && !Array.isArray(input.asset_ids)) throw Error("Asset references must be an array")
+  if (ids.length>4 || ids.some(id=>typeof id!=="string" || !/^ast_[a-f0-9]{24}$/.test(id))) throw Error("Select indexed library references")
+  if (input.seed !== undefined && (!Number.isInteger(input.seed) || Number(input.seed)<0 || Number(input.seed)>2147483647)) throw Error("Invalid seed")
++ if(input.dungeon!==undefined) {
++  if(operation!=="world" || (input.parameters!==undefined && (typeof input.parameters!=="object" || input.parameters===null || Array.isArray(input.parameters) || Object.keys(input.parameters).length>0))) throw Error("Dungeon options apply only to native world mode")
++  const options=validateDungeon(input.dungeon)
++  if(ids.length!==(options.style==="mixed"?2:1) || new Set(ids).size!==ids.length) throw Error("Select one pack anchor or two compatible mixed anchors")
++  return
++ }
+  const params = input.parameters ?? {}
+  if (typeof params!=="object" || params===null || Array.isArray(params)) throw Error("Invalid parameters")
+  for (const [name,value] of Object.entries(params)) {
+@@ -36,6 +43,7 @@ export function validate(input: Record<string,unknown>, capability: string) {
+ }
+ export function outputs(input: Record<string,unknown>) {
+  if (input.task === "asset-index" || input.task === "asset-search") return ["result.json","manifest.json"]
++ if(input.dungeon!==undefined) return dungeonOutputs
+  return ["asset.blend","asset.glb","manifest.json","validation.json","front.png","back.png","left.png","right.png","top.png","perspective.png","creative.json","godot-validation.json","project.godot","scene.tscn","verify.gd",
+  ...(input.operation === "world" ? ["world-layout.json"] : input.operation === "material" ? ["albedo.png","normal.png","roughness.png","metallic.png","orm.png"] : input.operation === "character" ? ["Idle-a.png","Idle-b.png","Walk-a.png","Walk-b.png","Run-a.png","Run-b.png"] : [])]
+ }
+diff --git a/packages/core/src/watoom/dungeon-contract.ts b/packages/core/src/watoom/dungeon-contract.ts
+new file mode 100644
+index 0000000..9721056
+--- /dev/null
++++ b/packages/core/src/watoom/dungeon-contract.ts
+@@ -0,0 +1,18 @@
++/** Bounded native dungeon options for the existing world.compose operation. */
++export const dungeonOutputs=["dungeon.umap","asset.glb","perspective.png","manifest.json","validation.json","dungeon-layout.json","dungeon-assembly.json","provenance.json"]
++export function validateDungeon(value:unknown) {
++ if (typeof value!=="object" || value===null || Array.isArray(value)) throw Error("Invalid dungeon options")
++ const options=value as Record<string,unknown>
++ const allowed=["style","rooms","levels","grid","room_size","cell_size","floor_height"]
++ if(Object.keys(options).some(key=>!allowed.includes(key))) throw Error("Unknown dungeon option")
++ if(!["dungeon-builder","dungeon-forge","mixed"].includes(String(options.style))) throw Error("Invalid dungeon style")
++ const defaults:Record<string,number>={rooms:12,levels:1,grid:8,room_size:600,cell_size:800,floor_height:400}
++ for(const key of Object.keys(defaults)) if(options[key]!==undefined) {
++  if(typeof options[key]!=="number" || !Number.isInteger(options[key])) throw Error("Integer dungeon dimensions required")
++  defaults[key]=Number(options[key])
++ }
++ const {rooms,levels,grid,room_size,cell_size,floor_height}=defaults
++ if(levels<1 || levels>4 || rooms<2*levels || rooms>64 || grid<2 || grid>16 || Math.ceil(rooms/levels)>grid*grid) throw Error("Dungeon layout outside bounds")
++ if(room_size<200 || room_size>=cell_size || cell_size>2000 || floor_height<300 || floor_height>1200) throw Error("Dungeon dimensions outside bounds")
++ return options
++}
+diff --git a/packages/core/test/watoom-dungeon-contract.test.ts b/packages/core/test/watoom-dungeon-contract.test.ts
+new file mode 100644
+index 0000000..f6931ed
+--- /dev/null
++++ b/packages/core/test/watoom-dungeon-contract.test.ts
+@@ -0,0 +1,24 @@
++import {test,expect} from "bun:test"
++import {validate,outputs} from "../src/watoom/creative-contract"
++const id="ast_"+"a".repeat(24)
++const good={task:"3d-creative",operation:"world",asset_id:id,seed:42,dungeon:{style:"dungeon-builder",rooms:8,levels:2}}
++test("native dungeon stays in world.compose and requires editable map evidence",()=>{
++ expect(()=>validate(good,"world.compose")).not.toThrow()
++ expect(outputs(good)).toContain("dungeon.umap")
++ expect(outputs(good)).not.toContain("asset.blend")
++ expect(()=>validate({...good,operation:"inspect"},"asset.inspect")).toThrow()
++})
++test("dungeon dimensions, styles and references are bounded",()=>{
++ for(const dungeon of [
++ {style:"unknown"},{style:"dungeon-builder",rooms:65},{style:"dungeon-builder",levels:5},
++ {style:"dungeon-builder",rooms:2,levels:3},{style:"dungeon-builder",rooms:64,grid:2},
++ {style:"dungeon-builder",room_size:900},{style:"dungeon-builder",rooms:2.5},
++ {style:"dungeon-builder",script:"exec-anything"},
++ ]) expect(()=>validate({...good,dungeon},"world.compose")).toThrow()
++ for(const parameters of [{instances:3},[],false]) expect(()=>validate({...good,parameters},"world.compose")).toThrow()
++})
++test("mixed mode requires distinct indexed anchors",()=>{
++ expect(()=>validate({...good,dungeon:{style:"mixed"}},"world.compose")).toThrow()
++ expect(()=>validate({...good,asset_ids:[id],dungeon:{style:"mixed"}},"world.compose")).toThrow()
++ expect(()=>validate({...good,asset_ids:["ast_"+"b".repeat(24)],dungeon:{style:"mixed"}},"world.compose")).not.toThrow()
++})
+-- 
+2.55.0
+

@@ -1,0 +1,11 @@
+{
+  "upstream_commit": "71d031dab8bc6729504d11a78cbe91945401045f",
+  "original_skill_sha256": "4ef5b352cca591ce68f9293dd5b805d1f7ded967d770862958a41ab3007c2644",
+  "files": {
+    "SKILL.md": "750b77786275d95170ebaee5968eed9b7e76b369f10b8adb68321d173d3cfa1a",
+    "scripts/build_pbr_material.py": "52235f44ba07e7f41d5ba90f90e45267f57e2ae5753148dfda11e15d1318990d",
+    "scripts/_bpyx.py": "a3339ba8a678469e8ed29510e32a7331e0235202191ca4edb977af4720819b4b",
+    "references/upstream-SKILL.md": "4ef5b352cca591ce68f9293dd5b805d1f7ded967d770862958a41ab3007c2644",
+    "references/pbr-values.md": "d92f53568ea1525c84d68fc7077abfa9cc64a517ac9472fdc18b873784b84d40"
+  }
+}

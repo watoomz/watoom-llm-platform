@@ -1,0 +1,451 @@
+#endif
+
+#ifndef TOUCH_SHARES_TFT_SPI
+/* CYD uses a dedicated VSPI touch bus (T_CLK/T_DIN/T_OUT on 25/32/39); TFT stays on HSPI. */
+#define TOUCH_SHARES_TFT_SPI 0
+#endif
+
+#if defined(BOARD_CYD)
+#ifndef TOUCH_ROTATION
+/* Match TFT_ROTATION (RNT CYD test uses the same rotation for tft and touch). */
+#define TOUCH_ROTATION TFT_ROTATION
+#endif
+#endif
+
+/*──────────────────── I/O & Pins ────────────────────*/
+// PCF8574 I2C address: auto-detect 0x20-0x27 by default.
+// To force a fixed address, add to BoardConfig.h: #define pcf_ADDR 0x21
+#ifndef pcf_ADDR
+#define PCF8574_AUTO_DETECT 1
+#define PCF8574_I2C_ADDR  0x20
+#else
+#define PCF8574_AUTO_DETECT 0
+#define PCF8574_I2C_ADDR  pcf_ADDR
+#endif
+#define PCF8574_ADDR_MIN 0x20
+#define PCF8574_ADDR_MAX 0x27
+#if defined(BOARD_ESP32_DIV_V1)
+#define BTN_UP       6
+#define BTN_DOWN     3
+#define BTN_LEFT     4
+#define BTN_RIGHT    5
+#define BTN_SELECT   7
+#else
+#define BTN_UP       7
+#define BTN_DOWN     5
+#define BTN_LEFT     3
+#define BTN_RIGHT    4
+#define BTN_SELECT   6
+#endif
+
+/* Buzzer */
+#ifndef BUZZER_PIN
+// User hardware: buzzer on IO2
+#define BUZZER_PIN -1
+#endif
+
+/* Backlight / PWM */
+#ifndef BACKLIGHT_PIN
+#if defined(BOARD_CYD)
+#define BACKLIGHT_PIN   21
+#elif defined(BOARD_ESP32_DIV_V1)
+#define BACKLIGHT_PIN   32
+#else
+#define BACKLIGHT_PIN   7
+#endif
+#endif
+#define PWM_CHANNEL     0
+#define PWM_FREQ        5000
+#define PWM_RESOLUTION  8
+
+/* XPT2046 (Touch) SPI */
+#ifndef XPT2046_CS
+#if defined(BOARD_CYD)
+#define XPT2046_CS   33
+#elif defined(BOARD_ESP32_DIV_V1)
+#define XPT2046_CS   33
+#else
+#define XPT2046_CS   18
+#endif
+#endif
+#ifndef XPT2046_MOSI
+#if defined(BOARD_CYD)
+#define XPT2046_MOSI 32
+#elif defined(BOARD_ESP32_DIV_V1)
+#define XPT2046_MOSI 32
+#else
+#define XPT2046_MOSI 35
+#endif
+#endif
+#ifndef XPT2046_MISO
+#if defined(BOARD_CYD)
+#define XPT2046_MISO 39
+#elif defined(BOARD_ESP32_DIV_V1)
+#define XPT2046_MISO 35
+#else
+#define XPT2046_MISO 37
+#endif
+#endif
+#ifndef XPT2046_CLK
+#if defined(BOARD_CYD)
+#define XPT2046_CLK  25
+#elif defined(BOARD_ESP32_DIV_V1)
+#define XPT2046_CLK  25
+#else
+#define XPT2046_CLK  36
+#endif
+#endif
+#ifndef XPT2046_IRQ
+#if defined(BOARD_CYD)
+#define XPT2046_IRQ  36
+#elif defined(BOARD_ESP32_DIV_V1)
+#define XPT2046_IRQ  34
+#else
+#define XPT2046_IRQ  255
+#endif
+#endif
+
+/* SD Card */
+#ifndef SD_CS
+#if defined(BOARD_CYD)
+#define SD_CS    5
+#elif defined(BOARD_ESP32_DIV_V1)
+#define SD_CS    5
+#else
+#define SD_CS    10
+#endif
+#endif
+#ifndef SD_MOSI
+#if defined(BOARD_CYD)
+#define SD_MOSI  23
+#elif defined(BOARD_ESP32_DIV_V1)
+#define SD_MOSI  23
+#else
+#define SD_MOSI  11
+#endif
+#endif
+#ifndef SD_MISO
+#if defined(BOARD_CYD)
+#define SD_MISO  19
+#elif defined(BOARD_ESP32_DIV_V1)
+#define SD_MISO  19
+#else
+#define SD_MISO  13
+#endif
+#endif
+#ifndef SD_SCLK
+#if defined(BOARD_CYD)
+#define SD_SCLK  18
+#elif defined(BOARD_ESP32_DIV_V1)
+#define SD_SCLK  18
+#else
+#define SD_SCLK  12
+#endif
+#endif
+#if !defined(BOARD_CYD) && !defined(BOARD_ESP32_DIV_V1) && !defined(SD_CD)
+#define SD_CD    38
+#endif
+#ifndef SD_CS_PIN
+#define SD_CS_PIN 5
+#endif
+
+/* PN532 RFID/NFC (SPI).
+ * CYD has few spare GPIOs; these are suggested external wiring defaults.
+ * Override any pin below if your wiring differs. Requires Adafruit PN532 library. */
+#ifndef PN532_SCK
+#if defined(BOARD_CYD)
+#define PN532_SCK  18
+#else
+#define PN532_SCK  12
+#endif
+#endif
+#ifndef PN532_MISO
+#if defined(BOARD_CYD)
+#define PN532_MISO 19
+#else
+#define PN532_MISO 11
+#endif
+#endif
+#ifndef PN532_MOSI
+#if defined(BOARD_CYD)
+#define PN532_MOSI 23
+#else
+#define PN532_MOSI 13
+#endif
+#endif
+#ifndef PN532_SS
+#if defined(BOARD_CYD)
+#define PN532_SS   25
+#else
+#define PN532_SS   5
+#endif
+#endif
+
+/* UART (if you use hardware serial on external pins) */
+#ifndef RX_PIN
+#if defined(BOARD_CYD)
+#define RX_PIN 35
+#elif defined(BOARD_ESP32_DIV_V1)
+#define RX_PIN 16
+#else
+#define RX_PIN 6
+#endif
+#endif
+#ifndef TX_PIN
+#if defined(BOARD_CYD)
+#define TX_PIN 22
+#elif defined(BOARD_ESP32_DIV_V1)
+#define TX_PIN 26
+#else
+#define TX_PIN 3
+#endif
+#endif
+
+/* Neo-6M GPS — GPS module TX → ESP RX, GPS RX → ESP TX (optional). Uses UART2 by default. */
+#ifndef GPS_UART_RX
+#if defined(BOARD_CYD)
+#define GPS_UART_RX 35
+#elif defined(BOARD_ESP32_DIV_V1)
+#define GPS_UART_RX 3
+#else
+#define GPS_UART_RX 5
+#endif
+#endif
+#ifndef GPS_UART_TX
+#if defined(BOARD_CYD)
+#define GPS_UART_TX 22
+#elif defined(BOARD_ESP32_DIV_V1)
+#define GPS_UART_TX 1
+#else
+#define GPS_UART_TX 6
+#endif
+#endif
+
+/* CC1101 (Sub-GHz) */
+#ifndef CC1101_SCK
+#if defined(BOARD_CYD)
+#define CC1101_SCK  18
+#elif defined(BOARD_ESP32_DIV_V1)
+#define CC1101_SCK  18
+#else
+#define CC1101_SCK  12
+#endif
+#endif
+#ifndef CC1101_MISO
+#if defined(BOARD_CYD)
+#define CC1101_MISO 19
+#elif defined(BOARD_ESP32_DIV_V1)
+#define CC1101_MISO 19
+#else
+#define CC1101_MISO 13
+#endif
+#endif
+#ifndef CC1101_MOSI
+#if defined(BOARD_CYD)
+#define CC1101_MOSI 23
+#elif defined(BOARD_ESP32_DIV_V1)
+#define CC1101_MOSI 23
+#else
+#define CC1101_MOSI 11
+#endif
+#endif
+#ifndef CC1101_CS
+#if defined(BOARD_CYD)
+#define CC1101_CS   27
+#elif defined(BOARD_ESP32_DIV_V1)
+#define CC1101_CS   27
+#else
+#define CC1101_CS   5
+#endif
+#endif
+
+/* SubGHz (RCSwitch/Replay) data pins (wired to CC1101 GDO pins) */
+// Override these in your board config if your wiring differs.
+#ifndef SUBGHZ_RX_PIN
+#if defined(BOARD_CYD)
+#define SUBGHZ_RX_PIN 35
+#elif defined(BOARD_ESP32_DIV_V1)
+#define SUBGHZ_RX_PIN 16
+#else
+#define SUBGHZ_RX_PIN 3
+#endif
+#endif
+#ifndef SUBGHZ_TX_PIN
+#if defined(BOARD_CYD)
+#define SUBGHZ_TX_PIN 22
+#elif defined(BOARD_ESP32_DIV_V1)
+#define SUBGHZ_TX_PIN 26
+#else
+#define SUBGHZ_TX_PIN 6
+#endif
+#endif
+
+// CC1101 GDO mapping (used by ELECHOUSE_cc1101.setGDO).
+// Default follows the legacy wiring used in the SubGHz code: setGDO(TX, RX).
+#ifndef CC1101_GDO0
+#define CC1101_GDO0 SUBGHZ_TX_PIN
+#endif
+#ifndef CC1101_GDO2
+#define CC1101_GDO2 SUBGHZ_RX_PIN
+#endif
+
+/* SubGHz debug (0=off, 1=on) */
+#ifndef SUBGHZ_DEBUG
+#define SUBGHZ_DEBUG 0
+#endif
+
+/* NRF24 */
+#ifndef CE_PIN_1
+#if defined(BOARD_CYD)
+#define CE_PIN_1  16
+#elif defined(BOARD_ESP32_DIV_V1)
+#define CE_PIN_1  4
+#else
+#define CE_PIN_1  15
+#endif
+#endif
+#ifndef CSN_PIN_1
+#if defined(BOARD_CYD)
+#define CSN_PIN_1 17
+#elif defined(BOARD_ESP32_DIV_V1)
+#define CSN_PIN_1 5
+#else
+#define CSN_PIN_1 4
+#endif
+#endif
+#ifndef CE_PIN_2
+#if defined(BOARD_CYD)
+#define CE_PIN_2  22
+#elif defined(BOARD_ESP32_DIV_V1)
+#define CE_PIN_2  26
+#else
+#define CE_PIN_2  47
+#endif
+#endif
+#ifndef CSN_PIN_2
+#if defined(BOARD_CYD)
+#define CSN_PIN_2 27
+#elif defined(BOARD_ESP32_DIV_V1)
+#define CSN_PIN_2 27
+#else
+#define CSN_PIN_2 48
+#endif
+#endif
+#ifndef CE_PIN_3
+#if defined(BOARD_CYD)
+#define CE_PIN_3  4
+#elif defined(BOARD_ESP32_DIV_V1)
+#define CE_PIN_3  16
+#else
+#define CE_PIN_3  14
+#endif
+#endif
+#ifndef CSN_PIN_3
+#if defined(BOARD_CYD)
+#define CSN_PIN_3 25
+#elif defined(BOARD_ESP32_DIV_V1)
+#define CSN_PIN_3 17
+#else
+#define CSN_PIN_3 21
+#endif
+#endif
+
+/* nRF24 bit-bang CE/CSN pair used by Scanner / ESB / MouseJack helpers. */
+#ifndef NRF24_SCAN_CE
+#define NRF24_SCAN_CE  CE_PIN_3
+#endif
+#ifndef NRF24_SCAN_CSN
+#define NRF24_SCAN_CSN CSN_PIN_3
+#endif
+/* Shared SPI pinout for those nRF features (must match board SD/CC1101 bus on v1). */
+#if BOARD_HAS_ESP32S3
+#ifndef NRF24_SPI_SCK
+#define NRF24_SPI_SCK  12
+#endif
+#ifndef NRF24_SPI_MISO
+#define NRF24_SPI_MISO 13
+#endif
+#ifndef NRF24_SPI_MOSI
+#define NRF24_SPI_MOSI 11
+#endif
+#ifndef NRF24_SPI_SS
+#define NRF24_SPI_SS   4
+#endif
+#else
+#ifndef NRF24_SPI_SCK
+#define NRF24_SPI_SCK  SD_SCLK
+#endif
+#ifndef NRF24_SPI_MISO
+#define NRF24_SPI_MISO SD_MISO
+#endif
+#ifndef NRF24_SPI_MOSI
+#define NRF24_SPI_MOSI SD_MOSI
+#endif
+#ifndef NRF24_SPI_SS
+#define NRF24_SPI_SS   CSN_PIN_1
+#endif
+#endif
+
+/* IR Remote (Record/Replay)
+ * NOTE: Default pins overlap with the optional NRF24 #3 wiring above.
+ * If you use NRF24 on CE_PIN_3/CSN_PIN_3, override these in your board config.
+ */
+#ifndef IR_RX_PIN
+#if defined(BOARD_CYD)
+#define IR_RX_PIN 35
+#elif defined(BOARD_ESP32_DIV_V1)
+#define IR_RX_PIN 4
+#else
+#define IR_RX_PIN 21
+#endif
+#endif
+#ifndef IR_TX_PIN
+#if defined(BOARD_CYD)
+#define IR_TX_PIN 4
+#elif defined(BOARD_ESP32_DIV_V1)
+#define IR_TX_PIN 5
+#else
+#define IR_TX_PIN 14
+#endif
+#endif
+#ifndef IR_DEFAULT_KHZ
+#define IR_DEFAULT_KHZ 38
+#endif
+
+/*──────────────────── Display & Touch ────────────────────*/
+#ifndef TFT_WIDTH
+#define TFT_WIDTH 240
+#endif
+#ifndef TFT_HEIGHT
+#define TFT_HEIGHT 320
+#endif
+#ifndef STATUS_BAR_Y_OFFSET
+#define STATUS_BAR_Y_OFFSET 0
+#endif
+
+/*──────────────────── Timing ────────────────────*/
+#ifndef DEBOUNCE_MS
+#define DEBOUNCE_MS 40
+#endif
+#ifndef LONG_PRESS_MS
+#define LONG_PRESS_MS 800
+#endif
+#ifndef REPEAT_SCROLL_MS
+#define REPEAT_SCROLL_MS 120
+#endif
+
+/*──────────────────── Backlight Levels ────────────────────*/
+#ifndef BKL_LEVEL_MIN
+#define BKL_LEVEL_MIN 10
+#endif
+#ifndef BKL_LEVEL_MED
+#define BKL_LEVEL_MED 128
+#endif
+#ifndef BKL_LEVEL_MAX
+#define BKL_LEVEL_MAX 255
+#endif
+
+/*──────────────────── Filesystem ────────────────────*/
+#ifndef FS_MOUNT_OK_MSG
+#define FS_MOUNT_OK_MSG "SD OK"
+#endif

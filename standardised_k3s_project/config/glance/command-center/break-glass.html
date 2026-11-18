@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WatooM · Break glass</title>
+<link rel="stylesheet" href="/command-center/cc.css">
+<link rel="stylesheet" href="/command-center/change-requests.css">
+<link rel="stylesheet" href="/command-center/break-glass.css">
+</head>
+<body>
+  <header class="cc-head">
+    <div>
+      <div class="cc-title"><b>WatooM</b> Break glass</div>
+      <div class="cc-sub">return the LLM / inference stack to a known good state when gates, claims, holds or workers are stuck</div>
+    </div>
+    <div class="cc-sub"><a href="/command-center/">Command Center</a> · <a href="/command-center/change-requests.html">Change requests</a> · <span id="stamp">loading…</span></div>
+  </header>
+  <main class="cr-main">
+    <section class="panel">
+      <h2>Current state <span class="hint" id="verdict"></span></h2>
+      <div id="problems"></div>
+    </section>
+    <section class="panel">
+      <label class="cr-pin">Operator PIN
+        <input id="pin" type="password" autocomplete="off" spellcheck="false" placeholder="from /root/.watoom-change-request-pin">
+      </label>
+      <div class="bg-actions">
+        <div class="bg-card">
+          <h3>Clear stale</h3>
+          <p>Safe. Clears only what is provably orphaned: execution claims whose owner is interrupted and idle, finished or very old worker pods and units, and a GPU owner whose process has ended. Running work is never touched.</p>
+          <button id="stale" type="button" class="safe">Clear stale</button>
+        </div>
+        <div class="bg-card danger">
+          <h3>Force reset</h3>
+          <p>Stops the app and every worker, clears all claims, queued inputs, running-job flags and any held deployment guard, recovers GPU ownership through the GPU controller, restarts the router and the app, then checks health. <b>Running work is interrupted.</b> Session history is kept and a database snapshot is taken first.</p>
+          <label class="bg-confirm">Type RESET to enable <input id="confirm" autocomplete="off" spellcheck="false" placeholder="RESET"></label>
+          <button id="force" type="button" class="force" disabled>Force reset</button>
+        </div>
+      </div>
+      <div id="msg" role="status" aria-live="polite"></div>
+    </section>
+    <section class="panel"><h2>Last run</h2><div id="last"></div></section>
+  </main>
+  <script src="/command-center/break-glass.js"></script>
+</body>
+</html>

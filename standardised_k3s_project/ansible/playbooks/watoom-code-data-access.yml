@@ -1,0 +1,14 @@
+---
+- name: Maintain agent evidence access without application rollout
+  hosts: homelab
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Install maintained agent permissions
+      ansible.builtin.include_role:
+        name: watoom-code
+        tasks_from: native_agents
+    - name: Apply maintained bounded receipt access
+      ansible.builtin.include_role:
+        name: watoom-code
+        tasks_from: data_access

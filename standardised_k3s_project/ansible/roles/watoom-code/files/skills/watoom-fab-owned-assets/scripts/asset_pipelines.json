@@ -1,0 +1,634 @@
+{
+  "schema": 1,
+  "basis": "Offline title/type/format taxonomy; facts override guesses. Category is not rig, format, download or integration proof.",
+  "classification_notes": [
+    "Rules are ordered; heightmaps precede materials, sound precedes animal/weapon words, and material names precede mesh guesses.",
+    "CODE_PLUGIN and METAHUMAN types identify their category unless facts override it. COMPLETE_PROJECT may retain its title-based content category; all three types always retain explicit safety routes. Title guesses never assert rigging or offered formats."
+  ],
+  "categories": [
+    {
+      "id": "metahuman",
+      "label": "MetaHuman",
+      "pattern": "\\bmetahumans?\\b"
+    },
+    {
+      "id": "megascans",
+      "label": "Quixel Megascans / Megaplants",
+      "pattern": "\\b(?:megascans|megaplants|quixel)\\b"
+    },
+    {
+      "id": "terrain",
+      "label": "Terrain / heightmaps / landscape",
+      "pattern": "\\bheightmaps?\\b|\\blandscape\\b|\\bterrain\\b"
+    },
+    {
+      "id": "audio",
+      "label": "Audio",
+      "pattern": "\\b(?:audio|sounds?|sfx|music|vocalizations|orchestra|announcer|dialogue|ambience)\\b"
+    },
+    {
+      "id": "ui",
+      "label": "UI / icons / 2D",
+      "pattern": "\\b(?:ui|gui|icons?|menus?|avatars?|overlays|backgrounds)\\b|radial menu"
+    },
+    {
+      "id": "materials",
+      "label": "Materials / textures",
+      "pattern": "\\b(?:materials?|textures?|shaders?|decals?|hdri|trim sheet|alpha|pbr marble|tileable surface)\\b"
+    },
+    {
+      "id": "vfx",
+      "label": "VFX",
+      "pattern": "\\b(?:vfx|fx|niagara|vdb|particles?|thrusters?|muzzle flash|shockwaves?|flames?|explosions?)\\b|footprintsvfx"
+    },
+    {
+      "id": "animations",
+      "label": "Animations only (candidate)",
+      "pattern": "\\b(?:animations?|anims?|animset|mocap|mocap|motions?|locomotion|poses|motion matching|levitation)\\b"
+    },
+    {
+      "id": "animals",
+      "label": "Animals / birds",
+      "pattern": "\\b(?:animals?|birds?|dogs?|german shepherd|cats?|quadruped|canary|deer|wolf|squirrel|fish|dinosaur)\\b"
+    },
+    {
+      "id": "creatures",
+      "label": "Creatures",
+      "pattern": "\\b(?:creatures?|monsters?|dragon|orc|golem|minotaur|reptilian|lizzard|necromancer|zombie|beast\\w*)\\b"
+    },
+    {
+      "id": "characters",
+      "label": "Characters",
+      "pattern": "\\b(?:characters?|paragon|humans?|humanoids?|people|girl|female|woman|soldier|mercenary|insurgent|pirate|viking|assassin|wizard|knight|vampire|ronin|skeleton|elves|clown|hero|mannequin)\\b|\\[cr\\]|windwalker echo"
+    },
+    {
+      "id": "environment",
+      "label": "Environment / props / foliage / static meshes",
+      "pattern": "\\b(?:environments?|props?|foliage|vegetation|trees?|plants?|grass|forest|nature|rocks?|stones?|boulders?|buildings?|houses?|village|town|castle|dungeon|temple|ruins?|ruined|city|cities|street|warehouse|bunker|cave|citadel|cathedral|cemetery|graveyard|furniture|interior|exterior|weapons?|swords?|rifles?|pistols?|gunpack|guns?|axes?|axe|shields?|longsword|greatsword|blade|dualblades|arcblade|staff|hammer|knife|machetes|ammunition|barrels?|pillows|coins|roof|road|vehicles?|ship|car|truck|camp|construction|corridor|mine|bazaar|banquet|trash|saloon|beech|hornbeam|modular|models?|photogrammetry|playground|alley|station|cargo|hangar|factory|slums|docks|prison|military|equipment|armor|armour|sculpture|statue|crates?|bench|tunnel|cabin|garden|medieval|coastal|space|ruinbreaker|hatchet|long sword|spear|missile|smg|m4a1|ak-47|m1911|c4)\\b"
+    },
+    {
+      "id": "code_plugins",
+      "label": "Code plugins / tools",
+      "pattern": "\\b(?:plugins?|toolkits?|customizer|systems?|framework|manager|utility|builder)\\b"
+    },
+    {
+      "id": "complete_projects",
+      "label": "Complete projects"
+    },
+    {
+      "id": "uncategorised",
+      "label": "Uncategorised"
+    }
+  ],
+  "pipelines": [
+    {
+      "id": "unreal-skeletal-to-godot",
+      "applies_to": [
+        "characters",
+        "animals",
+        "creatures"
+      ],
+      "steps": [
+        "Preflight actual source classes and formats: ue-library is not proof of a rig. Use this route only for SkeletalMesh; static/unrigged sources use rigify-static-character.",
+        "Load watoom-fab-owned-assets; write a bounded .opencode/unreal-export-jobs/<job>/request.json selecting SkeletalMesh and AnimSequence; call watoom_game_worker operation unreal-export.",
+        "Read result.json, errors and exported class/file receipt; Unreal glTF Exporter produces GLB. Assign external textures/materials in Godot.",
+        "If a clip set targets another skeleton, use sims4-animation retarget_generic.py via the Blender worker, passing --target-armature explicitly with a verified bone map.",
+        "Import GLB into Godot; verify skeleton, clips, scale, deformation and visible playback."
+      ],
+      "tools": [
+        "watoom-fab-owned-assets",
+        "watoom_game_worker:unreal-export",
+        "sims4-animation/scripts/retarget_generic.py",
+        "watoom_game_worker:blender",
+        "godot"
+      ],
+      "requires_owner_approval": true,
+      "approval_scope": "Explicit per-asset owner approval before any additional Fab download; reuse existing receipts, do not redownload automatically.",
+      "pitfalls": [
+        "Title-based character match does not establish skeletal content.",
+        "Headless skeletal FBX export lacks a render device; use GLB.",
+        "External textures need explicit assignment; GLB existence is not engine readiness.",
+        "PARTIAL exports are not complete; preserve originals and dependency closure.",
+        "The admitted unreal-export manifest selects a downloaded pack under /data/ai/assets/fab. For other source locations, verify a supported staging/export route first; do not assume animpic or arbitrary paths are admitted."
+      ],
+      "status": "CANDIDATE",
+      "qualification_scope": "Suggested route only; validate exact source, worker capability, target import/runtime and visuals.",
+      "skill_sources": [
+        "ansible/roles/watoom-code/files/skills/watoom-fab-owned-assets/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/sims4-animation/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/blender-character-rigging/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/godot/SKILL.md"
+      ]
+    },
+    {
+      "id": "rigify-static-character",
+      "applies_to": [
+        "characters",
+        "animals",
+        "creatures"
+      ],
+      "steps": [
+        "Confirm unrigged/static humanoid, quadruped or bird mesh; preserve original and inspect scale/facing.",
+        "Through watoom_game_worker operation blender run blender-character-rigging/scripts/rigify_build.py -- --add auto --auto-fit [MESH ...] --generate.",
+        "Inspect auto_fit.quality; for review/poor render x-ray and correct joints before accepting generation.",
+        "Weld split-vertex meshes (merge by distance) before blender-character-rigging/scripts/bind_mesh.py; inspect @@JSON@@ ok/pass.",
+        "Retarget with sims4-animation/scripts/retarget_generic.py --target-armature <generated-rig> and a verified map; export GLB and validate target playback/deformation."
+      ],
+      "tools": [
+        "watoom_game_worker:blender",
+        "blender-character-rigging/scripts/rigify_build.py",
+        "blender-character-rigging/scripts/bind_mesh.py",
+        "sims4-animation/scripts/retarget_generic.py",
+        "blender-export-pipelines/scripts/export_asset.py"
+      ],
+      "requires_owner_approval": true,
+      "approval_scope": "Explicit per-asset owner approval before any additional Fab download; reuse existing receipts, do not redownload automatically.",
+      "pitfalls": [
+        "Plain --fit only scales; use --auto-fit.",
+        "Unwelded split vertices can tear when animated.",
+        "Auto-pick may choose the metarig; pass --target-armature explicitly.",
+        "Validated fitting does not qualify every mesh or downstream retarget/import."
+      ],
+      "status": "QUALIFIED",
+      "qualification_scope": "Auto-fit documented validated 2026-11-06 for humanoids, quadrupeds and birds; individual binding, retargeting and engine acceptance still required.",
+      "skill_sources": [
+        "ansible/roles/watoom-code/files/skills/blender-character-rigging/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/sims4-animation/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/blender-export-pipelines/SKILL.md"
+      ]
+    },
+    {
+      "id": "retarget-animation",
+      "applies_to": [
+        "animations"
+      ],
+      "steps": [
+        "Confirm clips, source skeleton, target rig and exact bone map; an animations title may include meshes or code.",
+        "For Unreal clips, export AnimSequence and the needed reference SkeletalMesh with watoom_game_worker operation unreal-export to GLB.",
+        "Read sims4-animation references/retarget-any.md; run retarget_generic.py through the Blender worker with --target-armature <explicit-target>.",
+        "Bake and export required clips, then inspect actual motion, root displacement, contacts and imported Godot playback."
+      ],
+      "tools": [
+        "watoom-fab-owned-assets",
+        "watoom_game_worker:unreal-export",
+        "sims4-animation/scripts/retarget_generic.py",
+        "watoom_game_worker:blender"
+      ],
+      "requires_owner_approval": true,
+      "approval_scope": "Explicit per-asset owner approval before any additional Fab download; reuse existing receipts, do not redownload automatically.",
+      "pitfalls": [
+        "Different skeletons need a verified map; no automatic universal compatibility.",
+        "Check unmapped tracks, face/fingers, constraints and contacts; source clips alone are not target-ready.",
+        "The admitted unreal-export manifest selects a downloaded pack under /data/ai/assets/fab. For other source locations, verify a supported staging/export route first; do not assume animpic or arbitrary paths are admitted."
+      ],
+      "status": "CANDIDATE",
+      "qualification_scope": "Suggested route only; validate exact source, worker capability, target import/runtime and visuals.",
+      "skill_sources": [
+        "ansible/roles/watoom-code/files/skills/sims4-animation/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/watoom-fab-owned-assets/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/blender-character-rigging/SKILL.md"
+      ]
+    },
+    {
+      "id": "terrain-real-place",
+      "applies_to": [
+        "terrain"
+      ],
+      "steps": [
+        "For a requested real place (an alternative to importing an owned heightmap), load watoom-terrain-map.",
+        "Use scripts/build_terrain.py --place <place> or --lat <lat> --lon <lon> --out <project-terrain-dir> through its documented execution boundary.",
+        "Import generated EXR and scene; validate elevation range, collision and scale; place objects with terrain.height_at(x,z)."
+      ],
+      "tools": [
+        "watoom-terrain-map/scripts/build_terrain.py",
+        "godot"
+      ],
+      "requires_owner_approval": true,
+      "approval_scope": "Explicit per-asset owner approval before any additional Fab download; reuse existing receipts, do not redownload automatically.",
+      "pitfalls": [
+        "Fetches open DEM data and needs network at execution; this advisor performs no fetch.",
+        "Does not consume arbitrary owned heightmap packs; inspect a separate import route.",
+        "No roads, buildings or satellite imagery; PNG preview is not elevation data.",
+        "Skill text mentions a UE heightmap PNG but output table lists EXR and preview; verify actual compatible input instead of assuming."
+      ],
+      "status": "CANDIDATE",
+      "qualification_scope": "Suggested route only; validate exact source, worker capability, target import/runtime and visuals.",
+      "skill_sources": [
+        "ansible/roles/watoom-code/files/skills/watoom-terrain-map/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/godot/SKILL.md"
+      ]
+    },
+    {
+      "id": "terrain-unreal-bake",
+      "applies_to": [
+        "terrain"
+      ],
+      "steps": [
+        "Load watoom-landscape-mesh-builder and read current landscape-mesh-builder.json qualification; inspect source heightmap precision and compatible Unreal runtime.",
+        "Use existing bounded Unreal worker/operator controls; require Geometry Script, CPU-available heightmap, static-mesh template and output material.",
+        "Start with tiny sample, generate/save meshes and disable repeat generation. If no admitted generation operation exists request bounded operator work package.",
+        "Export resulting StaticMesh with unreal-export; validate Godot import, seams, collision, scale, orientation and performance."
+      ],
+      "tools": [
+        "watoom-landscape-mesh-builder",
+        "watoom_game_worker:unreal-export",
+        "watoom-fab-owned-assets"
+      ],
+      "requires_owner_approval": true,
+      "approval_scope": "Explicit per-asset owner approval before any additional Fab download; reuse existing receipts, do not redownload automatically.",
+      "pitfalls": [
+        "Native load/compile qualification does not prove generation or Godot integration.",
+        "Blueprint is not a Godot plugin; never guess generation API or raise infinite-loop limits.",
+        "Terrain material packs may need only material translation rather than baking.",
+        "The admitted unreal-export manifest selects a downloaded pack under /data/ai/assets/fab. For other source locations, verify a supported staging/export route first; do not assume animpic or arbitrary paths are admitted."
+      ],
+      "status": "CANDIDATE",
+      "qualification_scope": "Suggested route only; validate exact source, worker capability, target import/runtime and visuals.",
+      "skill_sources": [
+        "ansible/roles/watoom-code/files/skills/watoom-landscape-mesh-builder/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/watoom-fab-owned-assets/SKILL.md"
+      ]
+    },
+    {
+      "id": "unreal-static-to-godot",
+      "applies_to": [
+        "environment"
+      ],
+      "steps": [
+        "Inspect actual formats/classes, dependencies and license; use compatible portable source if offered.",
+        "For downloaded Unreal source load watoom-fab-owned-assets; request watoom_game_worker operation unreal-export with classes StaticMesh and Texture2D in bounded manifest.",
+        "Read file/class receipt: static meshes export FBX, textures TGA. If GLB is needed use Blender export_asset.py; fbx_relink_to_glb.py repairs author-machine texture paths using --textures folders.",
+        "Import FBX/GLB into Godot; assign materials and validate collision, LODs, scale and real visual/runtime result."
+      ],
+      "tools": [
+        "watoom-fab-owned-assets",
+        "watoom_game_worker:unreal-export",
+        "watoom_game_worker:blender",
+        "blender-export-pipelines/scripts/fbx_relink_to_glb.py",
+        "blender-export-pipelines/scripts/export_asset.py",
+        "godot"
+      ],
+      "requires_owner_approval": true,
+      "approval_scope": "Explicit per-asset owner approval before any additional Fab download; reuse existing receipts, do not redownload automatically.",
+      "pitfalls": [
+        "Static geometry does not transfer Blueprint, foliage wind shaders or runtime logic.",
+        "Preserve namespaces and texture closure; never byte-patch FBX.",
+        "The admitted unreal-export manifest selects a downloaded pack under /data/ai/assets/fab. For other source locations, verify a supported staging/export route first; do not assume animpic or arbitrary paths are admitted."
+      ],
+      "status": "CANDIDATE",
+      "qualification_scope": "Suggested route only; validate exact source, worker capability, target import/runtime and visuals.",
+      "skill_sources": [
+        "ansible/roles/watoom-code/files/skills/watoom-fab-owned-assets/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/blender-export-pipelines/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/godot/SKILL.md"
+      ]
+    },
+    {
+      "id": "native-godot",
+      "applies_to": [
+        "*"
+      ],
+      "steps": [
+        "Select the explicitly offered Godot package (animpic format labels are catalogue evidence, not import validation).",
+        "Preserve purchased source; inspect compatible Godot version, dependencies and scripts before project-local direct import; no conversion.",
+        "Load godot child discovery for asset import; run actual import/runtime and visual checks in existing bounded engine route."
+      ],
+      "tools": [
+        "godot",
+        "watoom_skill_search:Godot asset import scene pipeline",
+        "watoom_game_worker"
+      ],
+      "requires_owner_approval": true,
+      "approval_scope": "Explicit per-asset owner approval before any additional Fab download; reuse existing receipts, do not redownload automatically.",
+      "pitfalls": [
+        "Offered Godot format does not establish version compatibility or project readiness.",
+        "Inspect downloaded scripts; do not execute purchased code automatically."
+      ],
+      "status": "CANDIDATE",
+      "qualification_scope": "Suggested route only; validate exact source, worker capability, target import/runtime and visuals.",
+      "skill_sources": [
+        "ansible/roles/watoom-code/files/skills/watoom-fab-owned-assets/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/godot/SKILL.md"
+      ]
+    },
+    {
+      "id": "materials-to-godot",
+      "applies_to": [
+        "materials"
+      ],
+      "steps": [
+        "Inspect complete maps, UVs, license and color spaces; for UE-only source use unreal-export Texture2D.",
+        "Rebuild target-native Godot PBR material with actual albedo/normal/roughness/metallic/alpha maps; validate rendered appearance."
+      ],
+      "tools": [
+        "watoom-fab-owned-assets",
+        "watoom_game_worker:unreal-export",
+        "godot"
+      ],
+      "requires_owner_approval": true,
+      "approval_scope": "Explicit per-asset owner approval before any additional Fab download; reuse existing receipts, do not redownload automatically.",
+      "pitfalls": [
+        "Unreal material graphs and procedural functions do not export as equivalent Godot shaders.",
+        "Avoid inferring missing maps, alpha or shader fidelity from a title.",
+        "The admitted unreal-export manifest selects a downloaded pack under /data/ai/assets/fab. For other source locations, verify a supported staging/export route first; do not assume animpic or arbitrary paths are admitted."
+      ],
+      "status": "CANDIDATE",
+      "qualification_scope": "Suggested route only; validate exact source, worker capability, target import/runtime and visuals.",
+      "skill_sources": [
+        "ansible/roles/watoom-code/files/skills/watoom-fab-owned-assets/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/godot/SKILL.md"
+      ]
+    },
+    {
+      "id": "vfx-adaptation",
+      "applies_to": [
+        "vfx"
+      ],
+      "steps": [
+        "Load watoom-poo-vfx for the concrete Poo pack recipe; other VFX require their own compatible source inspection.",
+        "Use existing bounded Unreal inspection/export controls and receipts; select actual textures, LUTs, masks and meshes.",
+        "Adapt into native Godot particles/decals/shaders or an explicitly accepted temporal bake. For particles read godot-particle-vfx-v1 recipe and scripts/particle_vfx_recipe.gd documented in the skill.",
+        "Verify alpha/draw-pass, multiple times/playback, repeated impacts, cleanup and runtime performance with fresh captures."
+      ],
+      "tools": [
+        "watoom-poo-vfx",
+        "watoom_game_worker:poo-vfx-inspect",
+        "tools/fab/export-poo-vfx.py (operator, Poo pack only)",
+        "godot"
+      ],
+      "requires_owner_approval": true,
+      "approval_scope": "Explicit per-asset owner approval before any additional Fab download; reuse existing receipts, do not redownload automatically.",
+      "pitfalls": [
+        "Poo export and particle recipe have scoped validation; arbitrary Niagara/VDB adaptation remains a candidate.",
+        "GLB geometry cannot carry Niagara or material behaviour.",
+        "poo-vfx-export requires live admission enum; do not assume staged operation is callable."
+      ],
+      "status": "CANDIDATE",
+      "qualification_scope": "Suggested route only; validate exact source, worker capability, target import/runtime and visuals.",
+      "skill_sources": [
+        "ansible/roles/watoom-code/files/skills/watoom-poo-vfx/SKILL.md"
+      ]
+    },
+    {
+      "id": "audio-import",
+      "applies_to": [
+        "audio"
+      ],
+      "steps": [
+        "Inspect actual audio formats, license, loop metadata and channel/sample rates; use existing asset-pipelines/godot discovery for exact import route.",
+        "Import supported audio directly and test playback, volume, loops and streaming in target Godot project."
+      ],
+      "tools": [
+        "asset-pipelines",
+        "godot",
+        "watoom_skill_search:Godot asset import scene pipeline"
+      ],
+      "requires_owner_approval": true,
+      "approval_scope": "Explicit per-asset owner approval before any additional Fab download; reuse existing receipts, do not redownload automatically.",
+      "pitfalls": [
+        "No documented generic Unreal SoundWave export in unreal-export; an Unreal-only audio pack has an extraction gap.",
+        "Catalogue title is not proof of WAV/OGG files."
+      ],
+      "status": "CANDIDATE",
+      "qualification_scope": "Suggested route only; validate exact source, worker capability, target import/runtime and visuals.",
+      "skill_sources": [
+        "ansible/roles/watoom-code/files/skills/asset-pipelines/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/godot/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/watoom-fab-owned-assets/SKILL.md"
+      ]
+    },
+    {
+      "id": "ui-import",
+      "applies_to": [
+        "ui"
+      ],
+      "steps": [
+        "Inspect whether source is portable images/fonts or Unreal widgets/code, and preserve licensing.",
+        "Import supported images/fonts into Godot and rebuild native Control layout as needed; validate scaling and visuals."
+      ],
+      "tools": [
+        "asset-pipelines",
+        "godot"
+      ],
+      "requires_owner_approval": true,
+      "approval_scope": "Explicit per-asset owner approval before any additional Fab download; reuse existing receipts, do not redownload automatically.",
+      "pitfalls": [
+        "UMG widgets and Blueprint behaviour have no direct portable route.",
+        "Icon/background words may describe a mixed pack; inspect exact contents."
+      ],
+      "status": "CANDIDATE",
+      "qualification_scope": "Suggested route only; validate exact source, worker capability, target import/runtime and visuals.",
+      "skill_sources": [
+        "ansible/roles/watoom-code/files/skills/asset-pipelines/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/godot/SKILL.md"
+      ]
+    },
+    {
+      "id": "no-godot-plugin",
+      "applies_to": [
+        "code_plugins"
+      ],
+      "steps": [
+        "Inspect native formats, engine version, license and dependencies.",
+        "Unreal plugins/code require separate native compatibility and security qualification; no direct Godot path.",
+        "Report unsupported integration explicitly; do not execute purchased code automatically."
+      ],
+      "tools": [
+        "watoom-fab-owned-assets",
+        "asset-pipelines"
+      ],
+      "requires_owner_approval": true,
+      "approval_scope": "Explicit per-asset owner approval before any additional Fab download; reuse existing receipts, do not redownload automatically.",
+      "pitfalls": [
+        "Unreal plugins/code require separate native compatibility and security qualification; no direct Godot path."
+      ],
+      "status": "CANDIDATE",
+      "qualification_scope": "Suggested route only; validate exact source, worker capability, target import/runtime and visuals.",
+      "skill_sources": [
+        "ansible/roles/watoom-code/files/skills/watoom-fab-owned-assets/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/asset-pipelines/SKILL.md"
+      ]
+    },
+    {
+      "id": "no-godot-project",
+      "applies_to": [
+        "complete_projects"
+      ],
+      "steps": [
+        "Inspect native formats, engine version, license and dependencies.",
+        "Complete Unreal projects and Blueprint gameplay have no direct Godot path; separately assess reusable data only.",
+        "Report unsupported integration explicitly; do not execute purchased code automatically."
+      ],
+      "tools": [
+        "watoom-fab-owned-assets",
+        "asset-pipelines"
+      ],
+      "requires_owner_approval": true,
+      "approval_scope": "Explicit per-asset owner approval before any additional Fab download; reuse existing receipts, do not redownload automatically.",
+      "pitfalls": [
+        "Complete Unreal projects and Blueprint gameplay have no direct Godot path; separately assess reusable data only."
+      ],
+      "status": "CANDIDATE",
+      "qualification_scope": "Suggested route only; validate exact source, worker capability, target import/runtime and visuals.",
+      "skill_sources": [
+        "ansible/roles/watoom-code/files/skills/watoom-fab-owned-assets/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/asset-pipelines/SKILL.md"
+      ]
+    },
+    {
+      "id": "metahuman-pipeline",
+      "applies_to": [
+        "metahuman"
+      ],
+      "steps": [
+        "Inspect first (operator, root): sudo python3 /data/ai/watoom-code/config/skills/watoom-metahuman/scripts/metahuman_pipeline.py inspect /data/ai/assets/fab/<pack>. It reports each character as 'editable' (a MetaHuman Creator character) or 'assembled', its LODs, grooms and clothing, and verifies the package hash.",
+        "To Unreal: 'unpack <pack>' builds a verified <pack>/Content tree; 'copy-to-project <pack> <UE project dir>' copies it into a project and enables MetaHumanCharacter, MetaHumanSDK and RigLogic. Open the project in Unreal 5.6+ with the MetaHuman plugin; editable characters are opened and assembled there.",
+        "To Godot: 'export-godot <pack> <Character>' (for example Base_Female) runs two Unreal stages on the Bazzite worker and writes /data/ai/artifacts/metahuman/<pack>/<Character>/godot with GLB meshes (head, body, full body), DNA files, normal maps, a scene and a setup script. Copy that folder to res://metahuman/<Character>/ and instance <Character>.tscn.",
+        "Verify in Godot: skeleton count, scale (metres), the head following the body pose, and a visible render. Replace the flat skin_tone with real skin textures if you have them."
+      ],
+      "tools": [
+        "watoom-metahuman",
+        "watoom-fab-owned-assets",
+        "watoom_game_worker:bazzite",
+        "godot"
+      ],
+      "requires_owner_approval": true,
+      "approval_scope": "Explicit per-asset owner approval before any additional Fab download; reuse existing receipts, do not redownload automatically.",
+      "pitfalls": [
+        "Skin base-colour and composited skin maps are generated with a GPU TextureGraph and are NOT produced by the headless worker; the Godot export uses a flat skin tone plus the stored normal maps.",
+        "Facial animation is RigLogic-driven (the .dna files); Godot has no RigLogic, so the face is a static neutral pose that follows the body skeleton.",
+        "Editable characters need an 8 GiB Unreal job on Bazzite; fewer than 8 GiB free RAM there means the job waits.",
+        "Check the MetaHuman licence terms for the target engine before shipping."
+      ],
+      "status": "CANDIDATE",
+      "qualification_scope": "Qualified on the owned Ultimate Metahuman Body: Base Adult (editable female) through Godot 4.7 import; other packs and assembled characters are untested.",
+      "skill_sources": [
+        "ansible/roles/watoom-code/files/skills/watoom-metahuman/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/watoom-fab-owned-assets/SKILL.md"
+      ]
+    },
+    {
+      "id": "megascans-static",
+      "applies_to": [
+        "megascans"
+      ],
+      "steps": [
+        "Inspect exact Quixel Megascans/Megaplants content, license, offered formats, textures and dependencies; labels alone do not establish mesh versus surface.",
+        "For StaticMesh follow unreal-static-to-godot with unreal-export StaticMesh/Texture2D -> FBX/TGA -> optional Blender GLB -> Godot.",
+        "For surfaces follow materials-to-godot instead; validate foliage opacity, wind adaptation, LODs, collisions and actual target visuals."
+      ],
+      "tools": [
+        "watoom-fab-owned-assets",
+        "watoom_game_worker:unreal-export",
+        "blender-export-pipelines",
+        "godot"
+      ],
+      "requires_owner_approval": true,
+      "approval_scope": "Explicit per-asset owner approval before any additional Fab download; reuse existing receipts, do not redownload automatically.",
+      "pitfalls": [
+        "Candidate application of documented generic static/material routes; no dedicated Megascans qualification found.",
+        "Quixel Bridge code plugin is not a mesh pack.",
+        "Nanite, foliage placement and Unreal shaders do not port automatically.",
+        "The admitted unreal-export manifest selects a downloaded pack under /data/ai/assets/fab. For other source locations, verify a supported staging/export route first; do not assume animpic or arbitrary paths are admitted."
+      ],
+      "status": "CANDIDATE",
+      "qualification_scope": "Suggested route only; validate exact source, worker capability, target import/runtime and visuals.",
+      "skill_sources": [
+        "ansible/roles/watoom-code/files/skills/watoom-fab-owned-assets/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/blender-export-pipelines/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/godot/SKILL.md"
+      ]
+    },
+    {
+      "id": "inspect-unknown",
+      "applies_to": [
+        "uncategorised"
+      ],
+      "steps": [
+        "Inspect listing category, tags, formats and bounded source contents; supply --facts keyed by asset id.",
+        "Rebuild index and select a supported pipeline only after evidence resolves asset type."
+      ],
+      "tools": [
+        "asset-pipelines",
+        "watoom-fab-owned-assets"
+      ],
+      "requires_owner_approval": true,
+      "approval_scope": "Explicit per-asset owner approval before any additional Fab download; reuse existing receipts, do not redownload automatically.",
+      "pitfalls": [
+        "No conversion recommendation while content type is unknown."
+      ],
+      "status": "CANDIDATE",
+      "qualification_scope": "Suggested route only; validate exact source, worker capability, target import/runtime and visuals.",
+      "skill_sources": [
+        "ansible/roles/watoom-code/files/skills/asset-pipelines/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/watoom-fab-owned-assets/SKILL.md"
+      ]
+    },
+    {
+      "id": "portable-character",
+      "applies_to": [
+        "characters",
+        "animals",
+        "creatures"
+      ],
+      "steps": [
+        "Inspect actual portable source, textures, scale, rig and clips; preserve originals.",
+        "Use watoom_game_worker operation blender with blender-export-pipelines/scripts/export_asset.py for GLB; for broken author-machine FBX texture paths use fbx_relink_to_glb.py --textures <folders>.",
+        "If another skeleton is targeted use sims4-animation/scripts/retarget_generic.py --target-armature <explicit-target> with a verified map; confirmed unrigged sources use rigify-static-character first.",
+        "Import into Godot and verify materials, scale, collision and actual visuals; for rigs also verify deformation and playback."
+      ],
+      "tools": [
+        "watoom_game_worker:blender",
+        "blender-export-pipelines/scripts/export_asset.py",
+        "blender-export-pipelines/scripts/fbx_relink_to_glb.py",
+        "godot",
+        "sims4-animation/scripts/retarget_generic.py"
+      ],
+      "requires_owner_approval": true,
+      "approval_scope": "Explicit per-asset owner approval before any additional Fab download; reuse receipts.",
+      "pitfalls": [
+        "Portable format labels do not establish dependency completeness or target readiness.",
+        "Do not run Blender in the application shell; use documented bounded workers."
+      ],
+      "status": "CANDIDATE",
+      "qualification_scope": "Documented portable export route; exact purchased asset integration still needs validation.",
+      "skill_sources": [
+        "ansible/roles/watoom-code/files/skills/blender-export-pipelines/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/blender-character-rigging/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/sims4-animation/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/godot/SKILL.md"
+      ]
+    },
+    {
+      "id": "portable-static",
+      "applies_to": [
+        "environment"
+      ],
+      "steps": [
+        "Inspect actual portable source, textures, scale, rig and clips; preserve originals.",
+        "Use watoom_game_worker operation blender with blender-export-pipelines/scripts/export_asset.py for GLB; for broken author-machine FBX texture paths use fbx_relink_to_glb.py --textures <folders>.",
+        "Import into Godot and verify materials, scale, collision and actual visuals; for rigs also verify deformation and playback."
+      ],
+      "tools": [
+        "watoom_game_worker:blender",
+        "blender-export-pipelines/scripts/export_asset.py",
+        "blender-export-pipelines/scripts/fbx_relink_to_glb.py",
+        "godot"
+      ],
+      "requires_owner_approval": true,
+      "approval_scope": "Explicit per-asset owner approval before any additional Fab download; reuse receipts.",
+      "pitfalls": [
+        "Portable format labels do not establish dependency completeness or target readiness.",
+        "Do not run Blender in the application shell; use documented bounded workers."
+      ],
+      "status": "CANDIDATE",
+      "qualification_scope": "Documented portable export route; exact purchased asset integration still needs validation.",
+      "skill_sources": [
+        "ansible/roles/watoom-code/files/skills/blender-export-pipelines/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/blender-character-rigging/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/sims4-animation/SKILL.md",
+        "ansible/roles/watoom-code/files/skills/godot/SKILL.md"
+      ]
+    }
+  ]
+}

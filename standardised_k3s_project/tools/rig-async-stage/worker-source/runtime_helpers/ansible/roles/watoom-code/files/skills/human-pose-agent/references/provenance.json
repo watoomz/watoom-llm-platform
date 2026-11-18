@@ -1,0 +1,6 @@
+{
+  "source": "User-supplied human-pose-agent-v3-fixed.zip",
+  "sha256": "101e4f3e22c3b69094163d8ae2133065fa417eea9241ed76e9cf7696d7d3d1ca",
+  "original_code": "scripts/human_pose_agent.py and scripts/auto_ik_validation.py preserved byte-for-byte",
+  "adaptation": "prepare_pose.py environment wrapper; no dependencies or shell launcher"
+}

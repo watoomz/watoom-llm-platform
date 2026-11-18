@@ -1,0 +1,35 @@
+{
+  "autoload": false,
+  "model_root": "/data/ai/models/gguf",
+  "models": {
+    "gemma-4-e4b": {
+      "compat_status": "probe-required",
+      "enabled": false,
+      "storage_root": "/data/ai"
+    },
+    "ornith-1.5-9b": {
+      "compat_status": "probe-required",
+      "enabled": false,
+      "storage_root": "/data/ai"
+    },
+    "qwen35-defiant-fable-9b": {
+      "compat_status": "probe-required",
+      "enabled": false,
+      "storage_root": "/data/ai"
+    }
+  },
+  "resident_model_limit": 1,
+  "router_image": "ghcr.io/ggml-org/llama.cpp:server-cuda12-b10380@sha256:11786fb97f93edf676e801b389a0c75417ce4cef1e6b9a03e83ad69096218e92",
+  "router_mode": "native-llama-cpp",
+  "schema_version": 2,
+  "switch_policy": "explicit-unload-load",
+  "switch_sequence": [
+    "serialize model switch",
+    "wait for active requests to drain",
+    "POST /models/unload for current model if different",
+    "wait until current model is unloaded",
+    "POST /models/load for requested model",
+    "wait until requested model status is loaded",
+    "forward original inference request"
+  ]
+}

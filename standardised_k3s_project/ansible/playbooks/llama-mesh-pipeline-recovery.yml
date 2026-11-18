@@ -1,0 +1,10 @@
+---
+- name: Persist WatooM LLaMA-Mesh host queue recovery
+  hosts: homelab
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Reconcile only mesh pipeline recovery
+      ansible.builtin.include_role:
+        name: llm-model-lab
+        tasks_from: mesh-pipeline-recovery

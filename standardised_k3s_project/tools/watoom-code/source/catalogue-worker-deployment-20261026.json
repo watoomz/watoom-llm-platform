@@ -1,0 +1,84 @@
+{
+  "status": "PASS",
+  "image": "127.0.0.1:5000/watoom-code@sha256:66e2ca21794c483b72be4f5c7fc63face4ac010b61ae606d5e13a55bd3c7a976",
+  "sourceCommit": "520aca54ea4a49640f91ebe819983c89dc30e558",
+  "version": "0.0.0--202610252140",
+  "skills": 132,
+  "pipelines": 29,
+  "pausedSessions": [
+    "ses_e8dadd86cffdgwM0LvBScAZAMQ",
+    "ses_e8afd08a7ffeb1hPeMcFDoWREg"
+  ],
+  "activeExecutions": {},
+  "guard": {
+    "version": 1,
+    "supported": true,
+    "held": false,
+    "leases": 0
+  },
+  "memory": {
+    "enabled": true,
+    "required": true,
+    "outbox": {
+      "pending": 0,
+      "sending": 0,
+      "uncertain": 0,
+      "observed": 4361,
+      "attempts": 4361,
+      "lastCheckpoint": 1792964693785,
+      "lastObserved": 1792964694500,
+      "oldestPending": null
+    }
+  },
+  "ownership": {
+    "available": true,
+    "stale": false,
+    "sampledAt": 1792964834291,
+    "phase": "qwen-ready",
+    "owner": null,
+    "generation": 167,
+    "uncertain": false,
+    "activeRequests": 0,
+    "primary": "llama-cpp-swift-qwen38-coder"
+  },
+  "workerHealth": {
+    "schema": "watoom.workstation-stage.health.v1",
+    "sampledAt": 1792964832.6922596,
+    "workers": [
+      {
+        "id": "rig-stage",
+        "lastSeen": 1792964832.4440162,
+        "online": true,
+        "lastOperation": "hello"
+      }
+    ],
+    "jobs": {
+      "COMPLETED_VISUAL_REVIEW_PENDING": 3,
+      "FAILED": 1
+    },
+    "automatic_replay": false
+  },
+  "renderChecks": [
+    {
+      "job": "9423ce353dc5bc6c523bcb95c2334bacdf345d24394dc1d4c3725b127f3bb358",
+      "state": "COMPLETED_VISUAL_REVIEW_PENDING",
+      "device": "CPU",
+      "frames": 1,
+      "hashes_verified": true
+    },
+    {
+      "job": "8477b308095c8c38ecc993203a040971b1267a940832a3df947af63c9903fd4f",
+      "state": "COMPLETED_VISUAL_REVIEW_PENDING",
+      "device": "OPTIX",
+      "frames": 1,
+      "hashes_verified": true
+    },
+    {
+      "job": "1c92b35d6a451258996f4e939f8b8c3cd9126c47326542da75e31ff816e0cf96",
+      "state": "COMPLETED_VISUAL_REVIEW_PENDING",
+      "device": "OPTIX",
+      "frames": 3,
+      "hashes_verified": true
+    }
+  ]
+}

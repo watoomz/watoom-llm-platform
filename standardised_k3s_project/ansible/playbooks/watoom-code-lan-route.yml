@@ -1,0 +1,32 @@
+---
+- name: Publish isolated WatooM Code LAN route
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Require explicit release approval
+      ansible.builtin.assert:
+        that: watoom_code_lan_route_approved | default(false) | bool
+    - name: Read authoritative existing LAN certificate
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Secret
+        namespace: opencode
+        name: watoom-tls
+      register: lan_tls
+      no_log: true
+    - name: Install isolated copy of existing LAN certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: watoom-code-lan-tls
+            namespace: watoom-code
+          type: kubernetes.io/tls
+          data: '{{ lan_tls.resources[0].data }}'
+      no_log: true
+    - name: Publish validated isolated application on existing TLS entrypoint
+      kubernetes.core.k8s:
+        state: present
+        src: '{{ playbook_dir }}/../../tools/watoom-code/lan-route.json'

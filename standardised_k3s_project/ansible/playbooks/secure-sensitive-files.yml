@@ -1,0 +1,26 @@
+---
+- name: Restrict credential-bearing files in the project checkout
+  hosts: homelab
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Inspect sensitive files
+      ansible.builtin.stat:
+        path: "{{ project_root }}/{{ item.path }}"
+      loop: "{{ watoom_sensitive_files }}"
+      register: watoom_sensitive_stat
+    - name: Require every sensitive file to be a regular file
+      ansible.builtin.assert:
+        that: [item.stat.exists, item.stat.isreg]
+        fail_msg: "{{ item.item.path }} is missing or not a regular file"
+        quiet: true
+      loop: "{{ watoom_sensitive_stat.results }}"
+      loop_control: {label: "{{ item.item.path }}"}
+    - name: Apply owner and mode (content never read)
+      ansible.builtin.file:
+        path: "{{ project_root }}/{{ item.path }}"
+        owner: "{{ item.owner }}"
+        group: "{{ item.group }}"
+        mode: "{{ item.mode }}"
+      loop: "{{ watoom_sensitive_files }}"
+      loop_control: {label: "{{ item.path }}"}

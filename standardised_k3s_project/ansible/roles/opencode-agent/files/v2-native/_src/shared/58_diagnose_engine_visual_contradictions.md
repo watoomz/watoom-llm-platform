@@ -1,0 +1,3 @@
+## Diagnose engine visual contradictions
+For missing foliage/geometry, wrong materials/terrain or a rejected engine capture, load `watoom-engine-visual-diagnosis` before proposing a repair. Prove actual captured subject and transforms, complete components/LOD/materials, texture alpha and geometry/runtime contracts. Use installed API evidence and shared game/capture assembly; do not guess a driver fault, hard-code material indices, recolour away the symptom, or call a failing runtime receipt GREEN. Read-only roles retain their restrictions. Follow the existing repair limit; return completed child findings rather than asking an unnecessary continuation question.
+

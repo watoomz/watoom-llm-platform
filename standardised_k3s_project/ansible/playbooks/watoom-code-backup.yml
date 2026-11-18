@@ -1,0 +1,51 @@
+---
+- name: Schedule verified WatooM-Code backups
+  hosts: homelab
+  become: true
+  gather_facts: false
+  vars:
+    watoom_code_backup_dest: /data/backups/watoom-code
+    watoom_code_backup_keep: 14
+  tasks:
+    - name: Install the backup tools outside any checkout
+      ansible.builtin.include_tasks: tasks/watoom-backup-libexec.yml
+    - name: Create the private backup destination
+      ansible.builtin.file:
+        path: "{{ watoom_code_backup_dest }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0700'
+    - name: Install the backup service and daily timer
+      ansible.builtin.copy:
+        dest: "/etc/systemd/system/{{ item.name }}"
+        mode: '0644'
+        content: "{{ item.content }}"
+      loop:
+        - name: watoom-code-backup.service
+          content: |
+            [Unit]
+            Description=Verified WatooM-Code SQLite, config and AgentMemory backup
+            [Service]
+            Type=oneshot
+            ExecStart=/usr/bin/python3 -I {{ watoom_backup_libexec }}/backup.py --dest {{ watoom_code_backup_dest }} --keep {{ watoom_code_backup_keep }}
+            Nice=10
+            IOSchedulingClass=idle
+            TimeoutStartSec=1h
+        - name: watoom-code-backup.timer
+          content: |
+            [Unit]
+            Description=Daily verified WatooM-Code backup
+            [Timer]
+            OnCalendar=*-*-* 03:30:00
+            RandomizedDelaySec=15min
+            Persistent=true
+            [Install]
+            WantedBy=timers.target
+      loop_control: {label: "{{ item.name }}"}
+    - name: Enable the daily backup timer
+      ansible.builtin.systemd_service:
+        name: watoom-code-backup.timer
+        enabled: true
+        state: started
+        daemon_reload: true

@@ -1,0 +1,7 @@
+---
+- name: Install the tickets board (kanban over the ticket store, served under Glance at /tickets/)
+  hosts: homelab
+  become: true
+  gather_facts: false
+  roles:
+    - role: tickets-board

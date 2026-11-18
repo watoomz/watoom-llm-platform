@@ -1,0 +1,28 @@
+---
+# Versioned MOSS Image tool plugin (tools/moss-image/plugin): moss_presets, moss_status, moss_generate.
+# Feature-flagged; off by default. The plugin only calls the internal Studio API and cannot start a GPU session.
+- name: Derive MOSS Image plugin version
+  ansible.builtin.set_fact:
+    watoom_code_moss_hash: >-
+      {{ ((lookup('ansible.builtin.file', role_path + '/../../../tools/moss-image/plugin/index.js', rstrip=false)
+        ~ lookup('ansible.builtin.file', role_path + '/../../../tools/moss-image/plugin/package.json', rstrip=false)
+        ~ watoom_code_moss_image_url) | hash('sha256')) }}
+  when: watoom_code_moss_image_enabled | bool
+- name: Install versioned MOSS Image plugin
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../tools/moss-image/plugin/"
+    dest: "{{ watoom_code_root }}/config/watoom-tools/moss-image-{{ watoom_code_moss_hash }}/"
+    owner: '1001'
+    group: '1001'
+    mode: '0644'
+    directory_mode: '0750'
+  when: watoom_code_moss_image_enabled | bool
+- name: Select (or remove) the MOSS Image plugin in native configuration
+  ansible.builtin.script:
+    cmd: >-
+      enable-moss-image-plugin.py {{ watoom_code_root }}/config/opencode.json
+      {{ ('/config/watoom-tools/moss-image-' ~ watoom_code_moss_hash) if (watoom_code_moss_image_enabled | bool) else '-' }}
+      '{{ {"baseUrl": watoom_code_moss_image_url} | to_json }}'
+    executable: /usr/bin/python3
+  register: watoom_code_moss
+  changed_when: "'CHANGED' == watoom_code_moss.stdout | trim"

@@ -1,0 +1,4 @@
+<!-- WATOOM_EXECUTION_STATUS_EVIDENCE_V1 -->
+Execution status must match observed evidence. A skill is instructions, not an executing worker. Do not describe a job as handed off, queued, running or completed without the corresponding real tool receipt and job identity. If no execution tool was called, state that no job has been submitted.
+Do not invent a pending installer, reviewer, worker or approval confirmation. Describe a wait only when an actual tool result identifies the outstanding operation or required approval; distinguish a proposed prerequisite from an observed blocker. Never imply another actor is working merely because you named one. Report uncertainty honestly and preserve existing job identities. These reporting rules grant no additional execution authority and do not override permissions or content restrictions.
+

@@ -1,0 +1,88 @@
+---
+- name: "Image Audit {{ image_audit_action }} | Validate requested action"
+  ansible.builtin.assert:
+    that:
+      - image_audit_action in ['check', 'export']
+    fail_msg: "Valid image_audit_action values: check, export"
+
+- name: "Image Audit check | Find floating image tags"
+  ansible.builtin.shell: |
+    set -euo pipefail
+
+    find manifests \
+      -path manifests/05-secrets -prune -o \
+      -type f \( -name '*.yml' -o -name '*.yaml' \) -print |
+    while read -r file; do
+      case "$file" in
+        *.before-*|*.bak|*.tmp)
+          continue
+          ;;
+      esac
+
+      {
+        grep -nE \
+          'image:[[:space:]]+[^[:space:]]+:(latest|release|stable)$' \
+          "$file" 2>/dev/null || true
+      } | sed "s#^#$file:#"
+    done
+  args:
+    chdir: "{{ project_root }}"
+    executable: /bin/bash
+  register: image_audit_floating
+  changed_when: false
+  when: image_audit_action == 'check'
+
+- name: "Image Audit check | Report floating image tags"
+  ansible.builtin.debug:
+    msg: >-
+      {{
+        image_audit_floating.stdout_lines
+        if image_audit_floating.stdout_lines | length > 0
+        else ['OK: no :latest, :release, or :stable image references found']
+      }}
+  when: image_audit_action == 'check'
+
+- name: "Image Audit export | Query Kubernetes pods"
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    kubeconfig: "{{ k3s_kubeconfig }}"
+  register: image_audit_pods
+  changed_when: false
+  when: image_audit_action == 'export'
+
+- name: "Image Audit export | Query Docker container IDs"
+  ansible.builtin.command:
+    argv:
+      - docker
+      - ps
+      - -q
+  register: image_audit_docker_ids
+  changed_when: false
+  when: image_audit_action == 'export'
+
+- name: "Image Audit export | Inspect Docker containers"
+  ansible.builtin.command:
+    argv:
+      - docker
+      - inspect
+      - "{{ image_audit_container_id }}"
+  loop: "{{ image_audit_docker_ids.stdout_lines | default([]) }}"
+  loop_control:
+    loop_var: image_audit_container_id
+    label: "{{ image_audit_container_id }}"
+  register: image_audit_docker_inspect
+  changed_when: false
+  when: image_audit_action == 'export'
+
+- name: "Image Audit export | Write {{ image_audit_output }}"
+  ansible.builtin.template:
+    src: LIVE_IMAGE_LOCK.md.j2
+    dest: "{{ image_audit_output }}"
+    mode: "0644"
+  when: image_audit_action == 'export'
+
+- name: "Image Audit export | Report generated image lock"
+  ansible.builtin.debug:
+    msg: "Wrote {{ image_audit_output }}"
+  when: image_audit_action == 'export'

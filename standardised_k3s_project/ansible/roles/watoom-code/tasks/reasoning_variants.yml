@@ -1,0 +1,9 @@
+---
+- name: Offer xhigh, medium, low and off reasoning variants without replacing user settings
+  ansible.builtin.script:
+    cmd: >-
+      enable-reasoning-variants.py {{ watoom_code_root }}/config/opencode.json
+      {{ {'models': watoom_code_reasoning_models, 'variants': watoom_code_reasoning_variants} | to_json | quote }}
+    executable: /usr/bin/python3
+  register: watoom_code_reasoning_variants_result
+  changed_when: "'CHANGED' == watoom_code_reasoning_variants_result.stdout | trim"

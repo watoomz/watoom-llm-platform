@@ -1,0 +1,10 @@
+---
+# Default off. Example: ansible-playbook playbooks/moss-image.yml -e moss_image_enabled=true
+- name: MOSS Image Studio (GPU sessions via the GPU controller)
+  hosts: homelab
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../vars/moss-image.yml
+  roles:
+    - role: moss-image

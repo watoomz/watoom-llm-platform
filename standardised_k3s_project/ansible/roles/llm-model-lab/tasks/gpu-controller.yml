@@ -1,0 +1,196 @@
+---
+- name: Require explicit reviewed GPU controller cutover
+  ansible.builtin.assert:
+    that:
+      - gpu_controller_cutover_verified | default(false) | bool
+      - gpu_controller_backup_verified | default(false) | bool
+      - gpu_controller_legacy_drain_verified | default(false) | bool
+      - gpu_controller_rollback_verified | default(false) | bool
+    fail_msg: Run the reviewed cutover gates before promoting controller clients.
+
+- name: Create narrowly scoped controller directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "{{ item.mode }}"
+  loop:
+    - {path: /data/ai/helper-scripts/config, mode: "0755"}
+    - {path: /data/ai/helper-scripts/gpu-controller, mode: "0700"}
+    - {path: /data/ai/helper-scripts/state/gpu-controller, mode: "0700"}
+    - {path: /data/ai/helper-scripts/state/gpu-controller-private, mode: "0700"}
+    - {path: /data/ai/helper-scripts/state/gpu-controller-router, mode: "0755"}
+    - {path: /data/ai/helper-scripts/state/gpu-controller-observability, mode: "0755"}
+    - {path: /data/ai/helper-scripts/state/gpu-controller-credentials, mode: "0700"}
+
+- name: Install controller runtime modules
+  ansible.builtin.copy:
+    src: "{{ llm_model_lab_project_root }}/tools/llm/watoom-gpu-controller/{{ item }}"
+    remote_src: true
+    dest: "/data/ai/helper-scripts/gpu-controller/{{ item }}"
+    owner: root
+    group: root
+    mode: "0600"
+  register: gpu_controller_modules
+  loop: [controller.py, durable_store.py, gateway.py, client.py, kubernetes_actuator.py, kubernetes_api.py, g3h_service.py, refresh_credentials.py, g3h_ops.py, g3h_cutover.py, model_lifecycle.py, inference_leases.py, observability.py]
+
+- name: Install reviewed controller config
+  ansible.builtin.copy:
+    src: gpu-controller.json
+    dest: /data/ai/helper-scripts/config/gpu-controller.json
+    owner: root
+    group: root
+    mode: "0600"
+  register: gpu_controller_config
+
+- name: Re-pin the primary model Deployment digest after a reviewed change (opt-in)
+  ansible.builtin.command:
+    argv: [/usr/bin/python3, "{{ llm_model_lab_project_root }}/scripts/gpu-controller-repin-primary.py", --apply]
+  register: gpu_controller_repin
+  changed_when: "'REPINNED' in gpu_controller_repin.stdout"
+  when: gpu_controller_repin_primary | default(false) | bool
+
+- name: Persist controller units
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: "0644"
+  loop: [watoom-gpu-controller.service, watoom-gpu-controller-credentials.service, watoom-gpu-controller-credentials.timer]
+
+- name: Persist verified nonsecret Mesh pipeline configuration
+  ansible.builtin.copy:
+    content: >-
+      {{ (lookup('file', role_path + '/files/llama-mesh-pipeline.json') | from_json)
+         | combine({'existing_parser': llm_model_lab_project_root + '/tools/llm/llama_mesh.py'})
+         | to_nice_json }}
+    dest: /data/ai/helper-scripts/config/llama-mesh-pipeline.json
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Require retained runtime recovery baseline without reinitializing ownership
+  ansible.builtin.stat:
+    path: /data/ai/helper-scripts/state/qwen-runtime-baseline.json
+  register: gpu_pipeline_baseline
+
+- name: Preserve existing validated cutover recovery records
+  ansible.builtin.assert:
+    that:
+      - gpu_pipeline_baseline.stat.isreg | default(false)
+    fail_msg: Restore the protected runtime recovery records; never replay controller ownership initialization.
+
+- name: Install controller-mediated pipeline
+  ansible.builtin.copy:
+    src: llama_mesh_pipeline.py
+    dest: /data/ai/helper-scripts/llama_mesh_pipeline.py
+    owner: root
+    group: root
+    mode: "0750"
+    validate: /usr/bin/python3 -m py_compile %s
+
+- name: Label read-only ownership observations for container access
+  community.general.sefcontext:
+    target: /data/ai/helper-scripts/state/gpu-controller-observability(/.*)?
+    setype: container_file_t
+    state: present
+
+- name: Apply ownership observation context
+  ansible.builtin.command: restorecon -RF /data/ai/helper-scripts/state/gpu-controller-observability
+  changed_when: false
+
+- name: Label only router RPC socket directory for container access
+  community.general.sefcontext:
+    target: /data/ai/helper-scripts/state/gpu-controller-router(/.*)?
+    setype: container_file_t
+    state: present
+
+- name: Apply persistent router socket context
+  ansible.builtin.command: restorecon -RF /data/ai/helper-scripts/state/gpu-controller-router
+  changed_when: false
+
+- name: Refresh controller service definitions
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: Keep controller token rotation enabled
+  ansible.builtin.systemd_service:
+    name: watoom-gpu-controller-credentials.timer
+    enabled: true
+    state: started
+
+- name: Keep exclusive controller service enabled
+  ansible.builtin.systemd_service:
+    name: watoom-gpu-controller.service
+    enabled: true
+    state: "{{ 'restarted' if (gpu_controller_modules.changed or gpu_controller_config.changed or (gpu_controller_repin.changed | default(false))) else 'started' }}"
+
+- name: Maintain narrow controller authorization and admission
+  kubernetes.core.k8s:
+    kubeconfig: "{{ llm_model_lab_kubeconfig }}"
+    state: present
+    definition: "{{ item }}"
+  loop: "{{ (lookup('file', llm_model_lab_project_root + '/manifests/10-infrastructure/llm/gpu-controller-rbac.yml') | from_yaml_all | list) + (lookup('file', llm_model_lab_project_root + '/manifests/10-infrastructure/llm/gpu-controller-admission.yml') | from_yaml_all | list) }}"
+
+- name: Maintain controller client router and read-only router role
+  kubernetes.core.k8s:
+    kubeconfig: "{{ llm_model_lab_kubeconfig }}"
+    state: present
+    definition: "{{ item }}"
+  loop: "{{ lookup('file', llm_model_lab_project_root + '/manifests/10-infrastructure/llm/llm-router-gpu-controller.yml') | from_yaml_all | list }}"
+
+- name: Verify controller client router rollout before recovery
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ llm_model_lab_kubeconfig }}"
+    api_version: apps/v1
+    kind: Deployment
+    namespace: llama-cpp
+    name: llm-router
+    wait: true
+    wait_timeout: 180
+    wait_condition:
+      type: Available
+      status: "True"
+
+- name: Verify routed primary inference before recovery service
+  ansible.builtin.command:
+    argv: [/usr/bin/python3, /data/ai/helper-scripts/llama_mesh_pipeline.py, health]
+  changed_when: false
+
+- name: Persist controller-owned recovery service
+  ansible.builtin.template:
+    src: watoom-llama-mesh-recovery.service.j2
+    dest: /etc/systemd/system/watoom-llama-mesh-recovery.service
+    mode: "0644"
+  register: gpu_recovery_unit
+
+- name: Restart changed recovery service once
+  ansible.builtin.systemd_service:
+    name: watoom-llama-mesh-recovery.service
+    daemon_reload: "{{ gpu_recovery_unit.changed }}"
+    enabled: true
+    state: "{{ 'restarted' if gpu_recovery_unit.changed else 'started' }}"
+
+- name: Install controller-compatible bridge with durable idempotency receipts
+  ansible.builtin.copy:
+    src: opencode_mesh_bridge.py
+    dest: /data/ai/helper-scripts/opencode_mesh_bridge.py
+    owner: root
+    group: root
+    mode: "0750"
+    validate: /usr/bin/python3 -m py_compile %s
+  register: gpu_bridge_source
+
+- name: Restart bridge only when implementation changes
+  ansible.builtin.systemd_service:
+    name: watoom-opencode-mesh-bridge.service
+    state: "{{ 'restarted' if gpu_bridge_source.changed else 'started' }}"
+
+- name: Install existing MCP server with bounded synchronous generation tool
+  ansible.builtin.copy:
+    src: watoom-llama-mesh.py
+    dest: /app/ai/services/opencode/home/.config/opencode/watoom-tools/watoom-llama-mesh.py
+    owner: "1009"
+    group: "1009"
+    mode: "0755"
+    validate: /usr/bin/python3 -m py_compile %s

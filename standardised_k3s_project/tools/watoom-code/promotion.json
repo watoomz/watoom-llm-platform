@@ -1,0 +1,60 @@
+{
+  "status": "PASS",
+  "image": "127.0.0.1:5000/watoom-code@sha256:c29262da8ca7a1c761b688b3c79db834bb4d465e64b0ff960c7f3b4d3a53162c",
+  "running_image_id": "127.0.0.1:5000/watoom-code@sha256:c29262da8ca7a1c761b688b3c79db834bb4d465e64b0ff960c7f3b4d3a53162c",
+  "local_models": [
+    "active-model",
+    "gemma-4-e4b",
+    "llama-mesh",
+    "ornith-1.5-9b",
+    "qwen35-defiant-fable-9b",
+    "qwen38-general",
+    "qwen38-uncensored-mtp",
+    "swift-qwen38-coder",
+    "tiel-coder-35b-a3b-mtp"
+  ],
+  "free_models": [
+    "big-pickle",
+    "ling-3.0-flash-fin-free",
+    "mimo-v2.6-flash-free",
+    "muse-spark-1.3-contributor-free",
+    "nemotron-3-ultra-free",
+    "nemotron-3.5-lightning-free",
+    "space-bunny-free"
+  ],
+  "acceptance_root": "/data/ai/helper-scripts/reports/loop-handoff-current-20261017T1157Z/candidate",
+  "engineering_tools": "PASS",
+  "source_commit": "b544067dd6b69ce6e3e6c4a77bef7a2bf37707d3",
+  "runtime_source_matches_committed_clean_tree": true,
+  "source_reconstruction": "PASS verified pinned public base and committed source bundle",
+  "source_bundle": "tools/watoom-code/source/watoom-code.bundle",
+  "rollback_image": "127.0.0.1:5000/watoom-code@sha256:4d0c4ad51b916c093ae24914d43868c59ff27773b5e78d294d346a9171626368",
+  "rollback_evidence": "/data/ai/helper-scripts/reports/loop-handoff-current-20261017T1157Z/candidate-acceptance.json",
+  "live_api_gui_validation": "/data/ai/helper-scripts/reports/loop-handoff-current-20261017T1157Z/promotion/native-gui/native-fenced-gui.json",
+  "native_fence_released_after_validation": true,
+  "gpu_handover": "PASS",
+  "workflow_recovery": "PASS",
+  "prior_gpu_workflow_evidence": "/data/ai/helper-scripts/reports/gpu-recovery-current-20261016T232245Z",
+  "unreal": "ENGINE ACCEPTANCE PASS: actual 5.8.3 editor/C++/commandlet/Vulkan render/clean exit/GLTF/Godot/Toolkit UID1009 runtime; isolated root preserved with enabled mount units. Production Toolkit engine switch and dungeon pack integration remain pending. Breakpad symbols omitted; actual reboot not tested.",
+  "evidence": "/data/ai/helper-scripts/reports/loop-handoff-current-20261017T1157Z",
+  "previous_release": {
+    "image": "127.0.0.1:5000/watoom-code@sha256:4d0c4ad51b916c093ae24914d43868c59ff27773b5e78d294d346a9171626368",
+    "source_commit": "36c68de32cb02dbec69f366992d68a0d0f5f73c7"
+  },
+  "loop_protection": {
+    "status": "DEPLOYED",
+    "source_runner_tests": 228,
+    "typecheck": "PASS"
+  },
+  "coordinator_subagent_handoff": {
+    "status": "PASS",
+    "evidence": "/data/ai/helper-scripts/reports/loop-handoff-current-20261017T1157Z/live-handoff-acceptance.json"
+  },
+  "native_skills": {
+    "total": 36,
+    "new_pinned_skills": 25,
+    "runtime_loads": "PASS"
+  },
+  "dungeon_native_generation": "GATED_NOT_ACCEPTED",
+  "unreal_acceptance_evidence": "/data/ai/helper-scripts/reports/unreal-recovery-20261016T213935Z/final-acceptance.json"
+}

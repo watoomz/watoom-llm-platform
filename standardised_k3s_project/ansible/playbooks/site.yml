@@ -1,0 +1,16 @@
+---
+# Base reconcile for the LLM platform: host paths, k3s manifests, validation.
+# Change the disk locations in ansible/roles/host_paths/defaults (see the repo README, "Adapting to your machine").
+- name: Reconcile the LLM platform host
+  hosts: homelab
+  become: true
+  gather_facts: true
+  roles:
+    - role: preflight
+      tags: [always, preflight]
+    - role: host_paths
+      tags: [host, storage, hostpaths]
+    - role: k3s_apply
+      tags: [k3s, manifests]
+    - role: validation
+      tags: [validate]

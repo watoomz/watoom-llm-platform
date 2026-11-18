@@ -1,0 +1,12 @@
+{
+  "upstream_commit": "71d031dab8bc6729504d11a78cbe91945401045f",
+  "original_skill_sha256": "072a74e87d433437ec14895312f23bb0f1bf78f9533028297f89d41bdc1df269",
+  "files": {
+    "SKILL.md": "67484f69e0e506808f1169d469dd3276c1dda488651d750e3e3273616e7001d7",
+    "references/upstream-SKILL.md": "072a74e87d433437ec14895312f23bb0f1bf78f9533028297f89d41bdc1df269",
+    "assets/addon_template/__init__.py": "93e6b738cdc7916f70db24065e0cd5368f5d5c9cdeb3cab1939f500cd6af667d",
+    "assets/addon_template/blender_manifest.toml": "18ad0365a8239ace1924bf81073111db4b42caecc70b968c0aa127776707e155",
+    "assets/addon_template/ui.py": "50e3083d3c94f69d065ee8b8cf05fa9e8b1e86675285d0d6c144307473f19a0f",
+    "assets/addon_template/operators.py": "b8ff4aa706c666a814451bf016a6c533e89540bc7168d953b1f9d84d6468eb3f"
+  }
+}

@@ -1,0 +1,253 @@
+---
+- name: "Docker host | Install Docker packages"
+  ansible.builtin.dnf:
+    name: "{{ docker_host_packages }}"
+    state: present
+
+- name: "Docker host | Check containerd storage mount"
+  ansible.builtin.command:
+    argv:
+      - mountpoint
+      - -q
+      - "{{ docker_host_containerd_mount }}"
+  register: docker_host_containerd_mount_check
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  when: docker_host_manage_containerd_storage | bool
+
+- name: "Docker host | Require containerd storage mount"
+  ansible.builtin.assert:
+    that:
+      - docker_host_containerd_mount_check.rc == 0
+    fail_msg: >-
+      {{ docker_host_containerd_mount }} must be a mounted filesystem before
+      system containerd storage can be configured at
+      {{ docker_host_containerd_root }}.
+  when: docker_host_manage_containerd_storage | bool
+
+- name: "Docker host | Check desired containerd root already configured"
+  ansible.builtin.command:
+    argv:
+      - grep
+      - -Fxq
+      - 'root = "{{ docker_host_containerd_root }}"'
+      - "{{ docker_host_containerd_config }}"
+  register: docker_host_containerd_desired_root_check
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  when: docker_host_manage_containerd_storage | bool
+
+- name: "Docker host | Check legacy containerd root for existing data"
+  ansible.builtin.shell: |
+    set -o pipefail
+
+    if [ ! -d {{ docker_host_containerd_legacy_root | quote }} ]; then
+      exit 0
+    fi
+
+    if find {{ docker_host_containerd_legacy_root | quote }} \
+        -mindepth 1 \
+        -print -quit |
+        grep -q .; then
+      echo nonempty
+    fi
+  args:
+    executable: /bin/bash
+  register: docker_host_containerd_legacy_data
+  changed_when: false
+  check_mode: false
+  when: docker_host_manage_containerd_storage | bool
+
+- name: "Docker host | Refuse implicit containerd data migration"
+  ansible.builtin.assert:
+    that:
+      - >-
+        docker_host_containerd_desired_root_check.rc == 0 or
+        docker_host_containerd_legacy_data.stdout != 'nonempty'
+    fail_msg: >-
+      Refusing to change containerd root automatically:
+      {{ docker_host_containerd_legacy_root }} contains existing data while
+      {{ docker_host_containerd_config }} does not point at
+      {{ docker_host_containerd_root }}.
+      Migrate the runtime store explicitly before applying this role.
+  when: docker_host_manage_containerd_storage | bool
+
+- name: "Docker host | Ensure containerd root directory"
+  ansible.builtin.file:
+    path: "{{ docker_host_containerd_root }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  when: docker_host_manage_containerd_storage | bool
+
+- name: "Docker host | Ensure containerd opt directory"
+  ansible.builtin.file:
+    path: "{{ docker_host_containerd_opt_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0711"
+  when: docker_host_manage_containerd_storage | bool
+
+- name: "Docker host | Check SELinux containerd equivalence"
+  ansible.builtin.shell: |
+    set -o pipefail
+
+    semanage fcontext -l |
+    awk \
+      -v target={{ docker_host_containerd_root | quote }} \
+      -v source={{ docker_host_containerd_legacy_root | quote }} \
+      '$1 == target && $2 == "=" && $3 == source { found=1 }
+       END { exit !found }'
+  args:
+    executable: /bin/bash
+  register: docker_host_containerd_selinux_equivalence
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  when:
+    - docker_host_manage_containerd_storage | bool
+    - ansible_facts['selinux']['status'] | default('disabled') == 'enabled'
+
+- name: "Docker host | Add SELinux containerd equivalence"
+  ansible.builtin.command:
+    argv:
+      - semanage
+      - fcontext
+      - -a
+      - -e
+      - "{{ docker_host_containerd_legacy_root }}"
+      - "{{ docker_host_containerd_root }}"
+  when:
+    - docker_host_manage_containerd_storage | bool
+    - ansible_facts['selinux']['status'] | default('disabled') == 'enabled'
+    - docker_host_containerd_selinux_equivalence.rc != 0
+
+- name: "Docker host | Restore containerd SELinux context"
+  ansible.builtin.command:
+    argv:
+      - restorecon
+      - -RF
+      - "{{ docker_host_containerd_root }}"
+  changed_when: false
+  when:
+    - docker_host_manage_containerd_storage | bool
+    - ansible_facts['selinux']['status'] | default('disabled') == 'enabled'
+
+- name: "Docker host | Ensure containerd systemd override directory"
+  ansible.builtin.file:
+    path: /etc/systemd/system/containerd.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: docker_host_manage_containerd_storage | bool
+
+- name: "Docker host | Require containerd storage filesystem"
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/containerd.service.d/20-watoom-storage.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [Unit]
+      RequiresMountsFor={{ docker_host_containerd_root }}
+  register: docker_host_containerd_systemd_override
+  when: docker_host_manage_containerd_storage | bool
+
+- name: "Docker host | Reload systemd units"
+  ansible.builtin.systemd:
+    daemon_reload: true
+  when:
+    - docker_host_manage_containerd_storage | bool
+    - docker_host_containerd_systemd_override.changed
+
+- name: "Docker host | Manage containerd configuration"
+  ansible.builtin.template:
+    src: containerd-config.toml.j2
+    dest: "{{ docker_host_containerd_config }}"
+    owner: root
+    group: root
+    mode: "0644"
+    validate: "containerd --config %s config dump"
+  register: docker_host_containerd_config_result
+  when: docker_host_manage_containerd_storage | bool
+
+- name: "Docker host | Validate containerd configuration"
+  ansible.builtin.command:
+    argv:
+      - containerd
+      - --config
+      - "{{ docker_host_containerd_config }}"
+      - config
+      - dump
+  changed_when: false
+  check_mode: false
+  when: docker_host_manage_containerd_storage | bool
+
+- name: "Docker host | Stop Docker service and socket for changed containerd configuration"
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: stopped
+  loop:
+    - docker.service
+    - docker.socket
+  when:
+    - docker_host_manage_containerd_storage | bool
+    - docker_host_containerd_config_result.changed
+
+- name: "Docker host | Restart containerd for changed configuration"
+  ansible.builtin.systemd:
+    name: containerd
+    state: restarted
+  when:
+    - docker_host_manage_containerd_storage | bool
+    - docker_host_containerd_config_result.changed
+
+- name: "Docker host | Docker group | Ensure present"
+  ansible.builtin.group:
+    name: docker
+    state: present
+
+- name: "Docker host | Docker users | Reconcile configured user"
+  ansible.builtin.include_tasks: user.yml
+  loop: "{{ docker_host_users }}"
+  loop_control:
+    loop_var: docker_host_user_target
+    label: "{{ docker_host_user_target }}"
+
+- name: "Docker host | Service docker | Enable and start"
+  ansible.builtin.systemd:
+    name: docker
+    enabled: true
+    state: started
+
+- name: "Docker host | Verify active containerd root"
+  ansible.builtin.command:
+    argv:
+      - containerd
+      - --config
+      - "{{ docker_host_containerd_config }}"
+      - config
+      - dump
+  register: docker_host_containerd_effective_config
+  changed_when: false
+  check_mode: false
+  when: docker_host_manage_containerd_storage | bool
+
+- name: "Docker host | Assert active containerd storage paths"
+  ansible.builtin.assert:
+    that:
+      - >-
+        ("root = '" ~ docker_host_containerd_root ~ "'")
+        in docker_host_containerd_effective_config.stdout
+      - >-
+        ("path = '" ~ docker_host_containerd_opt_path ~ "'")
+        in docker_host_containerd_effective_config.stdout
+    fail_msg: >-
+      Effective containerd configuration does not use the expected
+      {{ docker_host_containerd_root }} storage paths.
+  when: docker_host_manage_containerd_storage | bool

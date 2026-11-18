@@ -1,0 +1,10 @@
+#!/bin/sh
+# Refuse any push whose destination is main or master.
+while read -r local_ref local_sha remote_ref remote_sha; do
+  case "$remote_ref" in
+    refs/heads/main|refs/heads/master)
+      echo "BLOCKED: pushing to $remote_ref is not allowed from a dev clone." >&2
+      exit 1;;
+  esac
+done
+exit 0

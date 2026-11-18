@@ -1,0 +1,10 @@
+version = 2
+root = "{{ docker_host_containerd_root }}"
+
+[plugins]
+  [plugins."io.containerd.grpc.v1.cri"]
+    [plugins."io.containerd.grpc.v1.cri".cni]
+      bin_dir = "/usr/libexec/cni/"
+      conf_dir = "/etc/cni/net.d"
+  [plugins."io.containerd.internal.v1.opt"]
+    path = "{{ docker_host_containerd_opt_path }}"

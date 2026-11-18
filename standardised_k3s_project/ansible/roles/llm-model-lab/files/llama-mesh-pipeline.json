@@ -1,0 +1,40 @@
+{
+  "namespace": "llama-cpp",
+  "primary": "llama-cpp-swift-qwen38-coder",
+  "primary_alias": "swift-qwen38-coder",
+  "mesh": "llama-cpp-llama-mesh",
+  "router": "llm-router",
+  "port": 8000,
+  "model_alias": "llama-mesh-q8",
+  "model_path": "/data/ai/models/gguf/llama-mesh/LLaMA-Mesh-Q8_0.gguf",
+  "model_link": "/data/ai/models/gguf/llama-mesh/active.gguf",
+  "model_sha256": "e67bf3af4693f2be81aca6a9b6f519442a1b6ab32b0665846daee64e478f39af",
+  "model_stat": [
+    8540771616,
+    1791068297425843756
+  ],
+  "runtime": "llama.cpp 0.3.0-dev b10666 4e97ac86e; image sha256:150b59966fb5b2cb1a8fa9d226267c56ebd22c520c7b3640331cde87f3c4fb01",
+  "asset_root": "/data/ai/assets/generated",
+  "job_root": "/data/ai/llama-mesh/jobs",
+  "lock": "/data/ai/helper-scripts/state/llama-mesh.lock",
+  "baseline": "/data/ai/helper-scripts/state/qwen-runtime-baseline.json",
+  "tools_namespace": "opencode",
+  "tools_deployment": "opencode-v2-canary",
+  "existing_parser": "/data/github/watoom-standardised-homelab/standardised_k3s_project/tools/llm/llama_mesh.py",
+  "startup_timeout": 600,
+  "stop_timeout": 180,
+  "generation_timeout": 600,
+  "released_gpu_max_mib": 1500,
+  "sampling": {
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 20,
+    "min_p": 0.0,
+    "repeat_penalty": 1.0,
+    "max_tokens": 4096,
+    "seed": 42,
+    "stop": [
+      "<|eot_id|>"
+    ]
+  }
+}

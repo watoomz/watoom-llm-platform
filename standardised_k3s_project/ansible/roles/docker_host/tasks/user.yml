@@ -1,0 +1,7 @@
+---
+- name: "Docker user {{ docker_host_user_target }} | Add to docker group"
+  ansible.builtin.user:
+    name: "{{ docker_host_user_target }}"
+    groups:
+      - docker
+    append: true

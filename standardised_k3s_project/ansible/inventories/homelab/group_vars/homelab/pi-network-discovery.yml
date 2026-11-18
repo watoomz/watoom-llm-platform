@@ -1,0 +1,11 @@
+# BEGIN WATOOM PI NETWORK DISCOVERY SITE ALLOWLIST
+# Explicitly approved private networks for bounded Pi/Kali host discovery.
+pi_web_discovery_networks:
+  - "10.99.30.0/24"
+# END WATOOM PI NETWORK DISCOVERY SITE ALLOWLIST
+
+# BEGIN WATOOM DEDICATED KALI MCP DISCOVERY ALLOWLIST
+# Explicit bounded-discovery CIDRs for the dedicated Kali MCP.
+watoom_kali_mcp_discovery_networks:
+  - "10.99.30.0/24"
+# END WATOOM DEDICATED KALI MCP DISCOVERY ALLOWLIST

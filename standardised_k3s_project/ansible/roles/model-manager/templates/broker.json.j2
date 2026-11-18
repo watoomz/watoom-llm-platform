@@ -1,0 +1,15 @@
+{
+ "state": {{ model_manager_broker_root | to_json }},
+ "catalog": {{ (model_manager_state + '/catalog.sqlite') | to_json }},
+ "socket": {{ (model_manager_broker_root + '/broker.sock') | to_json }},
+ "ui_uid": {{ model_manager_uid }}, "ui_gid": {{ model_manager_gid }},
+ "stage_only": {{ model_manager_stage_only | bool | to_json }},
+ "kubeconfig": "/etc/rancher/k3s/k3s.yaml",
+ "controller_socket": {{ model_manager_controller_socket | to_json }},
+ "controller_state": {{ model_manager_controller_state | to_json }},
+ "router_view": {{ model_manager_router_view | to_json }},
+ "application_config": {{ (none if model_manager_stage_only else '/data/ai/watoom-code/config/opencode.json') | to_json }},
+ "image_output_root": {{ (model_manager_image_output_root if model_manager_image_mcp_enabled else none) | to_json }},
+ "image_output_gid": {{ model_manager_image_output_gid | int }},
+ "images": {"backend_auth_file": "/data/ai/private/model-manager/backend-key", "gguf": {{ model_manager_llama_image | to_json }}, "sdxl": {{ model_manager_sdxl_image | to_json }}, "sdxl_runtime": {{ model_manager_sdxl_runtime | to_json }}}
+}

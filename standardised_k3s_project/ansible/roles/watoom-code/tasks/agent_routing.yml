@@ -1,0 +1,20 @@
+---
+- name: Install immutable coordinator guard
+  ansible.builtin.include_tasks: coordinator_guard.yml
+- name: Install explicit role boundaries for the five workflow roles
+  # Same transform as native_agents.yml's "Install managed agents" task, deliberately: this playbook exists to
+  # reapply (not diverge from) that result for just these five files, under an idle guard, without a full
+  # redeploy. Keeping both copies in lockstep stops the two playbooks from flapping these files back and
+  # forth to two different byte-for-byte contents depending on which one ran most recently.
+  ansible.builtin.copy:
+    content: "{{ lookup('ansible.builtin.file', role_path ~ '/../opencode-agent/files/v2-native/agents/' ~ item) | regex_replace('(?m)^model:\\n  providerID: watoom\\n  model: [A-Za-z0-9_.-]+\\n', '') }}"
+    dest: '{{ watoom_code_root }}/config/agents/{{ item }}'
+    owner: '1001'
+    group: '1001'
+    mode: '0644'
+  loop:
+    - watoom-workflow.md
+    - watoom-investigator.md
+    - watoom-critic.md
+    - watoom-builder.md
+    - watoom-reviewer.md

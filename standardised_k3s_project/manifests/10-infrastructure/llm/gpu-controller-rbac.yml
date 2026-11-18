@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: watoom-gpu-controller
+  namespace: llama-cpp
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: watoom-gpu-controller
+  namespace: llama-cpp
+rules:
+# The llama-cpp-mm-* names below are managed-model deployments granted live by the model manager
+# (tools/model-manager/broker.py role()). They must be listed here or a role run revokes them, and the
+# controller then cannot read them while restoring the primary (outage 2026-11-10). When the model manager
+# adds or removes a managed model, update this list to match `kubectl -n llama-cpp get role watoom-gpu-controller`.
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  resourceNames:
+  - llama-cpp-gemma-4-e4b
+  - llama-cpp-llama-mesh
+  - llama-cpp-mm-5af2aafee6b956fe
+  - llama-cpp-mm-73306b413506f44b
+  - llama-cpp-mm-7ca0135a77ad0c89
+  - llama-cpp-mm-f8e679b2182aac21
+  - llama-cpp-ornith-15-9b
+  - llama-cpp-qwen35-defiant-fable-9b
+  - llama-cpp-qwen38-atomic
+  - llama-cpp-qwen38-uncensored-mtp
+  - llama-cpp-swift-qwen38-coder
+  - llama-cpp-tiel-coder-35b-a3b-mtp
+  verbs:
+  - get
+  - patch
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - ''
+  resources:
+  - services
+  resourceNames:
+  - llama-cpp-mm-5af2aafee6b956fe
+  - llama-cpp-mm-73306b413506f44b
+  - llama-cpp-mm-7ca0135a77ad0c89
+  - llama-cpp-mm-f8e679b2182aac21
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: watoom-gpu-controller
+  namespace: llama-cpp
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: watoom-gpu-controller
+subjects:
+- kind: ServiceAccount
+  name: watoom-gpu-controller
+  namespace: llama-cpp

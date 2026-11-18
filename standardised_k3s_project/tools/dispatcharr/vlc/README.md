@@ -1,0 +1,8 @@
+# VLC: Dispatcharr Web_stream channels
+
+- `dispatcharr.lua` goes to `~/.local/share/vlc/lua/sd/` and shows the Web_stream channels in VLC's playlist sidebar under Internet.
+- `refresh-playlist.sh` (installed as `/usr/local/bin/watoom-dispatcharr-playlist-refresh`, because systemd cannot execute it from /data) + the `watoom-dispatcharr-playlist` service and timer keep `~/.local/share/vlc/dispatcharr-web_stream.m3u` current (every 5 minutes) from `http://10.99.20.225:9191/output/m3u/Web_stream`.
+- vlcrc needs `services-discovery=lua{sd=dispatcharr}`, `stream-filter=` (empty: the old `prefetch:cache_read:playlist` chain stopped VLC detecting live TS), `network-caching=5000`, `live-caching=5000`, `http-reconnect=1`.
+- `vlc.stream()` returned nothing inside the SD script on this VLC (3.0.23), so the script reads the local copy with `io.open`.
+- `avcodec-hw=none`: with NVIDIA VDPAU hardware decoding the audio kept falling out of sync (log: "playback way too late / too early: playing silence", effectively no sound) while video played. Software decoding of the 720p60 H.264 costs about 30% of one core and keeps sound in sync.
+- `aout=pulse`: VLC's default native PipeWire audio output (`libaout_pipewire_plugin`) fell into an endless "playback way too early / way too late: flushing buffers" loop (hundreds of events a minute, no sound) with the live stream, even with software decoding. The PulseAudio output (`libpulse_plugin`, through PipeWire's pulse server) played cleanly (one startup warning in 60 s). Silence returned after the first fix because `avcodec-hw=none` alone was not the cause; keep both settings.

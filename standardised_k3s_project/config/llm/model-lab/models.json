@@ -1,0 +1,246 @@
+{
+  "schema_version": 1,
+  "storage_root": "/data/ai",
+  "namespace": "llama-cpp",
+  "router_service": "http://llm-router.llama-cpp.svc.cluster.local:8000",
+  "llama_cpp_image": "ghcr.io/ggml-org/llama.cpp@sha256:150b59966fb5b2cb1a8fa9d226267c56ebd22c520c7b3640331cde87f3c4fb01",
+  "python_image": "docker.io/library/python@sha256:6d43704baacd1bfbe7c295d7f13079d5d8104ed33568873133f8fc69980419df",
+  "context_size": 131072,
+  "model_max_calls": 3,
+  "exclusive_gpu_deployments": [
+    "llama-cpp-swift-qwen38-coder",
+    "llama-cpp-qwen38-atomic",
+    "llama-cpp-qwen38-uncensored-mtp",
+    "llama-cpp-qwen38"
+  ],
+  "models": {
+    "ornith-1.5-9b": {
+      "display_name": "Ornith 1.5 9B Uncensored",
+      "architecture": "qwen35",
+      "repository": "ressl/Ornith-1.5-9B-uncensored-GGUF",
+      "revision": "main",
+      "deployment": "llama-cpp-ornith-15-9b",
+      "service": "llama-cpp-ornith-15-9b",
+      "server_alias": "ornith-1.5-9b-q8",
+      "router_alias": "ornith-1.5-9b",
+      "reasoning": "off",
+      "sampler": {
+        "temperature": 0.6,
+        "top_p": 0.95,
+        "top_k": 20,
+        "min_p": 0.0,
+        "presence_penalty": 0.0,
+        "repeat_penalty": 1.0
+      },
+      "expected_runtime_vram_gib": "Not remeasured; validate when activated",
+      "primary": {
+        "quant": "Q8_0",
+        "filename": "Ornith-1.5-9B-uncensored-Q8_0.gguf",
+        "size_gb": 9.79,
+        "sha256": "9cfcab2bd1ed3824f57edb086e787476cfd517c3ac401c0eb063993985da6c68"
+      },
+      "fallback": {
+        "quant": "Q6_K",
+        "filename": "Ornith-1.5-9B-uncensored-Q6_K.gguf",
+        "size_gb": 7.56,
+        "sha256": "345e14516bee96f39b82757c31bd2c0c05247908a35a12fe908550782de651d0"
+      },
+      "context_size": 131072,
+      "kv_cache": {
+        "key": "q8_0",
+        "value": "q8_0"
+      },
+      "cpu_ffn_layers": 4,
+      "recommendation": {
+        "source": "https://huggingface.co/ornith-ai/Ornith-1.5-9B",
+        "preset": "precise coding",
+        "unspecified_settings": "Existing KV cache, CPU offload, threads, MTP, vision and hardware-limited context retained where not specified."
+      }
+    },
+    "qwen35-defiant-fable-9b": {
+      "display_name": "Qwen3.5 9B Defiant Fable plusIQ-TOOLS",
+      "architecture": "qwen35",
+      "repository": "DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF",
+      "revision": "main",
+      "deployment": "llama-cpp-qwen35-defiant-fable-9b",
+      "service": "llama-cpp-qwen35-defiant-fable-9b",
+      "server_alias": "qwen35-defiant-fable-9b-q8",
+      "router_alias": "qwen35-defiant-fable-9b",
+      "reasoning": "off",
+      "sampler": {
+        "temperature": 0.7,
+        "top_p": 0.8,
+        "top_k": 20,
+        "min_p": 0.0,
+        "presence_penalty": 1.5,
+        "repeat_penalty": 1.0
+      },
+      "expected_runtime_vram_gib": "Not remeasured; validate when activated",
+      "primary": {
+        "quant": "Q8_0 plusIQ-TOOLS MTP",
+        "filename": "Qwen3.5-9B-The-Defiant-Fable-Uncnr-Heretic-plusIQ-TOOLS-NEO-MAX-MTP-Q8_0.gguf",
+        "size_gb": 10.7,
+        "sha256": "701fd92f14cb7752923ecef608e1a5c5f6281affeb3dea6fc73b1b505c1c71a9"
+      },
+      "fallback": {
+        "quant": "Q6_K plusIQ-TOOLS MTP",
+        "filename": "Qwen3.5-9B-The-Defiant-Fable-Uncnr-Heretic-plusIQ-TOOLS-NEO-MAX-MTP-Q6_K.gguf",
+        "size_gb": 8.76,
+        "sha256": "2e8be304734e365f6b77f95f255f7cbc3aa46dd112d4169f1ea5a42266e6ef76"
+      },
+      "notes": "MTP tensors are present in this GGUF, but speculative/MTP acceleration is intentionally disabled for first-stage stability/tool-call testing.",
+      "context_size": 131072,
+      "kv_cache": {
+        "key": "q8_0",
+        "value": "q8_0"
+      },
+      "cpu_ffn_layers": 4,
+      "recommendation": {
+        "source": "https://huggingface.co/DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF",
+        "preset": "non-thinking",
+        "unspecified_settings": "Existing KV cache, CPU offload, threads, MTP, vision and hardware-limited context retained where not specified."
+      }
+    },
+    "gemma-4-e4b": {
+      "display_name": "Gemma 4 E4B Uncensored HauhauCS Aggressive",
+      "architecture": "gemma4",
+      "repository": "HauhauCS/Gemma-4-E4B-Uncensored-HauhauCS-Aggressive",
+      "revision": "main",
+      "deployment": "llama-cpp-gemma-4-e4b",
+      "service": "llama-cpp-gemma-4-e4b",
+      "server_alias": "gemma-4-e4b-q8-k-p",
+      "router_alias": "gemma-4-e4b",
+      "reasoning": "off",
+      "sampler": {
+        "temperature": 1.0,
+        "top_p": 0.95,
+        "top_k": 64,
+        "min_p": 0.0,
+        "presence_penalty": 0.0,
+        "repeat_penalty": 1.0
+      },
+      "expected_runtime_vram_gib": "Not remeasured; validate when activated",
+      "primary": {
+        "quant": "Q8_K_P",
+        "filename": "Gemma-4-E4B-Uncensored-HauhauCS-Aggressive-Q8_K_P.gguf",
+        "size_gb": 8.13,
+        "sha256": "a4c4177f9fd7e3f56522675afb742f079a53f9226195b7db5e9888c872f053da"
+      },
+      "fallback": {
+        "quant": "Q6_K_P",
+        "filename": "Gemma-4-E4B-Uncensored-HauhauCS-Aggressive-Q6_K_P.gguf",
+        "size_gb": 6.25,
+        "sha256": "f28b0ae262158af10d847c3f01bfdb943161dd31320f3aed20775ee2ad6c67a6"
+      },
+      "notes": "Vision enabled after the stable text/tool-call baseline was established; matching Swift Qwen3.8 F16 mmproj is loaded while preserving the stable 32K text runtime.",
+      "context_size": 131072,
+      "kv_cache": {
+        "key": "q8_0",
+        "value": "q8_0"
+      },
+      "cpu_ffn_layers": 4,
+      "recommendation": {
+        "source": "https://huggingface.co/HauhauCS/Gemma-4-E4B-Uncensored-HauhauCS-Aggressive",
+        "preset": "published sampler",
+        "unspecified_settings": "Existing KV cache, CPU offload, threads, MTP, vision and hardware-limited context retained where not specified."
+      }
+    },
+    "tiel-coder-35b-a3b-mtp": {
+      "display_name": "CyberTiel Coder 35B-A3B MTP IQ4_XS",
+      "architecture": "qwen35moe",
+      "repository": "peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF-MTP",
+      "revision": "fa19d4f33561dc0d107c2a2f8943f1ca2e288109",
+      "deployment": "llama-cpp-tiel-coder-35b-a3b-mtp",
+      "service": "llama-cpp-tiel-coder-35b-a3b-mtp",
+      "server_alias": "tiel-coder-35b-a3b-mtp",
+      "router_alias": "tiel-coder-35b-a3b-mtp",
+      "reasoning": "off",
+      "sampler": {
+        "temperature": 0.6,
+        "top_p": 0.95,
+        "top_k": 20,
+        "min_p": 0.0,
+        "presence_penalty": 0.0,
+        "repeat_penalty": 1.0
+      },
+      "expected_runtime_vram_gib": "Observed 17.23 GiB total with Q4_0 K/V, 128K context, MTP, BF16 vision and 8 CPU MoE layers; actual text inference PASS.",
+      "primary": {
+        "quant": "UD-IQ4_XS MTP",
+        "filename": "Cyber-Tiel-Coder-35B-A3B-MTP-UD-IQ4_XS.gguf",
+        "size_gb": 18.119934272,
+        "sha256": "33492edef3744830f3f45d8b1e1be2444c54c82945c6875df055e9440a44b4fc"
+      },
+      "fallback": {
+        "quant": "UD-IQ4_XS MTP",
+        "filename": "Cyber-Tiel-Coder-35B-A3B-MTP-UD-IQ4_XS.gguf",
+        "size_gb": 18.119934272,
+        "sha256": "33492edef3744830f3f45d8b1e1be2444c54c82945c6875df055e9440a44b4fc"
+      },
+      "notes": "CyberTiel replacement; legacy deployment/router ID retained for existing sessions. Pinned artifact, native Sharp Jinja, MTP draft=1 p_min=0, q4_0 KV, 131072 context, CPU routed-expert offload 8 layers; prior Tiel file retained for rollback.",
+      "context_size": 131072,
+      "kv_cache": {
+        "key": "q4_0",
+        "value": "q4_0"
+      },
+      "cpu_ffn_layers": 0,
+      "recommendation": {
+        "source": "https://huggingface.co/peculiar-ragdoll/Cyber-Tiel-Coder-35B-A3B-GGUF-MTP",
+        "preset": "agentic coding",
+        "unspecified_settings": "Prefer qualified full GPU residency. Owner selected Q4_0 for both K/V at 128K context; retain 8 CPU MoE layers until the full MTP/vision runtime has safe full-GPU headroom."
+      },
+      "cpu_moe_layers": 8,
+      "vision": {
+        "projector": "mmproj-BF16.gguf",
+        "revision": "fa19d4f33561dc0d107c2a2f8943f1ca2e288109",
+        "sha256": "d9ce31026d1cb1f3f8d5152e2e2a014d9d2b302b6c93a7dc07bb0a0487f52837",
+        "image_max_tokens": 1024,
+        "qualification": "two routed image inputs, text and tool continuation PASS"
+      }
+    },
+    "llama-mesh": {
+      "display_name": "LLaMA-Mesh 8B Q8_0",
+      "architecture": "llama",
+      "repository": "bartowski/LLaMA-Mesh-GGUF",
+      "revision": "a8ebec428764f081c6a3ae8c1c30a73cd338a387",
+      "deployment": "llama-cpp-llama-mesh",
+      "service": "llama-cpp-llama-mesh",
+      "server_alias": "llama-mesh-q8",
+      "router_alias": "llama-mesh",
+      "reasoning": "off",
+      "sampler": {
+        "temperature": 1.0,
+        "top_p": 0.95,
+        "top_k": 20,
+        "min_p": 0.0,
+        "presence_penalty": 0.0,
+        "repeat_penalty": 1.0
+      },
+      "context_size": 8192,
+      "expected_runtime_vram_gib": "Not remeasured; validate when activated",
+      "primary": {
+        "quant": "Q8_0",
+        "filename": "LLaMA-Mesh-Q8_0.gguf",
+        "size_gb": 8.540771616,
+        "sha256": "e67bf3af4693f2be81aca6a9b6f519442a1b6ab32b0665846daee64e478f39af"
+      },
+      "fallback": {
+        "quant": "Q6_K",
+        "filename": "LLaMA-Mesh-Q6_K.gguf",
+        "size_gb": 6.5960072,
+        "sha256": "9242f36f2b00b56e49be529fb0e4599de9ea9a480f69afef6749ff7b62ae4fa1"
+      },
+      "notes": "Model-card 8K context applied; card specifies no sampler preset, so sampling is retained. Mesh export capability remains separately prepared.",
+      "output_directory": "/data/ai/assets/generated/llama-mesh",
+      "kv_cache": {
+        "key": "q8_0",
+        "value": "q8_0"
+      },
+      "cpu_ffn_layers": 4,
+      "recommendation": {
+        "source": "https://huggingface.co/Zhengyi/LLaMA-Mesh",
+        "preset": "published 8K context; sampler not specified",
+        "unspecified_settings": "Existing KV cache, CPU offload, threads, MTP, vision and hardware-limited context retained where not specified."
+      }
+    }
+  }
+}

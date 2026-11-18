@@ -1,0 +1,91 @@
+# GPU-resident BGE embeddings for AgentMemory. Not named llama-cpp-*: the GPU controller
+# owns only primary models, so model switches neither stop nor wait for this small
+# auxiliary workload. Its VRAM ({{ bge_vram_budget_mib }} MiB budget) is shared through the
+# NVIDIA runtime without claiming the single schedulable nvidia.com/gpu held by Swift.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ bge_name }}
+  namespace: {{ bge_namespace }}
+  labels: {app: {{ bge_name }}, app.kubernetes.io/part-of: watoom-code, homelab.example/gpu-role: auxiliary}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: {{ bge_name }}}}
+  template:
+    metadata:
+      labels: {app: {{ bge_name }}, app.kubernetes.io/part-of: watoom-code, homelab.example/gpu-role: auxiliary}
+      annotations:
+        homelab.example/model-revision: "{{ bge_hf_repo }}@{{ bge_hf_revision }}"
+        homelab.example/gguf-sha256: "{{ bge_gguf_sha256 }}"
+        homelab.example/proxy-sha256: "{{ bge_proxy_sha256 }}"
+    spec:
+      runtimeClassName: nvidia
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: llama-server
+          image: {{ bge_llama_image }}
+          args: [-m, /models/{{ bge_gguf_file }}, --embeddings, --pooling, cls, -ngl, "{{ bge_gpu_layers }}", -t, "{{ bge_cpu_threads }}",
+                 -c, "2048", -np, "4", -b, "2048", -ub, "512", --host, 127.0.0.1, --port, "8081", --no-webui]
+          env:
+            - {name: NVIDIA_VISIBLE_DEVICES, value: all}
+            - {name: NVIDIA_DRIVER_CAPABILITIES, value: "compute,utility"}
+{% if bge_gpu_layers | int == 0 %}
+            - {name: CUDA_VISIBLE_DEVICES, value: "-1"}
+{% endif %}
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {cpu: "2", memory: 1Gi}
+          securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}
+          volumeMounts: [{name: model, mountPath: /models, readOnly: true}]
+        - name: embed-proxy
+          image: {{ bge_llama_image }}
+          command: [python3, -I, /proxy/embed_proxy.py, --backend, "http://127.0.0.1:8081", --port, "8000",
+                    --model, {{ bge_model_name }}, --concurrency, "4", --cache-size, "20000", --batch-rate, "{{ bge_batch_windows_per_second }}",
+                    --busy-file, /gpu-observation/status.json, --busy-rate, "{{ bge_busy_windows_per_second }}"]
+          ports: [{name: http, containerPort: 8000}]
+          readinessProbe: {httpGet: {path: /health, port: http}, periodSeconds: 10, failureThreshold: 3}
+          livenessProbe: {httpGet: {path: /health, port: http}, initialDelaySeconds: 60, periodSeconds: 30, failureThreshold: 4}
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {cpu: "1", memory: 512Mi}
+          securityContext: {runAsUser: 65534, runAsGroup: 65534, runAsNonRoot: true, allowPrivilegeEscalation: false,
+                            readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}
+          volumeMounts: [{name: proxy, mountPath: /proxy, readOnly: true}, {name: gpu-observation, mountPath: /gpu-observation, readOnly: true}]
+      volumes:
+        - name: model
+          hostPath: {path: {{ bge_model_dir }}, type: Directory}
+        - name: proxy
+          configMap: {name: {{ bge_name }}-proxy}
+        # GPU controller's read-only status publication (activeRequests); never an actuator.
+        - name: gpu-observation
+          hostPath: {path: {{ bge_gpu_observation_dir }}, type: Directory}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ bge_name }}
+  namespace: {{ bge_namespace }}
+  labels: {app: {{ bge_name }}}
+spec:
+  selector: {app: {{ bge_name }}}
+  ports: [{name: http, port: 8000, targetPort: http}]
+---
+# Additive to llama-cpp-model-servers: only AgentMemory, Prometheus and the node may embed.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ bge_name }}-clients
+  namespace: {{ bge_namespace }}
+spec:
+  podSelector: {matchLabels: {app: {{ bge_name }}}}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: watoom-code}}
+          podSelector: {matchLabels: {app: agentmemory}}
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: monitoring}}
+        - ipBlock: {cidr: 10.242.0.1/32}
+      ports: [{protocol: TCP, port: 8000}]

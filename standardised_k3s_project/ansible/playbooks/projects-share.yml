@@ -1,0 +1,10 @@
+---
+# Read-only SMB share of /data/ai/projects for the rig (map it as a drive). One-time after applying:
+#   sudo smbpasswd -a rigshare        (choose a password; it is never stored in Git)
+# Reachable only from network.rig_host, SMB3 with encryption and signing required.
+- name: Share the projects folder with the rig
+  hosts: homelab
+  become: true
+  gather_facts: false
+  roles:
+    - projects_share

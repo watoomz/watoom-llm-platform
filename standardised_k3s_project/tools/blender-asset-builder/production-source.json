@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "runtime": "Blender 5.2.1",
+  "files": {
+    "pipeline.py": "bda4854abcb2dbeb183bf7aa62437fb5a984bc2f3e2df0f6caa8d8aab77b586b",
+    "request_pipeline.py": "a2abb8db2ef271b4f9f324df7d10b3090242fb212a7f7c07b398b30654f83fb3",
+    "asset-build.py": "174e7f9e00757eb29b8011e7328a0f28655920ccc96aedef10e8fbc41a075778",
+    "port-el4cteo-42.py": "77bc47137d7942c3b6fb0904adf436e8c11c2f6e48fe3ba601592d1dc006ea30",
+    "skill/SKILL.md": "259f5a70ce5789bcc32e5d526fde52922f6a24b4f174fd46d67a38c6870de91f",
+    "skill/references/request-workflow.md": "56386c2be2ad369b78349d0aaeae61176596688dd63e2c3620280b24a3722540",
+    "run-watoom-blender.py": "f91b3661109a5db5ccc655047c1dcc4f49528f79fa5f0cb2ec6dac95c7a9a3f8"
+  },
+  "upstream_commit": "71d031dab8bc6729504d11a78cbe91945401045f",
+  "scope": "native skill execution and request-driven runner; existing Toolkit engine validation",
+  "recovery": "Actual SIGKILL/SIGTERM child-stop and resume proof; owned native upgrade/rollback proof",
+  "runtime_binary": "/data/ai/toolchains/blender/5.2.1/blender-5.2.1-linux-x64/blender",
+  "runtime_sha256": "c2fd82553c979a7f6ba85202c487aa1173c90db588a67d74d70cc7b0c2bea01c",
+  "worker_profiles": {
+    "server": "CPU/4GiB/two threads",
+    "rig": "OptiX or CPU/8GiB/four threads",
+    "component_deadline_seconds": 300
+  }
+}

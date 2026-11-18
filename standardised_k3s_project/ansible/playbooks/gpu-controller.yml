@@ -1,0 +1,9 @@
+---
+- name: Promote reviewed GPU controller runtime only
+  hosts: homelab
+  become: true
+  tasks:
+    - name: Install the reviewed controller runtime
+      ansible.builtin.include_role:
+        name: llm-model-lab
+        tasks_from: gpu-controller

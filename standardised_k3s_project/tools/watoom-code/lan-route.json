@@ -1,0 +1,33 @@
+{
+  "apiVersion": "traefik.io/v1alpha1",
+  "kind": "IngressRoute",
+  "metadata": {
+    "name": "watoom-code-lan-route",
+    "namespace": "watoom-code",
+    "labels": {
+      "app.kubernetes.io/managed-by": "ansible",
+      "homelab.example/release-tier": "live"
+    }
+  },
+  "spec": {
+    "entryPoints": [
+      "websecure"
+    ],
+    "routes": [
+      {
+        "kind": "Rule",
+        "match": "Host(`watoom-code.internal.homelab.example`)",
+        "services": [
+          {
+            "name": "watoom-code",
+            "port": 4096,
+            "nativeLB": true
+          }
+        ]
+      }
+    ],
+    "tls": {
+      "secretName": "watoom-code-lan-tls"
+    }
+  }
+}

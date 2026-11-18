@@ -1,0 +1,25 @@
+---
+- name: Create private image credential directory
+  ansible.builtin.file:
+    path: "{{ watoom_code_root }}/config/watoom-tools/image-credentials"
+    state: directory
+    owner: "{{ watoom_code_uid }}"
+    group: "{{ watoom_code_gid }}"
+    mode: '0700'
+    setype: container_file_t
+- name: Copy generation-only token without exposing administrator credentials
+  ansible.builtin.copy:
+    src: "{{ watoom_code_image_mcp_token_file }}"
+    remote_src: true
+    dest: "{{ watoom_code_root }}/config/watoom-tools/image-credentials/token"
+    owner: "{{ watoom_code_uid }}"
+    group: "{{ watoom_code_gid }}"
+    mode: '0600'
+    setype: container_file_t
+  no_log: true
+- name: Register only the maintained image MCP entry in existing user configuration
+  ansible.builtin.script:
+    cmd: "enable-image-mcp.py {{ watoom_code_root }}/config/opencode.json {{ watoom_code_image_mcp_url }}"
+    executable: /usr/bin/python3
+  register: watoom_code_image_mcp
+  changed_when: "watoom_code_image_mcp.stdout | trim == 'CHANGED'"

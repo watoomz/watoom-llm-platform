@@ -1,0 +1,12 @@
+---
+- name: Maintain only the Godot MCP integration in the watoom-code configuration
+  hosts: homelab
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../vars/watoom-code.yml
+  tasks:
+    - name: Merge (or remove) the watoom-godot MCP entry in existing configuration
+      ansible.builtin.import_role:
+        name: watoom-code
+        tasks_from: godot_mcp
