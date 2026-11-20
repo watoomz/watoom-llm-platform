@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Fast pre-commit gate (T-0115): generated agent defs, shared skill copies and Markdown links must be consistent.
+# Full suite: make -C standardised_k3s_project check. Bypass in an emergency with git commit --no-verify.
+set -euo pipefail
+top="$(git rev-parse --show-toplevel)"
+# Git hands hooks GIT_DIR (relative in a normal checkout, without GIT_WORK_TREE in a linked worktree) and
+# GIT_INDEX_FILE; make them absolute and pin the work tree so git still resolves paths after the cd below.
+export GIT_DIR="$(git rev-parse --absolute-git-dir)"
+[ -n "${GIT_INDEX_FILE:-}" ] && export GIT_INDEX_FILE="$(realpath -m "$GIT_INDEX_FILE")"
+export GIT_WORK_TREE="$top"
+cd "$top/standardised_k3s_project"
+make -s generated links

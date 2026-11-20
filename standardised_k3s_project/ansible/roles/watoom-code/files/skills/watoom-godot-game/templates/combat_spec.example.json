@@ -1,0 +1,119 @@
+{
+ "_comment": "T-0075: a declarative weapon/spell spec, the Godot-side equivalent of watoom-unreal-combat's combat_spec.zas.json, loaded by `gg_combat.py spec --spec <this file> --weapon|--spell NAME` and (for just the vfx half) `gg_vfx.py check --combat-spec <this file>`. effect.damage_type is the resist lookup key on CombatAttributes.resist -- game/combat.gd calls it damage_type, not 'element'; this doc's own prose still says 'element' informally since that is what the ticket and the Unreal side call the same concept. 'low-poly-weapons-set-0794c54e' is a real owned pack (StaticMesh-only: assault rifle/shotgun/pistol props, no skeleton/animation), exported via the unreal-export bridge on 2026-11-18 (PORTABLE_EXPORT_PASS, 8/8 StaticMesh, 0 failed) -- converted to glb with blender-export-pipelines fbx_relink_to_glb.py into the pack's glb/converted/ (indexed), brought into a project with `gg_assets.py use --asset low-poly-weapons-set-0794c54e-sm-assaultrifle-01 --slot ar_body` (and -magazine-01 ar_mag, -trigger-01 ar_trigger, sm-pumpshotgun-01 sg_body, sm-pumpshotgun-trigger-01 sg_trigger). 'mesh' is the body glb, 'parts' the separately exported pieces on the same pivot; `gg_combat.py spec` checks the body's size and that each part sits on it.",
+ "schema": 1,
+ "pack": "low-poly-weapons-set-0794c54e",
+ "weapons": {
+  "AssaultRifle": {
+   "display_name": "Assault Rifle",
+   "mesh": "res://assets/library/ar_body.glb",
+   "delivery": "raycast",
+   "range_m": 50.0,
+   "cooldown_s": 0.15,
+   "effect": {
+    "kind": "damage",
+    "amount": 12.0,
+    "damage_type": "physical"
+   },
+   "vfx": {
+    "muzzle": {
+     "recipe": "muzzle",
+     "element": "Physical"
+    },
+    "impact": {
+     "recipe": "impact",
+     "element": "Physical",
+     "scale": 0.6
+    }
+   },
+   "animation": {
+    "attack_state": "fire"
+   },
+   "parts": [
+    "res://assets/library/ar_mag.glb",
+    "res://assets/library/ar_trigger.glb"
+   ]
+  },
+  "PumpShotgun": {
+   "display_name": "Pump Shotgun",
+   "mesh": "res://assets/library/sg_body.glb",
+   "delivery": "raycast",
+   "range_m": 12.0,
+   "cooldown_s": 0.8,
+   "effect": {
+    "kind": "damage",
+    "amount": 45.0,
+    "damage_type": "physical"
+   },
+   "vfx": {
+    "muzzle": {
+     "recipe": "muzzle",
+     "element": "Physical",
+     "scale": 1.4
+    },
+    "impact": {
+     "recipe": "impact",
+     "element": "Physical",
+     "scale": 0.4
+    }
+   },
+   "animation": {
+    "attack_state": "fire"
+   },
+   "parts": [
+    "res://assets/library/sg_trigger.glb"
+   ]
+  },
+  "TacticalKnife": {
+   "display_name": "Tactical Knife",
+   "delivery": "melee",
+   "range_m": 1.8,
+   "cooldown_s": 0.5,
+   "effect": {
+    "kind": "damage",
+    "amount": 30.0,
+    "damage_type": "physical"
+   },
+   "vfx": {
+    "impact": {
+     "recipe": "impact",
+     "element": "Physical",
+     "scale": 0.8
+    }
+   },
+   "animation": {
+    "attack_state": "stab"
+   }
+  }
+ },
+ "spells": {
+  "Fireball": {
+   "display_name": "Fireball",
+   "delivery": "instant",
+   "range_m": 40.0,
+   "cooldown_s": 1.5,
+   "cost": {
+    "resource": "mana",
+    "amount": 20.0
+   },
+   "effect": {
+    "kind": "damage",
+    "amount": 30.0,
+    "damage_type": "fire"
+   },
+   "vfx": {
+    "cast": {
+     "recipe": "projectile",
+     "element": "Fire"
+    },
+    "impact": {
+     "recipe": "impact",
+     "element": "Fire",
+     "scale": 1.5
+    }
+   },
+   "animation": {
+    "cast_state": "cast_a"
+   }
+  }
+ }
+}

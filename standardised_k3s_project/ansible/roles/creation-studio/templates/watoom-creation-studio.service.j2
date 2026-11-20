@@ -1,0 +1,20 @@
+# Managed by Ansible (roles/creation-studio). Same shape as watoom-moss-image.service: a host-bound proxy
+# in front of Model Manager (SDXL) and MOSS Image Studio, with Mesh limited to read-only telemetry.
+[Unit]
+Description=Creation Studio (SDXL, MOSS Image Studio, Mesh and GLB 3D Coder proxy)
+After=network.target k3s.service
+Wants=watoom-gpu-controller.service
+
+[Service]
+Type=simple
+User=creation-studio
+Group={{ creation_studio_gid }}
+ExecStart=/usr/bin/python3 -I {{ creation_studio_project_root }}/tools/creation-studio/creation_studio_service.py --host {{ creation_studio_host }} --port {{ creation_studio_port }} --model-manager-base {{ creation_studio_model_manager_base | quote }} --model-manager-origin {{ creation_studio_model_manager_origin | quote }} --model-manager-password-file {{ creation_studio_model_manager_password_file | quote }} --model-manager-ca-file {{ creation_studio_model_manager_ca_file | quote }} --moss-base {{ creation_studio_moss_base | quote }} --mesh-observability-path {{ creation_studio_mesh_observability_path | quote }} --mesh-bridge-socket {{ creation_studio_mesh_bridge_socket | quote }} --glb-router-base {{ creation_studio_glb_router_base | quote }} --glb-model {{ creation_studio_glb_model | quote }} --glb-output-dir {{ creation_studio_glb_output_dir | quote }}
+Restart=on-failure
+RestartSec=10
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+
+[Install]
+WantedBy=multi-user.target

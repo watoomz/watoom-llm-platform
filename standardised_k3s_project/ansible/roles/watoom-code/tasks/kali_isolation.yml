@@ -1,0 +1,11 @@
+---
+# Only watoom-kali may use the Kali MCP. Built-in agents have no prompt file, so their deny is kept in opencode.json.
+- name: Deny Kali tools to the built-in agents
+  ansible.builtin.script:
+    cmd: >-
+      enable-kali-isolation.py {{ watoom_code_root }}/config/opencode.json
+      {{ watoom_code_kali_denied_builtin_agents | join(' ') }}
+    executable: /usr/bin/python3
+  register: watoom_code_kali_isolation
+  changed_when: "'CHANGED' == watoom_code_kali_isolation.stdout | trim"
+  when: watoom_code_kali_mcp_enabled | bool

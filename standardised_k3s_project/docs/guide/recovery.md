@@ -14,7 +14,7 @@ The repository rebuilds **desired state**. It does not contain application data.
 | Data | Protection |
 |---|---|
 | Repository and manifests | Git remote; encrypted secrets in `secrets-vault/` |
-| Vault password | `/data/secrets/watoom-homelab/` and the owner's password manager |
+| Vault password | `/data/secrets/homelab-host/` and the owner's password manager |
 | WatooM Code database, config, AgentMemory | Daily verified backup (03:30, 14 kept) in `/data/backups/watoom-code`, plus an off-host copy pulled by the workstation |
 | Protected AI baseline | Read-only recovery bundle in `/data/ai/backups/baselines/` |
 | RouterOS | Redacted `.rsc` exports (reviewable) and password-protected binary backups, kept outside this repository |

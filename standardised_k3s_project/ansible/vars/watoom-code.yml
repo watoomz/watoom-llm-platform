@@ -31,6 +31,6 @@ watoom_code_godot_mcp_enabled: true
 # playbooks/watoom-code-ue-mcp.yml.
 watoom_code_ue_mcp_enabled: true
 # Egress NetworkPolicy enabled 2026-11-17 after validating every destination selector against live pod
-# labels on watoom-homelab (caught and fixed a real gap: bge-embeddings was missing from the base rule
+# labels on homelab-host (caught and fixed a real gap: bge-embeddings was missing from the base rule
 # despite watoom_code_memory_embeddings being live). Rollback: set false and re-run playbooks/watoom-code.yml.
 watoom_code_egress_policy_enabled: true

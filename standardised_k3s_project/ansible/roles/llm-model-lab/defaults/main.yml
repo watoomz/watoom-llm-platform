@@ -15,3 +15,14 @@ llm_model_lab_models:
   - llama-mesh
 
 gpu_controller_enabled: true
+
+# LLaMA-Mesh host bridge (moved from the retired opencode-agent role in T-0115; values and paths unchanged).
+# The bridge socket still lives under the old canary home path because consumers are configured with it.
+llm_mesh_bridge_uid: 1009
+llm_mesh_bridge_gid: 1009
+llm_mesh_bridge_home: /app/ai/services/opencode/home
+# UIDs besides the bridge owner that may use the socket: 1001 watoom-code, 1013 creation-studio
+# (creation_studio_uid; owner-approved 2026-11-19 so its page can submit/poll real Mesh jobs).
+llm_mesh_bridge_additional_uids: [1001, 1013]
+llm_mesh_bridge_checkpoint_databases:
+  '1001': /data/ai/watoom-code/application.sqlite

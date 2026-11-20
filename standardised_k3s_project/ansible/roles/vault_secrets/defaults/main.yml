@@ -2,4 +2,4 @@
 vault_secrets_project_root: "{{ role_path | dirname | dirname | dirname }}"
 vault_secrets_vault_file: "{{ vault_secrets_project_root }}/secrets-vault/env.local.vault"
 vault_secrets_output_file: "{{ vault_secrets_project_root }}/secrets/.env.local"
-vault_secrets_password_file: /data/secrets/watoom-homelab/ansible-vault-password.txt
+vault_secrets_password_file: /data/secrets/homelab-host/ansible-vault-password.txt

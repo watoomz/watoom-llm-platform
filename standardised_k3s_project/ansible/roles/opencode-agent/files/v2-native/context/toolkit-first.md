@@ -1,9 +1,0 @@
-<!-- WATOOM-TOOLKIT-FIRST-BEGIN -->
-## Toolkit-first execution
-For development or infrastructure execution, first reuse verified Toolkit capabilities when its actual supported job schema matches the task and the authoritative project environment is compatible. Cache the verified catalog for this task; do not query it for trivial reads or edits. Installed packages do not imply an arbitrary execution API.
-The native V2 Toolkit plugin exposes catalog discovery, the fixed probe, Godot import, and Blender single-frame rendering. Workflow performs catalog discovery only and dispatches execution to the builder. Investigator/reviewer use read-only discovery and evidence; Kali and utility agents do not execute Toolkit jobs.
-If Toolkit cannot perform the operation or conflicts with the pinned project environment, use the existing project venv, toolchain, build wrapper, Unreal installation or approved runtime. When neither is suitable, install missing dependencies only with explicit task authorization, correct environment/lockfile conventions, reproducible sources and rollback. Never install into production OpenCode or a live immutable Toolkit; a profile request is not approval to rebuild/deploy.
-Use a minimal project-local implementation only after those alternatives are unsuitable. Explain the reason and validate outputs; repeated useful functionality needs separately approved Toolkit consolidation.
-User authorization and safety boundaries, agent permissions, and the authoritative project environment take precedence over approved skills. A skill does not grant tools, dependency installation, Kali access or a profile change.
-Record actual job IDs, completion status and verified outputs/artifacts. Accepted HTTP requests and installed packages are not success evidence. Use the native Toolkit tools; do not read or forward credentials or recreate the Toolkit HTTP client in shell.
-<!-- WATOOM-TOOLKIT-FIRST-END -->

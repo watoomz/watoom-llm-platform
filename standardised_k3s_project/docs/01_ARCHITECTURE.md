@@ -1,7 +1,5 @@
 # Architecture
 
-Current deployment snapshot: 13 October 2026. Runtime-specific status is dated; configured/recovery guidance is not an end-to-end test.
-
 ## High-level model
 
 ```text
@@ -12,10 +10,10 @@ Internet
   |      +-- VLAN 20  10.99.20.0/24      homelab/LAN
   |      +-- VLAN 30  10.99.30.0/24      low-trust Wi-Fi
   |      +-- VLAN 40  10.99.40.0/24      low-trust Wi-Fi
-  |      +-- VLAN 50  192.168.0.0/24    DMZ
+  |      +-- VLAN 50  192.168.250.0/24    DMZ
   |      +-- break-glass 192.168.99.0/24
   |
-  +-- watoom-homelab
+  +-- homelab-host
          +-- Fedora 44
          +-- k3s single node
          |    +-- Traefik ingress
@@ -79,6 +77,6 @@ The current LLM stack is live but is not listed in the broad `k3s_manifest_group
 
 ## Production AI control plane
 
-Open WebUI, OpenCode and Pi use the controller-compatible router. G3H is the sole GPU replica writer with eleven deployment barriers. OpenCode Mesh MCP -> host bridge -> durable pipeline -> exclusive controller -> Mesh -> Qwen restoration -> CPU asset preparation. The normal primary is Swift Qwen3.8 27B IQ4_XS at 131072 context/Q4 KV, with one inference slot.
+WatooM Code and the model-lab tools use the controller-compatible router. G3H is the sole GPU replica writer with eleven deployment barriers. OpenCode Mesh MCP -> host bridge -> durable pipeline -> exclusive controller -> Mesh -> Qwen restoration -> CPU asset preparation. The normal primary is Swift Qwen3.8 27B IQ4_XS at 131072 context/Q4 KV, with one inference slot.
 
-Controller/bridge/credential rotation and recovery are persisted through existing IaC owners. The protected [13 October baseline](baselines/pre-new-agent-engine-20261013.md) includes integrated G3H ancestry; future agent/inference-engine work must be isolated. Pending Kali/Pi redesign work is not baseline deployment proof.
+Controller, bridge and credential rotation and recovery are persisted through their IaC owners (`llm-model-lab`, `tools/llm/watoom-gpu-controller`).

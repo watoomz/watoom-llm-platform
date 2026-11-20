@@ -251,6 +251,22 @@ whose outcome is then unknown); ue_stray_check.py's paged foliage reads use it.
 difference to the rig's .uproject and `--apply` writes it (editor stopped, backup kept). Only the named plugins are touched.
 `MeshPartitionWater` is OFF: enabled, every foliage add crashed the editor (T-0061, bisected 2026-11-19).
 
+## Upgrading ue-mcp (2026-11-19, 1.4.13 -> 1.4.14)
+1. Lab: `npm pack ue-mcp@V` and unpack it (never install or run it); fetch docs/tool-reference.md, configuration.md and guards.md
+   at tag vV into `tools/language-knowledge/manuals/ue-mcp/sources/`; `extract/ue_mcp_entries.py derive --package <unpacked>`
+   then `build --policy-out ue-mcp-policy.reviewed.json`; review the policy diff (a new category stays blocked until reviewed);
+   `manual_extract.py --product ue-mcp` must report 0 failures. Bump the pins (Add-RigAuthorizedKey.ps1 default, this README,
+   docs/guide/watoom-code.md, source.json).
+2. Rig: copy `<unpacked>/plugin/ue_mcp_bridge` to a folder named `UE_MCP_Bridge` and build it:
+   `rig_build_plugin.py <dir>/UE_MCP_Bridge` (~45 min, editor untouched). Then, after a note on T-0049,
+   `rig_build_plugin.py <dir>/UE_MCP_Bridge --install --reuse-build --ue-mcp-version V`: one editor stop, the bridge binaries and
+   the uemcp launcher pin change together, editor start. A stop reply whose log already says `exiting` is waited out.
+3. Check: `project.get_status` connected; the plugin's VersionName and `findstr ue-mcp@ run-ue-mcp.cmd` show V.
+The `epic_*` actions of a category (e.g. niagara.epic_set_stack_input_data) exist only when that engine toolset plugin is enabled
+in the project (NiagaraToolsets, ...: `epic.list_toolsets` lists the live ones). On 1.4.13 and 1.4.14 alike they were "Unknown
+action" until NiagaraToolsets went into project_plugins.json; `rig_build_plugin.py --install --project-plugins` applies that file
+in the same editor restart as a plugin install.
+
 ## Checking combat in PIE (`ue_combat_check.py`)
 `ue_combat_check.py --from-calls combat_calls.json [--net]` replays the combat slice checks from the generated calls: melee on
 the first dummy, every spell (aimed from the real camera), consumable pickups, and with --net a listen server + client run

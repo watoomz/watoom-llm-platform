@@ -41,7 +41,7 @@
 <td>Low-trust Wi-Fi (5 GHz)</td>
 </tr>
 <tr>
-<td>VLAN 50 · <code>192.168.0.0/24</code></td>
+<td>VLAN 50 · <code>192.168.250.0/24</code></td>
 <td><code>vlan_dmz</code></td>
 <td>DMZ for public game traffic</td>
 </tr>
@@ -85,7 +85,7 @@ enp35s0      192.168.250.225/24  no default route           DMZ, public game NAT
 </code></pre></div>
 <p>Inside the cluster, CoreDNS resolves <code>service.namespace.svc.cluster.local</code>. Pi-hole local records are maintained in Pi-hole itself, not in this repository; a new Traefik route also needs its A record there.</p>
 <h2 id="internal-https">Internal HTTPS</h2>
-<p>Traefik (namespace <code>kube-system</code>) is exposed by the k3s service load balancer on <code>10.99.20.225:80/443</code>. Routes are <code>IngressRoute</code> objects matching <code>Host(...)</code>, with optional <code>PathPrefix</code> for services that share the Glance host (<code>/guide</code>, <code>/guide-api</code>, <code>/model-manager/</code>, <code>/pi-lab</code>).</p>
+<p>Traefik (namespace <code>kube-system</code>) is exposed by the k3s service load balancer on <code>10.99.20.225:80/443</code>. Routes are <code>IngressRoute</code> objects matching <code>Host(...)</code>, with optional <code>PathPrefix</code> for services that share the Glance host (<code>/guide</code>, <code>/guide-api</code>, <code>/model-manager/</code>, the studios).</p>
 <div class="table-scroll"><table>
 <thead>
 <tr>
@@ -96,23 +96,23 @@ enp35s0      192.168.250.225/24  no default route           DMZ, public game NAT
 <tbody>
 <tr>
 <td>Certificate</td>
-<td>Self-signed wildcard, <code>CN=*.internal.homelab.example</code></td>
+<td>Let's Encrypt wildcard, issued by cert-manager (<code>letsencrypt-cloudflare-prod</code>, Cloudflare DNS-01)</td>
 </tr>
 <tr>
 <td>SANs</td>
-<td><code>*.internal.homelab.example</code>, <code>internal.homelab.example</code>, <code>10.99.20.225</code>, <code>192.168.250.225</code></td>
+<td><code>*.internal.homelab.example</code>, <code>internal.homelab.example</code></td>
 </tr>
 <tr>
-<td>Expiry</td>
-<td>24 November 2028</td>
+<td>Renewal</td>
+<td>automatic, about 30 days before the 90-day expiry</td>
 </tr>
 <tr>
 <td>Secret</td>
-<td><code>watoom-tls</code> in each namespace that terminates TLS</td>
+<td><code>watoom-tls</code> in each namespace that terminates TLS, copied from <code>cert-manager/watoom-internal-wildcard-prod-tls</code> by <code>watoom-internal-tls-sync.timer</code></td>
 </tr>
 </tbody>
 </table></div>
-<p>Clients must trust the internal CA. There is no cert-manager in the cluster. <code>scripts/install-browser-trusted-tls.sh</code> implements an optional migration to Let's Encrypt via Cloudflare DNS-01; it is not active.</p>
+<p>Browsers trust it with no local CA. <code>scripts/install-browser-trusted-tls.sh</code> installs or repairs the whole chain.</p>
 <p>Verify what Traefik is serving:</p>
 <div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">echo | openssl s_client -connect 10.99.20.225:443 -servername glance.internal.homelab.example 2&gt;/dev/null \
   | openssl x509 -noout -subject -enddate
@@ -150,7 +150,7 @@ kubectl get ingressroute -A
 <p>Tunnel tokens are mounted from secret files and never appear in Git or documentation.</p>
 <p><strong>Router dst-nat (games).</strong> Selected game ports are forwarded to the DMZ address <code>192.168.250.225</code>. Minecraft is intentionally not forwarded. See Game servers for the port list and router checks.</p>
 <h2 id="remote-access">Remote access</h2>
-<p>WireGuard runs as Docker <code>wg-easy</code>: UDP <code>51820</code> for tunnels, admin UI on <code>10.99.20.225:51821</code> and at <code>https://wireguard.internal.homelab.example</code>. Clients receive <code>10.9.0.x</code>, use Pi-hole for DNS and may reach <code>10.99.0.0/16</code> and <code>192.168.0.0/24</code>.</p>
+<p>WireGuard runs as Docker <code>wg-easy</code>: UDP <code>51820</code> for tunnels, admin UI on <code>10.99.20.225:51821</code> and at <code>https://wireguard.internal.homelab.example</code>. Clients receive <code>10.9.0.x</code>, use Pi-hole for DNS and may reach <code>10.99.0.0/16</code> and <code>192.168.250.0/24</code>.</p>
 <h2 id="checks">Checks</h2>
 <div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">ip -br addr; ip route
 dig +short glance.internal.homelab.example @10.99.20.225

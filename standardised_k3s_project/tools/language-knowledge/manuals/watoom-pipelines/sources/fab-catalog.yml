@@ -6,6 +6,13 @@
     owner: root
     group: root
     mode: '0700'
+# Run from the root-owned release mirror (game_worker.yml syncs tools/fab and tools/watoom-code there), like the
+# game session watchdog: approval_worker.py imports the sibling maintenance_guard / owned_catalog modules, and the
+# old standalone copy in helper-scripts/watoom-code failed every minute with ModuleNotFoundError (T-0115).
+- name: Remove the old standalone Fab approval worker copy
+  ansible.builtin.file:
+    path: /data/ai/helper-scripts/watoom-code/fab_approval_worker.py
+    state: absent
 - name: Install native Fab approval worker service
   ansible.builtin.copy:
     dest: /etc/systemd/system/watoom-fab-approvals.service
@@ -15,7 +22,7 @@
       Description=Process owner-approved Fab acquisition requests
       [Service]
       Type=oneshot
-      ExecStart=/usr/bin/python3 {{ role_path }}/../../../tools/fab/approval_worker.py
+      ExecStart=/usr/bin/python3 {{ watoom_game_worker_release_root }}/standardised_k3s_project/tools/fab/approval_worker.py
       Nice=15
       CPUQuota=100%
       MemoryMax=2G

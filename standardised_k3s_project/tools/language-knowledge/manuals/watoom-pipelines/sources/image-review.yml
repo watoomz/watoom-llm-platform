@@ -26,6 +26,9 @@
       CPUQuota=25%
       MemoryMax=192M
       UMask=0022
+      RuntimeMaxSec=240
+      TimeoutStopSec=10
+      KillMode=control-group
 - name: Install central image review timer
   ansible.builtin.copy:
     dest: /etc/systemd/system/watoom-image-review.timer

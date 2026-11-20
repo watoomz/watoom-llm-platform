@@ -7,7 +7,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
 VAULT_FILE="${VAULT_FILE:-$ROOT/secrets-vault/env.local.vault}"
-VAULT_PASSWORD_FILE="${VAULT_PASSWORD_FILE:-/data/secrets/watoom-homelab/ansible-vault-password.txt}"
+VAULT_PASSWORD_FILE="${VAULT_PASSWORD_FILE:-/data/secrets/homelab-host/ansible-vault-password.txt}"
 [[ -f "$VAULT_FILE" && -f "$VAULT_PASSWORD_FILE" ]] || { echo "ERROR: missing vault file or password file" >&2; exit 1; }
 tmp="$(mktemp)"; new="$(mktemp)"; trap 'rm -f "$tmp" "$new"' EXIT
 ansible-vault view --vault-password-file "$VAULT_PASSWORD_FILE" "$VAULT_FILE" | grep -v -E '^(CHANGE_REQUEST_PIN|GLANCE_CHANGE_APPROVAL_PIN_HASH)=' >"$tmp"

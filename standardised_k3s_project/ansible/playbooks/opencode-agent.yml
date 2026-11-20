@@ -1,8 +1,0 @@
----
-- name: Manage suspended legacy WatooM OpenCode canary
-  hosts: homelab
-  become: true
-  gather_facts: false
-  roles:
-    - role: opencode-agent
-      when: opencode_agent_restore_retired | default(false) | bool

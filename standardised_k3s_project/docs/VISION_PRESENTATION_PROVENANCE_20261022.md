@@ -1,7 +1,0 @@
-# Exact image-presentation provenance correction
-
-A native image read returned image bytes but the earlier context hook did not reliably expose them in its pre-provider message structure. Generic imagePresent context detection therefore failed to record the verified model. Budget/error gates also took precedence over the exact pending-image reread needed for recovery.
-
-The maintained native guard now binds the pending image SHA256 to an actual outgoing OpenAI image_url data payload for the configured verified model. Only a successful primary HTTP response records presentedBy. Unrelated images, generic media markers and failed responses do not establish provenance. Generic pre-provider image detection no longer grants presentation. Pending-image review takes precedence over unrelated budget/error handoffs while retaining the existing-child serial boundary and bounded rereads. All receipt path/hash/model/observations checks and error counters remain intact.
-
-Native regression fixtures exercise the outgoing request and response hooks, exact/mismatched hashes, generic-media rejection, failed response rejection and reread availability at an exhausted coordinator discovery boundary. The full guard suite passed. Scoped IaC deployment verified the exact active plugin. The coordinator is resumed only to reread its pending image and produce a genuinely verified new receipt; the old claimed PASS is not accepted or injected. Evidence: /data/ai/helper-scripts/reports/vision-presentation-fix-20261022.

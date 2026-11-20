@@ -1,6 +1,6 @@
 ---
 - name: Deploy only the isolated WatooM learning candidate
-  hosts: watoom-homelab
+  hosts: homelab-host
   become: true
   gather_facts: false
   vars:

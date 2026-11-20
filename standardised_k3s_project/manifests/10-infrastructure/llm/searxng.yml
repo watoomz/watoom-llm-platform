@@ -7,7 +7,7 @@ metadata:
   labels:
     app: searxng
     app.kubernetes.io/name: searxng
-    app.kubernetes.io/part-of: ollama
+    app.kubernetes.io/part-of: watoom-code
     app.kubernetes.io/managed-by: kubectl
 data:
   settings.yml: |
@@ -88,7 +88,7 @@ metadata:
   labels:
     app: searxng
     app.kubernetes.io/name: searxng
-    app.kubernetes.io/part-of: ollama
+    app.kubernetes.io/part-of: watoom-code
     app.kubernetes.io/managed-by: kubectl
     homelab.watoom/category: Infrastructure
     homelab.watoom/icon: search
@@ -104,7 +104,7 @@ spec:
       labels:
         app: searxng
         app.kubernetes.io/name: searxng
-        app.kubernetes.io/part-of: ollama
+        app.kubernetes.io/part-of: watoom-code
     spec:
       automountServiceAccountToken: false
       containers:
@@ -159,7 +159,7 @@ metadata:
   labels:
     app: searxng
     app.kubernetes.io/name: searxng
-    app.kubernetes.io/part-of: ollama
+    app.kubernetes.io/part-of: watoom-code
     app.kubernetes.io/managed-by: kubectl
 spec:
   type: ClusterIP
@@ -178,7 +178,7 @@ metadata:
   namespace: searxng
   labels:
     app.kubernetes.io/name: searxng
-    app.kubernetes.io/part-of: ollama
+    app.kubernetes.io/part-of: watoom-code
     app.kubernetes.io/managed-by: kubectl
 spec:
   entryPoints:
@@ -201,7 +201,7 @@ metadata:
   namespace: searxng
   labels:
     app.kubernetes.io/name: searxng-http
-    app.kubernetes.io/part-of: ollama
+    app.kubernetes.io/part-of: watoom-code
     app.kubernetes.io/managed-by: kubectl
 spec:
   entryPoints:

@@ -18,11 +18,11 @@ STAGES = ("checking-native-idle","loading-model","generating","restoring-chat-mo
 class Client:
  def __init__(self,path):self.path=path
  def __call__(self,action,record,request=None,progress=None):
-  budget=GENERATION_BROKER_TIMEOUT if action=="generate" else 1800
+  budget=GENERATION_BROKER_TIMEOUT if action=="generate" else 30 if action=="inventory" else 1800
   deadline=time.monotonic()+budget
   with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as s:
    s.settimeout(budget);s.connect(self.path)
-   message={"action":action,"id":record["id"],"revision":record["revision"],"request":request}
+   message={"action":action} if action=="inventory" else {"action":action,"id":record["id"],"revision":record["revision"],"request":request}
    if progress and action=="generate":message["progress"]=True
    s.sendall(json.dumps(message).encode()+b"\n")
    reader=s.makefile("rb")
@@ -62,6 +62,9 @@ def main():
     raw=self.rfile.readline(65537)
     if len(raw)>65536:raise ValueError("Oversized request")
     request=json.loads(raw)
+    if request["action"]=="inventory":
+     # Read-only view of every router model (also the pre-Model-Manager ones); no record, no mutation.
+     self.wfile.write(json.dumps({"result":broker.inventory()}).encode()+b"\n");return
     if request["action"] not in ("register","retire","generate"):raise ValueError("Unsupported operation")
     row=store.db.execute("SELECT record FROM models WHERE id=?",(request["id"],)).fetchone()
     if not row:raise ValueError("Installation unknown")

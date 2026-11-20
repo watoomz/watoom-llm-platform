@@ -1,14 +1,11 @@
-# Blender production status and legacy canary policy
+# Blender production status
 
-Verified 20 October 2026, Australia/Brisbane. Production Toolkit cutover and three real native engine fixtures passed. Final authenticated published API/UI, protected Deployment comparison and idle admission checks passed. A repeat native-skill IaC apply changed zero resources. The owned temporary test controller was removed after proving idle; its source, assets and evidence remain.
 
-## Production and canary
+## Production
 
 Production is **watoom-code/watoom-code**, reached at [watoom-code](https://watoom-code.internal.homelab.example). The existing coordinator/builder/investigator/reviewer hierarchy, specialist registry, AgentMemory and authentication remain. No new MCP server, inference engine or Blender addon was deployed.
 
-The legacy **opencode/opencode-v2-canary stays suspended: zero replicas, zero pods and zero service endpoints**. Its persistent data and service selectors are retained. Its companion Toolkit is a separate resource. Desired state remains opencode_agent_replicas: 0 and opencode_v2_promote_production_service: false in the existing opencode-agent role. At zero, the role skips legacy builds, configuration and promotion. Repeat suspension applies are unchanged. Do not reactivate it for normal asset work.
 
-The approved suspension helper uses idle/session/HPA/port-forward checks, temporary application-service drain and optimistic scale-to-zero. It preserves data and restores original selectors. No router, DNS, firewall, ingress or NetworkPolicy changes were made.
 
 ## Production images and execution paths
 
@@ -16,7 +13,7 @@ The approved suspension helper uses idle/session/HPA/port-forward checks, tempor
 - Toolkit/controller/worker is now 127.0.0.1:5000/watoom-toolkit@sha256:3e8ac07deb09b4e3011c818386027bab7a604991c86f18b588a1f89bd5f3f748, from committed source fe37aa5ea85d9489c7fa39f80a3722a941919cbe.
 - AgentMemory remains sha256:979134cb586355234e1acb6fd426e7bd1bd96734a647a59b207c8d24e45f0f3a.
 - Worker Blender is 4.2.23 LTS; Godot is 4.7.2. The host Blender 5.2 is not substituted into this pipeline.
-- Unreal 5.8.3 is pinned at /data/ai/toolchains/unreal/5.8.3/runtime-74dc43e1a653; editor SHA-256 is 74dc43e1a653fe3a46f68a1b3db6c3500d04d0f68a8878c9aa1b76b36a08fad3. Workers mount it read-only at /unreal-engine. Historical /data/ai/assets/unreal-engine and wrapper paths are not executable discovery proof.
+- Unreal 5.8.3 is pinned at /data/ai/toolchains/unreal/5.8.3/runtime-74dc43e1a653; editor SHA-256 is 74dc43e1a653fe3a46f68a1b3db6c3500d04d0f68a8878c9aa1b76b36a08fad3. Workers mount it read-only at /unreal-engine. /data/ai/assets/unreal-engine and wrapper paths are not executable discovery proof.
 
 The Blender cutover changed only Toolkit/worker image pins, Toolkit source provenance in IaC and three existing native descriptor fields: modelSha256, configurationSha256 and sourceCommit. Application, AgentMemory and inference Deployment specs were preserved. The global asset catalogue and existing agents were not replaced. Existing native/Toolkit fences, snapshots, service drain, runtime identity checks and automatic rollback were reused.
 
@@ -36,7 +33,7 @@ A native-skill reconciliation exposed and fixed an existing private-instruction 
 
 Use a new version under /data/ai/projects/llm/pipelines/blender-asset-builder. The production coordinator authors a reference/provenance record, specification and appropriate Blender scripts for the request. Generation uses agent-authored Blender code and selected installed skills; the reusable runner is not limited to the old magpie/prop/environment adapter.
 
-The supported command inside the production builder session is python3 /config/skills/watoom-blender-asset-builder/scripts/pipeline.py --request <revision>/request.json. Its --dry-run shows the plan. Required unique stages include MODEL, MATERIALS, QA and EXPORT. Source/input/script/output hashes, real exit results, logs and attempts are durable. Start model scripts with an empty scene and QA all intended runtime geometry. Legacy --root pilot execution is historical diagnosis, not the production entry point.
+The supported command inside the production builder session is python3 /config/skills/watoom-blender-asset-builder/scripts/pipeline.py --request <revision>/request.json. Its --dry-run shows the plan. Required unique stages include MODEL, MATERIALS, QA and EXPORT. Source/input/script/output hashes, real exit results, logs and attempts are durable. Start model scripts with an empty scene and QA all intended runtime geometry. The `--root` pilot mode is for diagnosis only, not the production entry point.
 
 After EXPORT, automatic SOURCE_QA reopens the actual packed engine source, checks every runtime mesh against the geometry QA object set and triangle count, and repeats strict topology/UV checks. The QA output must contain the real upstream object metrics; finalize runtime names before QA and save source/export before adding preview floors. A real negative control rejected a GroundPlane that engine import alone had accepted.
 
@@ -140,12 +137,10 @@ Current evidence root: /data/ai/helper-scripts/watoom-blender-package/production
 - Final authenticated published UI and deployment/idle audit: final-gui and final-runtime-audit.
 - Latest magpie source, renders, QA and durable state: /data/ai/projects/llm/pipelines/blender-asset-builder/magpie-v22-20261020.
 - Original engine and isolated rollback/durability evidence: /data/ai/projects/blender-asset-builder/production-20261020T074548Z/reports.
-- Canary suspension: /data/ai/helper-scripts/reports/opencode-canary-retirement-20261020T092349Z.
 
 The scoped rollback command is maintained in the existing deployment coordinator: --rollback-blender-evidence <live-toolkit-release> --iac-root <authoritative repository> --evidence <new private evidence directory> --i-approve. The helper prints its risk warning, requires idle native/worker admission, verifies exact current configuration and immutable previous image, and restores only Toolkit image/binding/IaC pins. It does not restore an older user database, delete assets or remove compatible native skills. Concurrent changes refuse rollback. An older Toolkit image disables the extended engine inspection path until re-promotion. Rollback failure retains admission ownership and recovery evidence.
 
 The server operator helper /data/ai/helper-scripts/watoom-blender-package/scripts/run-watoom-blender.py shows the current production entry and supports --request <request.json> --dry-run. Actual execution stays inside the existing native builder session. Scoped production rollback can also be invoked with sudo python3 /data/ai/helper-scripts/watoom-blender-package/scripts/run-watoom-blender.py --rollback-production --i-approve.
 
-The old legacy canary remains at zero throughout production use and rollback. Never restore a historical full Deployment over unrelated current settings.
 
 The guided [Prompt Builder](https://watoom-code.internal.homelab.example/prompt-builder) now collects dimensions and requirements with editable safe defaults. See [Pipeline prompts](PIPELINE_PROMPTS.md).

@@ -22,12 +22,13 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
   await page.locator('#url').fill('https://huggingface.co/thejagstudio/3d-animation-style-sdxl');
   await page.locator('#inspect button').click();
   await page.locator('#details').waitFor({state:'visible',timeout:60000});
-  assert((await page.locator('#metadata').innerText()).includes('lora'));
-  assert((await page.locator('#metadata').innerText()).includes('stabilityai/stable-diffusion-xl-base-1.0'));
-  assert((await page.locator('#size').innerText()).includes('228,679,500'));
+  assert((await page.locator('#repoBadges').textContent()).includes('SDXL LoRA'));
+  assert((await page.locator('#repoBadges').textContent()).includes('stabilityai/stable-diffusion-xl-base-1.0'));
+  assert((await page.locator('#files').textContent()).includes('228,679,500'));
   assert(await page.locator('#settings select').count()>0);
   assert((await page.locator('#base').innerText()).includes('stable-diffusion-xl-base-1.0'));
-  assert((await page.locator('#models').innerText()).includes('registered=true'));
+  assert((await page.locator('#modelGrid').textContent()).includes('✓ Registered'));
+  assert((await page.locator('#modelGrid .card').count())>=10); // managed and pre-Model-Manager system models together
   await page.screenshot({path:out+'/production.png',fullPage:true});
   assert.deepStrictEqual(errors,[]);
   const code=await context.newPage();

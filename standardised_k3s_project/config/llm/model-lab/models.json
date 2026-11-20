@@ -241,6 +241,58 @@
         "preset": "published 8K context; sampler not specified",
         "unspecified_settings": "Existing KV cache, CPU offload, threads, MTP, vision and hardware-limited context retained where not specified."
       }
+    },
+    "fable-cold-fusion-27b-mtp": {
+      "display_name": "Qwen3.8-27B TURBO Fable Cold Fusion Heretic NEO CODER MAX MTP IQ4_XS",
+      "architecture": "qwen3_5",
+      "repository": "DavidAU/Qwen3.8-27B-TURBO-Fable-Cold-Fusion-735-882-Heretic-Uncensored-NEO-CODER-MAX-MTP-GGUF",
+      "revision": "36116c48f4e81b4c66a9c63da13a72959999a5f6",
+      "deployment": "llama-cpp-fable-cold-fusion-27b-mtp",
+      "service": "llama-cpp-fable-cold-fusion-27b-mtp",
+      "server_alias": "fable-cold-fusion-27b-mtp",
+      "router_alias": "fable-cold-fusion-27b-mtp",
+      "reasoning": "off",
+      "sampler": {
+        "temperature": 0.6,
+        "top_p": 0.95,
+        "top_k": 20,
+        "min_p": 0.0,
+        "presence_penalty": 0.0,
+        "repeat_penalty": 1.0
+      },
+      "expected_runtime_vram_gib": "Not yet qualified on this hardware: run `llm-models download/verify/test` before activate. IQ4_XS weight file alone is ~15.9 GiB; context/KV/vision budget and any CPU offload are unqualified.",
+      "primary": {
+        "quant": "MTP IQ4_XS",
+        "filename": "Qwen3.8-27B-TurboFCFusion-735-882-Here-Uncen-NEO-CODER-MAX-MTP-IQ4_XS.gguf",
+        "size_gb": 17.033680416,
+        "sha256": "318d14f81f301bfa3b0853cce3e68fa14a2571fdecb9fde455b591ff2754b0de"
+      },
+      "fallback": {
+        "quant": "MTP Q4_K_S",
+        "filename": "Qwen3.8-27B-TurboFCFusion-735-882-Here-Uncen-NEO-CODER-MAX-MTP-Q4_K_S.gguf",
+        "size_gb": 17.537488416,
+        "sha256": "889caf9975ef423464dd319f8bc97318d5bab7d034060efee8711cdb15708766"
+      },
+      "notes": "Owner-requested 2026-11-19 (chat). Between the two 4-bit quants on this repo, IQ4_XS (importance-matrix quant) is the better choice at this bit-budget and is also the smaller file than Q4_K_S here, so it is primary; Q4_K_S kept as fallback. MTP (speculative-decoding draft head) variant chosen over the plain MAX quant per this homelab's full-GPU-residency-with-MTP preference. NOT YET DOWNLOADED/QUALIFIED: run the normal llm-models download -> verify -> test flow (and the GPU ownership controller's rollback-guarded activate) before this serves traffic. context_size/kv_cache/cpu_moe_layers below are unqualified placeholders copied from the sibling dense qwen35 entries, not a measured fit.",
+      "context_size": 131072,
+      "kv_cache": {
+        "key": "q4_0",
+        "value": "q4_0"
+      },
+      "cpu_ffn_layers": 4,
+      "recommendation": {
+        "source": "https://huggingface.co/DavidAU/Qwen3.8-27B-TURBO-Fable-Cold-Fusion-735-882-Heretic-Uncensored-NEO-CODER-MAX-MTP-GGUF",
+        "preset": "precise coding (thinking mode, per the model card's own 'Thinking mode for precise coding tasks' preset)",
+        "unspecified_settings": "Model card also lists temperature=1.0/top_p=0.95 for general thinking mode and temperature=0.7/top_p=0.80/presence_penalty=1.5 for instruct/non-thinking mode; coding preset chosen to match the sibling tiel-coder-35b-a3b-mtp entry's sampler."
+      },
+      "cpu_moe_layers": null,
+      "vision": {
+        "projector": "mmproj-BF16.gguf",
+        "revision": "36116c48f4e81b4c66a9c63da13a72959999a5f6",
+        "sha256": "b0d8d89e9c9c90e0fb8ca74742d9d9bd7cc0f966a29b6f8c14227000ea6bd89e",
+        "image_max_tokens": 1024,
+        "qualification": "not yet qualified -- image_max_tokens/projector choice copied from the sibling tiel-coder-35b-a3b-mtp entry as a starting point, not tested against this model"
+      }
     }
   }
 }

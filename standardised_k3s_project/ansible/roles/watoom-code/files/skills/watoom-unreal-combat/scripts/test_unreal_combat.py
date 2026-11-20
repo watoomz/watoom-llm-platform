@@ -31,7 +31,7 @@ class Combat(unittest.TestCase):
 
     def test_phase_order_puts_tags_and_data_before_what_references_them(self):
         self.assertEqual([p["name"] for p in self.c["phases"] if not p["name"].startswith("fx ")],
-                         ["tags", "input", "anim Manny", "anim MannyGuns", "anim RPGHero", "anim Rogue", "anim Wizard", "retarget", "montages", "data", "items", "characters", "game_mode", "place"])
+                         ["tags", "input", "anim Manny", "anim MannyBow", "anim MannyGuns", "anim RPGHero", "anim Rogue", "anim Wizard", "retarget", "montages", "data", "items", "characters", "game_mode", "place"])
 
     def test_spell_cooldown_tag_is_registered_and_set(self):
         self.assertIn(["reflection.create_tag", {"tag": "Cooldown.Spell.Fireball", "comment": "WatooMCombat (unreal_combat.py)"}],
@@ -43,7 +43,7 @@ class Combat(unittest.TestCase):
         calls = phase(self.c, "data")
         self.assertTrue(all(m == "asset.bulk_upsert_data_assets" and a["onConflict"] == "update" for m, a in calls))
         w = {i["name"]: i for i in calls[0][1]["items"]}
-        self.assertEqual(sorted(w), ["DA_Weapon_HeroSword", "DA_Weapon_Pistol", "DA_Weapon_Rifle", "DA_Weapon_Shotgun", "DA_Weapon_Staff", "DA_Weapon_Sword", "DA_Weapon_WizardStaff"])
+        self.assertEqual(sorted(w), ["DA_Weapon_Bow", "DA_Weapon_HeroSword", "DA_Weapon_Pistol", "DA_Weapon_Rifle", "DA_Weapon_Shotgun", "DA_Weapon_Staff", "DA_Weapon_Sword", "DA_Weapon_WizardStaff"])
         self.assertEqual(w["DA_Weapon_Rifle"]["packagePath"], "/Game/ZAS/Combat/Weapons")
         self.assertEqual(w["DA_Weapon_Rifle"]["properties"]["FireMode"], "Auto")
 
@@ -59,7 +59,7 @@ class Combat(unittest.TestCase):
         maps = [a for m, a in calls if m == "gameplay.add_imc_mapping"]
         self.assertTrue(all(a["imcPath"].endswith("IMC_ZAS_Combat") for a in maps))
         self.assertEqual({(a["inputActionPath"].rsplit("/", 1)[1], a["key"]) for a in maps},
-                         {("IA_Reload", "R"), ("IA_NextWeapon", "Q"), ("IA_Spell1", "One"), ("IA_Spell2", "Two"), ("IA_Spell3", "Three")})
+                         {("IA_Reload", "R"), ("IA_NextWeapon", "Q"), ("IA_Spell1", "One"), ("IA_Spell2", "Two"), ("IA_Spell3", "Three"), ("IA_Spell4", "Four")})
 
     def test_player_character_gets_weapons_spells_and_input(self):
         d = defaults(self.c, "BP_ZAS_CombatWizard")
@@ -212,16 +212,28 @@ class Combat(unittest.TestCase):
 
     def test_a_map_can_take_another_specs_hero_and_retire_an_old_pawn(self):
         spec = {"game_mode": {"name": "BP_Main", "pawn": "/Game/ZAS/Combat/Characters/BP_ZAS_WizardHero"},
-                "map": {"path": "/Game/ZAS/Maps/L_Main"}, "remove": ["ZAS_Player"]}
+                "map": {"path": "/Game/ZAS/Maps/L_Main"}, "remove": ["ZAS_Player"],
+                "place": [{"player_start": True, "label": "PS", "location": [1, 2, 3], "rotation": [0, 140, 0]}]}
         c = uc.build(spec, "/Game/ZAS/Combat")
         self.assertEqual(phase(c, "game_mode")[1][1]["value"],
                          "/Game/ZAS/Combat/Characters/BP_ZAS_WizardHero.BP_ZAS_WizardHero_C")
         calls = phase(c, "place")
         self.assertEqual([m for m, _ in calls], ["level.create", "level.load", "level.delete_actor",
-                                                 "gameplay.set_world_game_mode", "level.save"])
+                                                 "gameplay.set_world_game_mode", "level.place_actor", "level.save"])
+        self.assertEqual((calls[4][1]["actorClass"], calls[4][1]["rotation"]["yaw"]), ("PlayerStart", 140))
         self.assertNotIn("templateLevel", calls[0][1])
         with self.assertRaises(ValueError):
             uc.build({"game_mode": {"name": "G", "pawn": "BP_Nobody"}}, "/Game/ZAS/Combat")
+
+    def test_any_blueprint_actor_can_be_placed_with_properties(self):
+        spec = {"map": {"path": "/Game/M"}, "place": [{"actor": "/Game/Fish/BP_FishWander", "label": "F1", "location": [1, 2, 3],
+                                                       "properties": {"WanderRadius": 800, "HeightRange": 200}}]}
+        calls = phase(uc.build(spec, "/Game/G/Combat"), "place")
+        self.assertEqual(calls[2][1]["actorClass"], "/Game/Fish/BP_FishWander.BP_FishWander_C")
+        self.assertEqual([(a["propertyName"], a["value"]) for m, a in calls if m == "level.set_actor_property"],
+                         [("HeightRange", 200), ("WanderRadius", 800)])
+        with self.assertRaises(ValueError):
+            uc.build({"place": [{"actor": "BP_FishWander", "label": "F"}]}, "/Game/G/Combat")
 
     def test_bad_specs_are_refused(self):
         for bad in ({"weapons": {"my sword": {}}},

@@ -18,6 +18,156 @@ Source component: AGENTS. Inspect the source before use.
 
 Source: [`scripts/AGENTS.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/AGENTS.md). Description basis: filename summary.
 
+## scripts/agent-rules/coding/ansible.md
+
+Source component: ansible. Inspect the source before use.
+
+Source: [`scripts/agent-rules/coding/ansible.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/coding/ansible.md). Description basis: filename summary.
+
+## scripts/agent-rules/coding/c-cpp.md
+
+Source component: c cpp. Inspect the source before use.
+
+Source: [`scripts/agent-rules/coding/c-cpp.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/coding/c-cpp.md). Description basis: filename summary.
+
+## scripts/agent-rules/coding/docker.md
+
+Source component: docker. Inspect the source before use.
+
+Source: [`scripts/agent-rules/coding/docker.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/coding/docker.md). Description basis: filename summary.
+
+## scripts/agent-rules/coding/go.md
+
+Source component: go. Inspect the source before use.
+
+Source: [`scripts/agent-rules/coding/go.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/coding/go.md). Description basis: filename summary.
+
+## scripts/agent-rules/coding/javascript-typescript.md
+
+Source component: javascript typescript. Inspect the source before use.
+
+Source: [`scripts/agent-rules/coding/javascript-typescript.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/coding/javascript-typescript.md). Description basis: filename summary.
+
+## scripts/agent-rules/coding/kubernetes.md
+
+Source component: kubernetes. Inspect the source before use.
+
+Source: [`scripts/agent-rules/coding/kubernetes.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/coding/kubernetes.md). Description basis: filename summary.
+
+## scripts/agent-rules/coding/python.md
+
+Source component: python. Inspect the source before use.
+
+Source: [`scripts/agent-rules/coding/python.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/coding/python.md). Description basis: filename summary.
+
+## scripts/agent-rules/coding/rust.md
+
+Source component: rust. Inspect the source before use.
+
+Source: [`scripts/agent-rules/coding/rust.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/coding/rust.md). Description basis: filename summary.
+
+## scripts/agent-rules/coding/shell.md
+
+Source component: shell. Inspect the source before use.
+
+Source: [`scripts/agent-rules/coding/shell.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/coding/shell.md). Description basis: filename summary.
+
+## scripts/agent-rules/coding/sql.md
+
+Source component: sql. Inspect the source before use.
+
+Source: [`scripts/agent-rules/coding/sql.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/coding/sql.md). Description basis: filename summary.
+
+## scripts/agent-rules/homelab.md
+
+Source component: homelab. Inspect the source before use.
+
+Source: [`scripts/agent-rules/homelab.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/homelab.md). Description basis: filename summary.
+
+## scripts/agent-rules/kali/containers.md
+
+Source component: containers. Inspect the source before use.
+
+Source: [`scripts/agent-rules/kali/containers.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/kali/containers.md). Description basis: filename summary.
+
+## scripts/agent-rules/kali/core.md
+
+Source component: core. Inspect the source before use.
+
+Source: [`scripts/agent-rules/kali/core.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/kali/core.md). Description basis: filename summary.
+
+## scripts/agent-rules/kali/dns.md
+
+Source component: dns. Inspect the source before use.
+
+Source: [`scripts/agent-rules/kali/dns.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/kali/dns.md). Description basis: filename summary.
+
+## scripts/agent-rules/kali/evidence.md
+
+Source component: evidence. Inspect the source before use.
+
+Source: [`scripts/agent-rules/kali/evidence.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/kali/evidence.md). Description basis: filename summary.
+
+## scripts/agent-rules/kali/exploitation-lab.md
+
+Source component: exploitation lab. Inspect the source before use.
+
+Source: [`scripts/agent-rules/kali/exploitation-lab.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/kali/exploitation-lab.md). Description basis: filename summary.
+
+## scripts/agent-rules/kali/kubernetes.md
+
+Source component: kubernetes. Inspect the source before use.
+
+Source: [`scripts/agent-rules/kali/kubernetes.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/kali/kubernetes.md). Description basis: filename summary.
+
+## scripts/agent-rules/kali/network-discovery.md
+
+Source component: network discovery. Inspect the source before use.
+
+Source: [`scripts/agent-rules/kali/network-discovery.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/kali/network-discovery.md). Description basis: filename summary.
+
+## scripts/agent-rules/kali/package-management.md
+
+Source component: package management. Inspect the source before use.
+
+Source: [`scripts/agent-rules/kali/package-management.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/kali/package-management.md). Description basis: filename summary.
+
+## scripts/agent-rules/kali/packet-analysis.md
+
+Source component: packet analysis. Inspect the source before use.
+
+Source: [`scripts/agent-rules/kali/packet-analysis.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/kali/packet-analysis.md). Description basis: filename summary.
+
+## scripts/agent-rules/kali/service-fingerprinting.md
+
+Source component: service fingerprinting. Inspect the source before use.
+
+Source: [`scripts/agent-rules/kali/service-fingerprinting.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/kali/service-fingerprinting.md). Description basis: filename summary.
+
+## scripts/agent-rules/kali/smb-ad.md
+
+Source component: smb ad. Inspect the source before use.
+
+Source: [`scripts/agent-rules/kali/smb-ad.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/kali/smb-ad.md). Description basis: filename summary.
+
+## scripts/agent-rules/kali/snmp.md
+
+Source component: snmp. Inspect the source before use.
+
+Source: [`scripts/agent-rules/kali/snmp.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/kali/snmp.md). Description basis: filename summary.
+
+## scripts/agent-rules/kali/web-assessment.md
+
+Source component: web assessment. Inspect the source before use.
+
+Source: [`scripts/agent-rules/kali/web-assessment.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/kali/web-assessment.md). Description basis: filename summary.
+
+## scripts/agent-rules/universal.md
+
+Source component: universal. Inspect the source before use.
+
+Source: [`scripts/agent-rules/universal.md`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/agent-rules/universal.md). Description basis: filename summary.
+
 ## scripts/apply-all.sh
 
 \# Apply ONLY manifests explicitly registered in k3s\_manifest\_groups.
@@ -35,6 +185,12 @@ Source: [`scripts/audit-host-stability-before-ai-deploy.sh`](https://github.com/
 Audits manifests for floating image tags. Prefer digest-pinned images for repeatable rebuilds, and keep fallback tag comments beside digests for humans.
 
 Source: [`scripts/check-image-pinning.sh`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/check-image-pinning.sh). Description basis: Purpose comment.
+
+## scripts/check-md-links.py
+
+Fail on broken relative links in tracked Markdown \(T-0115\).
+
+Source: [`scripts/check-md-links.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/check-md-links.py). Description basis: module docstring.
 
 ## scripts/check-required-secrets.sh
 
@@ -66,17 +222,23 @@ Reads live workload images and exports a lock-style reference for reproducible f
 
 Source: [`scripts/export-live-image-lock.sh`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/export-live-image-lock.sh). Description basis: Purpose comment.
 
+## scripts/git-hooks/pre-commit
+
+Source component: pre commit. Inspect the source before use.
+
+Source: [`scripts/git-hooks/pre-commit`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/git-hooks/pre-commit). Description basis: filename summary.
+
 ## scripts/gpu-controller-repin-primary.py
 
 Re-pin the GPU controller's approved spec digest for the primary model Deployment.
 
 Source: [`scripts/gpu-controller-repin-primary.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/gpu-controller-repin-primary.py). Description basis: module docstring.
 
-Declared CLI options: `--apply`, `--config`, `--state`.
+Declared CLI options: `--apply`, `--config`, `--name`, `--state`.
 
 ## scripts/install-browser-trusted-tls.sh
 
-Replace the temporary self-signed internal wildcard cert with a
+Install or repair the browser-trusted Let's Encrypt wildcard for
 
 Source: [`scripts/install-browser-trusted-tls.sh`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/install-browser-trusted-tls.sh). Description basis: Purpose comment.
 
@@ -246,11 +408,31 @@ Creates or rotates the operator PIN for approving model change requests in Glanc
 
 Source: [`scripts/set-change-approval-pin.sh`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/set-change-approval-pin.sh). Description basis: Purpose comment.
 
+## scripts/sync-internal-tls.py
+
+Propagate the cert-manager Let's Encrypt wildcard to every place that serves it \(T-0116\).
+
+Source: [`scripts/sync-internal-tls.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/sync-internal-tls.py). Description basis: module docstring.
+
+Declared CLI options: `--canonical-dir`, `--domain`, `--dry-run`, `--source-namespace`, `--source-secret`, `--target-secret`.
+
+## scripts/sync-skill-shared.py
+
+Keep helper files that are shipped in several places identical to one source \(T-0115\).
+
+Source: [`scripts/sync-skill-shared.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/sync-skill-shared.py). Description basis: module docstring.
+
 ## scripts/test-pipeline-prompts.cjs
 
 Test fixture/check: test pipeline prompts. Inspect the source before use.
 
 Source: [`scripts/test-pipeline-prompts.cjs`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/test-pipeline-prompts.cjs). Description basis: filename summary.
+
+## scripts/tests/test_watoom_model_perf_accumulator.py
+
+Test fixture/check: test watoom model perf accumulator. Inspect the source before use.
+
+Source: [`scripts/tests/test_watoom_model_perf_accumulator.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/tests/test_watoom_model_perf_accumulator.py). Description basis: filename summary.
 
 ## scripts/tool-knowledge
 
@@ -291,6 +473,14 @@ Source component: watoom kali rules. Inspect the source before use.
 Source: [`scripts/watoom-kali-rules`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/watoom-kali-rules). Description basis: filename summary.
 
 Declared CLI options: `--capability`, `--format`.
+
+## scripts/watoom-model-perf-accumulator.py
+
+Accumulate lifetime per-model performance counters for Grafana's all-time comparison panel.
+
+Source: [`scripts/watoom-model-perf-accumulator.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/watoom-model-perf-accumulator.py). Description basis: module docstring.
+
+Declared CLI options: `--output`, `--prometheus-url`, `--state-file`.
 
 ## scripts/watoom-node-textfile.sh
 

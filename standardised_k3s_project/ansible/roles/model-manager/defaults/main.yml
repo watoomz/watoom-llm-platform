@@ -11,6 +11,8 @@ model_manager_origin: https://glance.internal.homelab.example
 model_manager_state: /data/ai/model-manager
 model_manager_models: /data/ai/models
 model_manager_password_file: /data/ai/private/model-manager/password
+# Single-operator admin UI behind Basic Auth + a long-lived session cookie; avoid forcing re-login mid-session.
+model_manager_session_ttl_sec: 2592000
 model_manager_broker_root: /data/ai/helper-scripts/state/model-manager-broker
 model_manager_router_view: /data/ai/helper-scripts/state/model-manager-router/catalog.json
 model_manager_controller_state: /data/ai/helper-scripts/state/gpu-controller
@@ -23,7 +25,7 @@ model_manager_service_name: watoom-model-manager-broker
 model_manager_publish_route: false
 model_manager_controller_verified: false
 
-model_manager_repository_root: /data/github/watoom-standardised-homelab/standardised_k3s_project
+model_manager_repository_root: "{{ project_root | default('/data/github/watoom-standardised-homelab/standardised_k3s_project') }}"
 
 model_manager_sdxl_runtime: "{{ model_manager_runtime.sdxl_runtime | default(none) }}"
 

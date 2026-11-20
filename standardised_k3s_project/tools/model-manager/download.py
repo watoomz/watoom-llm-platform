@@ -79,7 +79,9 @@ def fetch(root,repo,revision,item,token=None,reserve=3*1024**3,progress=lambda n
         flags=os.O_WRONLY|os.O_CREAT|os.O_NOFOLLOW|(os.O_APPEND if offset else os.O_TRUNC)
         with os.fdopen(os.open(partial,flags,0o600),"ab" if offset else "wb") as out:
             while True:
-                if cancel(): raise DownloadError("Cancelled; partial retained")
+                if cancel():
+                    partial.unlink(missing_ok=True); validator.unlink(missing_ok=True)
+                    raise DownloadError("Cancelled; partial removed")
                 data=res.read(1024*1024)
                 if not data: break
                 offset+=len(data)

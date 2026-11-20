@@ -1,3 +1,4 @@
+import html
 """Fixed-origin Hugging Face metadata inspection. Repository text is data."""
 import json, re, urllib.request, urllib.parse
 ORIGIN="https://huggingface.co"
@@ -20,6 +21,37 @@ def parse_url(value):
     return "/".join(parts[:2]),revision,selected
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self,*args,**kwargs): return None
+def card_description(card,readme,limit=500):
+    """Short description published by the repository (T-0087): cardData description/summary, else the README's first
+    prose paragraph (front matter, headings, images, badges, HTML, tables, quotes and code skipped). Never invented:
+    None when the repository publishes none."""
+    for key in ("description","summary","model_summary"):
+        value=(card or {}).get(key)
+        if isinstance(value,str) and len(value.strip())>=20:return _clip(value,limit)
+    if not isinstance(readme,str):return None
+    text=readme
+    if text.startswith("---"):
+        end=text.find("\n---",3)
+        if end!=-1:text=text[end+4:]
+    fence=False;paragraph=[];broken=False
+    for line in text.splitlines()+[""]:
+        stripped=line.strip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):fence=not fence;paragraph=[];continue
+        if fence:continue
+        if not stripped:
+            if paragraph and not broken:
+                candidate=" ".join(paragraph)
+                plain=re.sub(r"!?\[([^\]]*)\]\([^)]*\)",r"\1",candidate)
+                plain=html.unescape(re.sub(r"<[^>]+>","",plain));plain=re.sub(r"[*_`]{1,3}","",plain).strip()
+                if len(plain)>=40 and sum(c.isalpha() for c in plain)>len(plain)*0.6:return _clip(plain,limit)
+            paragraph=[];broken=False;continue
+        if stripped[0]=="<" and len(re.sub(r"<[^>]+>","",stripped).strip())>=20:paragraph.append(stripped);continue
+        if stripped[0] in "#!<|>" or stripped.startswith("[!") or re.match(r"[-*+]\s|\d+\.\s",stripped) or re.fullmatch(r"(\[!?\[[^\]]*\]\([^)]*\)\]\([^)]*\)\s*)+",stripped):broken=bool(paragraph) or broken;paragraph=[] if not paragraph else paragraph;continue
+        paragraph.append(stripped)
+    return None
+def _clip(value,limit):
+    value=" ".join(value.split())
+    return value if len(value)<=limit else value[:limit].rsplit(" ",1)[0]+"…"
 class Hub:
     def __init__(self,token=None):
         self.token=token; self.open=urllib.request.build_opener(NoRedirect)
@@ -68,11 +100,14 @@ class Hub:
         base=card.get("base_model")
         if isinstance(base,list): base=base[0] if len(base)==1 else base
         lora="lora" in tags or card.get("base_model_relation")=="adapter" or "adapter_config.json" in names
-        kind="lora" if lora else "diffusion-pipeline" if "model_index.json" in names else "gguf" if any(n.lower().endswith(".gguf") for n in names) else "diffusion-checkpoint" if meta.get("pipeline_tag")=="text-to-image" or ("sdxl" in tags and any(n.lower().endswith(".safetensors") for n in names)) else "unsupported"
+        has_gguf=any(n.lower().endswith(".gguf") and "mmproj" not in n.lower() for n in names)
+        # A LoRA repository publishing .gguf adapters is a llama.cpp adapter (served with --lora on a GGUF base),
+        # not an SDXL safetensors LoRA.
+        kind="gguf-lora" if lora and has_gguf else "lora" if lora else "diffusion-pipeline" if "model_index.json" in names else "gguf" if any(n.lower().endswith(".gguf") for n in names) else "diffusion-checkpoint" if meta.get("pipeline_tag")=="text-to-image" or ("sdxl" in tags and any(n.lower().endswith(".safetensors") for n in names)) else "unsupported"
         variants=[]; grouped={}
         for f in files:
             n=f["path"]; lower=n.lower()
-            eligible=(kind=="gguf" and lower.endswith(".gguf") and "mmproj" not in lower) or (kind in ("lora","diffusion-checkpoint") and lower.endswith(".safetensors"))
+            eligible=(kind in ("gguf","gguf-lora") and lower.endswith(".gguf") and "mmproj" not in lower) or (kind in ("lora","diffusion-checkpoint") and lower.endswith(".safetensors"))
             if not eligible: continue
             m=re.search(r"-(\d{5})-of-(\d{5})\.gguf$",n,re.I)
             key=re.sub(r"-\d{5}-of-\d{5}\.gguf$",".gguf",n,flags=re.I) if m else n
@@ -83,8 +118,10 @@ class Hub:
             if parts[0]:
                 total=int(parts[0].group(2))
                 if sorted(int(m.group(1)) for m in parts)!=list(range(1,total+1)): continue
-            quant=re.search(r"(?:^|[-_.])(IQ\d[^./-]*|Q\d[^./-]*|BF16|F16|F32)(?:[-_.]|$)",key,re.I) if kind=="gguf" else None
-            variants.append({"id":key,"files":items,"bytes":sum(x["size"] for x in items) if all(isinstance(x["size"],int) for x in items) else None,"precision":quant.group(1) if quant else None})
+            quant=re.search(r"(?:^|[-_.])(IQ\d[^./-]*|Q\d[^./-]*|BF16|F16|F32)(?:[-_.]|$)",key,re.I) if kind in ("gguf","gguf-lora") else None
+            # Provisional only: the published name says MTP; registration requires the downloaded header to prove it.
+            mtp=kind=="gguf" and re.search(r"(?:^|[-_.])MTP(?:[-_.]|$)",key.rsplit("/",1)[-1],re.I) is not None
+            variants.append({"id":key,"files":items,"bytes":sum(x["size"] for x in items) if all(isinstance(x["size"],int) for x in items) else None,"precision":quant.group(1) if quant else None,"mtp_published":mtp})
         if kind=="diffusion-pipeline":
             index=docs.get("model_index.json",{})
             components={k for k,v in index.items() if not k.startswith("_") and isinstance(v,list) and len(v)==2 and all(v)}
@@ -99,4 +136,8 @@ class Hub:
                     items.extend(weights+auxiliary)
                 if not complete or not components or not any(f["path"].endswith(".safetensors") for f in items):continue
                 variants.append({"id":precision,"precision":"float16" if precision=="fp16" else None,"files":items,"bytes":sum(x["size"] for x in items) if all(isinstance(x["size"],int) for x in items) else None})
-        return {"repository":repo,"revision":sha,"refs":refs,"kind":kind,"base_model":base,"variants":variants,"files":files,"documents":docs,"gated":meta.get("gated",False),"license":card.get("license"),"source":ORIGIN+"/"+repo+"/tree/"+sha}
+        # Published vision projectors (mmproj GGUFs), preferred precision first; the header proves the match at install.
+        rank=lambda f:next((i for i,p in enumerate(("f16","bf16","q8_0","f32")) if p in f["path"].lower()),9)
+        projectors=sorted([f for f in files if kind in ("gguf","gguf-lora") and f["path"].lower().endswith(".gguf") and "mmproj" in f["path"].lower() and isinstance(f.get("size"),int)],key=lambda f:(rank(f),f["path"]))
+        description=card_description(card,docs.get("README.md"))
+        return {"repository":repo,"revision":sha,"refs":refs,"kind":kind,"base_model":base,"variants":variants,"files":files,"projectors":projectors,"description":description,"documents":docs,"gated":meta.get("gated",False),"license":card.get("license"),"source":ORIGIN+"/"+repo+"/tree/"+sha}

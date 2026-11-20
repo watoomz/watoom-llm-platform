@@ -163,6 +163,16 @@ spec:
           periodSeconds: 15
           timeoutSeconds: 10
           failureThreshold: 12
+        # 2026-11-19: a 27B gguf is read fresh from disk on a switch (~80 MB/s here; the other model evicted it from the
+        # page cache) and loads in 5-7 min. Liveness alone (90 s + 6 x 30 s) killed it mid-load every time and the switch
+        # failed. The startup probe allows 10 min (the GPU controller's startup_timeout is 600 s); liveness starts after.
+        startupProbe:
+          httpGet:
+            path: /health
+            port: http
+          periodSeconds: 10
+          timeoutSeconds: 10
+          failureThreshold: 60
         livenessProbe:
           httpGet:
             path: /health

@@ -4,7 +4,7 @@ sys.path.insert(0, str(HERE))
 import memory_curator as mc
 
 AGENT = "codex@agent.example"
-OWNER = "garthcordery@gmail.com"
+OWNER = "owner@example.com"
 
 
 def git(repo, *args, email=None, name="t"):

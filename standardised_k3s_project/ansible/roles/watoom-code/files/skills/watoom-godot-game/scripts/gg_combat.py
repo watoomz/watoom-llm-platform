@@ -24,6 +24,14 @@ animation, VFX, items, multiplayer replication).
                                                 CombatComponent.request_ability is rejected (it is never the
                                                 authority); its rpc_id(1, ...) call reaches the server, which
                                                 is the one that actually changes its own health.
+  gg_combat.py spec --project P --spec FILE (--weapon NAME | --spell NAME) [--timeout 60]
+                                                T-0075: load+validate a declarative weapon/spell spec (JSON,
+                                                see templates/combat_spec.example.json) and prove ONE named
+                                                entry live: real melee-range/raycast/instant delivery per its
+                                                "delivery" field, its own cooldown_s/effect/cost, and its vfx
+                                                recipes building (ops/combat_spec_check.gd) -- the data-driven
+                                                generalisation of `slice` above, which stays hardcoded and
+                                                untouched for backward compatibility.
 
 The library itself lives in the shared runtime (game/combat_attributes.gd, game/combat.gd,
 game/combat_component.gd) and is installed into every project's addons/gg by gg_project.py sync-runtime like
@@ -44,6 +52,38 @@ import time
 HERE = os.path.dirname(os.path.abspath(__file__))
 import gg_godot  # noqa: E402
 import gg_log  # noqa: E402
+import gg_schema as S  # noqa: E402
+
+# T-0075: declarative weapon/spell spec schema (the Godot-side equivalent of watoom-unreal-combat's
+# combat_spec.zas.json), checked with the same gg_schema.check() every other gg_*.py profile uses (see
+# gg_project.py's PROFILE_SCHEMA). "damage_type" (not "element") is the exact field game/combat.gd's
+# apply_effect/deal_damage reads for the resist lookup -- see references/gg-combat.md for why the ticket's
+# own "element" wording and this field's real name differ.
+RESOURCES = ["health", "shield", "stamina", "mana", "ammo"]
+EFFECT_SCHEMA = {"t": "obj", "fields": {
+    "kind": {"t": "str", "enum": ["damage", "heal", "cost", "grant"]},
+    "amount": {"t": "float", "min": 0},
+    "resource": {"t": "str", "enum": RESOURCES, "opt": True},
+    "damage_type": {"t": "str", "opt": True},
+}}
+ABILITY_SCHEMA = {"t": "obj", "fields": {
+    "display_name": {"t": "str", "opt": True},
+    "mesh": {"t": "str", "opt": True},
+    "parts": {"t": "list", "opt": True, "items": {"t": "str"}},
+    "delivery": {"t": "str", "enum": ["melee", "raycast", "instant"]},
+    "range_m": {"t": "float", "min": 0, "max": 10000},
+    "cooldown_s": {"t": "float", "min": 0, "max": 600},
+    "effect": EFFECT_SCHEMA,
+    "cost": {"t": "obj", "opt": True, "fields": {"resource": {"t": "str", "enum": RESOURCES}, "amount": {"t": "float", "min": 0}}},
+    "vfx": {"t": "obj", "open": True, "opt": True},
+    "animation": {"t": "obj", "open": True, "opt": True},
+}}
+SPEC_SCHEMA = {"t": "obj", "fields": {
+    "schema": {"t": "int", "min": 1, "max": 1},
+    "pack": {"t": "str", "opt": True},
+    "weapons": {"t": "obj", "open": True, "opt": True},
+    "spells": {"t": "obj", "open": True, "opt": True},
+}}
 
 TEST_COMBAT_GD = '''extends "res://addons/gg/lib/gg_test.gd"
 const Combat := preload("res://addons/gg/game/combat.gd")
@@ -191,6 +231,63 @@ def pickups(a):
     return 0 if ok else 1
 
 
+def spec_errors(doc):
+    """Validate a loaded weapon/spell spec doc (templates/combat_spec.example.json shape). -> list of error strings."""
+    errs = S.check(doc, SPEC_SCHEMA)
+    if not isinstance(doc, dict):
+        return errs
+    weapons = doc.get("weapons") or {}
+    spells = doc.get("spells") or {}
+    if not weapons and not spells:
+        errs.append("$: spec has neither 'weapons' nor 'spells' (need at least one ability)")
+    for category, group in (("weapons", weapons), ("spells", spells)):
+        if not isinstance(group, dict):
+            continue
+        for name, entry in group.items():
+            errs += S.check(entry, ABILITY_SCHEMA, "$.%s.%s" % (category, name))
+    return errs
+
+
+def load_spec(path):
+    """Load+validate a weapon/spell spec JSON file. -> dict. Raises gg_godot.Refused on any schema problem."""
+    if not os.path.isfile(path):
+        raise gg_godot.Refused("%s: no such spec file" % path)
+    with open(path) as f:
+        doc = json.load(f)
+    errs = spec_errors(doc)
+    if errs:
+        raise gg_godot.Refused("%s invalid:\n  " % path + "\n  ".join(errs))
+    return doc
+
+
+def resolve_ability(doc, category, name):
+    """-> the ability dict for one named weapon/spell ("weapons"|"spells") in a loaded spec. Raises gg_godot.Refused if missing."""
+    group = doc.get(category) or {}
+    if name not in group:
+        raise gg_godot.Refused("%s '%s' not found in spec (have: %s)" % (category[:-1], name, ", ".join(sorted(group)) or "none"))
+    return group[name]
+
+
+def spec(a):
+    project = os.path.abspath(a.project)
+    check_project(project)
+    if bool(a.weapon) == bool(a.spell):
+        raise gg_godot.Refused("pass exactly one of --weapon or --spell")
+    doc = load_spec(a.spec)
+    category, name = ("weapons", a.weapon) if a.weapon else ("spells", a.spell)
+    ability = resolve_ability(doc, category, name)
+    r = gg_godot.run(project, "combat_spec_check", {"category": category, "name": name, "ability": ability}, render=False, timeout=a.timeout)
+    d = (r.result or {}).get("data") or {}
+    if r.code not in (0, 1, 5) or not d:
+        print("gg_combat spec: exit %d: %s (job %s)" % (r.code, r.why, r.job_dir))
+        return r.code
+    for row in d["checks"]:
+        print("  [%s] %s: %s" % ("ok" if row["ok"] else "FAIL", row["name"], row["detail"]))
+    ok = all(row["ok"] for row in d["checks"])
+    print("gg_combat spec: %s: %s.%s, %d check(s) (job %s)" % ("PASS" if ok else "FAIL", category, name, len(d["checks"]), r.job_dir))
+    return 0 if ok else 1
+
+
 def _wait_process(p, timeout):
     try:
         out, _ = p.communicate(timeout=timeout)
@@ -284,9 +381,15 @@ def main(argv=None):
     p = sub.add_parser("mp")
     p.add_argument("--project", required=True)
     p.add_argument("--timeout", type=int, default=20)
+    p = sub.add_parser("spec")
+    p.add_argument("--project", required=True)
+    p.add_argument("--spec", required=True, help="path to a weapon/spell spec JSON file (see templates/combat_spec.example.json)")
+    p.add_argument("--weapon", default=None, help="name of an entry under the spec's \"weapons\"")
+    p.add_argument("--spell", default=None, help="name of an entry under the spec's \"spells\"")
+    p.add_argument("--timeout", type=int, default=60)
     a = ap.parse_args(argv)
     try:
-        return {"init": init, "check": check, "slice": slice_, "pickups": pickups, "mp": mp}[a.cmd](a)
+        return {"init": init, "check": check, "slice": slice_, "pickups": pickups, "mp": mp, "spec": spec}[a.cmd](a)
     except gg_godot.Refused as e:
         print("refused: %s" % e, file=sys.stderr)
         return 2

@@ -35,3 +35,5 @@ Use the authorized project checkout and current inventory. Keep secrets out of o
 ## Running things
 
 You cannot run shell, ansible or kubectl yourself. Load the `operator-commands` skill and hand the operator the exact command (dry run first), its check, and a revert command.
+
+Homelab-specific conventions: see `references/watoom.md`.

@@ -144,10 +144,14 @@
 
 - name: Enable maintained native router catalog without replacing user settings
   ansible.builtin.script:
-    cmd: enable-router-discovery.py {{ watoom_code_root }}/config/opencode.json
+    cmd: >-
+      enable-router-discovery.py {{ watoom_code_root }}/config/opencode.json
+      --header-timeout-ms {{ watoom_code_router_header_timeout_ms | int }} --timeout-ms {{ watoom_code_router_request_timeout_ms | int }}
     executable: /usr/bin/python3
   register: watoom_code_router_catalog
   changed_when: "'CHANGED' == watoom_code_router_catalog.stdout | trim"
+- name: Keep Kali tools to watoom-kali only
+  ansible.builtin.include_tasks: kali_isolation.yml
 - name: Maintain native SearXNG web search integration
   ansible.builtin.import_tasks: searxng.yml
 - name: Maintain the stable 100K Swift application context baseline
@@ -156,6 +160,12 @@
     executable: /usr/bin/python3
   register: watoom_code_swift_context
   changed_when: "'CHANGED' == watoom_code_swift_context.stdout | trim"
+- name: Maintain router model display names and add new router models
+  ansible.builtin.script:
+    cmd: enable-model-display-names.py {{ watoom_code_root }}/config/opencode.json {{ watoom_code_model_output_tokens | int }}
+    executable: /usr/bin/python3
+  register: watoom_code_model_display_names
+  changed_when: "'CHANGED' == watoom_code_model_display_names.stdout | trim"
 - name: Maintain GUI reasoning levels
   ansible.builtin.include_tasks: reasoning_variants.yml
 - name: Maintain versioned native coordinator guard
@@ -326,6 +336,7 @@
     - 'import json,urllib.request;print(json.dumps(json.load(urllib.request.urlopen("http://127.0.0.1:8000/v1/models",timeout=10))))'
   register: watoom_code_context_inventory
   changed_when: false
+  check_mode: false  # read-only query; --check must still see the real inventory (T-0115)
   retries: 3
   delay: 10
   until:
@@ -368,11 +379,12 @@
     group: root
     mode: '0755'
 
-- name: Maintain owner-approved Fab acquisition
-  ansible.builtin.import_tasks: fab_catalog.yml
-
 - name: Maintain bounded native game worker requests
   ansible.builtin.import_tasks: game_worker.yml
+
+# After game_worker.yml: the Fab worker runs from the release mirror that game_worker.yml syncs.
+- name: Maintain owner-approved Fab acquisition
+  ansible.builtin.import_tasks: fab_catalog.yml
 
 - name: Maintain game-session resume watchdog
   ansible.builtin.import_tasks: game_session_watchdog.yml

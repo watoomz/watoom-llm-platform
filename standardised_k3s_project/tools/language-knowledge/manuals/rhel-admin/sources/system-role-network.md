@@ -1236,7 +1236,7 @@ network_connections:
     interface_name: eth0
     ip:
       address:
-        - 192.168.0.1/24
+        - 192.168.250.1/24
 
   - name: veth0
     type: macvlan

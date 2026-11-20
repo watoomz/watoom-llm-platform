@@ -9,7 +9,7 @@
 <main class="main" id="content">
 <header class="hero"><p class="eyebrow">Operator manual</p><h1>Operator manual</h1><p class="lede">A task-first manual for running the homelab — how to check health, fix, approve, start, stop and restart things safely, what every approval gate means, and when to stop and ask the owner.</p></header>
 <div class="content">
-<p>This page is written for someone who did not build the system. Start at <strong><a href="#i-want-to">I want to…</a></strong> and follow the links. Every command runs on the server (<code>watoom-homelab</code>) over SSH unless it says otherwise. If a step is not covered here, <strong>stop and ask the owner</strong>; do not improvise on the GPU, the router, secrets or Git.</p>
+<p>This page is written for someone who did not build the system. Start at <strong><a href="#i-want-to">I want to…</a></strong> and follow the links. Every command runs on the server (<code>homelab-host</code>) over SSH unless it says otherwise. If a step is not covered here, <strong>stop and ask the owner</strong>; do not improvise on the GPU, the router, secrets or Git.</p>
 <blockquote class="callout callout-rule" data-kind="Rule">
 <p>Five things that are never the answer: scaling a model Deployment by hand, editing GPU-controller state, force-deleting things to &quot;clear&quot; them, running <code>git add .</code> / <code>git reset --hard</code> / <code>git clean -fd</code>, and pasting secrets into chat, Git or logs. Each is explained below.</p>
 </blockquote>
@@ -390,7 +390,7 @@ ls -lt /data/backups/watoom-code | head -3
 </code></pre></div>
 <p>Recovery tooling is read-only by default: <code>python3 tools/recovery/recovery.py {inventory,plan,audit,verify-backup,restore-test,restore-bundle,run-phase,capture}</code>. Restores go into a <strong>new empty directory</strong>; there is deliberately no live overwrite. Never restore over live state, and never replay historical jobs. Full procedures: <a href="/guide/recovery.html">Recovery</a> and <a href="/guide/disaster-recovery.html">Disaster recovery</a>.</p>
 <h2 id="secrets-and-the-vault">Secrets and the vault</h2>
-<p>Secrets are stored encrypted in Git (<code>secrets-vault/env.local.vault</code>); the vault password is <strong>not</strong> in Git (<code>/data/secrets/watoom-homelab/ansible-vault-password.txt</code>). Refer to secrets by name only — never print or paste values.</p>
+<p>Secrets are stored encrypted in Git (<code>secrets-vault/env.local.vault</code>); the vault password is <strong>not</strong> in Git (<code>/data/secrets/homelab-host/ansible-vault-password.txt</code>). Refer to secrets by name only — never print or paste values.</p>
 <div class="code-wrap"><button class="copy-btn" type="button">Copy</button><pre><code class="language-bash">scripts/check-required-secrets.sh      # confirms names exist; never prints values
 scripts/restore-vault-secrets.sh       # needs the vault password file
 scripts/render-secrets.sh              # then: kubectl apply -f manifests/05-secrets/

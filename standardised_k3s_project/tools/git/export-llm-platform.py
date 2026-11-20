@@ -18,7 +18,8 @@ PROJECT = Path(__file__).resolve().parents[2]
 BLOCK_PARTS = {'.git', '.private', '.kube', 'node_modules', '__pycache__', '.venv',
                'secrets-vault', 'apk-web'}
 BLOCK_SUFFIX = ('.bundle', '.db', '.sqlite', '.sqlite3', '.tar', '.tar.gz', '.tgz', '.zip',
-                '.7z', '.key', '.pem', '.pfx', '.p12', '.token', '.log', '.hprof')
+                '.7z', '.key', '.pem', '.pfx', '.p12', '.token', '.log', '.hprof',
+                '.pub')  # SSH public keys identify the owner's accounts
 RULES = {
     'private-key': re.compile(rb'-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----'),
     'github-token': re.compile(rb'\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,})\b'),

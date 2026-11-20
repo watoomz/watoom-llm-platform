@@ -1,7 +1,5 @@
 # Backup and Recovery
 
-Current deployment snapshot: 13 October 2026. Runtime-specific status is dated; configured/recovery guidance is not an end-to-end test.
-
 ## Recovery objective
 
 The repository rebuilds desired state; it does **not** replace application-state backups. Recovery requires both:
@@ -41,11 +39,12 @@ kubectl get pods -A
 docker compose ls
 ```
 
-## Backup coverage status
+## What is backed up
 
-The previous rebuild documentation states that NAS/restic backup automation was not yet configured. Do not represent a full off-host backup system as complete until it exists and has restore tests.
-
-The `/data/cleanup-backups` tree created during controlled cleanup passes is useful rollback material for those changes, but it is not a complete disaster-recovery strategy.
+- **Git:** all desired state (this repository) is pushed to `origin` (`main`, and `dev` for model work).
+- **WatooM Code state:** `watoom-code-backup.timer` (daily 03:30, `playbooks/watoom-code-backup.yml`, `tools/watoom-code/backup.py`) writes `/data/backups/watoom-code/<UTC stamp>/` with consistent online SQLite copies (application, catalog, home databases), configuration and AgentMemory archives, the Deployment list and a verified manifest (integrity check, row counts, sha256). It keeps 14 runs, prunes only after a verified run, and exports a last-success metric.
+- **Off-host copy:** `playbooks/watoom-backup-offhost.yml` publishes the newest verified runs for the rig to pull over a jailed, key-only SFTP account; `watoom-backup-offhost-check.timer` checks the rig's receipts against the manifests and raises `WatoomOffhostBackupStale` when the copy falls behind.
+- **Not covered:** model weights (re-downloadable, under `/data/ai/models`), media libraries and the purchased asset library, which rely on their own sources. A backup is not a restore test: restore into an isolated location and verify before relying on it.
 
 ## Router backups
 
@@ -66,16 +65,6 @@ The network repository contains redacted RouterOS text exports and password-prot
 
 ## AI state recovery
 
-Restore `/app/ai/services` and required `/data/ai` projects, assets, models and caches. Use [current layout](AI_DIRECTORY_LAYOUT.md), not retired pre-migration host paths. Account for OpenCode/Pi/Kali roles and specialised model scripts separately from the broad manifest registry. Preserve both Moonstone state trees; future state is project-local.
+Restore WatooM Code state from `/data/backups/watoom-code`, then the required `/data/ai` projects, assets, models and caches and `/app/ai/services`, following the [directory layout](AI_DIRECTORY_LAYOUT.md). WatooM Code, Kali and the model lab are restored through their own roles, separately from the broad manifest registry. Preserve both Moonstone state trees; new state is project-local.
 
 Model switching or service restart can affect active chats. Check persisted workflow checkpoints and unresolved children first. A package PASS checkpoint awaiting confirmation must leave the next package PENDING until explicit user continuation; startup recovery is not confirmation. Backups and file presence do not establish a restore test.
-
-## Protected pre-development baseline
-
-Frozen tag: `baseline/pre-new-agent-engine-20261013` at `6a2dc2e291f358c57df46123fdfba2cd04ffb0d2`. G3H commit `c293647bed8176b97123884fcad453b20ecd65b6` is an ancestor.
-
-Protected recovery directory: `/data/ai/backups/baselines/pre-new-agent-engine-20261013`. It contains verified Git history, committed source, sanitised runtime recovery records, inventory/fingerprints, checksums, verification and `ROLLBACK.md`. Files are read-only and immutable. Preserve the separately protected pre-G3H bundle at `/data/ai/archive/projects-20261029/pipelines/mesh-switch-coordination/g3h-snapshots/20261012T070337Z/repository.bundle`.
-
-Read [the baseline recovery procedure](baselines/pre-new-agent-engine-20261013.md) and the backup's `ROLLBACK.md` before restoration. Verify bundle/archive integrity and restore into an isolated checkout first. Restore only reviewed affected fields through existing owners, preserving current ownership, admission/RBAC, durable state and credential locations. Do not broad-reset the canonical checkout or apply old replica writers. Credentials, model weights and complete application data require their separately managed sources.
-
-The tag/backup is a verified local recovery point, not an off-host disaster-recovery test. Current documentation follows the frozen tag without rewriting it. New agent/inference-engine development must begin in separate branches or worktrees.

@@ -1,2 +1,0 @@
-<!-- WATOOM-NATIVE-SEARXNG-END -->
-

@@ -47,28 +47,37 @@ def walk(root, base_depth, pack_of):
 
 
 def build(fab, humble):
+    # Two passes: an id must depend only on this file's own (pack, relative path), never on what else is
+    # in the tree or the order it was walked in. A single-pass "first one claims the short id, latecomers
+    # get qualified" scheme is still order-dependent -- adding an unrelated, earlier-sorting file with the
+    # same basename would steal the short id from a file whose id a project's assets/library/ASSETS.md
+    # already cites. So: collect every file first, decide per (pack, basename) whether it is contested by
+    # counting candidates, then assign -- a file's short-vs-qualified form depends only on whether its own
+    # (pack, basename) is contested by another real file, never on which of them is seen first.
+    candidates = []  # (pack, path, kind, rel)
+    if os.path.isdir(fab):
+        for pack in sorted(os.listdir(fab)):
+            pdir = os.path.join(fab, pack)
+            if os.path.isdir(pdir) and not os.path.islink(pdir) and pack not in ('zips', 'chars'):
+                for _, p, kind in walk(pdir, 0, lambda x, pack=pack: pack): candidates.append((pack, p, kind, os.path.relpath(p, pdir)))
+    if os.path.isdir(humble):
+        for f in sorted(os.listdir(humble)):
+            p = os.path.join(humble, f)
+            ext = os.path.splitext(f)[1].lower()
+            if os.path.isfile(p) and not os.path.islink(p) and ext in EXTS: candidates.append(('humble_assets', p, EXTS[ext], f))
+    bases = [slug(pack + '-' + os.path.splitext(os.path.basename(p))[0])[:90] for pack, p, _, _ in candidates]
+    contested = {b for b in set(bases) if bases.count(b) > 1}
     models, seen = [], set()
-
-    def add(pack, p, kind):
-        base = slug(pack + '-' + os.path.splitext(os.path.basename(p))[0])[:90]
-        mid, n = base, 2
+    for (pack, p, kind, rel), base in zip(candidates, bases):
+        mid = slug(pack + '-' + os.path.splitext(rel)[0])[:90] if base in contested else base
+        n = 2
         while mid in seen:
-            mid = '%s-%d' % (base, n); n += 1
+            mid = '%s-%d' % (mid, n); n += 1  # only reached if the path-qualified id itself still collides
         seen.add(mid)
         e = {'id': mid, 'pack': pack, 'path': p, 'ext': kind, 'bytes': os.path.getsize(p), 'converted': '/glb/converted/' in p}
         if kind == 'glb':
             e['glb'] = glb_facts(p)
         models.append(e)
-    if os.path.isdir(fab):
-        for pack in sorted(os.listdir(fab)):
-            pdir = os.path.join(fab, pack)
-            if os.path.isdir(pdir) and not os.path.islink(pdir) and pack not in ('zips', 'chars'):
-                for _, p, kind in walk(pdir, 0, lambda x, pack=pack: pack): add(pack, p, kind)
-    if os.path.isdir(humble):
-        for f in sorted(os.listdir(humble)):
-            p = os.path.join(humble, f)
-            ext = os.path.splitext(f)[1].lower()
-            if os.path.isfile(p) and not os.path.islink(p) and ext in EXTS: add('humble_assets', p, EXTS[ext])
     return models
 
 

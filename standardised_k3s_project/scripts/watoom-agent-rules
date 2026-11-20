@@ -43,7 +43,7 @@ def detect(root):
 def source_root():
     # Installed host-side selector lives at <project>/scripts/watoom-agent-rules.
     p=Path(__file__).resolve()
-    candidate=p.parent.parent/'ansible'/'roles'/'opencode-agent'/'files'/'agent-rules'
+    candidate=p.parent/'agent-rules'
     if candidate.is_dir(): return candidate
     # Package self-test path.
     candidate=p.parent/'agent-rules'

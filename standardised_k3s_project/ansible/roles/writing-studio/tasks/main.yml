@@ -1,0 +1,76 @@
+---
+- name: Writing Studio is disabled unless explicitly enabled
+  ansible.builtin.debug:
+    msg: "writing_studio_enabled is false: nothing installed"
+  when: not (writing_studio_enabled | bool)
+
+- name: Install Writing Studio and start it only on request
+  when: writing_studio_enabled | bool
+  block:
+    - name: Allow only the k3s pod subnet to reach the Studio port (Glance route)
+      ansible.posix.firewalld:
+        zone: FedoraServer
+        rich_rule: 'rule family="ipv4" source address="10.242.0.0/24" port port="{{ writing_studio_port }}" protocol="tcp" accept'
+        permanent: true
+        immediate: true
+        state: enabled
+      when: writing_studio_pod_firewall | bool
+    - name: Ensure the Writing Studio group exists
+      ansible.builtin.group:
+        name: writing-studio
+        gid: "{{ writing_studio_gid }}"
+        system: true
+    - name: Ensure the Writing Studio service user exists
+      ansible.builtin.user:
+        name: writing-studio
+        uid: "{{ writing_studio_uid }}"
+        group: writing-studio
+        system: true
+        create_home: false
+        shell: /usr/sbin/nologin
+    - name: Create the Writing Studio directories
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: "{{ item.owner }}"
+        group: writing-studio
+        mode: "{{ item.mode }}"
+      loop:
+        - {path: "{{ writing_studio_root }}", owner: root, mode: "0755"}
+        - {path: "{{ writing_studio_skills_dir }}", owner: root, mode: "0755"}
+        - {path: "{{ writing_studio_output_dir }}", owner: writing-studio, mode: "0750"}
+    - name: Create one directory per skill
+      ansible.builtin.file:
+        path: "{{ writing_studio_skills_dir }}/{{ item }}"
+        state: directory
+        owner: root
+        group: writing-studio
+        mode: "0755"
+      loop: "{{ writing_studio_skills }}"
+    - name: Copy each skill's SKILL.md from the repository (read-only to the service)
+      ansible.builtin.copy:
+        src: "{{ writing_studio_skill_source }}/{{ item }}/SKILL.md"
+        dest: "{{ writing_studio_skills_dir }}/{{ item }}/SKILL.md"
+        owner: root
+        group: writing-studio
+        mode: "0644"
+      loop: "{{ writing_studio_skills }}"
+      register: writing_studio_skill_copy
+    - name: Install the unit
+      ansible.builtin.template:
+        src: watoom-writing-studio.service.j2
+        dest: /etc/systemd/system/watoom-writing-studio.service
+        owner: root
+        group: root
+        mode: "0644"
+      register: writing_studio_unit
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+      when: writing_studio_unit.changed
+    - name: Start and enable only when requested (restart when the unit or a skill changed)
+      ansible.builtin.systemd:
+        name: watoom-writing-studio.service
+        state: "{{ 'restarted' if (writing_studio_unit.changed or writing_studio_skill_copy.changed) else 'started' }}"
+        enabled: true
+      when: writing_studio_start | bool

@@ -1,6 +1,6 @@
 ---
 - name: Apply only an explicitly authorised WatooM learning configuration
-  hosts: watoom-homelab
+  hosts: homelab-host
   become: true
   gather_facts: false
   tasks:

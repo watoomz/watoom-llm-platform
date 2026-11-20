@@ -15,6 +15,11 @@
         src: ../../scripts/watoom-node-textfile.sh
         dest: /usr/local/libexec/watoom-node-textfile.sh
         mode: '0755'
+    - name: Install the lifetime model-performance accumulator
+      ansible.builtin.copy:
+        src: ../../scripts/watoom-model-perf-accumulator.py
+        dest: /usr/local/libexec/watoom-model-perf-accumulator.py
+        mode: '0755'
     - name: Install the metric writer service and timer
       ansible.builtin.copy:
         dest: "/etc/systemd/system/{{ item.name }}"
@@ -38,10 +43,30 @@
             OnUnitActiveSec=2min
             [Install]
             WantedBy=timers.target
+        - name: watoom-model-perf-accumulator.service
+          content: |
+            [Unit]
+            Description=Accumulate lifetime per-model performance metrics for node-exporter
+            [Service]
+            Type=oneshot
+            ExecStart=/usr/local/libexec/watoom-model-perf-accumulator.py --output /var/lib/node_exporter/textfile/watoom-model-perf.prom
+            Nice=10
+        - name: watoom-model-perf-accumulator.timer
+          content: |
+            [Unit]
+            Description=Refresh lifetime per-model performance metrics
+            [Timer]
+            OnBootSec=2min
+            OnUnitActiveSec=2min
+            [Install]
+            WantedBy=timers.target
       loop_control: {label: "{{ item.name }}"}
-    - name: Enable the metric writer timer
+    - name: Enable the metric writer timers
       ansible.builtin.systemd_service:
-        name: watoom-node-textfile.timer
+        name: "{{ item }}"
         enabled: true
         state: started
         daemon_reload: true
+      loop:
+        - watoom-node-textfile.timer
+        - watoom-model-perf-accumulator.timer

@@ -1,4 +1,0 @@
-# Asset shortlist policy
-
-## Shortlist suitability is distinct from conversion readiness
-Never reject/exclude a source pack from the candidate shortlist merely because it is Unreal-only, non-portable or lacks an exposed conversion operation. Keep suitable preferred downloaded stylised packs as CANDIDATE_PENDING_CONVERSION; record exact operation/dependency gaps and compare available previews/source evidence. Distinguish suitability, conversion readiness and validated engine import. Portable alternatives may be ready fallbacks but are not automatically the best assets. Inventory file/package counts are not distinct model counts. Bounded searches cannot establish library-wide absence; state not found in inspected scope. Never invent conversion support or bypass guards.

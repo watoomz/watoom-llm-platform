@@ -114,7 +114,9 @@ class Rig:
             a["pieInstance"] = pie_instance
         self.call("level.move_actor", a)
 
-    def press(self, action, pie_instance=None, rotation=None):
+    def press(self, action, pie_instance=0, rotation=None):
+        # pie_instance is always sent: ue-mcp 1.4.14 changed the default instance, and an injection without it reported
+        # success but reached no player (2026-11-19: every melee/spell check failed while GAS activation itself worked)
         if rotation:
             a = {"action_path": action, "value_x": 1, "duration_seconds": 0.1, "control_rotation": rotation}
             m = "pie.inject_input_start"
@@ -203,7 +205,7 @@ def main(argv=None):
             reset_dummy(rig, dummy["label"])
             rig.move(me, (dl[0] - 400, dl[1], dl[2]), yaw=0)
             time.sleep(1.5)
-            v = rig.call("pie.view_trace", {"distance": 100}).get("viewLocation")
+            v = rig.call("pie.view_trace", {"distance": 100, "pieInstance": 0}).get("viewLocation")
             rot = aim((v["x"], v["y"], v["z"]), (dl[0], dl[1], dl[2] + 30)) if v else None
             before = vitals(rig, dummy["label"])
             rig.press(p["primary"], rotation=rot)
@@ -232,7 +234,7 @@ def main(argv=None):
             time.sleep(1.5)
             rot = None
             if delivery in ("Projectile", "Hitscan"):
-                v = rig.call("pie.view_trace", {"distance": 100}).get("viewLocation")
+                v = rig.call("pie.view_trace", {"distance": 100, "pieInstance": 0}).get("viewLocation")
                 if v:
                     rot = aim((v["x"], v["y"], v["z"]), (dl[0], dl[1], dl[2] + 30))
             before, m0 = vitals(rig, dummy["label"]), rig.attr(me, "Mana")

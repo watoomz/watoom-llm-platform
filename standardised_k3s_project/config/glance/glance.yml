@@ -203,6 +203,12 @@ pages:
         - title: MOSS Image Studio
           url: https://glance.internal.homelab.example/moss/
           icon: mdi:image-auto-adjust
+        - title: Creation Studio
+          url: https://glance.internal.homelab.example/creation/
+          icon: mdi:cube-send
+        - title: Writing Studio
+          url: https://glance.internal.homelab.example/writing/
+          icon: mdi:book-open-page-variant
         - title: WatooM Code (agents, Mesh, builds)
           url: https://watoom-code.internal.homelab.example
           icon: mdi:code-braces

@@ -43,7 +43,10 @@ and controlled deployment; do not apply the legacy full worker role over this bu
 ## Qualified deployment and updates
 
 The installed application is isolated in `watoom-code-rig-jobs`; do not promote
-its guard or writable project enrollment to the main application automatically.
+its writable project enrollment to the main application automatically. It runs the
+SAME coordinator guard package as production (`ansible/roles/watoom-code/files/coordinator-guard/`,
+rig behaviour enabled by the `rigAsyncStage` plugin option); there is no separate guard fork (removed
+in T-0115). `update-guard.py` installs that guard and all managed agents into the stage.
 `provision-app.py` creates this isolated application once and refuses replacement.
 
 For an update: pause both desktop consumers, wait for terminal journals, stop

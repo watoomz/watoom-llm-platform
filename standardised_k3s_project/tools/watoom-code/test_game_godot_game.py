@@ -20,6 +20,13 @@ class Pure(unittest.TestCase):
         self.assertIn('LIBGL_ALWAYS_SOFTWARE=1', j)
         self.assertEqual(c[-3:], ['python3', '/job/godot_game_driver.py', '840'])
 
+    def test_from_project_keeps_gg_data_continuity_except_scratch_subdirs(self):
+        # a chained from_project job must still see an earlier job's adopted results (style.resolved.json,
+        # world/, census.json, scatter/), so only the scratch/job-history subdirs may be excluded wholesale.
+        self.assertEqual(O.SKIP_FROM_PROJECT_GG_DATA, ['--exclude=/gg_data/jobs/', '--exclude=/gg_data/export/stage/', '--exclude=/gg_data/selftest*/'])
+        source = pathlib.Path(O.__file__).read_text()
+        self.assertNotIn("'--exclude=/gg_data/'", source)
+
     def test_failure_reason_priority(self):
         d = {'selftest': {'exit': 0}, 'steps': [{'i': 1, 'script': 'gg_player.py', 'sub': 'smoke', 'exit': 1}], 'failed_at': 1, 'timed_out': False}
         self.assertIn('timeout', O.failure_reason(None, d, True))
@@ -27,6 +34,8 @@ class Pure(unittest.TestCase):
         self.assertIn('deadline', O.failure_reason(1, dict(d, timed_out=True), True))
         self.assertIn('selftest failed', O.failure_reason(1, dict(d, selftest={'exit': 4}, failed_at=0), True))
         self.assertIn('step 1 (gg_player.py smoke) exited 1', O.failure_reason(1, d, True))
+        self.assertIn('logs/01-gg_player-smoke.log', O.failure_reason(1, d, True))
+        self.assertIn('logs/00-selftest.log', O.failure_reason(1, dict(d, selftest={'exit': 4}, failed_at=0), True))
         self.assertIn('copied back', O.failure_reason(0, dict(d, failed_at=None), False))
 
     def test_tree_hash_changes_with_content_and_refuses_links(self):

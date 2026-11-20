@@ -4,7 +4,7 @@ Use the existing shared Catalog to find the owned complete project. This normal 
 
 Example, from the repository root:
 
-    ANSIBLE_CONFIG=ansible/ansible.cfg ANSIBLE_ROLES_PATH="$PWD/ansible/roles" ansible-playbook -i ansible/inventories/homelab/hosts.yml -l watoom-homelab ansible/playbooks/unreal-project.yml -e unreal_project_create=true -e unreal_project_source=/data/ai/assets/fab/hyper-combat-framework-v4-f92bbc40 -e unreal_project_destination=/data/ai/projects/games/my-new-combat-game
+    ANSIBLE_CONFIG=ansible/ansible.cfg ANSIBLE_ROLES_PATH="$PWD/ansible/roles" ansible-playbook -i ansible/inventories/homelab/hosts.yml -l homelab-host ansible/playbooks/unreal-project.yml -e unreal_project_create=true -e unreal_project_source=/data/ai/assets/fab/hyper-combat-framework-v4-f92bbc40 -e unreal_project_destination=/data/ai/projects/games/my-new-combat-game
 
 Create the parent directory as part of normal project setup first. Existing destinations are refused, including partial failed copies; inspect and explicitly choose recovery rather than overwriting. Only content-only starters are supported. Code/plugin starters require separate acceptance.
 

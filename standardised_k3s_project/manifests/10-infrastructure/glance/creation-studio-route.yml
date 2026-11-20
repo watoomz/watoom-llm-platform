@@ -1,0 +1,77 @@
+# Creation Studio (host service, tools/creation-studio) published under https://glance.internal.homelab.example/creation/
+# The service binds to the k3s bridge address (10.242.0.1), so only pods and the host can reach it directly.
+# Same exposure model as the moss-image and model-manager routes: internal domain, no extra auth of its own.
+# It proxies to Model Manager's existing authenticated API and to MOSS Image Studio's existing unauthenticated
+# API; the Mesh section only reads a world-readable GPU controller telemetry snapshot (no generation).
+apiVersion: v1
+kind: Service
+metadata:
+  name: creation-studio
+  namespace: glance
+spec:
+  ports:
+  - name: http
+    port: 8792
+    targetPort: 8792
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: creation-studio
+  namespace: glance
+subsets:
+- addresses:
+  - ip: 10.242.0.1
+  ports:
+  - name: http
+    port: 8792
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: creation-studio-strip
+  namespace: glance
+spec:
+  stripPrefix:
+    prefixes:
+    - /creation
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: creation-studio-slash
+  namespace: glance
+spec:
+  redirectRegex:
+    regex: ^https://glance\.internal\.watoom\.au/creation$
+    replacement: https://glance.internal.homelab.example/creation/
+    permanent: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: creation-studio
+  namespace: glance
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - kind: Rule
+    match: Host(`glance.internal.homelab.example`) && Path(`/creation`)
+    priority: 120
+    middlewares:
+    - name: creation-studio-slash
+    services:
+    - name: creation-studio
+      port: 8792
+  - kind: Rule
+    match: Host(`glance.internal.homelab.example`) && PathPrefix(`/creation/`)
+    priority: 120
+    middlewares:
+    - name: creation-studio-strip
+    services:
+    - name: creation-studio
+      nativeLB: true
+      port: 8792
+  tls:
+    secretName: watoom-tls

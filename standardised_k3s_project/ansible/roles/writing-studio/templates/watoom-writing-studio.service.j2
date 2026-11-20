@@ -1,0 +1,19 @@
+# Managed by Ansible (roles/writing-studio). Same shape as watoom-creation-studio.service: a host-bound page in
+# front of the LLM router (writing, model warm-up) and MOSS Image Studio (graphic-novel art).
+[Unit]
+Description=Writing Studio (25 creative-writing skills via the LLM router; graphic-novel art via MOSS)
+After=network.target k3s.service
+
+[Service]
+Type=simple
+User=writing-studio
+Group={{ writing_studio_gid }}
+ExecStart=/usr/bin/python3 -I {{ writing_studio_project_root }}/tools/writing-studio/writing_studio_service.py --host {{ writing_studio_host }} --port {{ writing_studio_port }} --router-base {{ writing_studio_router_base | quote }} --default-model {{ writing_studio_default_model | quote }} --skills-dir {{ writing_studio_skills_dir | quote }} --moss-base {{ writing_studio_moss_base | quote }} --output-dir {{ writing_studio_output_dir | quote }}
+Restart=on-failure
+RestartSec=10
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -244,3 +244,55 @@
     label: "{{ item }}/{{ homelab_local_tls_secret }}"
   when: item in homelab_local_tls_existing_namespaces
   no_log: true
+
+# T-0116: once cert-manager issues the Let's Encrypt wildcard (scripts/install-browser-trusted-tls.sh), renewals
+# must reach the canonical files above and every watoom-tls copy. The sync reports NO_SOURCE and changes nothing
+# until that certificate exists, so installing the timer is safe either way.
+- name: "Local TLS | Install the certificate renewal sync"
+  ansible.builtin.copy:
+    src: "{{ project_root }}/scripts/sync-internal-tls.py"
+    dest: /usr/local/sbin/watoom-internal-tls-sync
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: "Local TLS | Install the renewal sync service and daily timer"
+  ansible.builtin.copy:
+    dest: "/etc/systemd/system/{{ item.name }}"
+    owner: root
+    group: root
+    mode: "0644"
+    content: "{{ item.content }}"
+  loop:
+    - name: watoom-internal-tls-sync.service
+      content: |
+        [Unit]
+        Description=Copy the renewed internal wildcard certificate to canonical files and watoom-tls Secrets (T-0116)
+        After=k3s.service
+
+        [Service]
+        Type=oneshot
+        Environment=KUBECONFIG={{ k3s_kubeconfig }}
+        ExecStart=/usr/bin/python3 /usr/local/sbin/watoom-internal-tls-sync --domain {{ homelab_local_tls_domain }} --canonical-dir {{ homelab_local_tls_dir }}
+    - name: watoom-internal-tls-sync.timer
+      content: |
+        [Unit]
+        Description=Daily internal certificate renewal sync (T-0116)
+
+        [Timer]
+        OnCalendar=daily
+        RandomizedDelaySec=1h
+        Persistent=true
+
+        [Install]
+        WantedBy=timers.target
+  loop_control:
+    label: "{{ item.name }}"
+  register: homelab_local_tls_sync_units
+
+- name: "Local TLS | Enable the renewal sync timer"
+  ansible.builtin.systemd_service:
+    name: watoom-internal-tls-sync.timer
+    enabled: true
+    state: started
+    daemon_reload: "{{ homelab_local_tls_sync_units.changed }}"

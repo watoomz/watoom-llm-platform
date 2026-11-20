@@ -1,3 +1,0 @@
----
-# Legacy canary entry point; default is suspended. Production uses watoom-code.
-- ansible.builtin.import_playbook: opencode-agent.yml

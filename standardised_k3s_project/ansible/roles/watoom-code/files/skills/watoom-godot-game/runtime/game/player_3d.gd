@@ -22,7 +22,14 @@ func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventMouseMotion:
 		mouse_events += 1
 		if not world_relative:
-			rotate_y(-deg_to_rad((e as InputEventMouseMotion).relative.x * mouse_sens))
+			rotate_y(-deg_to_rad(look_delta(e as InputEventMouseMotion).x * mouse_sens))
+
+
+## Mouse movement in SCREEN pixels: screen_relative is not scaled by the viewport's stretch transform, relative is (T-0066:
+## in a stretched 640x360 project a 90 degree turn came out as 180 and 10 degrees of look as 56). Falls back to relative for
+## events that only set it (older injected test events).
+static func look_delta(e: InputEventMouseMotion) -> Vector2:
+	return e.screen_relative if e.screen_relative != Vector2.ZERO else e.relative
 
 func _physics_process(dt: float) -> void:
 	for a in ["move_forward", "move_back", "move_left", "move_right", "jump"]:

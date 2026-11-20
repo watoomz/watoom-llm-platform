@@ -1,5 +1,5 @@
-# Toolchain dependencies are maintained in
-# ansible/roles/opencode-agent/templates/opencode-v2-coding-Dockerfile.j2.
+# Toolchain dependencies (the watoom-code-engineering base image) are maintained in
+# tools/watoom-code/engineering-base.Dockerfile.j2 (moved from the retired opencode-agent role in T-0115).
 # Pinned Debian/glibc layer retains Git, SSH, Python/venv, Node, C/C++,
 # CMake/Ninja/Make, JSON/YAML, Blender and Playwright/Chromium on rebuilds.
 FROM 127.0.0.1:5000/watoom-code-engineering@sha256:561657a1d2e8a22b7a5cde0cab7a4ec2081e31b4e3a8453b186de7b1b75ce489

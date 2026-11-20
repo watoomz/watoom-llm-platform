@@ -78,12 +78,8 @@ def page(title, nav, summary, body):
     return f'---\ntitle: {title}\nnav: {nav}\nsummary: {summary}\n---\n\n' + body
 
 
-RETIRED_PATHS = {
-    'ansible/playbooks/host-ollama.yml', 'ansible/playbooks/opencode-agent.yml', 'ansible/playbooks/opencode-agent-v2-canary.yml', 'ansible/playbooks/rebuild-homelab.yml',
-    'ansible/playbooks/watoom-code-retire-legacy.yml', 'scripts/verify-opencode-v2-canary.sh', 'tools/watoom-code/suspend-canary.py',
-    'ansible/roles/opencode-agent/tasks/suspended.yml', 'ansible/roles/opencode-agent/tasks/v2_canary.yml',
-}
-RETIRED_PREFIXES = ('ansible/roles/host_ollama/', 'tools/blender-asset-builder/canary-', 'tools/blender-asset-builder/fix-canary', 'tools/blender-asset-builder/install-canary')
+RETIRED_PATHS = set()
+RETIRED_PREFIXES = ('tools/blender-asset-builder/canary-', 'tools/blender-asset-builder/fix-canary', 'tools/blender-asset-builder/install-canary')
 
 
 def is_retired(path):

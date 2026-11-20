@@ -30,17 +30,17 @@ class Maintenance:
         return pods[0]
     def exec(self, code, *args, input=None):
         return run(["kubectl","-n",self.ns,"exec","-i",self.pod()["metadata"]["name"],"-c","app","--","python3","-c",code,*args], data=input)
-    def request(self,path,body=None,authenticated=True):
+    def request(self,path,body=None,authenticated=True,method=None):
         code="""import os,json,sys,urllib.request,base64
 h={"Content-Type":"application/json","Connection":"close"}
 if sys.argv[3]=="true":h["Authorization"]="Basic "+base64.b64encode(("opencode:"+sys.stdin.read()).encode()).decode()
-req=urllib.request.Request("http://127.0.0.1:4096"+sys.argv[1],headers=h,data=None if sys.argv[2]=="null" else sys.argv[2].encode())
+req=urllib.request.Request("http://127.0.0.1:4096"+sys.argv[1],headers=h,data=None if sys.argv[2]=="null" else sys.argv[2].encode(),method=sys.argv[4] or None)
 try:
  with urllib.request.urlopen(req,timeout=12) as f:
   raw=f.read();print(json.dumps({"status":f.status,"body":json.loads(raw) if raw else None}))
 except urllib.error.HTTPError as e:print(json.dumps({"status":e.code,"body":None}))
 """
-        value=json.loads(self.exec(code,path,json.dumps(body),"true" if authenticated else "false", input=self.password.encode()))
+        value=json.loads(self.exec(code,path,json.dumps(body),"true" if authenticated else "false",method or "", input=self.password.encode()))
         if value["status"] not in (200,204):raise urllib.error.HTTPError(path,value["status"],"Maintenance API failed",{},None)
         return value["body"]
     def transport(self):

@@ -13,7 +13,7 @@ skill_editor_socket_dir: /data/ai/helper-scripts/state/skill-editor/socket
 skill_editor_password_file: /data/ai/private/skill-editor/password
 skill_editor_service_name: watoom-skill-editor-broker
 # Canonical checkout that playbooks deploy from; edits are committed to its main branch.
-skill_editor_repo: /data/github/watoom-standardised-homelab
+skill_editor_repo: "{{ repo_root | default('/data/github/watoom-standardised-homelab') }}"
 skill_editor_skills_path: standardised_k3s_project/ansible/roles/watoom-code/files/skills
 skill_editor_branch: main
 # Live WatooM-Code skill tree (watoom_code_root/config/skills) and its owner.

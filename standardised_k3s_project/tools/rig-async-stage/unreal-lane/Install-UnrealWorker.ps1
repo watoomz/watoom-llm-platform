@@ -8,7 +8,7 @@ param(
   [Parameter(Mandatory)][string]$UnrealRoot,                 # e.g. 'C:\Program Files\Epic Games\UE_5.8'
   [int]$MemoryGiB = 12,                                     # Job Object limit for Unreal (owner-set 2026-11-07: 12). The RIG's other workers use 8; raise it here if a job is killed for memory
   [string]$Root = 'F:\WatooM\unreal-lane',
-  [string]$Python = 'C:\Users\watoom\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe',
+  [string]$Python = 'C:\Users\RIG_USER\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe',
   [string]$HostAlias = 'lab',
   [string]$StageRoot = 'F:\WatooM\workstation-render-stage',   # where the existing Blender worker keeps its key and state
   [string[]]$BusyJournals = @('F:\WatooM\workstation-render-stage\state\active.private.json')

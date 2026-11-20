@@ -9,7 +9,7 @@ fi
 
 set -Eeuo pipefail
 
-NAMESPACE="${OPENCODE_NAMESPACE:-opencode}"
+NAMESPACE="${OPENCODE_NAMESPACE:-watoom-code}"
 WORKSPACE_HOST="${WORKSPACE_HOST:-/data/ai/projects/legacy-workspaces/opencode-workspace}"
 RUN_ROOT="${OPENCODE_RUN_ROOT:-$WORKSPACE_HOST/.opencode-runs}"
 DEFAULT_TIMEOUT="${OPENCODE_RUN_TIMEOUT_SECONDS:-28800}"
@@ -50,7 +50,7 @@ latest_run() {
 }
 
 get_pod() {
-  kubectl -n "$NAMESPACE" get pod -l app=opencode -o jsonpath='{.items[0].metadata.name}'
+  kubectl -n "$NAMESPACE" get pod -l app=watoom-code -o jsonpath='{.items[0].metadata.name}'
 }
 
 api_session_id_by_title() {
@@ -59,11 +59,11 @@ api_session_id_by_title() {
   kubectl -n "$NAMESPACE" exec "$pod" -- \
     env WATOOM_SESSION_TITLE="$title" sh -c '
       BASE=http://127.0.0.1:4096
-      USER="${OPENCODE_SERVER_USERNAME:-opencode}"
-      PASS="${OPENCODE_SERVER_PASSWORD:-}"
-      curl -fsS -u "$USER:$PASS" "$BASE/session" |
+      USER=opencode
+      PASS="$OPENCODE_PASSWORD"
+      curl -fsS -u "$USER:$PASS" "$BASE/api/session" |
         jq -r --arg t "$WATOOM_SESSION_TITLE" \
-          "[.[] | select(.title == \$t)] | sort_by(.time.created // 0) | last | .id // empty"
+          "[.data[] | select(.title == \$t)] | sort_by(.time.created // 0) | last | .id // empty"
     ' 2>/dev/null || true
 }
 
@@ -74,11 +74,13 @@ api_session_status() {
   kubectl -n "$NAMESPACE" exec "$pod" -- \
     env WATOOM_SESSION_ID="$session_id" sh -c '
       BASE=http://127.0.0.1:4096
-      USER="${OPENCODE_SERVER_USERNAME:-opencode}"
-      PASS="${OPENCODE_SERVER_PASSWORD:-}"
-      curl -fsS -u "$USER:$PASS" "$BASE/session/status" |
-        jq -r --arg s "$WATOOM_SESSION_ID" \
-          "if has(\$s) then .[\$s].type // .[\$s].status // \"present\" else \"not-present\" end"
+      USER=opencode
+      PASS="$OPENCODE_PASSWORD"
+      curl -fsS -u "$USER:$PASS" "$BASE/api/session/$WATOOM_SESSION_ID" |
+        jq -r ".data | if . == null then \"not-present\"
+          elif (.time.busy != null and .time.idle == null) then \"busy\"
+          elif .outcome != null then .outcome
+          else \"present\" end"
     ' 2>/dev/null || echo "unknown"
 }
 
@@ -91,10 +93,13 @@ abort_session() {
   kubectl -n "$NAMESPACE" exec "$pod" -- \
     env WATOOM_SESSION_ID="$session_id" sh -c '
       BASE=http://127.0.0.1:4096
-      USER="${OPENCODE_SERVER_USERNAME:-opencode}"
-      PASS="${OPENCODE_SERVER_PASSWORD:-}"
-      curl -fsS -X POST -u "$USER:$PASS" \
-        "$BASE/session/$WATOOM_SESSION_ID/abort"
+      USER=opencode
+      PASS="$OPENCODE_PASSWORD"
+      curl -fsS -X POST -u "$USER:$PASS" "$BASE/api/session/$WATOOM_SESSION_ID/interrupt" \
+        -H "Content-Type: application/json" -d "{}"
+      for item_id in $(curl -fsS -u "$USER:$PASS" "$BASE/api/session/$WATOOM_SESSION_ID/inbox" | jq -r ".data[].id"); do
+        curl -fsS -X DELETE -u "$USER:$PASS" "$BASE/api/session/$WATOOM_SESSION_ID/inbox/$item_id"
+      done
     ' 2>/dev/null || true
   echo
 }
@@ -249,7 +254,7 @@ with fh:
         tool = part.get("tool")
         status = state.get("status")
 
-        if tool == "task":
+        if tool in {"task", "subagent"}:  # native delegation is logged as "subagent"
             task_seen = True
             continue
 
@@ -263,19 +268,15 @@ with fh:
 if task_seen:
     raise SystemExit(1)
 
-if step_starts >= 3:
+# Only treat "no delegation after 3 steps" as stuck when there is also no
+# real direct tool execution (read/shell/write/...) -- watoom-workflow is
+# allowed to handle a simple, scoped task itself instead of delegating.
+if step_starts >= 3 and first_non_task_terminal_ms is None:
     print(f"steps={step_starts};task_calls=0")
     raise SystemExit(0)
 
-if first_non_task_terminal_ms is not None:
-    age_ms = now_ms - first_non_task_terminal_ms
-    if age_ms >= timeout_seconds * 1000:
-        print(
-            f"first_non_task_age={age_ms // 1000}s;"
-            f"limit={timeout_seconds}s;task_calls=0"
-        )
-        raise SystemExit(0)
-
+# Direct work (reads, shell, edits) is legitimate: the coordinator does short tasks itself.
+# Runaway direct work is caught by duplicate_tool_loop, maximum steps and the run timeout.
 raise SystemExit(1)
 PY_INNER
 }
@@ -290,11 +291,11 @@ api_session_messages() {
   kubectl -n "$NAMESPACE" exec "$pod" -- \
     env WATOOM_SESSION_ID="$session_id" sh -c '
       BASE=http://127.0.0.1:4096
-      USER="${OPENCODE_SERVER_USERNAME:-opencode}"
-      PASS="${OPENCODE_SERVER_PASSWORD:-}"
+      USER=opencode
+      PASS="$OPENCODE_PASSWORD"
 
       curl -fsS -u "$USER:$PASS" \
-        "$BASE/session/$WATOOM_SESSION_ID/message"
+        "$BASE/api/session/$WATOOM_SESSION_ID/message" | jq -c ".data"
     '
 }
 
@@ -331,17 +332,16 @@ for message in data:
     if not isinstance(message, dict):
         continue
 
-    info = message.get("info") or {}
-    if info.get("role") != "assistant":
+    if message.get("type") != "assistant":
         continue
-    if (info.get("agent") or info.get("mode")) != expected_agent:
+    if message.get("agent") != expected_agent:
         continue
-    if info.get("finish") != "stop":
+    if message.get("finish") != "stop":
         continue
-    if not (info.get("time") or {}).get("completed"):
+    if not (message.get("time") or {}).get("completed"):
         continue
 
-    for part in message.get("parts") or []:
+    for part in message.get("content") or []:
         if not isinstance(part, dict):
             continue
         if part.get("type") != "text":
@@ -406,18 +406,17 @@ for message in data:
     if not isinstance(message, dict):
         continue
 
-    info = message.get("info") or {}
-    if info.get("role") != "assistant":
+    if message.get("type") != "assistant":
         continue
-    if (info.get("agent") or info.get("mode")) != expected_agent:
+    if message.get("agent") != expected_agent:
         continue
-    if info.get("finish") != "stop":
+    if message.get("finish") != "stop":
         continue
-    if not (info.get("time") or {}).get("completed"):
+    if not (message.get("time") or {}).get("completed"):
         continue
 
     usable_text = False
-    for part in message.get("parts") or []:
+    for part in message.get("content") or []:
         if not isinstance(part, dict):
             continue
         if part.get("type") != "text":
@@ -443,8 +442,8 @@ if not candidates:
     raise SystemExit(4)
 
 message = candidates[0]
-info = message.get("info") or {}
-parts = message.get("parts") or []
+model = message.get("model") or {}
+parts = message.get("content") or []
 
 texts = []
 for part in parts:
@@ -468,15 +467,14 @@ final = "\n".join(texts)
 text_path.write_text(final + ("" if final.endswith("\n") else "\n"))
 
 meta = {
-    "message_id": info.get("id"),
-    "session_id": info.get("sessionID"),
-    "agent": info.get("agent") or info.get("mode"),
+    "message_id": message.get("id"),
+    "agent": message.get("agent"),
     "expected_agent": expected_agent,
-    "model_id": info.get("modelID"),
-    "provider_id": info.get("providerID"),
-    "finish": info.get("finish"),
-    "completed": (info.get("time") or {}).get("completed"),
-    "tokens": info.get("tokens"),
+    "model_id": model.get("id"),
+    "provider_id": model.get("providerID"),
+    "finish": message.get("finish"),
+    "completed": (message.get("time") or {}).get("completed"),
+    "tokens": message.get("tokens"),
     "text_parts": len(texts),
 }
 meta_path.write_text(json.dumps(meta, indent=2) + "\n")
@@ -496,12 +494,13 @@ worker() {
 
   [ -d "$run_dir" ] || { echo "ERROR: run not found: $run_id" >&2; return 2; }
 
-  local pod title timeout_seconds prompt_file output_log agent workdir
+  local pod title timeout_seconds prompt_file output_log agent workdir model
   pod="$(cat "$run_dir/pod")"
   title="$(cat "$run_dir/title")"
   timeout_seconds="$(cat "$run_dir/timeout-seconds")"
-  agent="$(cat "$run_dir/agent" 2>/dev/null || printf '%s' 'watoom-orchestrator')"
+  agent="$(cat "$run_dir/agent" 2>/dev/null || printf '%s' 'watoom-workflow')"
   workdir="$(cat "$run_dir/workdir" 2>/dev/null || printf '%s' '/workspace')"
+  model="$(cat "$run_dir/model" 2>/dev/null || true)"
   prompt_file="$run_dir/prompt.txt"
   output_log="$run_dir/output.log"
 
@@ -517,13 +516,18 @@ worker() {
   echo "agent=$agent"
   echo "workdir=$workdir"
   echo "timeout_seconds=$timeout_seconds"
+  [ -n "$model" ] && echo "model=$model"
+
+  local model_args=()
+  [ -n "$model" ] && model_args=(--model "$model")
 
   set +e
   kubectl -n "$NAMESPACE" exec "$pod" -- \
-    opencode run \
-      --attach http://127.0.0.1:4096 \
+    sh -c 'workdir="$1"; shift; cd "$workdir" || exit 97; exec opencode run "$@"' -- \
+      "$workdir" \
+      --server http://127.0.0.1:4096 \
       --agent "$agent" \
-      --dir "$workdir" \
+      "${model_args[@]}" \
       --auto \
       --format json \
       --title "$title" \
@@ -592,7 +596,7 @@ worker() {
       break
     fi
 
-    if [ "$agent" = "watoom-orchestrator" ]; then
+    if [ "$agent" = "watoom-workflow" ]; then
       if delegation_sig="$(no_delegation_progress "$output_log" "$no_delegation_timeout" 2>/dev/null)"; then
         echo "no_delegation_progress=$delegation_sig"
         printf '%s\n' "$delegation_sig" > "$run_dir/no-delegation-signature"
@@ -749,8 +753,9 @@ case "${1:-}" in
     detach=0
     prompt_file=""
     timeout_seconds="$DEFAULT_TIMEOUT"
-    agent="watoom-orchestrator"
+    agent="watoom-workflow"
     workdir="/workspace"
+    model=""
 
     while [ "$#" -gt 0 ]; do
       case "$1" in
@@ -761,6 +766,11 @@ case "${1:-}" in
         --agent)
           [ "$#" -ge 2 ] || { echo "ERROR: --agent requires a WatooM agent name" >&2; exit 2; }
           agent="$2"
+          shift 2
+          ;;
+        --model)
+          [ "$#" -ge 2 ] || { echo "ERROR: --model requires provider/model#variant" >&2; exit 2; }
+          model="$2"
           shift 2
           ;;
         --dir)
@@ -791,7 +801,7 @@ case "${1:-}" in
     done
 
     case "$agent" in
-      watoom-orchestrator|watoom-planner|watoom-explorer|watoom-builder|watoom-reviewer|watoom-tester|watoom-fixer|watoom-final-review)
+      watoom-workflow|watoom-builder|watoom-developer|watoom-investigator|watoom-researcher|watoom-reviewer|watoom-critic|watoom-qa-tester|watoom-adversarial-tester|watoom-blind-tester|watoom-systems-designer|watoom-integration-expert|watoom-game-designer|watoom-creative-writer|watoom-automation-expert|watoom-3d-modeller)
         ;;
       *)
         echo "ERROR: unsupported agent: $agent" >&2
@@ -802,8 +812,14 @@ case "${1:-}" in
     case "$workdir" in
       /workspace|/workspace/*)
         ;;
+      /data/ai/projects/work|/data/ai/projects/work/*|\
+      /data/ai/projects/writing|/data/ai/projects/writing/*|\
+      /data/ai/projects/games|/data/ai/projects/games/*|\
+      /data/ai/projects/homelab|/data/ai/projects/homelab/*|\
+      /data/ai/projects/llm|/data/ai/projects/llm/*)
+        ;;
       *)
-        echo "ERROR: --dir must be /workspace or a child of /workspace" >&2
+        echo "ERROR: --dir must be /workspace or a child of /workspace, or a child of one of the pod's mounted project groups (/data/ai/projects/{work,writing,games,homelab,llm})" >&2
         exit 2
         ;;
     esac
@@ -831,7 +847,7 @@ case "${1:-}" in
     title="watoom-overnight:$run_id"
     mkdir -p "$run_dir"
 
-    if [ "$agent" = "watoom-orchestrator" ]; then
+    if [ "$agent" = "watoom-workflow" ]; then
       cat > "$run_dir/prompt.txt" <<EOF_PROMPT
 WATOOM_RUN_ID=$run_id
 Follow the built-in bounded WatooM orchestration workflow in your agent prompt.
@@ -866,6 +882,7 @@ EOF_PROMPT
     printf '%s\n' "$timeout_seconds" > "$run_dir/timeout-seconds"
     printf '%s\n' "$agent" > "$run_dir/agent"
     printf '%s\n' "$workdir" > "$run_dir/workdir"
+    printf '%s\n' "$model" > "$run_dir/model"
 
     if [ "$detach" -eq 1 ]; then
       nohup "$SELF" __worker "$run_id" \

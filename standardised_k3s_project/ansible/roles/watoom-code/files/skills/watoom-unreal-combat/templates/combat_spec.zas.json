@@ -1,5 +1,5 @@
 {
- "_comment": "Vertical slice for the ZAS battle royale (T-0063): ONE character model animated for every combat style (UE5 Manny from Hyper Combat Framework: Sword, Rifle and Staff stances), sword + rifle + staff + fireball, target dummies on team 2, in a small arena map. Owner 2026-11-18: 'get a model with animations that suits all the different types of combat'. game_mode.pawn picks the player in the arena: BP_ZAS_WizardHero (Polyart wizard, own staff animations; T-0024) or BP_ZAS_CombatWizard (UE5 Manny with Hyper sets; sword/rifle/staff). Playables: BP_ZAS_WizardHero (game_mode.pawn) BP_ZAS_RPGHero and BP_ZAS_Gunslinger (Hyper pistol + shotgun; set game_mode.pawn to play one); BP_ZAS_RogueNPC is a friendly (team 1) wandering NPC.",
+ "_comment": "Vertical slice for the ZAS battle royale (T-0063): ONE character model animated for every combat style (UE5 Manny from Hyper Combat Framework: Sword, Rifle and Staff stances), sword + rifle + staff + fireball, target dummies on team 2, in a small arena map. Owner 2026-11-18: 'get a model with animations that suits all the different types of combat'. game_mode.pawn picks the player in the arena: BP_ZAS_WizardHero (Polyart wizard, own staff animations; T-0024) or BP_ZAS_CombatWizard (UE5 Manny with Hyper sets; sword/rifle/staff). Playables: BP_ZAS_WizardHero (game_mode.pawn) BP_ZAS_RPGHero and BP_ZAS_Gunslinger (Hyper pistol + shotgun) and BP_ZAS_Archer (Hyper SM_Bow, wooden arrows with gravity, Hyper bow jog/idle/fire set; T-0074) (set game_mode.pawn to play one); BP_ZAS_RogueNPC is a friendly (team 1) wandering NPC.",
  "content_root": "/Game/ZAS/Combat",
  "input": {
   "base_imc": "/Game/ZAS/Player/Input/IMC_Wizard",
@@ -17,7 +17,8 @@
   "spell_keys": [
    "One",
    "Two",
-   "Three"
+   "Three",
+   "Four"
   ]
  },
  "anim_sets": {
@@ -116,6 +117,21 @@
      "right": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Rifle/MM_Rifle_Jog_Right"
     }
    }
+  },
+  "MannyBow": {
+   "skeleton": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Meshes/SK_Mannequin",
+   "speed": 400,
+   "default_stance": "Bow",
+   "air": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Unarmed/MM_Unarmed_Jump_Fall_Loop",
+   "stances": {
+    "Bow": {
+     "idle": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Bow/Idle/Anim_Bow_idle_relaxed",
+     "fwd": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Bow/Jog/Anim_Bow_Jog_Fwd",
+     "bwd": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Bow/Jog/Anim_Bow_Jog_Bwd",
+     "left": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Bow/Jog/Anim_Bow_Jog_Left",
+     "right": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Bow/Jog/Anim_Bow_Jog_Right"
+    }
+   }
   }
  },
  "retarget": [
@@ -208,6 +224,23 @@
   "NS_Heal_Aura": {
    "recipe": "aura",
    "element": "Holy"
+  },
+  "NS_Rifle_Tracer": {
+   "recipe": "tracer",
+   "element": [
+    6,
+    4,
+    1.5
+   ]
+  },
+  "NS_Lightning_Bolt": {
+   "recipe": "lightning",
+   "element": "Lightning"
+  },
+  "NS_Lightning_Impact": {
+   "recipe": "impact",
+   "element": "Lightning",
+   "scale": 0.8
   }
  },
  "weapons": {
@@ -257,7 +290,8 @@
    "ImpactFx": {
     "Niagara": "NS_Hit_Physical",
     "Scale": 0.6
-   }
+   },
+   "TracerFx": "NS_Rifle_Tracer"
   },
   "Staff": {
    "Kind": "Melee",
@@ -344,7 +378,8 @@
    "ImpactFx": {
     "Niagara": "NS_Hit_Physical",
     "Scale": 0.5
-   }
+   },
+   "TracerFx": "NS_Rifle_Tracer"
   },
   "Shotgun": {
    "Kind": "Gun",
@@ -371,6 +406,36 @@
    "AttackFx": {
     "Niagara": "NS_Rifle_Muzzle",
     "Scale": 1.4
+   },
+   "ImpactFx": {
+    "Niagara": "NS_Hit_Physical",
+    "Scale": 0.4
+   },
+   "TracerFx": "NS_Rifle_Tracer"
+  },
+  "Bow": {
+   "Kind": "Bow",
+   "Stance": "Bow",
+   "DisplayName": "Hunting Bow",
+   "StaticMesh": "/Game/Hyper/ResourcePack/Weapons/Bows/BasicBow/SM_Bow",
+   "AttachSocket": "hand_l",
+   "Damage": 35,
+   "DamageType": "Damage.Type.Physical",
+   "FireMode": "Semi",
+   "RoundsPerMinute": 60,
+   "Range": 6000,
+   "HeadshotMultiplier": 2,
+   "HeadBone": "head",
+   "SpreadDegrees": 0.5,
+   "MagazineSize": 1,
+   "StartingReserveAmmo": 20,
+   "ReloadSeconds": 0.8,
+   "ProjectileSpeed": 5000,
+   "ProjectileGravityScale": 0.6,
+   "ProjectileMesh": "/Game/Hyper/ResourcePack/Weapons/Bows/Arrows/SM_Arrow_Wooden",
+   "AttackMontage": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Anims/Locomotion/Bow/Fire/AM_Bow_Fire_Montage",
+   "AttackFx": {
+    "Sound": "/Game/Hyper/ResourcePack/Sounds/Combat/BowAndArrow/SC_bow_fire"
    },
    "ImpactFx": {
     "Niagara": "NS_Hit_Physical",
@@ -480,6 +545,23 @@
     "Niagara": "NS_Heal_Aura",
     "Scale": 1
    }
+  },
+  "WizardLightning": {
+   "DisplayName": "Lightning",
+   "Delivery": "Hitscan",
+   "ManaCost": 25,
+   "Cooldown": 2.0,
+   "Damage": 35,
+   "DamageType": "Damage.Type.Lightning",
+   "Range": 2500,
+   "ReleaseDelay": 0.55,
+   "CastMontage": "AM_Wizard_Cast",
+   "CastSocket": "hand_r",
+   "ProjectileFx": "NS_Lightning_Bolt",
+   "ImpactFx": {
+    "Niagara": "NS_Lightning_Impact",
+    "Scale": 1
+   }
   }
  },
  "items": {
@@ -549,7 +631,8 @@
    "spells": [
     "WizardFireball",
     "WizardFrostNova",
-    "WizardHeal"
+    "WizardHeal",
+    "WizardLightning"
    ],
    "player": true,
    "anim_set": "Wizard"
@@ -588,6 +671,18 @@
    "spells": [],
    "player": true,
    "anim_set": "MannyGuns"
+  },
+  "BP_ZAS_Archer": {
+   "defaults": {
+    "TeamId": 1,
+    "Mesh.SkeletalMeshAsset": "/Game/Hyper/Locomotion/Chars/Mannequin_UE5/Meshes/SKM_Manny"
+   },
+   "weapons": [
+    "Bow"
+   ],
+   "spells": [],
+   "player": true,
+   "anim_set": "MannyBow"
   }
  },
  "game_mode": {

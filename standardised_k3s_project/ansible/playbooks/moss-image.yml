@@ -1,5 +1,5 @@
 ---
-# Default off. Example: ansible-playbook playbooks/moss-image.yml -e moss_image_enabled=true
+# On via ../vars/moss-image.yml; converged by site.yml --tags platform.
 - name: MOSS Image Studio (GPU sessions via the GPU controller)
   hosts: homelab
   become: true

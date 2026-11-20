@@ -5,10 +5,11 @@ from file_lock import lock_file
 from download import fetch,safe_path,digest
 from store import model_identity
 from settings import validate
-from gguf_header import context_limit
+from gguf_header import inspect as gguf_inspect
+LLM_KINDS=("gguf","gguf-lora")
 class Blocked(ValueError):pass
 class Operations:
- def __init__(self,store,root,broker,downloader=fetch,metadata_reader=context_limit):
+ def __init__(self,store,root,broker,downloader=fetch,metadata_reader=gguf_inspect):
   self.store=store;self.root=Path(root).resolve();self.root.mkdir(parents=True,exist_ok=True)
   self.broker=broker;self.downloader=downloader;self.metadata_reader=metadata_reader
  @contextlib.contextmanager
@@ -30,19 +31,26 @@ class Operations:
     if record.get("registered"):record.pop("registration_error",None)
     with self.store.db:self.store.db.execute("UPDATE models SET record=? WHERE id=?",(json.dumps(record),identity))
     return record
-   kind=selection["kind"];validate(selection["settings"],kind,max_context=selection.get("max_context"))
-   if kind in ("lora","diffusion-checkpoint"):
+   kind=selection["kind"]
+   # MTP is provisionally allowed for a published MTP file; the downloaded header decides before registration.
+   validate(selection["settings"],kind,capabilities={"mtp":True,"vision":True},max_context=selection.get("max_context"))
+   if kind in ("lora","diffusion-checkpoint","gguf-lora"):
     base=selection.get("base_install")
     row=self.store.db.execute("SELECT record FROM models WHERE id=?",(base,)).fetchone()
     if not row:raise Blocked("An installed compatible base selection is required")
     base_record=json.loads(row[0])
-    if base_record["kind"]!="diffusion-pipeline" or (selection.get("base_repository") and base_record["repository"]!=selection.get("base_repository")):raise Blocked("Base identity does not match adapter")
+    expected="gguf" if kind=="gguf-lora" else "diffusion-pipeline"
+    if base_record["kind"]!=expected or (selection.get("base_repository") and base_record["repository"]!=selection.get("base_repository")):raise Blocked("Base identity does not match adapter")
    else:base_record=None
    required=sum(item["size"] for item in selection["files"])
-   if shutil.disk_usage(self.root).free<required+3*1024**3:raise Blocked("Selection plus disk reserve exceeds available storage")
    artifacts=[];total=0
-   category={"gguf":"gguf","lora":"loras","diffusion-checkpoint":"diffusion","diffusion-pipeline":"diffusion"}[kind]
+   category={"gguf":"gguf","gguf-lora":"loras","lora":"loras","diffusion-checkpoint":"diffusion","diffusion-pipeline":"diffusion"}[kind]
    target=self.root/category/"model-manager"/identity
+   # self.root itself can be a small container-local overlay with only the per-category
+   # subdirectory bind-mounted onto the real storage; check free space where files actually
+   # land, not at self.root, or a real large volume gets wrongly reported as full.
+   target.parent.mkdir(parents=True,exist_ok=True)
+   if shutil.disk_usage(target.parent).free<required+3*1024**3:raise Blocked("Selection plus disk reserve exceeds available storage")
    for item in selection["files"]:
     aid=hashlib.sha256((selection["repository"]+"@"+selection["revision"]+"/"+item["path"]).encode()).hexdigest()
     prior=self.store.db.execute("SELECT path,bytes,digest FROM artifacts WHERE id=?",(aid,)).fetchone()
@@ -63,10 +71,17 @@ class Operations:
      result=self.downloader(target,selection["repository"],selection["revision"],item,progress=lambda n:progress(total+n),cancel=cancel)
     total+=result["bytes"];progress(total)
     artifacts.append((aid,result))
-   record={"id":identity,"revision":selection["revision"],"repository":selection["repository"],"kind":kind,"settings":selection["settings"],"artifacts":[a for a,_ in artifacts],"downloaded":True,"configured":False,"registered":False,"tested":False,"protected":False,"installation_epoch":secrets.token_hex(16),"max_context":selection.get("max_context")}
+   record={"id":identity,"revision":selection["revision"],"repository":selection["repository"],"kind":kind,"settings":selection["settings"],"artifacts":[a for a,_ in artifacts],"downloaded":True,"configured":False,"registered":False,"tested":False,"protected":False,"installation_epoch":secrets.token_hex(16),"max_context":selection.get("max_context"),"description":selection.get("description")}
    if kind=="diffusion-pipeline":record["base_path"]=str(target)
+   projector_name=selection["settings"].get("projector")
+   projector=next(((aid,item) for aid,item in artifacts if projector_name and Path(item["path"]).name==Path(projector_name).name),None)
+   if projector_name and not projector:raise Blocked("Projector was not downloaded")
+   if projector:record["artifacts"].remove(projector[0])
    if base_record:
-    record["dependencies"]=[base_record["id"]];record["artifacts"]+=base_record["artifacts"];record["base_path"]=base_record["base_path"]
+    record["dependencies"]=[base_record["id"]];record["artifacts"]+=base_record["artifacts"]
+    if "base_path" in base_record:record["base_path"]=base_record["base_path"]
+   # The projector is always the last artifact, so the model (and a LoRA's base) keep their positions.
+   if projector:record["artifacts"].append(projector[0])
    with self.store.db:
     for aid,item in artifacts:
      self.store.db.execute("INSERT OR IGNORE INTO artifacts VALUES(?,?,?,?)",(aid,item["path"],item["bytes"],item["sha256"]))
@@ -74,13 +89,38 @@ class Operations:
     for aid in record["artifacts"]:self.store.db.execute("INSERT INTO refs VALUES(?,?)",(identity,aid))
    # Real registration broker; failure leaves truthful downloaded-only recovery record.
    try:
-    if kind=="gguf":
-     detected=self.metadata_reader(artifacts[0][1]["path"])
+    if kind in LLM_KINDS:
+     # For a LoRA the served model is the base: its header gives the context limit and any MTP head.
+     model_path=artifacts[0][1]["path"] if kind=="gguf" else self.base_model_path(base_record)
+     header=self.metadata_reader(model_path)
+     if isinstance(header,int) or header is None:header={"context_length":header,"nextn_predict_layers":0}
+     detected=header.get("context_length")
      if detected:
       record["max_context"]=min(record.get("max_context") or detected,detected)
       record["context_limit_source"]="GGUF header"
-      validate(record["settings"],kind,max_context=record["max_context"])
-      with self.store.db:self.store.db.execute("UPDATE models SET record=? WHERE id=?",(json.dumps(record),identity))
+     record["capabilities"]={"mtp":(header.get("nextn_predict_layers") or 0)>0,"vision":False}
+     if projector:
+      vision=self.metadata_reader(projector[1]["path"])
+      if not isinstance(vision,dict) or vision.get("type")!="mmproj" or not vision.get("vision_encoder") or vision.get("projection_dim")!=header.get("embedding_length"):raise Blocked("Projector does not match the model (mmproj vision encoder, projection_dim == embedding_length)")
+      record["capabilities"]["vision"]=True
+     # Smaller models get more context: context_auto raises (never lowers) the chosen context to what fits on the GPU.
+     from settings import fit_context
+     weights=sum(item["bytes"] for aid,item in artifacts if not (projector and aid==projector[0]))+(sum(row[0] for row in self.store.db.execute("SELECT bytes FROM artifacts WHERE id IN (%s)"%",".join("?"*len(base_record["artifacts"])),base_record["artifacts"])) if base_record else 0)
+     settings=record["settings"]
+     fit=fit_context(header,weights,settings.get("cache_k","q4_0"),settings.get("cache_v","q4_0")) if isinstance(header,dict) and header.get("block_count") else None
+     if fit:
+      record["context_fit"]=fit
+      if settings.get("context_auto") and fit>settings.get("context",0):settings["context"]=min(fit,record.get("max_context") or fit)
+     # A projector on the GPU counts against the cap; when it does not fit beside the context it encodes on the CPU.
+     if projector and settings.get("projector_gpu"):
+      from settings import fits_on_gpu
+      if fits_on_gpu(header,weights+projector[1]["bytes"],settings.get("context",0),settings.get("cache_k","q4_0"),settings.get("cache_v","q4_0")) is False:
+       settings["projector_gpu"]=False;record["projector_note"]="Projector moved to the CPU: it does not fit beside the context in 18 GiB"
+     if kind=="gguf-lora":
+      adapter=self.metadata_reader(artifacts[0][1]["path"])
+      if isinstance(adapter,dict) and (adapter.get("type")!="adapter" or adapter.get("architecture")!=header.get("architecture")):raise Blocked("Adapter does not match the base model architecture")
+     validate(record["settings"],kind,capabilities=record["capabilities"],max_context=record.get("max_context"))
+     with self.store.db:self.store.db.execute("UPDATE models SET record=? WHERE id=?",(json.dumps(record),identity))
     outcome=self.broker("register",record)
     record.update(outcome)
     if outcome.get("registered") is not True:raise Blocked("Registration not verified")
@@ -88,6 +128,10 @@ class Operations:
     record["registration_error"]=type(e).__name__+": "+str(e)[:200]
    with self.store.db:self.store.db.execute("UPDATE models SET record=? WHERE id=?",(json.dumps(record),identity))
    return record
+ def base_model_path(self,base_record):
+  row=self.store.db.execute("SELECT path FROM artifacts WHERE id=?",(base_record["artifacts"][0],)).fetchone()
+  if not row:raise Blocked("Base model artifact missing")
+  return row[0]
  def generate(self,identity,revision,prompt,settings=None,negative_prompt=None,progress=None):
   with self.exclusive():
    row=self.store.db.execute("SELECT record FROM models WHERE id=?",(identity,)).fetchone()
@@ -137,14 +181,17 @@ class Operations:
    with self.store.db:self.store.db.execute("UPDATE models SET record=? WHERE id=?",(json.dumps(record),identity))
    moved=[]
    if delete:
-    quarantine=self.root/"quarantine"/"model-manager"/identity;quarantine.mkdir(parents=True,exist_ok=True)
     for name in plan["paths"]:
      source=Path(name)
      if not source.is_relative_to(self.root) or source.is_symlink():raise Blocked("Artifact escapes managed storage")
      relative=source.relative_to(self.root);safe_path(self.root,str(relative))
      known=self.store.db.execute("SELECT digest,bytes FROM artifacts WHERE path=?",(str(source),)).fetchone()
      if source.exists() and (not known or source.stat().st_size!=known[1] or digest(source)!=known[0]):raise Blocked("Artifact changed since installation; retained")
-     target=safe_path(quarantine,str(relative));target.parent.mkdir(parents=True,exist_ok=True)
+     # Quarantine inside the same <category>/model-manager mount as the file: in the pod only those directories are
+     # bind-mounted on the real storage, so a quarantine elsewhere is another filesystem (rename -> EXDEV, 2026-11-19).
+     if len(relative.parts)<3 or relative.parts[1]!="model-manager":raise Blocked("Artifact outside a managed category")
+     quarantine=self.root/relative.parts[0]/"model-manager"/".quarantine"/identity
+     target=safe_path(quarantine,str(Path(*relative.parts[2:])));target.parent.mkdir(parents=True,exist_ok=True)
      if source.exists():os.rename(source,target)
      if target.exists():
       if not known or target.stat().st_size!=known[1] or digest(target)!=known[0]:raise Blocked("Quarantine receipt integrity mismatch")

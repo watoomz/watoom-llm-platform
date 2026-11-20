@@ -5,7 +5,7 @@
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a><div class="shell">
-<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link active" aria-current="page" href="/guide/server-roles.html">Roles</a><div class="toc"><a class="toc-link" href="#ansible-lint-api">ansible_lint_api</a><a class="toc-link" href="#artex">artex</a><a class="toc-link" href="#docker-host">docker_host</a><a class="toc-link" href="#gpu-host">gpu_host</a><a class="toc-link" href="#homelab-rebuild">homelab_rebuild</a><a class="toc-link" href="#host-health">host_health</a><a class="toc-link" href="#host-paths">host_paths</a><a class="toc-link" href="#host-repairs">host_repairs</a><a class="toc-link" href="#image-audit">image_audit</a><a class="toc-link" href="#k3s-apply">k3s_apply</a><a class="toc-link" href="#kubernetes-app-control">kubernetes_app_control</a><a class="toc-link" href="#kubernetes-secrets">kubernetes_secrets</a><a class="toc-link" href="#llm-model-lab">llm-model-lab</a><a class="toc-link" href="#model-manager">model-manager</a><a class="toc-link" href="#moss-image">moss-image</a><a class="toc-link" href="#opencode-agent">opencode-agent</a><a class="toc-link" href="#preflight">preflight</a><a class="toc-link" href="#projects-share">projects_share</a><a class="toc-link" href="#skill-editor">skill-editor</a><a class="toc-link" href="#tickets-board">tickets-board</a><a class="toc-link" href="#tuned-virtual-guest">tuned_virtual_guest</a><a class="toc-link" href="#unreal-engine">unreal-engine</a><a class="toc-link" href="#unreal-project">unreal-project</a><a class="toc-link" href="#user-kubeconfig">user_kubeconfig</a><a class="toc-link" href="#validation">validation</a><a class="toc-link" href="#vault-secrets">vault_secrets</a><a class="toc-link" href="#watoom-code">watoom-code</a><a class="toc-link" href="#workstation-render-stage">workstation-render-stage</a></div><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
+<aside class="sidebar"><a class="brand" href="/guide/"><span class="brand-mark" aria-hidden="true"></span>WATOOM<span>//ops</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">Menu</button><div class="sidebar-body" id="sidebar-nav"><label class="search-wrap"><span class="sr-only">Search the guide</span><input id="site-search" class="search" type="search" placeholder="Search guide  /" autocomplete="off"></label><div id="search-results" class="search-results" hidden></div><nav class="nav" aria-label="Guide pages"><p class="nav-label">Overview</p><a class="nav-link" href="/guide/">Overview</a><p class="nav-label">Architecture</p><a class="nav-link" href="/guide/software-design.html">Software design</a><p class="nav-label">Platform</p><a class="nav-link" href="/guide/platform.html">Platform</a><a class="nav-link" href="/guide/network.html">Network</a><a class="nav-link" href="/guide/security.html">Security</a><p class="nav-label">Services</p><a class="nav-link" href="/guide/voice-companion.html">Voice companion</a><a class="nav-link" href="/guide/artex.html">Artex</a><a class="nav-link" href="/guide/monitoring.html">Monitoring</a><p class="nav-label">LLM platform</p><a class="nav-link" href="/guide/ai.html">AI platform</a><a class="nav-link" href="/guide/watoom-code.html">WatooM Code</a><a class="nav-link" href="/guide/llm-project.html">Project guide</a><a class="nav-link" href="/guide/llm-extensions.html">Custom extensions</a><a class="nav-link" href="/guide/animation-library.html">Animation library</a><a class="nav-link" href="/guide/llm-user-guide.html">LLM user guide</a><a class="nav-link" href="/guide/llm-api.html">LLM API &amp; reference</a><a class="nav-link" href="/guide/llm-publication.html">GitHub publication</a><p class="nav-label">Source reference</p><a class="nav-link" href="/guide/server-catalogue.html">Server reference</a><a class="nav-link" href="/guide/server-scripts.html">Scripts</a><a class="nav-link" href="/guide/server-playbooks.html">Playbooks</a><a class="nav-link active" aria-current="page" href="/guide/server-roles.html">Roles</a><div class="toc"><a class="toc-link" href="#ansible-lint-api">ansible_lint_api</a><a class="toc-link" href="#artex">artex</a><a class="toc-link" href="#creation-studio">creation-studio</a><a class="toc-link" href="#docker-host">docker_host</a><a class="toc-link" href="#gpu-host">gpu_host</a><a class="toc-link" href="#homelab-rebuild">homelab_rebuild</a><a class="toc-link" href="#host-health">host_health</a><a class="toc-link" href="#host-paths">host_paths</a><a class="toc-link" href="#host-repairs">host_repairs</a><a class="toc-link" href="#image-audit">image_audit</a><a class="toc-link" href="#k3s-apply">k3s_apply</a><a class="toc-link" href="#kubernetes-app-control">kubernetes_app_control</a><a class="toc-link" href="#kubernetes-secrets">kubernetes_secrets</a><a class="toc-link" href="#llm-model-lab">llm-model-lab</a><a class="toc-link" href="#model-manager">model-manager</a><a class="toc-link" href="#moss-image">moss-image</a><a class="toc-link" href="#preflight">preflight</a><a class="toc-link" href="#projects-share">projects_share</a><a class="toc-link" href="#skill-editor">skill-editor</a><a class="toc-link" href="#tickets-board">tickets-board</a><a class="toc-link" href="#tuned-virtual-guest">tuned_virtual_guest</a><a class="toc-link" href="#unreal-engine">unreal-engine</a><a class="toc-link" href="#unreal-project">unreal-project</a><a class="toc-link" href="#user-kubeconfig">user_kubeconfig</a><a class="toc-link" href="#validation">validation</a><a class="toc-link" href="#vault-secrets">vault_secrets</a><a class="toc-link" href="#watoom-code">watoom-code</a><a class="toc-link" href="#workstation-render-stage">workstation-render-stage</a><a class="toc-link" href="#writing-studio">writing-studio</a></div><a class="nav-link" href="/guide/server-tools.html">Tools</a><p class="nav-label">Operations</p><a class="nav-link" href="/guide/operator-manual.html">Operator manual</a><a class="nav-link" href="/guide/operations.html">Operations</a><a class="nav-link" href="/guide/tickets.html">Tickets</a><a class="nav-link" href="/guide/recovery.html">Recovery</a><a class="nav-link" href="/guide/disaster-recovery.html">Disaster recovery</a><a class="nav-link" href="/guide/troubleshooting.html">Troubleshooting</a><p class="nav-label">Tools</p><a class="nav-link tool" href="/guide/job-reference.html">Job reference</a><a class="nav-link tool" href="/guide/pipeline-prompts.html">Pipeline prompts</a><a class="nav-link tool" href="/">Glance dashboard</a></nav></div></aside>
 <main class="main" id="content">
 <header class="hero"><p class="eyebrow">Roles</p><h1>Ansible role reference</h1><p class="lede">Each role, its task entrypoints, defaults, handlers and deployed helper payloads.</p></header>
 <div class="content">
@@ -78,6 +78,27 @@
 <tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/artex/tasks/main.yml" rel="noopener"><code>ansible/roles/artex/tasks/main.yml</code></a></td>
 <td>Require isolated namespace and immutable release</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="creation-studio">creation-studio</h2>
+<p>Creation Studio is disabled unless explicitly enabled</p>
+<ul>
+<li><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/creation-studio/tasks/main.yml" rel="noopener"><code>ansible/roles/creation-studio/tasks/main.yml</code></a></li>
+<li><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/creation-studio/defaults/main.yml" rel="noopener"><code>ansible/roles/creation-studio/defaults/main.yml</code></a></li>
+</ul>
+<p>Source files: 3. All paths and hashes are in the downloadable inventory.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Task file</th>
+<th>Purpose declared in source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/creation-studio/tasks/main.yml" rel="noopener"><code>ansible/roles/creation-studio/tasks/main.yml</code></a></td>
+<td>Creation Studio is disabled unless explicitly enabled</td>
 </tr>
 </tbody>
 </table></div>
@@ -410,7 +431,7 @@
 <li><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/llm-model-lab/tasks/main.yml" rel="noopener"><code>ansible/roles/llm-model-lab/tasks/main.yml</code></a></li>
 <li><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/llm-model-lab/defaults/main.yml" rel="noopener"><code>ansible/roles/llm-model-lab/defaults/main.yml</code></a></li>
 </ul>
-<p>Source files: 14. All paths and hashes are in the downloadable inventory.</p>
+<p>Source files: 16. All paths and hashes are in the downloadable inventory.</p>
 <div class="table-scroll"><table>
 <thead>
 <tr>
@@ -430,6 +451,10 @@
 <tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/llm-model-lab/tasks/mesh-pipeline-recovery.yml" rel="noopener"><code>ansible/roles/llm-model-lab/tasks/mesh-pipeline-recovery.yml</code></a></td>
 <td>Check installed host mesh controller</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/llm-model-lab/tasks/mesh_bridge.yml" rel="noopener"><code>ansible/roles/llm-model-lab/tasks/mesh_bridge.yml</code></a></td>
+<td>Read installed pipeline for narrow compatibility fix</td>
 </tr>
 </tbody>
 </table></div>
@@ -499,110 +524,6 @@
 <tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/moss-image/tasks/main.yml" rel="noopener"><code>ansible/roles/moss-image/tasks/main.yml</code></a></td>
 <td>MOSS Image Studio is disabled unless explicitly enabled</td>
-</tr>
-</tbody>
-</table></div>
-<h2 id="opencode-agent">opencode-agent</h2>
-<p>Keep legacy OpenCode canary suspended</p>
-<ul>
-<li><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/opencode-agent/tasks/main.yml" rel="noopener"><code>ansible/roles/opencode-agent/tasks/main.yml</code></a></li>
-<li><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/opencode-agent/defaults/main.yml" rel="noopener"><code>ansible/roles/opencode-agent/defaults/main.yml</code></a></li>
-</ul>
-<p>Source files: 252. All paths and hashes are in the downloadable inventory.</p>
-<div class="table-scroll"><table>
-<thead>
-<tr>
-<th>Task file</th>
-<th>Purpose declared in source</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/opencode-agent/tasks/main.yml" rel="noopener"><code>ansible/roles/opencode-agent/tasks/main.yml</code></a></td>
-<td>Keep legacy OpenCode canary suspended</td>
-</tr>
-<tr>
-<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/opencode-agent/tasks/mesh_integration.yml" rel="noopener"><code>ansible/roles/opencode-agent/tasks/mesh_integration.yml</code></a></td>
-<td>Read installed pipeline for narrow compatibility fix</td>
-</tr>
-<tr>
-<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/opencode-agent/tasks/v2_openspec.yml" rel="noopener"><code>ansible/roles/opencode-agent/tasks/v2_openspec.yml</code></a></td>
-<td>OpenCode V2 OpenSpec / Ensure command directory exists</td>
-</tr>
-<tr>
-<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/opencode-agent/tasks/v2_toolkit.yml" rel="noopener"><code>ansible/roles/opencode-agent/tasks/v2_toolkit.yml</code></a></td>
-<td>OpenCode V2 Toolkit / Ensure native policy directories</td>
-</tr>
-<tr>
-<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/opencode-agent/tasks/verify.yml" rel="noopener"><code>ansible/roles/opencode-agent/tasks/verify.yml</code></a></td>
-<td>OpenCode verify / Show pod</td>
-</tr>
-</tbody>
-</table></div>
-<h3 id="deployed-code-and-helpers-2-2">Deployed code and helpers</h3>
-<div class="table-scroll"><table>
-<thead>
-<tr>
-<th>Source</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/opencode-agent/files/opencode_mesh_bridge.py" rel="noopener"><code>ansible/roles/opencode-agent/files/opencode_mesh_bridge.py</code></a></td>
-<td>Narrow local bridge; all GPU work remains in the existing pipeline. (module docstring)</td>
-</tr>
-<tr>
-<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/opencode-agent/files/v2-native/plugins/agentmemory-v2.ts" rel="noopener"><code>ansible/roles/opencode-agent/files/v2-native/plugins/agentmemory-v2.ts</code></a></td>
-<td>Source component: agentmemory v2. Inspect the source before use. (filename summary)</td>
-</tr>
-<tr>
-<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/opencode-agent/files/v2-native/plugins/agentmemory/agentmemory-capture.ts" rel="noopener"><code>ansible/roles/opencode-agent/files/v2-native/plugins/agentmemory/agentmemory-capture.ts</code></a></td>
-<td>Source component: agentmemory capture. Inspect the source before use. (filename summary)</td>
-</tr>
-<tr>
-<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/opencode-agent/files/v2-native/plugins/searxng-search/index.js" rel="noopener"><code>ansible/roles/opencode-agent/files/v2-native/plugins/searxng-search/index.js</code></a></td>
-<td>Source component: index. Inspect the source before use. (filename summary)</td>
-</tr>
-<tr>
-<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/opencode-agent/files/v2-native/plugins/toolkit-3d-native/server.ts" rel="noopener"><code>ansible/roles/opencode-agent/files/v2-native/plugins/toolkit-3d-native/server.ts</code></a></td>
-<td>Release policy: expose verified local engines only, including when the preserved Toolkit baseline advertises legacy providers. (source comment)</td>
-</tr>
-<tr>
-<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/opencode-agent/files/v2-native/plugins/toolkit-native/server.ts" rel="noopener"><code>ansible/roles/opencode-agent/files/v2-native/plugins/toolkit-native/server.ts</code></a></td>
-<td>Source component: server. Inspect the source before use. (filename summary)</td>
-</tr>
-<tr>
-<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/opencode-agent/files/v2-native/plugins/toolkit-secret-guard/server.ts" rel="noopener"><code>ansible/roles/opencode-agent/files/v2-native/plugins/toolkit-secret-guard/server.ts</code></a></td>
-<td>Source component: server. Inspect the source before use. (filename summary)</td>
-</tr>
-<tr>
-<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/opencode-agent/files/v2-native/skills/web-smoke/scripts/smoke-vite.mjs" rel="noopener"><code>ansible/roles/opencode-agent/files/v2-native/skills/web-smoke/scripts/smoke-vite.mjs</code></a></td>
-<td>Source component: smoke vite. Inspect the source before use. (filename summary)</td>
-</tr>
-<tr>
-<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/opencode-agent/files/v2-native/tools/watoom-hashline.mjs" rel="noopener"><code>ansible/roles/opencode-agent/files/v2-native/tools/watoom-hashline.mjs</code></a></td>
-<td>Source component: watoom hashline. Inspect the source before use. (filename summary)</td>
-</tr>
-<tr>
-<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/opencode-agent/files/v2-native/tools/watoom-llama-mesh.py" rel="noopener"><code>ansible/roles/opencode-agent/files/v2-native/tools/watoom-llama-mesh.py</code></a></td>
-<td>Dependency-free MCP stdio adapter and CLI for the authorized Unix bridge. (module docstring)</td>
-</tr>
-<tr>
-<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/opencode-agent/files/v2-native/tools/watoom-openspec-notify.py" rel="noopener"><code>ansible/roles/opencode-agent/files/v2-native/tools/watoom-openspec-notify.py</code></a></td>
-<td>Post an OpenSpec change event to Discord. Dependency-free (stdlib only). (module docstring)</td>
-</tr>
-<tr>
-<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/opencode-agent/files/v2-native/tools/watoom-track.mjs" rel="noopener"><code>ansible/roles/opencode-agent/files/v2-native/tools/watoom-track.mjs</code></a></td>
-<td>Source component: watoom track. Inspect the source before use. (filename summary)</td>
-</tr>
-<tr>
-<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/opencode-agent/files/v2-native/tools/watoom_toolkit.ts" rel="noopener"><code>ansible/roles/opencode-agent/files/v2-native/tools/watoom_toolkit.ts</code></a></td>
-<td>Source component: watoom toolkit. Inspect the source before use. (filename summary)</td>
-</tr>
-<tr>
-<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/opencode-agent/files/watoom-kali-mcp-proxy.mjs" rel="noopener"><code>ansible/roles/opencode-agent/files/watoom-kali-mcp-proxy.mjs</code></a></td>
-<td>WatooM OpenCode local MCP transport proxy. OpenCode: stdio MCP -&gt; this transport-only proxy -&gt; dedicated WatooM Kali MCP over stateful Streamable HTTP. This process contains no target authority, no Kali command construction and no Docker/Ku (source comment)</td>
 </tr>
 </tbody>
 </table></div>
@@ -836,7 +757,7 @@
 <li><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/tasks/main.yml" rel="noopener"><code>ansible/roles/watoom-code/tasks/main.yml</code></a></li>
 <li><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/defaults/main.yml" rel="noopener"><code>ansible/roles/watoom-code/defaults/main.yml</code></a></li>
 </ul>
-<p>Source files: 1034. All paths and hashes are in the downloadable inventory.</p>
+<p>Source files: 1165. All paths and hashes are in the downloadable inventory.</p>
 <div class="table-scroll"><table>
 <thead>
 <tr>
@@ -875,7 +796,7 @@
 </tr>
 <tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/tasks/game_session_watchdog.yml" rel="noopener"><code>ansible/roles/watoom-code/tasks/game_session_watchdog.yml</code></a></td>
-<td>Install the game session watchdog script to a root-owned path</td>
+<td>Install game session watchdog timer</td>
 </tr>
 <tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/tasks/game_worker.yml" rel="noopener"><code>ansible/roles/watoom-code/tasks/game_worker.yml</code></a></td>
@@ -900,6 +821,10 @@
 <tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/tasks/image_scope.yml" rel="noopener"><code>ansible/roles/watoom-code/tasks/image_scope.yml</code></a></td>
 <td>Derive exact image-scope source version</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/tasks/kali_isolation.yml" rel="noopener"><code>ansible/roles/watoom-code/tasks/kali_isolation.yml</code></a></td>
+<td>Deny Kali tools to the built-in agents</td>
 </tr>
 <tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/tasks/language_knowledge.yml" rel="noopener"><code>ansible/roles/watoom-code/tasks/language_knowledge.yml</code></a></td>
@@ -963,7 +888,7 @@
 </tr>
 </tbody>
 </table></div>
-<h3 id="deployed-code-and-helpers-2-2-2">Deployed code and helpers</h3>
+<h3 id="deployed-code-and-helpers-2-2">Deployed code and helpers</h3>
 <div class="table-scroll"><table>
 <thead>
 <tr>
@@ -1013,12 +938,20 @@
 <td>Source component: enable image scope. Inspect the source before use. (filename summary)</td>
 </tr>
 <tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/enable-kali-isolation.py" rel="noopener"><code>ansible/roles/watoom-code/files/enable-kali-isolation.py</code></a></td>
+<td>Deny Kali MCP tools to the built-in agents (build, plan, general, compaction, ...). (module docstring)</td>
+</tr>
+<tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/enable-language-knowledge.py" rel="noopener"><code>ansible/roles/watoom-code/files/enable-language-knowledge.py</code></a></td>
 <td>Select (or with '-' remove) the versioned language-knowledge plugin in native opencode.json without touching other entries. (module docstring)</td>
 </tr>
 <tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/enable-model-context.py" rel="noopener"><code>ansible/roles/watoom-code/files/enable-model-context.py</code></a></td>
 <td>Maintain user-selected application budgets without changing backend deployments. (module docstring)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/enable-model-display-names.py" rel="noopener"><code>ansible/roles/watoom-code/files/enable-model-display-names.py</code></a></td>
+<td>Idempotent migration: rename existing router model entries to their actual HuggingFace source, and add new router models (NEW_MODELS) if a prior run already seeded opencode.json (the template's `force: false` render never touches an existin (module docstring)</td>
 </tr>
 <tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/enable-moss-image-plugin.py" rel="noopener"><code>ansible/roles/watoom-code/files/enable-moss-image-plugin.py</code></a></td>
@@ -1065,6 +998,46 @@
 <td>Source component: init catalog. Inspect the source before use. (filename summary)</td>
 </tr>
 <tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/native/plugins/agentmemory-v2.ts" rel="noopener"><code>ansible/roles/watoom-code/files/native/plugins/agentmemory-v2.ts</code></a></td>
+<td>Source component: agentmemory v2. Inspect the source before use. (filename summary)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/native/plugins/agentmemory/agentmemory-capture.ts" rel="noopener"><code>ansible/roles/watoom-code/files/native/plugins/agentmemory/agentmemory-capture.ts</code></a></td>
+<td>Source component: agentmemory capture. Inspect the source before use. (filename summary)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/native/plugins/searxng-search/index.js" rel="noopener"><code>ansible/roles/watoom-code/files/native/plugins/searxng-search/index.js</code></a></td>
+<td>Source component: index. Inspect the source before use. (filename summary)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/native/plugins/toolkit-3d-native/server.ts" rel="noopener"><code>ansible/roles/watoom-code/files/native/plugins/toolkit-3d-native/server.ts</code></a></td>
+<td>Release policy: expose verified local engines only, including when the preserved Toolkit baseline advertises legacy providers. (source comment)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/native/plugins/toolkit-native/server.ts" rel="noopener"><code>ansible/roles/watoom-code/files/native/plugins/toolkit-native/server.ts</code></a></td>
+<td>Source component: server. Inspect the source before use. (filename summary)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/native/plugins/toolkit-secret-guard/server.ts" rel="noopener"><code>ansible/roles/watoom-code/files/native/plugins/toolkit-secret-guard/server.ts</code></a></td>
+<td>Source component: server. Inspect the source before use. (filename summary)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/native/tools/watoom-openspec-notify.py" rel="noopener"><code>ansible/roles/watoom-code/files/native/tools/watoom-openspec-notify.py</code></a></td>
+<td>Post an OpenSpec change event to Discord. Dependency-free (stdlib only). (module docstring)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skill-shared/blender-worker/scripts/_bpyx.py" rel="noopener"><code>ansible/roles/watoom-code/files/skill-shared/blender-worker/scripts/_bpyx.py</code></a></td>
+<td>_bpyx - tiny shared helpers for blender-agent-skills scripts (Blender 5.2+). (module docstring)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skill-shared/blender-worker/scripts/_worker_runtime.py" rel="noopener"><code>ansible/roles/watoom-code/files/skill-shared/blender-worker/scripts/_worker_runtime.py</code></a></td>
+<td>Windows Job Object boundary. Start suspended, assign limits, then resume. (module docstring)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skill-shared/blender-worker/scripts/worker_profile.py" rel="noopener"><code>ansible/roles/watoom-code/files/skill-shared/blender-worker/scripts/worker_profile.py</code></a></td>
+<td>Execution policy for every installed EL4CTEO component, not a dispatcher. (module docstring)</td>
+</tr>
+<tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/blender-addon-development/assets/addon_template/__init__.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/blender-addon-development/assets/addon_template/__init__.py</code></a></td>
 <td>My Tool - Blender extension template (4.2+ extension format, verified on 5.2). (module docstring)</td>
 </tr>
@@ -1087,6 +1060,10 @@
 <tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/blender-animation/scripts/bake_action.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/blender-animation/scripts/bake_action.py</code></a></td>
 <td>Bake animation clips from a control rig onto an export skeleton (visual keying), one action per clip, optional root motion, clean curves, NLA strips for exporters; or list clips. (module docstring)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/blender-animation/scripts/creature_gait.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/blender-animation/scripts/creature_gait.py</code></a></td>
+<td>Generate looping in-place clips (Idle, Walk, Run, Roar, Attack) for a tailed biped rigged by creature_rig.py, and optionally export one engine FBX per clip (skinned mesh + that clip, the layout rig_import_fbx_character.py imports). (module docstring)</td>
 </tr>
 <tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/blender-animation/scripts/worker_profile.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/blender-animation/scripts/worker_profile.py</code></a></td>
@@ -1129,6 +1106,14 @@
 <td>Skin meshes to an armature with robust automatic weights, then clean them for engines. (module docstring)</td>
 </tr>
 <tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/blender-character-rigging/scripts/creature_fit.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/blender-character-rigging/scripts/creature_fit.py</code></a></td>
+<td>creature_fit - place a game skeleton on an unrigged tailed biped (theropod dinosaur, raptor, bird-like walker) from its surface points alone. Pure numpy (no bpy), so it is unit-tested outside Blender; creature_rig.py builds the armature. (module docstring)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/blender-character-rigging/scripts/creature_rig.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/blender-character-rigging/scripts/creature_rig.py</code></a></td>
+<td>Rig an unrigged tailed biped (theropod dinosaur, raptor, ground bird) with a plain engine skeleton, then skin it. (module docstring)</td>
+</tr>
+<tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/blender-character-rigging/scripts/rig_check.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/blender-character-rigging/scripts/rig_check.py</code></a></td>
 <td>Validate a skeleton + its skinned meshes for animation/engine export; optional safe fixes. (module docstring)</td>
 </tr>
@@ -1139,6 +1124,10 @@
 <tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/blender-character-rigging/scripts/stress_poses.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/blender-character-rigging/scripts/stress_poses.py</code></a></td>
 <td>Create a QA_Stress action with extreme poses to review deformation (elbows, knees, shoulders, hips, spine, neck). (module docstring)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/blender-character-rigging/scripts/test_creature_fit.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/blender-character-rigging/scripts/test_creature_fit.py</code></a></td>
+<td>creature_fit on a synthetic theropod (no Blender needed): python3 -m unittest test_creature_fit (module docstring)</td>
 </tr>
 <tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/blender-character-rigging/scripts/worker_profile.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/blender-character-rigging/scripts/worker_profile.py</code></a></td>
@@ -1389,6 +1378,10 @@
 <td>Windows Job Object boundary. Start suspended, assign limits, then resume. (module docstring)</td>
 </tr>
 <tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/blender-simulation/scripts/fracture.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/blender-simulation/scripts/fracture.py</code></a></td>
+<td>Pre-fracture one mesh into Voronoi pieces for a game engine (no Cell Fracture add-on needed). (module docstring)</td>
+</tr>
+<tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/blender-simulation/scripts/sim_setup.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/blender-simulation/scripts/sim_setup.py</code></a></td>
 <td>Set up and bake simulations: rigid bodies, classic cloth (presets), 5.2 node-based cloth (experimental Cloth Dynamics asset + Collider assets), then bake / bake-to-keyframes. (module docstring)</td>
 </tr>
@@ -1589,6 +1582,14 @@
 <td>Source component: combat component. Inspect the source before use. (filename summary)</td>
 </tr>
 <tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-godot-game/runtime/game/destructible.gd" rel="noopener"><code>ansible/roles/watoom-code/files/skills/watoom-godot-game/runtime/game/destructible.gd</code></a></td>
+<td>Source component: destructible. Inspect the source before use. (filename summary)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-godot-game/runtime/game/fps_weapon.gd" rel="noopener"><code>ansible/roles/watoom-code/files/skills/watoom-godot-game/runtime/game/fps_weapon.gd</code></a></td>
+<td>Source component: fps weapon. Inspect the source before use. (filename summary)</td>
+</tr>
+<tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-godot-game/runtime/game/overlay_window.gd" rel="noopener"><code>ansible/roles/watoom-code/files/skills/watoom-godot-game/runtime/game/overlay_window.gd</code></a></td>
 <td>Source component: overlay window. Inspect the source before use. (filename summary)</td>
 </tr>
@@ -1637,6 +1638,10 @@
 <td>Source component: build colliders. Inspect the source before use. (filename summary)</td>
 </tr>
 <tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-godot-game/runtime/ops/build_fps_range.gd" rel="noopener"><code>ansible/roles/watoom-code/files/skills/watoom-godot-game/runtime/ops/build_fps_range.gd</code></a></td>
+<td>Source component: build fps range. Inspect the source before use. (filename summary)</td>
+</tr>
+<tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-godot-game/runtime/ops/build_level.gd" rel="noopener"><code>ansible/roles/watoom-code/files/skills/watoom-godot-game/runtime/ops/build_level.gd</code></a></td>
 <td>Source component: build level. Inspect the source before use. (filename summary)</td>
 </tr>
@@ -1675,6 +1680,18 @@
 <tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-godot-game/runtime/ops/combat_slice.gd" rel="noopener"><code>ansible/roles/watoom-code/files/skills/watoom-godot-game/runtime/ops/combat_slice.gd</code></a></td>
 <td>Source component: combat slice. Inspect the source before use. (filename summary)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-godot-game/runtime/ops/combat_spec_check.gd" rel="noopener"><code>ansible/roles/watoom-code/files/skills/watoom-godot-game/runtime/ops/combat_spec_check.gd</code></a></td>
+<td>Source component: combat spec check. Inspect the source before use. (filename summary)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-godot-game/runtime/ops/destruction_check.gd" rel="noopener"><code>ansible/roles/watoom-code/files/skills/watoom-godot-game/runtime/ops/destruction_check.gd</code></a></td>
+<td>Source component: destruction check. Inspect the source before use. (filename summary)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-godot-game/runtime/ops/fps_check.gd" rel="noopener"><code>ansible/roles/watoom-code/files/skills/watoom-godot-game/runtime/ops/fps_check.gd</code></a></td>
+<td>Source component: fps check. Inspect the source before use. (filename summary)</td>
 </tr>
 <tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-godot-game/runtime/ops/hang.gd" rel="noopener"><code>ansible/roles/watoom-code/files/skills/watoom-godot-game/runtime/ops/hang.gd</code></a></td>
@@ -1765,6 +1782,14 @@
 <td>Combat core: attribute/damage/effect math (the Godot equivalent of T-0063's Unreal/GAS core, generic step only -- see references/gg-combat.md for the full plan and what is NOT built yet: weapon/spell/item specs, animation, VFX, items, multi (module docstring)</td>
 </tr>
 <tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-godot-game/scripts/gg_destruction.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/watoom-godot-game/scripts/gg_destruction.py</code></a></td>
+<td>Destructible props for a first-person shooter (T-0066): pre-fractured models that break under the gg_combat gun. (module docstring)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-godot-game/scripts/gg_dungeon.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/watoom-godot-game/scripts/gg_dungeon.py</code></a></td>
+<td>Dungeon kit catalog + procedural grid layout. No engine needed: everything here is pure Python/numpy logic over JSON files, so it runs the same with or without a real Godot worker. It is deliberately decoupled from asset conversion: pieces  (module docstring)</td>
+</tr>
+<tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-godot-game/scripts/gg_export.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/watoom-godot-game/scripts/gg_export.py</code></a></td>
 <td>Export a smoke-tested level (3D) and prove the exported pack loads. (module docstring)</td>
 </tr>
@@ -1849,6 +1874,14 @@
 <td>gg_combat: refusals are pure; `init`/`check` need a real project and are skipped without godot (or when GG_SKIP_ENGINE=1). The combat math itself (game/combat.gd, game/combat_attributes.gd) is GDScript, exercised by tests/test_combat.gd (gg (module docstring)</td>
 </tr>
 <tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-godot-game/scripts/test_gg_destruction.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/watoom-godot-game/scripts/test_gg_destruction.py</code></a></td>
+<td>gg_destruction.py without an engine: refusals, the test-wall fixture's layout, init. The engine check itself is `gg_destruction.py check` (ops/destruction_check.gd), run on a real project. (module docstring)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-godot-game/scripts/test_gg_dungeon.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/watoom-godot-game/scripts/test_gg_dungeon.py</code></a></td>
+<td>gg_dungeon: every test here is pure logic (catalog schema, rotation geometry, the layout generator and its independent verifier, and filesystem scanning for catalog-init). Nothing needs Godot/numpy-only, no engine, no real converted kit: th (module docstring)</td>
+</tr>
+<tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-godot-game/scripts/test_gg_engine.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/watoom-godot-game/scripts/test_gg_engine.py</code></a></td>
 <td>Real-engine test: the selftest end to end. Skipped when godot or xvfb-run is missing (or GG_SKIP_ENGINE=1). (module docstring)</td>
 </tr>
@@ -1931,6 +1964,14 @@
 <tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-metahuman/scripts/ue_probe_api.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/watoom-metahuman/scripts/ue_probe_api.py</code></a></td>
 <td>Read-only: run INSIDE the Unreal Editor on the rig (Tools &gt; Execute Python Script, or Output Log in Python mode). Lists which MetaHuman export/build functions this engine + plugin version exposes. Changes nothing; loads no assets. Writes &lt;p (module docstring)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-terrain-export/scripts/terrain_stage.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/watoom-terrain-export/scripts/terrain_stage.py</code></a></td>
+<td>Stage a terrain-export job's .opencode/tmp/&lt;dir&gt; + .opencode/terrain-jobs/&lt;job&gt;/request.json pairing that game_terrain_export.py (the operator) and terrain_spec.py (the declarative contract it validates against) require. Runs in your own se (module docstring)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-terrain-export/scripts/test_terrain_stage.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/watoom-terrain-export/scripts/test_terrain_stage.py</code></a></td>
+<td>Test fixture/check: test terrain stage. Inspect the source before use. (filename summary)</td>
 </tr>
 <tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-terrain-map/scripts/build_terrain.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/watoom-terrain-map/scripts/build_terrain.py</code></a></td>
@@ -2214,7 +2255,7 @@
 </tr>
 <tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-unreal-combat/scripts/unreal_niagara_fx.py" rel="noopener"><code>ansible/roles/watoom-code/files/skills/watoom-unreal-combat/scripts/unreal_niagara_fx.py</code></a></td>
-<td>Niagara VFX from small recipes: projectile, impact, muzzle, area, aura (and anything built from layers) -&gt; ue-mcp call phases. (module docstring)</td>
+<td>Niagara VFX from small recipes: projectile, impact, muzzle, area, aura, tracer, lightning (and anything built from layers) -&gt; ue-mcp call phases. (module docstring)</td>
 </tr>
 </tbody>
 </table></div>
@@ -2240,6 +2281,27 @@
 <tr>
 <td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/workstation-render-stage/tasks/sftp.yml" rel="noopener"><code>ansible/roles/workstation-render-stage/tasks/sftp.yml</code></a></td>
 <td>Maintain worker data group</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="writing-studio">writing-studio</h2>
+<p>Writing Studio is disabled unless explicitly enabled</p>
+<ul>
+<li><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/writing-studio/tasks/main.yml" rel="noopener"><code>ansible/roles/writing-studio/tasks/main.yml</code></a></li>
+<li><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/writing-studio/defaults/main.yml" rel="noopener"><code>ansible/roles/writing-studio/defaults/main.yml</code></a></li>
+</ul>
+<p>Source files: 3. All paths and hashes are in the downloadable inventory.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Task file</th>
+<th>Purpose declared in source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/writing-studio/tasks/main.yml" rel="noopener"><code>ansible/roles/writing-studio/tasks/main.yml</code></a></td>
+<td>Writing Studio is disabled unless explicitly enabled</td>
 </tr>
 </tbody>
 </table></div>

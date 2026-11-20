@@ -33,7 +33,7 @@ import release_ledger
 latest=release_ledger.latest()
 check("deployed application source pin",bool(latest) and latest["image"]==app["watoom_code_image"] and latest["source_commit"]==app["watoom_code_image_source_commit"])
 for name in ["watoom-workflow","watoom-builder","watoom-investigator","watoom-reviewer","watoom-critic","watoom-kali"]:
-    src=ROOT/"ansible/roles/opencode-agent/files/v2-native/agents"/(name+".md")
+    src=ROOT/"ansible/roles/watoom-code/files/native/agents"/(name+".md")
     dst=pathlib.Path("/data/ai/watoom-code/config/agents")/(name+".md")
     # Mirror native_agents.yml: lookup(file) rstrips, then the model block is removed.
     rendered=re.sub(r"(?m)^model:\n  providerID: watoom\n  model: [A-Za-z0-9_.-]+\n","",src.read_text().rstrip())

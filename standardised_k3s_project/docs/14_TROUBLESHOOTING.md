@@ -1,7 +1,5 @@
 # Troubleshooting
 
-Current deployment snapshot: 13 October 2026. Runtime-specific status is dated; configured/recovery guidance is not an end-to-end test.
-
 Use evidence before restart. Work from the lowest relevant layer upward.
 
 ## Host unreachable / networking
@@ -30,12 +28,12 @@ Do not reintroduce `.agent.example` overrides to solve an `internal.homelab.exam
 ```bash
 kubectl get nodes -o wide
 kubectl get pods -A
-kubectl describe node watoom-homelab
+kubectl describe node homelab-host
 kubectl -n <ns> get events --sort-by=.lastTimestamp
 kubectl -n <ns> logs deploy/<name> --tail=200
 ```
 
-Check root filesystem pressure because `/var/lib/rancher/k3s` has historically been a large root consumer.
+Check root filesystem pressure because `/var/lib/rancher/k3s` is the largest root consumer.
 
 ## Internal HTTPS 404 / 502
 

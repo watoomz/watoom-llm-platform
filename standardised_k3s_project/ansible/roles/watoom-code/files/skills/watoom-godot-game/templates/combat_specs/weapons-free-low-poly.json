@@ -1,0 +1,103 @@
+{
+ "_comment": "T-0075: combat spec for the owned fab pack 'Weapons Free - Low Poly 3D Models Pack' (StaticMesh only, one shared texture T_Textures). Exported by the unreal-export bridge 2026-11-18 (PORTABLE_EXPORT_PASS, 12 StaticMesh), converted with blender-export-pipelines fbx_relink_to_glb.py --textures <exported/Textures> into the pack's glb/converted/ (12/12, texture relinked) and indexed. Bring a model in with `gg_assets.py use --asset weapons-free-low-poly-3d-models-pack-e4d37345-<sm-name> --project P --slot <slot>`, using the slot names below. Parts are exported on their body's pivot.",
+ "schema": 1,
+ "pack": "weapons-free-low-poly-3d-models-pack-e4d37345",
+ "weapons": {
+  "Pistol": {
+   "display_name": "Pistol",
+   "mesh": "res://assets/library/wf_pistol.glb",
+   "delivery": "raycast",
+   "range_m": 30.0,
+   "cooldown_s": 0.3,
+   "effect": {"kind": "damage", "amount": 15.0, "damage_type": "physical"},
+   "vfx": {
+    "muzzle": {"recipe": "muzzle", "element": "Physical", "scale": 0.7},
+    "impact": {"recipe": "impact", "element": "Physical", "scale": 0.5}
+   },
+   "animation": {"attack_state": "fire"},
+   "parts": ["res://assets/library/wf_pistol_drum.glb"]
+  },
+  "Rifle": {
+   "display_name": "Rifle",
+   "mesh": "res://assets/library/wf_rifle.glb",
+   "delivery": "raycast",
+   "range_m": 50.0,
+   "cooldown_s": 0.12,
+   "effect": {"kind": "damage", "amount": 11.0, "damage_type": "physical"},
+   "vfx": {
+    "muzzle": {"recipe": "muzzle", "element": "Physical"},
+    "impact": {"recipe": "impact", "element": "Physical", "scale": 0.6}
+   },
+   "animation": {"attack_state": "fire"},
+   "parts": ["res://assets/library/wf_rifle_mag.glb"]
+  },
+  "Shotgun": {
+   "display_name": "Shotgun",
+   "mesh": "res://assets/library/wf_shotgun.glb",
+   "delivery": "raycast",
+   "range_m": 12.0,
+   "cooldown_s": 0.9,
+   "effect": {"kind": "damage", "amount": 48.0, "damage_type": "physical"},
+   "vfx": {
+    "muzzle": {"recipe": "muzzle", "element": "Physical", "scale": 1.4},
+    "impact": {"recipe": "impact", "element": "Physical", "scale": 0.4}
+   },
+   "animation": {"attack_state": "fire"},
+   "parts": ["res://assets/library/wf_shotgun_handguard.glb"]
+  },
+  "SniperRifle": {
+   "display_name": "Sniper Rifle",
+   "mesh": "res://assets/library/wf_sniper.glb",
+   "delivery": "raycast",
+   "range_m": 120.0,
+   "cooldown_s": 1.5,
+   "effect": {"kind": "damage", "amount": 80.0, "damage_type": "physical"},
+   "vfx": {
+    "muzzle": {"recipe": "muzzle", "element": "Physical", "scale": 1.2},
+    "impact": {"recipe": "impact", "element": "Physical", "scale": 0.8}
+   },
+   "animation": {"attack_state": "fire"},
+   "parts": ["res://assets/library/wf_sight.glb"]
+  },
+  "Knife": {
+   "display_name": "Knife",
+   "mesh": "res://assets/library/wf_knife.glb",
+   "delivery": "melee",
+   "range_m": 1.6,
+   "cooldown_s": 0.45,
+   "effect": {"kind": "damage", "amount": 25.0, "damage_type": "physical"},
+   "vfx": {"impact": {"recipe": "impact", "element": "Physical", "scale": 0.6}},
+   "animation": {"attack_state": "stab"}
+  },
+  "Axe": {
+   "display_name": "Axe",
+   "mesh": "res://assets/library/wf_axe.glb",
+   "delivery": "melee",
+   "range_m": 2.0,
+   "cooldown_s": 0.9,
+   "effect": {"kind": "damage", "amount": 40.0, "damage_type": "physical"},
+   "vfx": {"impact": {"recipe": "impact", "element": "Physical", "scale": 1.0}},
+   "animation": {"attack_state": "swing"}
+  },
+  "BaseballBat": {
+   "display_name": "Baseball Bat",
+   "mesh": "res://assets/library/wf_bat.glb",
+   "delivery": "melee",
+   "range_m": 2.1,
+   "cooldown_s": 0.8,
+   "effect": {"kind": "damage", "amount": 30.0, "damage_type": "physical"},
+   "vfx": {"impact": {"recipe": "impact", "element": "Physical", "scale": 0.9}},
+   "animation": {"attack_state": "swing"}
+  },
+  "HockeyStick": {
+   "display_name": "Hockey Stick",
+   "mesh": "res://assets/library/wf_hockey_stick.glb",
+   "delivery": "melee",
+   "range_m": 2.3,
+   "cooldown_s": 0.8,
+   "effect": {"kind": "damage", "amount": 26.0, "damage_type": "physical"},
+   "vfx": {"impact": {"recipe": "impact", "element": "Physical", "scale": 0.9}},
+   "animation": {"attack_state": "swing"}
+  }
+ }
+}

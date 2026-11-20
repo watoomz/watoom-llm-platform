@@ -515,7 +515,7 @@ metadata:
   labels:
     app: platform-workers
     app.kubernetes.io/name: platform-workers
-    app.kubernetes.io/part-of: watoom-homelab
+    app.kubernetes.io/part-of: homelab-host
 spec:
   replicas: 1
   strategy:
@@ -528,7 +528,7 @@ spec:
       labels:
         app: platform-workers
         app.kubernetes.io/name: platform-workers
-        app.kubernetes.io/part-of: watoom-homelab
+        app.kubernetes.io/part-of: homelab-host
     spec:
       automountServiceAccountToken: false
       initContainers:

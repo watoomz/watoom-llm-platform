@@ -29,6 +29,6 @@ Because the edit is committed to the source the skills playbook deploys from, la
 ## Deploy and test
 
 ```
-ansible-playbook -i ansible/inventories/homelab/hosts.yml ansible/playbooks/skill-editor.yml --connection local --limit watoom-homelab
+ansible-playbook -i ansible/inventories/homelab/hosts.yml ansible/playbooks/skill-editor.yml --connection local --limit homelab-host
 python3 -m unittest test_skill_editor   # from tools/skill-editor
 ```

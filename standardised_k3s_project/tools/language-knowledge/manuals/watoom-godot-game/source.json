@@ -24,6 +24,14 @@
       "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-godot-game/references/gg-combat.md"
     },
     {
+      "file": "gg-destruction.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-godot-game/references/gg-destruction.md"
+    },
+    {
+      "file": "gg-dungeon.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-godot-game/references/gg-dungeon.md"
+    },
+    {
       "file": "gg-export.md",
       "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-godot-game/references/gg-export.md"
     },

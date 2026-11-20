@@ -21,9 +21,14 @@ rules:
   resourceNames:
   - llama-cpp-gemma-4-e4b
   - llama-cpp-llama-mesh
+  - llama-cpp-mm-06f6c45fbe6c3037
+  - llama-cpp-mm-1664e7966537969a
   - llama-cpp-mm-5af2aafee6b956fe
+  - llama-cpp-mm-6f1168c199628118
   - llama-cpp-mm-73306b413506f44b
   - llama-cpp-mm-7ca0135a77ad0c89
+  - llama-cpp-mm-88adc68f43bc4ee5
+  - llama-cpp-mm-aa6b02d9fb75e702
   - llama-cpp-mm-f8e679b2182aac21
   - llama-cpp-ornith-15-9b
   - llama-cpp-qwen35-defiant-fable-9b
@@ -46,9 +51,14 @@ rules:
   resources:
   - services
   resourceNames:
+  - llama-cpp-mm-06f6c45fbe6c3037
+  - llama-cpp-mm-1664e7966537969a
   - llama-cpp-mm-5af2aafee6b956fe
+  - llama-cpp-mm-6f1168c199628118
   - llama-cpp-mm-73306b413506f44b
   - llama-cpp-mm-7ca0135a77ad0c89
+  - llama-cpp-mm-88adc68f43bc4ee5
+  - llama-cpp-mm-aa6b02d9fb75e702
   - llama-cpp-mm-f8e679b2182aac21
   verbs:
   - get

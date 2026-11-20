@@ -3875,7 +3875,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "mktxp_connection_stats{routerboard_name=\"$node\"}",
+          "expr": "mktxp_ip_connections_total{routerboard_name=\"$node\"} or mktxp_ipv4_connections_total{routerboard_name=\"$node\"} or mktxp_ipv6_connections_total{routerboard_name=\"$node\"}",
           "format": "table",
           "instant": true,
           "interval": "",
@@ -3884,6 +3884,7 @@
         }
       ],
       "title": "Open Connections",
+      "description": "mktxp_connection_stats (the old per-connection table) no longer exists in the deployed mktxp exporter version; these are the current scalar connection-count metrics it exports instead.",
       "transformations": [
         {
           "id": "organize",
@@ -3891,28 +3892,16 @@
             "excludeByName": {
               "Time": true,
               "Value": false,
-              "__name__": true,
+              "__name__": false,
               "instance": true,
               "job": true,
               "routerboard_address": true,
               "routerboard_name": true,
               "version": true
             },
-            "indexByName": {
-              "Time": 0,
-              "Value": 7,
-              "__name__": 1,
-              "dhcp_name": 6,
-              "dst_addresses": 8,
-              "instance": 2,
-              "job": 3,
-              "routerboard_address": 4,
-              "routerboard_name": 5,
-              "src_address": 9
-            },
             "renameByName": {
               "Value": "Count",
-              "disabled": ""
+              "__name__": "Metric"
             }
           }
         }
@@ -4026,10 +4015,10 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "mktxp_connection_stats{routerboard_name=\"$node\"}",
+          "expr": "mktxp_ip_connections_total{routerboard_name=\"$node\"} or mktxp_ipv4_connections_total{routerboard_name=\"$node\"} or mktxp_ipv6_connections_total{routerboard_name=\"$node\"}",
           "instant": true,
           "interval": "",
-          "legendFormat": "{{dhcp_name}}",
+          "legendFormat": "{{__name__}}",
           "range": false,
           "refId": "A"
         }

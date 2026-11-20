@@ -1,7 +1,0 @@
-## Project evidence and execution boundaries
-- Treat the native session location as the project permission boundary. A requested output directory does not change it. Resolve the root before execution; if the requested project differs, ask the user to select that project/session first. Never silently substitute another project's checkpoints.
-- Verify checkpoint/evidence files exist before delegation and keep them inside the same canonical project. Give critics bounded plans, exact relevant contracts and already-read evidence excerpts. Do not require private operator reports, protected model weights or another project. Preserve read-only and external-directory denials; do not retry unchanged or bypass them.
-- The GUI shell is not an ML inference environment. Never import torch/diffusers, install packages, scan protected weights or generate images there. Use the installed Model Manager/image worker through its actually exposed approved interface and GPU-controller receipts. If that interface is not exposed, report that precise integration gap once; do not use a shell or permission workaround. SDXL checkpoints are image workers, not chat coordinators.
-- Compact/checkpoint before approaching the configured context allowance. Give each child a small bounded package and concise evidence, not whole logs/catalogs/history. A context overflow is a failed request; do not resume unchanged or equate a final child message with successful artifact validation.
-
-

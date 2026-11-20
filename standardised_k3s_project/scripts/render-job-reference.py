@@ -1,25 +1,84 @@
 #!/usr/bin/env python3
 """Render the reviewed job catalogue as static, searchable documentation; never execute jobs."""
-import argparse,html,json,re
+
+import argparse, html, json, re
 from pathlib import Path
-from project_groups import groups,stale_roots
-ROOT=Path(__file__).resolve().parents[1]
+from project_groups import groups, stale_roots
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
 def render():
- data=json.loads((ROOT/'config/glance/job-reference.json').read_text());items=data['items'];ids=[x['id'] for x in items]
- assert data['version']==1 and len(ids)==len(set(ids))
- stale=stale_roots(json.dumps(items),groups())
- assert not stale,'job prompts name non-group project roots: '+', '.join(stale)
- esc=lambda value:html.escape(str(value),quote=True)
- categories=sorted({x['category'] for x in items});cards=[]
- for item in items:
-  assert item['prompt'] and item['inputs'] and item['limits']
-  identifier=item['id'];assert re.fullmatch('[a-z0-9-]+',identifier)
-  cards.append('<article class="job-card" id="'+identifier+'" data-category="'+esc(item['category'])+'" data-kind="'+esc(item['kind'])+'"><div class="card-top"><span class="eyebrow">'+esc(item['category'])+'</span><span class="kind">'+esc(item['kind'])+'</span></div><h2><a href="#'+identifier+'">'+esc(item['name'])+'</a></h2><p class="purpose">'+esc(item['description'][:420])+'</p><p class="status">'+esc(item['status'])+'</p><p class="inputs"><strong>Supply:</strong> '+esc(', '.join(x.lower().replace('_',' ') for x in item['inputs']))+'</p><details><summary>Example request</summary><textarea readonly aria-label="'+esc(item['name'])+' example">'+html.escape(item['prompt'])+'</textarea></details><button class="copy-request" type="button">Copy request</button><p class="limits">'+esc(item['limits'])+'</p><p class="provenance">'+esc(item['source'])+'</p></article>')
- return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Run a job · WatooM</title><meta name="description" content="Searchable WatooM skill and pipeline reference with example requests, inputs and verified limits."><link rel="stylesheet" href="/guide/assets/site.css"><link rel="stylesheet" href="/guide/assets/job-reference.css"><script src="/guide/assets/job-reference.js" defer></script></head><body><main><header><nav aria-label="Main"><a href="/">WATOOM</a><a href="/guide/">Operations guide</a><a href="/guide/pipeline-prompts.html">Pipeline templates</a><a href="https://watoom-code.internal.homelab.example/prompt-builder">Prompt Builder ↗</a></nav><div class="hero"><p class="eyebrow">YOUR WORKFLOWS, IN ONE PLACE</p><h1>What would you like<br>to make or change?</h1><p class="intro">Find a skill or pipeline, copy its example, replace the bracketed inputs and paste it into a WatooM Code session. The coordinator asks for anything essential that is missing.</p><div class="stats"><span><b>__SKILLS__</b> installed skills</span><span><b>__PIPELINES__</b> pipeline templates</span><span>Verified __DATE__</span></div></div><div class="quick-links" aria-label="Common jobs"><button type="button" data-find="asset-image-clip-capture">Capture an asset</button><button type="button" data-find="human-pose-agent">Pose a character</button><button type="button" data-find="sims">Run a Sims job</button><button type="button" data-find="watoom-blender-asset-builder">Build in Blender</button><button type="button" data-find="Writing">Write something</button></div></header><section class="howto" aria-labelledby="howto-title"><h2 id="howto-title">From request to result</h2><ol><li><b>Choose your project.</b> Use its actual path and source asset, package or document.</li><li><b>Describe the result.</b> Include the change, view or motion, target format and quality.</li><li><b>Copy and send.</b> Paste the edited request into <a href="https://watoom-code.internal.homelab.example">WatooM Code</a>. Copying here never starts a job.</li><li><b>Review the evidence.</b> Check real outputs and remaining blockers before accepting delivery.</li></ol><p class="notice">Installed guidance is not a guarantee that every adapter, dependency or output is available. Sims modules check game-format support; prompt-builder skills only prepare prompts. Capture uses the native dispatcher and separate 4 GiB worker. Pose preparation supports qualified FK cases and needs asset-specific review.</p></section><section class="catalogue" aria-labelledby="catalogue-title"><div class="catalogue-heading"><h2 id="catalogue-title">Job reference</h2><button id="reset" type="button">Reset filters</button></div><div class="filters"><label>Search skills, tasks or tools<input id="search" type="search" placeholder="Try: portrait, package, animation, story…" autocomplete="off"></label><label>Category<select id="category"><option value="">All categories</option>__CATEGORIES__</select></label><label>Type<select id="kind"><option value="">All types</option><option>Pipeline</option><option>Skill</option><option>Prompt builder</option></select></label><label>Project path (optional)<input id="project" placeholder="/data/ai/projects/images" autocomplete="off" spellcheck="false"></label></div><p id="count" role="status" aria-live="polite">__COUNT__ reference entries</p><p id="feedback" role="status" aria-live="polite"></p><div class="cards">__CARDS__</div><p id="empty" hidden>No matching entries. Try a broader search or reset the filters.</p></section><footer><p>Current reference: __DATE__. Examples are requests, not shell commands. Credentials, private instructions and job submission controls are not included.</p><a href="/guide/">Back to operations guide</a></footer></main></body></html>'.replace('__SKILLS__',str(data['installed_skill_count'])).replace('__PIPELINES__',str(data['pipeline_count'])).replace('__DATE__',esc(data['verified_on'])).replace('__COUNT__',str(len(items))).replace('__CATEGORIES__',''.join('<option>'+esc(c)+'</option>' for c in categories)).replace('__CARDS__',''.join(cards))
+    data = json.loads((ROOT / "config/glance/job-reference.json").read_text())
+    items = data["items"]
+    ids = [x["id"] for x in items]
+    assert data["version"] == 1 and len(ids) == len(set(ids))
+    stale = stale_roots(json.dumps(items), groups())
+    assert not stale, "job prompts name non-group project roots: " + ", ".join(stale)
+    esc = lambda value: html.escape(str(value), quote=True)
+    categories = sorted({x["category"] for x in items})
+    cards = []
+    for item in items:
+        assert item["prompt"] and item["inputs"] and item["limits"]
+        identifier = item["id"]
+        assert re.fullmatch("[a-z0-9-]+", identifier)
+        cards.append(
+            '<article class="job-card" id="'
+            + identifier
+            + '" data-category="'
+            + esc(item["category"])
+            + '" data-kind="'
+            + esc(item["kind"])
+            + '"><div class="card-top"><span class="eyebrow">'
+            + esc(item["category"])
+            + '</span><span class="kind">'
+            + esc(item["kind"])
+            + '</span></div><h2><a href="#'
+            + identifier
+            + '">'
+            + esc(item["name"])
+            + '</a></h2><p class="purpose">'
+            + esc(item["description"][:420])
+            + '</p><p class="status">'
+            + esc(item["status"])
+            + '</p><p class="inputs"><strong>Supply:</strong> '
+            + esc(", ".join(x.lower().replace("_", " ") for x in item["inputs"]))
+            + '</p><details><summary>Example request</summary><textarea readonly aria-label="'
+            + esc(item["name"])
+            + ' example">'
+            + html.escape(item["prompt"])
+            + '</textarea></details><button class="copy-request" type="button">Copy request</button><p class="limits">'
+            + esc(item["limits"])
+            + '</p><p class="provenance">'
+            + esc(item["source"])
+            + "</p></article>"
+        )
+    return (
+        '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Run a job · WatooM</title><meta name="description" content="Searchable WatooM skill and pipeline reference with example requests, inputs and verified limits."><link rel="stylesheet" href="/guide/assets/site.css"><link rel="stylesheet" href="/guide/assets/job-reference.css"><script src="/guide/assets/job-reference.js" defer></script></head><body><main><header><nav aria-label="Main"><a href="/">WATOOM</a><a href="/guide/">Operations guide</a><a href="/guide/pipeline-prompts.html">Pipeline templates</a><a href="https://watoom-code.internal.homelab.example/prompt-builder">Prompt Builder ↗</a></nav><div class="hero"><p class="eyebrow">YOUR WORKFLOWS, IN ONE PLACE</p><h1>What would you like<br>to make or change?</h1><p class="intro">Find a skill or pipeline, copy its example, replace the bracketed inputs and paste it into a WatooM Code session. The coordinator asks for anything essential that is missing.</p><div class="stats"><span><b>__SKILLS__</b> installed skills</span><span><b>__PIPELINES__</b> pipeline templates</span><span>Verified __DATE__</span></div></div><div class="quick-links" aria-label="Common jobs"><button type="button" data-find="asset-image-clip-capture">Capture an asset</button><button type="button" data-find="human-pose-agent">Pose a character</button><button type="button" data-find="sims">Run a Sims job</button><button type="button" data-find="watoom-blender-asset-builder">Build in Blender</button><button type="button" data-find="Writing">Write something</button></div></header><section class="howto" aria-labelledby="howto-title"><h2 id="howto-title">From request to result</h2><ol><li><b>Choose your project.</b> Use its actual path and source asset, package or document.</li><li><b>Describe the result.</b> Include the change, view or motion, target format and quality.</li><li><b>Copy and send.</b> Paste the edited request into <a href="https://watoom-code.internal.homelab.example">WatooM Code</a>. Copying here never starts a job.</li><li><b>Review the evidence.</b> Check real outputs and remaining blockers before accepting delivery.</li></ol><p class="notice">Installed guidance is not a guarantee that every adapter, dependency or output is available. Sims modules check game-format support; prompt-builder skills only prepare prompts. Capture uses the native dispatcher and separate 4 GiB worker. Pose preparation supports qualified FK cases and needs asset-specific review.</p></section><section class="catalogue" aria-labelledby="catalogue-title"><div class="catalogue-heading"><h2 id="catalogue-title">Job reference</h2><button id="reset" type="button">Reset filters</button></div><div class="filters"><label>Search skills, tasks or tools<input id="search" type="search" placeholder="Try: portrait, package, animation, story…" autocomplete="off"></label><label>Category<select id="category"><option value="">All categories</option>__CATEGORIES__</select></label><label>Type<select id="kind"><option value="">All types</option><option>Pipeline</option><option>Skill</option><option>Prompt builder</option></select></label><label>Project path (optional)<input id="project" placeholder="/data/ai/projects/images" autocomplete="off" spellcheck="false"></label></div><p id="count" role="status" aria-live="polite">__COUNT__ reference entries</p><p id="feedback" role="status" aria-live="polite"></p><div class="cards">__CARDS__</div><p id="empty" hidden>No matching entries. Try a broader search or reset the filters.</p></section><footer><p>Current reference: __DATE__. Examples are requests, not shell commands. Credentials, private instructions and job submission controls are not included.</p><a href="/guide/">Back to operations guide</a></footer></main></body></html>'.replace(
+            "__SKILLS__", str(data["installed_skill_count"])
+        )
+        .replace("__PIPELINES__", str(data["pipeline_count"]))
+        .replace("__DATE__", esc(data["verified_on"]))
+        .replace("__COUNT__", str(len(items)))
+        .replace("__CATEGORIES__", "".join("<option>" + esc(c) + "</option>" for c in categories))
+        .replace("__CARDS__", "".join(cards))
+    )
+
+
 def main():
- parser=argparse.ArgumentParser();parser.add_argument('--check',action='store_true');args=parser.parse_args();path=ROOT/'config/glance/guide/job-reference.html';value=render()
- if args.check:assert path.read_text()==value,'Job reference page drift'
- else:
-  temporary=path.with_suffix('.html.tmp');temporary.write_text(value);temporary.replace(path)
- print('PASS job-reference.html')
-if __name__=='__main__':main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--check", action="store_true")
+    args = parser.parse_args()
+    path = ROOT / "config/glance/guide/job-reference.html"
+    value = render()
+    if args.check:
+        assert path.read_text() == value, "Job reference page drift"
+    else:
+        temporary = path.with_suffix(".html.tmp")
+        temporary.write_text(value)
+        temporary.replace(path)
+    print("PASS job-reference.html")
+
+
+if __name__ == "__main__":
+    main()

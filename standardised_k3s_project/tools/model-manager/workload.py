@@ -8,7 +8,7 @@ def build(record,artifacts,images,namespace="llama-cpp"):
  identity=record["id"]
  if not re.fullmatch("[a-f0-9]{64}",identity):raise ValueError("Invalid managed identity")
  name="llama-cpp-mm-"+identity[:16];alias="mm-"+identity[:16];kind=record["kind"];settings=record["settings"]
- validate(settings,kind,max_context=record.get("max_context"))
+ validate(settings,kind,capabilities=record.get("capabilities"),max_context=record.get("max_context"))
  labels={"app":name,"watoom.io/model-manager":"owned","watoom.io/model-id":identity[:32]}
  auth=images.get("backend_auth_file")
  if auth!="/data/ai/private/model-manager/backend-key":raise ValueError("Managed backend authentication file required")
@@ -21,18 +21,34 @@ def build(record,artifacts,images,namespace="llama-cpp"):
   vol="artifact-"+str(index)
   volumes.append({"name":vol,"hostPath":{"path":str(path),"type":"File"}})
   mounts.append({"name":vol,"mountPath":"/models/"+path.name,"readOnly":True})
- if kind=="gguf":
+ if kind in ("gguf","gguf-lora"):
   image=images.get("gguf",LLAMA_IMAGE)
-  models=[m["mountPath"] for m in mounts if m["mountPath"].endswith(".gguf")]
+  projector=settings.get("projector")
+  projector_mount="/models/"+Path(artifacts[-1]["path"]).name if projector else None
+  if projector and Path(artifacts[-1]["path"]).name!=Path(projector).name:raise ValueError("Projector must be the last artifact")
+  models=[m["mountPath"] for m in mounts if m["mountPath"].endswith(".gguf") and m["mountPath"]!=projector_mount]
+  # gguf-lora artifacts are [adapter, base...]: the base is served and the adapter applied with --lora.
+  if kind=="gguf-lora" and len(models)<2:raise ValueError("GGUF LoRA needs the adapter and its base model")
   if not models:raise ValueError("GGUF model absent")
-  args=["--host","0.0.0.0","--port","8080","--api-key-file","/private/backend-key","--alias",alias,"--model",models[0]]
+  args=["--host","0.0.0.0","--port","8080","--api-key-file","/private/backend-key","--metrics","--alias",alias,"--model",models[1 if kind=="gguf-lora" else 0]]
+  if kind=="gguf-lora":args.extend(("--lora",models[0]))
   flags={"context":"--ctx-size","threads":"--threads","gpu_layers":"--gpu-layers","cache_k":"--cache-type-k","cache_v":"--cache-type-v","parallel":"--parallel","batch":"--batch-size","ubatch":"--ubatch-size","cpu_ffn":"--n-cpu-ffn","reasoning":"--reasoning","temperature":"--temp","top_p":"--top-p","top_k":"--top-k","min_p":"--min-p","presence_penalty":"--presence-penalty","repeat_penalty":"--repeat-penalty","repeat_last_n":"--repeat-last-n"}
   for k,flag in flags.items():
    if k in settings:args.extend((flag,str(settings[k])))
   args.extend(("--flash-attn","on" if settings.get("flash_attention",True) else "off"))
   if settings.get("jinja",True):args.append("--jinja")
-  if settings.get("speculation","none")!="none" or settings.get("projector"):raise ValueError("Additional architecture capability proof required")
-  args.extend(("--spec-type","none"))
+  if projector:
+   # Proven at install from both GGUF headers (mmproj vision encoder, projection_dim == embedding_length).
+   if not (record.get("capabilities") or {}).get("vision"):raise ValueError("Vision projector not proven")
+   args.extend(("--mmproj",projector_mount,"--image-max-tokens","1024"))
+   if not settings.get("projector_gpu"):args.append("--no-mmproj-offload")
+  speculation=settings.get("speculation","none")
+  if speculation=="draft-mtp":
+   # Proven at install from the GGUF header (<arch>.nextn_predict_layers > 0), never from a file name.
+   if not (record.get("capabilities") or {}).get("mtp"):raise ValueError("MTP head not proven in the GGUF header")
+   args.extend(("--spec-type","draft-mtp","--spec-draft-n-max",str(settings["draft_count"])))
+  elif speculation!="none":raise ValueError("Unsupported speculation")
+  else:args.extend(("--spec-type","none"))
   command=["/app/llama-server"]
  else:
   image=images.get("sdxl")

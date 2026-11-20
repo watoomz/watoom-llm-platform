@@ -1,0 +1,120 @@
+---
+- name: Read installed pipeline for narrow compatibility fix
+  ansible.builtin.slurp:
+    src: /data/ai/helper-scripts/llama_mesh_pipeline.py
+  register: mesh_pipeline_source
+
+- name: Add bounded idle wait for asynchronous OpenCode acknowledgement
+  ansible.builtin.replace:
+    path: /data/ai/helper-scripts/llama_mesh_pipeline.py
+    regexp: '^def generate\(c,request,job\):'
+    replace: |
+      def safe_when_idle(c,phase):
+          deadline=time.monotonic()+90
+          while True:
+              try:
+                  safe(c)
+                  return
+              except RuntimeError as error:
+                  if str(error)!='Primary inference busy; retry when idle' or time.monotonic()>=deadline:
+                      raise
+                  phase('waiting-primary-idle')
+                  time.sleep(2)
+
+      def generate(c,request,job):
+    backup: true
+  when: "'def safe_when_idle(' not in (mesh_pipeline_source.content | b64decode)"
+
+- name: Use bounded idle wait while preserving all preflight safety checks
+  ansible.builtin.replace:
+    path: /data/ai/helper-scripts/llama_mesh_pipeline.py
+    regexp: '        safe\(c\);write\(job/''primary-before.json'',obj\(c,''deployment'',c\[''primary''\]\)\)'
+    replace: "        safe_when_idle(c,phase);write(job/'primary-before.json',obj(c,'deployment',c['primary']))"
+    backup: true
+
+- name: Ensure narrow mesh bridge socket directory
+  ansible.builtin.file:
+    path: "{{ llm_mesh_bridge_home }}/.config/opencode/mesh-bridge"
+    state: directory
+    owner: root
+    group: "{{ llm_mesh_bridge_gid }}"
+    mode: "0750"
+
+- name: Install host mesh bridge
+  ansible.builtin.copy:
+    src: "{{ role_path }}/files/opencode_mesh_bridge.py"
+    dest: /data/ai/helper-scripts/opencode_mesh_bridge.py
+    owner: root
+    group: root
+    mode: "0700"
+  register: mesh_bridge_source
+
+- name: Configure narrow mesh bridge
+  ansible.builtin.copy:
+    dest: /data/ai/helper-scripts/config/opencode-mesh-bridge.json
+    owner: root
+    group: root
+    mode: "0600"
+    content: >-
+      {{ {'pipeline': '/data/ai/helper-scripts/llama_mesh_pipeline.py',
+          'state': '/data/ai/helper-scripts/state/opencode-mesh-bridge',
+          'socket': llm_mesh_bridge_home ~ '/.config/opencode/mesh-bridge/bridge.sock',
+          'uid': llm_mesh_bridge_uid | int,
+          'additional_uids': llm_mesh_bridge_additional_uids,
+          'checkpoint_databases': llm_mesh_bridge_checkpoint_databases,
+          'gid': llm_mesh_bridge_gid | int} | to_nice_json }}
+  register: mesh_bridge_config
+
+- name: Install authorized mesh bridge unit
+  ansible.builtin.template:
+    src: opencode-mesh-bridge.service.j2
+    dest: /etc/systemd/system/watoom-opencode-mesh-bridge.service
+    owner: root
+    group: root
+    mode: "0644"
+  register: mesh_bridge_unit
+
+- name: Start narrow bridge without touching pipeline workers
+  ansible.builtin.systemd_service:
+    name: watoom-opencode-mesh-bridge
+    daemon_reload: "{{ mesh_bridge_unit.changed }}"
+    enabled: true
+    state: "{{ 'restarted' if mesh_bridge_source.changed or mesh_bridge_config.changed or mesh_bridge_unit.changed else 'started' }}"
+
+- name: Install mesh MCP adapter in existing tool directory
+  ansible.builtin.copy:
+    src: "{{ role_path }}/files/watoom-llama-mesh.py"
+    dest: "{{ llm_mesh_bridge_home }}/.config/opencode/watoom-tools/watoom-llama-mesh.py"
+    owner: "{{ llm_mesh_bridge_uid }}"
+    group: "{{ llm_mesh_bridge_gid }}"
+    mode: "0755"
+
+- name: Ensure dedicated native mesh skill directory
+  ansible.builtin.file:
+    path: "{{ llm_mesh_bridge_home }}/.config/opencode/skills/watoom-llama-mesh"
+    state: directory
+    owner: "{{ llm_mesh_bridge_uid }}"
+    group: "{{ llm_mesh_bridge_gid }}"
+    mode: "0755"
+
+- name: Install mesh skill through supported native discovery directory
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../watoom-code/files/native/skills/watoom-llama-mesh/SKILL.md"
+    dest: "{{ llm_mesh_bridge_home }}/.config/opencode/skills/watoom-llama-mesh/SKILL.md"
+    owner: "{{ llm_mesh_bridge_uid }}"
+    group: "{{ llm_mesh_bridge_gid }}"
+    mode: "0644"
+
+- name: Label only new files using existing SELinux mappings
+  ansible.builtin.command:
+    argv:
+      - restorecon
+      - -RFv
+      - "{{ llm_mesh_bridge_home }}/.config/opencode/mesh-bridge"
+      - "{{ llm_mesh_bridge_home }}/.config/opencode/watoom-tools/watoom-llama-mesh.py"
+      - "{{ llm_mesh_bridge_home }}/.config/opencode/skills/watoom-llama-mesh"
+  register: mesh_bridge_labels
+  changed_when: mesh_bridge_labels.stdout | trim | length > 0
+
+# The old OpenCode v2 canary MCP registration (ConfigMap patch + canary rollout restart in namespace opencode)
+# was removed in T-0115: the canary is retired and watoom-code registers its own watoom-llama-mesh tool.

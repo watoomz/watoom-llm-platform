@@ -1,10 +1,8 @@
 # k3s Platform
 
-Current deployment snapshot: 13 October 2026. Runtime-specific status is dated; configured/recovery guidance is not an end-to-end test.
-
 ## Baseline
 
-- Single node: `watoom-homelab`
+- Single node: `homelab-host`
 - k3s: `v1.36.3+k3s1`
 - node/LAN IP: `10.99.20.225`
 - pod network observed: `10.242.0.0/24`
@@ -16,9 +14,9 @@ Current deployment snapshot: 13 October 2026. Runtime-specific status is dated; 
 
 ## Current namespaces
 
-The current cluster includes infrastructure, media, game and LLM namespaces such as `glance`, `monitoring`, `pihole`, `platform-workers`, `llama-cpp`, `open-webui`, `searxng`, `opencode`, `pi-agent`, `kali-agent`, `seerr`, `jellyfin`, `cs2`, and game-specific namespaces.
+The current cluster includes infrastructure, media, game and LLM namespaces such as `glance`, `monitoring`, `pihole`, `platform-workers`, `llama-cpp`, `searxng`, `watoom-code`, `watoom-code-rig-jobs`, `kali-agent`, `seerr`, `jellyfin`, `cs2`, and game-specific namespaces.
 
-The retired generic `/app/kali` path is unrelated to active `kali-agent` MCP/workbench workloads and Docker `kali-workbench` (the earlier `kali-pentest` name is historical). Namespace existence alone does not establish a running service.
+Kali runs as the `kali-agent` MCP Deployment and the Docker `kali-workbench` container. Namespace existence alone does not establish a running service.
 
 ## Desired-state groups
 
@@ -66,7 +64,7 @@ The game server remains `Deployment/cs2` in namespace `cs2`. Helper processes ha
 - `cs2-stats-tracker:8080`
 - `platform-workers:9599`
 
-Retired compatibility Services, old helper PVCs/PVs and standalone helper Deployments must not be restored from historical documentation.
+Only the manifests in this repository define the platform; do not recreate Services, PVCs or helper Deployments that are not in it.
 
 ## Documentation publication
 

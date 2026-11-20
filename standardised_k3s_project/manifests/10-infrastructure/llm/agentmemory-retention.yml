@@ -98,10 +98,12 @@ spec:
   schedule: "17 * * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 2
-  failedJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
   startingDeadlineSeconds: 1800
   jobTemplate:
     spec:
+      # Never leave a finished/failed pod behind for days (T-0115).
+      ttlSecondsAfterFinished: 7200
       backoffLimit: 0
       activeDeadlineSeconds: 1800
       template:

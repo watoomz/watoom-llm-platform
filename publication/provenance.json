@@ -1,41 +1,13 @@
 {
-  "platform_head": "9de6a954f277090e850b4db905313a66f9dc7c1a",
-  "platform_dirty_paths": [
-    "standardised_k3s_project/ansible/roles/watoom-code/files/skills/blender-animation/SKILL.md",
-    "standardised_k3s_project/ansible/roles/watoom-code/files/skills/blender-character-rigging/SKILL.md",
-    "standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-game-blueprint/references/engine-unreal.md",
-    "standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-unreal-combat/plugin/WatooMCombat/Source/WatooMCombat/Private/WatooMAbilities.cpp",
-    "standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-unreal-combat/plugin/WatooMCombat/Source/WatooMCombat/Private/WatooMCombatCharacter.cpp",
-    "standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-unreal-combat/plugin/WatooMCombat/Source/WatooMCombat/Private/WatooMProjectile.cpp",
-    "standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-unreal-combat/plugin/WatooMCombat/Source/WatooMCombat/Public/WatooMCombatData.h",
-    "standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-unreal-combat/plugin/WatooMCombat/Source/WatooMCombat/Public/WatooMProjectile.h",
-    "standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-unreal-combat/scripts/test_unreal_combat.py",
-    "standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-unreal-combat/scripts/unreal_combat.py",
-    "standardised_k3s_project/ansible/vars/artex.yml",
-    "standardised_k3s_project/docs/guide/watoom-code.md",
-    "standardised_k3s_project/tools/git/llm-platform-publication-policy.json",
-    "standardised_k3s_project/tools/git/llm-root-overlay/README.md",
-    "standardised_k3s_project/tools/git/llm-scope-overlay/tools/set-domain.py",
-    "standardised_k3s_project/tools/language-knowledge/manuals/ue-mcp/effects.json",
-    "standardised_k3s_project/tools/language-knowledge/manuals/ue-mcp/entries.jsonl",
-    "standardised_k3s_project/tools/language-knowledge/manuals/ue-mcp/source.json",
-    "standardised_k3s_project/tools/language-knowledge/manuals/ue-mcp/sources/configuration.md",
-    "standardised_k3s_project/tools/language-knowledge/manuals/ue-mcp/sources/tool-reference.md",
-    "standardised_k3s_project/tools/language-knowledge/manuals/watoom-ue-route/entries.jsonl",
-    "standardised_k3s_project/tools/rig-ue-mcp/Add-RigAuthorizedKey.ps1",
-    "standardised_k3s_project/tools/rig-ue-mcp/README.md",
-    "standardised_k3s_project/tools/rig-ue-mcp/project_plugins.json",
-    "standardised_k3s_project/tools/rig-ue-mcp/rig_build_plugin.py",
-    "standardised_k3s_project/tools/rig-ue-mcp/test_rig_build_plugin.py",
-    "standardised_k3s_project/tools/rig-ue-mcp/ue_combat_check.py"
-  ],
+  "platform_head": "9309c27635ff32a5aa9fdb693b2b16a04b3c10fa",
+  "platform_dirty_paths": [],
   "application_commit": "440fb4d1f9409a3c9278e9eabd27be4b657232fe",
   "application_origin": "https://github.com/anomalyco/opencode.git",
   "history_imported": false,
   "excluded_private_source": [
     "standardised_k3s_project/ansible/roles/watoom-code/files/skills/reverse-engineer-feature/SKILL.md"
   ],
-  "file_count": 12676,
+  "file_count": 12533,
   "symlinks": [
     {
       "path": "application/packages/app/public/apple-touch-icon-v3.png",
@@ -223,8 +195,8 @@
     }
   ],
   "placeholder_substitutions": {
-    "files": 244,
-    "replacements": 4725
+    "files": 276,
+    "replacements": 4968
   },
   "review_policy": "standardised_k3s_project/tools/git/llm-platform-publication-policy.json",
   "limits": [

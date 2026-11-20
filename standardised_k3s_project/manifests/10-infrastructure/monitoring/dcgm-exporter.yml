@@ -46,7 +46,18 @@ spec:
       containers:
       - name: dcgm-exporter
         image: docker.io/nvidia/dcgm-exporter:4.5.1-4.8.0-ubuntu22.04
+        readinessProbe:  # T-0115: gate traffic on the port actually listening (never restarts the pod)
+          tcpSocket:
+            port: 9400
+          periodSeconds: 20
+          failureThreshold: 3
         imagePullPolicy: IfNotPresent
+        resources:  # T-0115: live use ~460Mi / 3m CPU
+          requests:
+            cpu: 10m
+            memory: 512Mi
+          limits:
+            memory: 1Gi
         args:
         - -f
         - /etc/dcgm-exporter/custom/counters.csv

@@ -2,18 +2,17 @@
 """Assemble the watoom-code native agent definitions from single-source fragments.
 
 Source of truth:
-    ansible/roles/opencode-agent/files/v2-native/_src/
+    ansible/roles/watoom-code/files/native/_src/
         assembly.json            -- ordered fragment list per role
         shared/*.md              -- fragments shared by >1 role
         roles/<role>/*.md        -- role-specific fragments
 
 Output (generated; do not hand-edit):
-    ansible/roles/opencode-agent/files/v2-native/agents/<role>.md
+    ansible/roles/watoom-code/files/native/agents/<role>.md
 
 Each <role>.md is the byte-exact concatenation (no separator) of the fragment
-files listed for that role in assembly.json. Only the roles present in
-assembly.json are generated; other agents (watoom-creative-writer, watoom-kali)
-are left untouched.
+files listed for that role in assembly.json. Every agent, including
+watoom-kali and watoom-creative-writer, is generated (T-0117).
 
 Usage:
     render-native-agents.py           regenerate the role .md files
@@ -26,8 +25,8 @@ import json
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "ansible/roles/opencode-agent/files/v2-native/_src"
-OUT = ROOT / "ansible/roles/opencode-agent/files/v2-native/agents"
+SRC = ROOT / "ansible/roles/watoom-code/files/native/_src"
+OUT = ROOT / "ansible/roles/watoom-code/files/native/agents"
 ASSEMBLY = SRC / "assembly.json"
 
 

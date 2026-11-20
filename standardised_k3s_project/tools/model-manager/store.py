@@ -1,7 +1,8 @@
 """Single durable queue/catalog, revision-scoped overrides and dependency references."""
 import sqlite3,json,hashlib,time,threading
 def model_identity(selection):
-    return hashlib.sha256(json.dumps({k:v for k,v in selection.items() if k!="max_context"},sort_keys=True).encode()).hexdigest()
+    # Not part of what is served: the context limit (from the header) and the card description (T-0087).
+    return hashlib.sha256(json.dumps({k:v for k,v in selection.items() if k not in ("max_context","description")},sort_keys=True).encode()).hexdigest()
 class Store:
     def __init__(self,path):
         self.path=path; self.local=threading.local()
@@ -53,8 +54,15 @@ class Store:
             result.append(item)
         return result
     def transition(self,key,state,progress=0,error=None):
-        if state=="DOWNLOADING" and self.cancelled(key):return
-        with self.db: self.db.execute("UPDATE jobs SET state=?,progress=?,error=?,stage=NULL,updated=? WHERE id=?",(state,progress,error,time.time(),key))
+        # A separate read-then-write here races a concurrent cancel() between the read and
+        # the write: a progress tick can read "not yet cancelled" and then overwrite a
+        # CANCEL_REQUESTED/CANCELLED row back to DOWNLOADING. Guarding in the WHERE clause
+        # makes the check and the write a single atomic statement.
+        with self.db:
+            if state=="DOWNLOADING":
+                self.db.execute("UPDATE jobs SET state=?,progress=?,error=?,stage=NULL,updated=? WHERE id=? AND state NOT IN ('CANCEL_REQUESTED','CANCELLED')",(state,progress,error,time.time(),key))
+            else:
+                self.db.execute("UPDATE jobs SET state=?,progress=?,error=?,stage=NULL,updated=? WHERE id=?",(state,progress,error,time.time(),key))
     def set_stage(self,key,stage):
         # Only a running generation carries a stage; never resurrect a finished or cancelled job.
         with self.db: self.db.execute("UPDATE jobs SET stage=?,updated=? WHERE id=? AND state='GENERATING'",(stage,time.time(),key))

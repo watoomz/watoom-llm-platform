@@ -8,7 +8,7 @@
 | VLAN 20 — `10.99.20.0/24` | `vlan_TheHood` | homelab/LAN; server default route |
 | VLAN 30 — `10.99.30.0/24` | `vlan_wifi24` | low-trust Wi-Fi |
 | VLAN 40 — `10.99.40.0/24` | `vlan_wifi5` | low-trust Wi-Fi |
-| VLAN 50 — `192.168.0.0/24` | `vlan_dmz` | DMZ/game exposure |
+| VLAN 50 — `192.168.250.0/24` | `vlan_dmz` | DMZ/game exposure |
 | Break-glass — `192.168.99.0/24` | `emergency-mgmt` | emergency management |
 
 The collected RB5009 export shows VLAN filtering, tagged trunks and restricted management services. IPv6 is disabled in the current RouterOS export.
@@ -35,15 +35,13 @@ Pi-hole on `10.99.20.225` is the local resolver for homelab clients. Each intern
 <service>.internal.homelab.example
 ```
 
-The old `*.agent.example` naming belongs only to legacy documentation and should not be used for new configuration.
-
 Inside k3s, CoreDNS is `10.243.0.10` and services use normal Kubernetes DNS such as:
 
 ```text
 service.namespace.svc.cluster.local
 ```
 
-CS2 helper services are now canonical in namespace `platform-workers`, for example:
+CS2 helper services run in namespace `platform-workers`, for example:
 
 ```text
 cs2-server-tracker.platform-workers.svc.cluster.local
@@ -53,30 +51,22 @@ cs2-server-tracker.platform-workers.svc.cluster.local
 
 Traefik is the internal ingress controller and is exposed on `10.99.20.225` ports 80/443. Internal application routes use wildcard TLS Secrets named `watoom-tls` in the relevant namespaces.
 
-### Current certificate implementation
+### Certificates
 
-The live audit on 5 October 2026 showed a self-signed wildcard certificate with:
+Every internal HTTPS name uses one Let's Encrypt wildcard certificate for `*.internal.homelab.example` (and `internal.homelab.example`):
 
-- subject/issuer: `CN=*.internal.homelab.example`
-- SANs: `*.internal.homelab.example`, `internal.homelab.example`, `10.99.20.225`, `192.168.250.225`
-- Kubernetes Secret name: `watoom-tls`
+- cert-manager (namespace `cert-manager`) issues it through the `letsencrypt-cloudflare-prod` ClusterIssuer with a Cloudflare DNS-01 challenge; a `letsencrypt-cloudflare-staging` issuer exists for tests.
+- The `Certificate` `watoom-internal-wildcard-prod` writes Secret `watoom-internal-wildcard-prod-tls` in `cert-manager` and renews automatically.
+- `watoom-internal-tls-sync.timer` (`scripts/sync-internal-tls.py`, installed by `homelab_rebuild` `local_tls`) copies it into every namespace's `watoom-tls` Secret, the `watoom-code-lan-tls` Secret and the host files in `/data/watoom-local-tls`. Only namespaces that already hold the Secret are updated.
+- `scripts/install-browser-trusted-tls.sh` installs and repairs the whole chain; `STAGING_ONLY=true` tests against the staging issuer.
 
-No cert-manager `Certificate` or `ClusterIssuer` CRDs were present in the audited live cluster. Treat self-signed wildcard TLS as the current implementation unless a deliberate TLS migration is performed.
+Browsers trust it with no local CA. If one shows "not secure", check the Secret in that namespace matches the cert-manager one and that the sync timer last ran successfully.
 
-### Preferred / planned certificate model
+## Internal names
 
-- wildcard: `*.internal.homelab.example`
-- issuer: Let's Encrypt
-- challenge: Cloudflare DNS-01
-- secret name used by application routes: `watoom-tls`
+Current `internal.homelab.example` names (from the live IngressRoutes): `arma-reforger`, `artex`, `audiobookshelf`, `bazarr`, `dispatcharr`, `glance`, `grafana`, `iac-console`, `immich`, `jellyfin`, `lidarr`, `llm-router`, `pihole`, `plex`, `prometheus`, `prowlarr`, `qbittorrent`, `qwen38`, `radarr`, `sabnzbd`, `searxng`, `seerr`, `sims4-mods`, `sonarr`, `traefik-dashboard`, `vaultwarden`, `watoom-code` and `wireguard`.
 
-`scripts/install-browser-trusted-tls.sh` is the migration helper for the preferred model. Do not describe that model as current until cert-manager and the issuer/certificate objects are actually live and validated. `STAGING_ONLY=true` remains available for staging tests.
-
-## Current internal names evidenced by current manifests/config
-
-`arma-reforger`, `audiobookshelf`, `bazarr`, `dispatcharr`, `glance`, `grafana`, `iac-console`, `immich`, `jellyfin`, `lidarr`, `llm-builder`, `opencode`, `open-webui`, `pihole`, `plex`, `prometheus`, `prowlarr`, `qbittorrent`, `llm-router` (router API, from 2026-11-18), `qwen38` (legacy experiment endpoint), `radarr`, `sabnzbd`, `searxng`, `seerr`, `sonarr`, `traefik-dashboard`, `vaultwarden`, and `wireguard` under `internal.homelab.example`.
-
-The `qwen38.internal.homelab.example` ingress belongs to the older retained Qwen3.8 experiment deployment and is not the canonical router entry for normal Open WebUI model selection.
+`qwen38` is the direct endpoint of the `llama-cpp-qwen38` experiment backend; models are normally reached through `llm-router`.
 
 ## Public publication
 

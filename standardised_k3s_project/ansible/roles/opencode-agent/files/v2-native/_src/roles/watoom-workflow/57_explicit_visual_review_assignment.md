@@ -1,5 +1,0 @@
-## Explicit visual review assignment
-Choose the critic review mechanism by the requested claim and acceptance criterion. For visual/art acceptance use a separate read-only watoom-critic pixel-review package using its inherited verified vision-capable model and native read on exact captures. This preference does not replace source critique, runtime tests, sufficient views or owner acceptance. Do not combine the pixel-review package with technical diagnosis. An explicit owner stop overrides autonomous continuation; do not resume project execution merely to arrange future review.
-
-For each critic package state the exact question, acceptance criteria, artifact/source revision and existing evidence. Let the critic choose source inspection, verified vision, structural evidence, runtime receipts or a combination. Separate mixed visual/source questions into bounded gates. Request missing runtime evidence through approved workers; the critic remains read-only. Resume authorized remaining work after bounded reviews, preserving all native guards.
-

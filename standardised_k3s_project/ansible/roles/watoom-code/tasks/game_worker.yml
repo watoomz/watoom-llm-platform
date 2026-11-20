@@ -61,12 +61,15 @@
       Type=oneshot
       ExecStart=/usr/bin/python3 {{ watoom_game_worker_release_root }}/standardised_k3s_project/tools/watoom-code/game_worker_bridge.py
       ExecStopPost=/usr/bin/python3 {{ watoom_game_worker_release_root }}/standardised_k3s_project/tools/watoom-code/game_worker_bridge.py --recover-cpu
-      TimeoutStopSec=65min
+      TimeoutStopSec=210min
       Nice=15
       CPUQuota=100%
       MemoryMax=768M
       MemorySwapMax=0
-      TimeoutStartSec=60min
+      # Type=oneshot: TimeoutStartSec bounds the whole ExecStart, so it must cover the single heaviest
+      # operation's own subprocess.run timeout (godot-game, 12000s = 200min; see game_worker_bridge.py) plus
+      # headroom for the dispatcher's own setup/polling/JSON work either side of that call.
+      TimeoutStartSec=205min
       # The HDD uses the bfq scheduler: give this job's disk reads a lower share so the GUI's database reads are not starved.
       IOWeight=20
       KillMode=control-group

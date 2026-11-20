@@ -1,6 +1,6 @@
 ---
 - name: Schedule guarded existing Skill improvement and rollback
-  hosts: watoom-homelab
+  hosts: homelab-host
   become: true
   gather_facts: false
   vars:

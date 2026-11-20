@@ -8,6 +8,10 @@ watoom_code_root: /data/ai/watoom-code
 # sooner (extra summarisation cost) without reducing retained reasoning — opencode does NOT store or
 # resend prior-turn reasoning/thinking (assistant messages persist only content/tool-calls/text), so
 # reasoning is already ephemeral. Context growth comes from accumulated tool outputs/messages, not reasoning.
+# 2026-11-19 (owner): each model's budget now scales with its served llama-server context, 100K per 128K served
+# (router /v1/models application_context from the Deployment's --ctx-size; enable-model-context.py), so the ~17 GB
+# 27B models at 128K keep 100K and smaller models with bigger contexts get more. This value is only the default for a
+# model that reports none, and Swift's baseline.
 watoom_code_swift_context_tokens: 100000
 # Per-step output budget (limit.output). Reasoning counts against it; 4096 truncated tool calls (finish=length).
 watoom_code_model_output_tokens: 16384
@@ -30,6 +34,11 @@ watoom_code_reasoning_variants:
 watoom_code_router_url: http://llm-router.llama-cpp.svc.cluster.local:8000/v1
 watoom_code_apply: true
 watoom_code_rollout_timeout: 180s
+# Router requests wait out a model switch (the router holds them up to SWITCH_WAIT_SECONDS 900 while a 27B model loads
+# from disk in 5-7 min), so the client must wait longer than that for response headers; a full request may also run long.
+# 2026-11-19: with the provider defaults a switch surfaced in watoom-code as a burst of 503s / timeouts.
+watoom_code_router_header_timeout_ms: 1200000
+watoom_code_router_request_timeout_ms: 3600000
 
 
 # Owner project groups (2026-10-29 layout): each <root>/<group>/<project> is mounted read-write
@@ -55,6 +64,8 @@ watoom_code_project_spaces:
 
 watoom_code_kali_mcp_enabled: true
 watoom_code_kali_mcp_url: http://watoom-kali-workbench-mcp.kali-agent.svc.cluster.local:8088/mcp
+# Built-in agents (no prompt file) that must not use Kali; WatooM agents deny it in their own frontmatter.
+watoom_code_kali_denied_builtin_agents: [build, plan, general, explore, compaction, summary, title]
 
 # Base egress NetworkPolicy for the watoom-code pod (DNS, agentmemory, toolkit, the model router,
 # model-manager, the Kali MCP workbench, SearXNG, and the public internet except LAN/private ranges).
@@ -72,7 +83,7 @@ watoom_code_unreal_mcp_url: http://10.242.0.1:15354/mcp
 # account on the rig (tools/rig-godot-mcp). Off until the rig's sshd, the router rule and the
 # egress policy are installed. See that README: UNTESTED against the real editor/plugin/bridge.
 watoom_code_godot_mcp_enabled: false
-watoom_code_godot_mcp_host: 10.99.1.44
+watoom_code_godot_mcp_host: "{{ rig_host | default('10.99.1.44') }}"
 watoom_code_godot_mcp_port: 2223
 watoom_code_godot_mcp_user: godotmcp
 
@@ -80,7 +91,7 @@ watoom_code_godot_mcp_user: godotmcp
 # (tools/rig-ue-mcp). Off until the rig side, the router rule and the egress policy are installed; the rig steps are in
 # that README. UNTESTED on the rig and against the real ue-mcp server.
 watoom_code_ue_mcp_enabled: false
-watoom_code_ue_mcp_host: 10.99.1.44
+watoom_code_ue_mcp_host: "{{ rig_host | default('10.99.1.44') }}"
 watoom_code_ue_mcp_port: 2224
 watoom_code_ue_mcp_user: uemcp
 
@@ -117,6 +128,7 @@ watoom_code_native_skills:
   - human-pose-agent
   - watoom-engine-visual-diagnosis
   - watoom-terrain-map
+  - watoom-terrain-export
   - watoom-texture-layering
   # Unreal GAS combat (melee/guns/magic, VFX, pickups) + WatooMCombat plugin source; owner-requested 2026-11-18 (T-0063).
   - watoom-unreal-combat
@@ -158,6 +170,22 @@ watoom_code_native_skills:
   - red-hat-product-lifecycle
   - red-hat-security-mcp-setup
   - red-hat-support-severity
+  # Restored 2026-11-20 (T-0115): domain skills from the retired v2-native tree that filled real gaps.
+  - linux
+  - bash
+  - docker
+  - networking
+  - observability
+  - python
+  - typescript
+  - go
+  - godot-4
+  - unreal-engine
+  - ursina
+  - vision-first-3d-review
+  - vision-3d-inspector
+  # Worker/specialist contracts moved out of the agent prompts (T-0117); prompts load it before any worker job.
+  - watoom-worker-contracts
 
   - adaptation
   - chapter-writing
@@ -279,7 +307,7 @@ watoom_code_migrated_project_roots:
   - /data/ai/projects/homelab/homelab-llm
   - /data/ai/projects/llm/watoom-code
 
-# Additive isolated development integration; maintained by watoom-code-dev.yml.
+# Additive isolated development integration; maintained by watoom-code-parts.yml --tags dev.
 watoom_code_dev_enabled: true
 watoom_code_dev_host: 10.99.20.225
 watoom_code_dev_package_sha: 453bdc38279c7a85e1af0c03f3f8af4be4712322c899711c607fda28a362464b

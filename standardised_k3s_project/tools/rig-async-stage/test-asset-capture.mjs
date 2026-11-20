@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {validateAssetCaptureInput,assetCaptureProject,executeAssetCapture} from './guard-source/index.js';
+import {validateAssetCaptureInput,assetCaptureProject,executeAssetCapture} from '../../ansible/roles/watoom-code/files/coordinator-guard/index.js';
 validateAssetCaptureInput({action:'request',job:'clothed-test'},'watoom-builder');
 for(const role of ['watoom-reviewer','watoom-investigator','unknown'])assert.throws(()=>validateAssetCaptureInput({action:'request',job:'j'},role));
 for(const v of [{action:'request',job:'../escape'},{action:'request',job:'j',script:'bad'},{action:'render',job:'j'}])assert.throws(()=>validateAssetCaptureInput(v,'watoom-builder'));

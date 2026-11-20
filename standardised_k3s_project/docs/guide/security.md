@@ -10,7 +10,7 @@ summary: Trust boundaries, how secrets are stored and rendered, agent isolation 
 |---|---|
 | Internet → services | No inbound web ports; web publication only through Cloudflare Tunnel. Game ports dst-nat to the DMZ address only |
 | VLANs | Router VLAN filtering; management services reachable only from management networks; low-trust Wi-Fi separated |
-| Remote users | WireGuard (`wg-easy`), clients limited to `10.99.0.0/16` and `192.168.0.0/24` |
+| Remote users | WireGuard (`wg-easy`), clients limited to `10.99.0.0/16` and `192.168.250.0/24` |
 | Internal HTTPS | Traefik with wildcard TLS; clients trust the internal CA |
 | GPU and models | Only the GPU controller scales model Deployments; router and agents request access through admission |
 | Agents → filesystem | WatooM Code mounts project groups read-write, the rest of `/data/ai` read-only |
@@ -23,7 +23,7 @@ Do not flatten VLANs, open router ports or widen mounts to make a service reacha
 | Item | Location |
 |---|---|
 | Encrypted source (committed) | `secrets-vault/env.local.vault` |
-| Vault password (not committed) | `/data/secrets/watoom-homelab/ansible-vault-password.txt` (mode `0640`, group `wheel`) |
+| Vault password (not committed) | `/data/secrets/homelab-host/ansible-vault-password.txt` (mode `0640`, group `wheel`) |
 | Decrypted working copy (ignored) | `secrets/.env.local` |
 | Rendered Kubernetes Secrets (ignored) | `manifests/05-secrets/*-generated.yml` |
 | Tunnel tokens | Local secret files, bind-mounted read-only |

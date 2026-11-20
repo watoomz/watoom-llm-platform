@@ -14,7 +14,7 @@ def calls_of(phases, method):
 
 class Fx(unittest.TestCase):
     def test_every_recipe_builds_template_copies_a_system_and_checks_it(self):
-        for r in ("projectile", "impact", "muzzle", "area", "aura"):
+        for r in ("projectile", "impact", "muzzle", "area", "aura", "tracer", "lightning"):
             phases, paths = fx.fx_calls(ROOT, {"NS_X": {"recipe": r, "element": "Frost"}})
             methods = [m for m, a in phases[0]["calls"]]
             self.assertEqual(methods[-3:], ["niagara.compile", "asset.save", "niagara.validate"], r)  # edits persisted
@@ -64,6 +64,22 @@ class Fx(unittest.TestCase):
         a, = calls_of(phases, "niagara.set_module_input")
         self.assertEqual((a["emitterName"], a["moduleName"], a["inputName"], a["value"]), ("NE_C_L0", "SpawnRate", "SpawnRate", 30))
         self.assertEqual(fx.colour([1, 2, 3], 2)["b"], 6)
+
+    def test_beams_end_at_the_world_hit_point_and_play_once(self):
+        for r, n in (("tracer", 1), ("lightning", 2)):
+            phases, _ = fx.fx_calls(ROOT, {"NS_T": {"recipe": r, "element": "Lightning"}})
+            uv, = calls_of(phases, "niagara.epic_add_user_variables")
+            self.assertEqual([v["name"] for v in uv["variablesToAdd"]], ["BeamEnd"])  # once per system, no "User." prefix
+            ex = calls_of(phases, "niagara.epic_set_stack_input_data")
+            self.assertEqual(len(ex), 2 * n)  # Beam End + Beam Width per beam
+            ex = [e for e in ex if e["stackInputRef"]["inputNameStack"] == ["Beam End"]]
+            ref = ex[0]["stackInputRef"]
+            self.assertEqual((ref["scriptName"], ref["moduleName"], ref["inputNameStack"]), ("EmitterUpdateScript", "BeamEmitterSetup", ["Beam End"]))
+            self.assertIn("SystemWorldToLocal", ex[0]["inputData"]["value"]["hlslExpression"])
+            methods = [m for m, a in phases[0]["calls"]]
+            self.assertLess(methods.index("niagara.epic_add_user_variables"), methods.index("niagara.epic_set_stack_input_data"))
+            once = [a for a in calls_of(phases, "niagara.set_static_switch") if a["switchName"] == "Loop Behavior"]
+            self.assertEqual(len(once), n)
 
     def test_bad_specs_fail_loudly(self):
         with self.assertRaises(ValueError):

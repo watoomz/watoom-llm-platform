@@ -80,7 +80,7 @@ EXAMPLES = r"""
   - name: Send magic Wake-On-Lan packet to turn on individual systems
     community.general.wakeonlan:
       mac: '{{ mac }}'
-      broadcast: 192.168.0.255
+      broadcast: 192.168.250.255
     delegate_to: localhost
 
   - name: Wait for system to become reachable

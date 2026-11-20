@@ -86,6 +86,21 @@ class Use(unittest.TestCase):
         outside = [dict(self.models[0], path="/etc/passwd")]
         with self.assertRaisesRegex(gg_godot.Refused, "not a regular file under"): gg_assets.use(outside, "hero-pack-hero", self.proj, "hero")
 
+    def test_gltf_with_external_bin_or_textures_is_refused(self):
+        gltf = os.path.join(self.d, "src2.gltf")
+        json.dump({"asset": {"version": "2.0"}, "buffers": [{"uri": "src2.bin", "byteLength": 36}],
+                   "images": [{"uri": "textures/diffuse.png"}]}, open(gltf, "w"))
+        models = [dict(entry("ext-pack-ext", "ext-pack", ext="gltf", path=gltf), bytes=os.path.getsize(gltf))]
+        with self.assertRaisesRegex(gg_godot.Refused, "external file.*src2.bin.*textures/diffuse.png|src2.bin"):
+            gg_assets.use(models, "ext-pack-ext", self.proj, "hero")
+
+    def test_self_contained_gltf_with_embedded_data_uris_is_allowed(self):
+        gltf = os.path.join(self.d, "src3.gltf")
+        json.dump({"asset": {"version": "2.0"}, "buffers": [{"uri": "data:application/octet-stream;base64,AA==", "byteLength": 1}]}, open(gltf, "w"))
+        models = [dict(entry("embed-pack-embed", "embed-pack", ext="gltf", path=gltf), bytes=os.path.getsize(gltf))]
+        dest, e, sha = gg_assets.use(models, "embed-pack-embed", self.proj, "hero")
+        self.assertTrue(os.path.isfile(dest) and dest.endswith("assets/library/hero.gltf"))
+
     def test_missing_index_is_a_refusal(self):
         with self.assertRaisesRegex(gg_godot.Refused, "model index"): gg_assets.load_index(os.path.join(self.d, "none.json"))
 

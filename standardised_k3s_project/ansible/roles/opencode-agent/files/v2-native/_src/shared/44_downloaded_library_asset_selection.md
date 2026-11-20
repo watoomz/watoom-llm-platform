@@ -1,3 +1,0 @@
-## Downloaded-library asset selection
-For asset-selection reviews, search the approved downloaded source library under `/data/ai/assets`, including actual Fab/Humble packs, rather than restricting discovery to the current project or already indexed portable files. Preserve purchased originals, use bounded shortlists and verify exact supported extraction/conversion routes. For the Magpie environment the owner prefers downloaded stylised nature packs first; compare those with the existing project baseline and document any evidence-backed conversion gap or fallback. Preserve this project-specific preference in child handoffs; do not impose it on unrelated projects with different art direction.
-

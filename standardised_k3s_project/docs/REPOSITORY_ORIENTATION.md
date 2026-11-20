@@ -5,7 +5,7 @@ Start at the repository root `AGENTS.md` and `standardised_k3s_project/AGENTS.md
 ## Where to look
 
 - `ansible/roles/watoom-code`: durable application policies, native plugins, skills, worker installation and resource templates.
-- `ansible/roles/opencode-agent/files/v2-native/agents`: coordinator, builder, investigator, critic and reviewer role boundaries.
+- `ansible/roles/watoom-code/files/native/agents`: coordinator, builder, investigator, critic and reviewer role boundaries.
 - `tools/watoom-code`: native guarded deployment/recovery helpers, capture contracts, regression checks and recorded app source bundles/manifests under `source/`.
 - `tools/rig-async-stage` (its `worker-source/` is what the workstation-render-stage role installs), `tools/bazzite-render-worker`: external queue/worker staging. Inspect current live qualification before claiming a route active. Bazzite-first routing remains staged.
 - `tools/game-template-catalogue`: pinned Godot sources, owner-requested Unreal archive metadata, safe installation and combined catalogue generation. Actual source projects and original archives are under `/data/ai/game_templates` and are not Git content.

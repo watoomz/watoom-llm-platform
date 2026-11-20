@@ -50,9 +50,9 @@ Use `scripts/watoom-menu.sh` or `https://iac-console.internal.homelab.example/me
 
 Dispatcharr is intentionally excluded from `kubernetes_app_manifests`: its dedicated control workflow owns VPN/no-VPN variants.
 
-### LLM exception
+### LLM stack
 
-The llama.cpp, LLM router, Open WebUI and SearXNG stack is live; Ollama is retired. These AI manifests exist, but the LLM manifest set is not currently present in the broad `k3s_manifest_groups`. Dedicated scripts under `tools/llm/` are used for portions of this stack.
+The llama.cpp backends, LLM router and SearXNG manifests are not in the broad `k3s_manifest_groups`; their owning roles and the tools under `tools/llm/` apply them.
 
 Consequences:
 
@@ -83,10 +83,10 @@ docker compose ls
 
 Do not broad-reset a dirty working tree to “fix” a single service. Existing changes may represent other approved consolidation work.
 
-## Baseline AI owners
+## AI owners
 
-Existing playbooks include `gpu-controller.yml`, `llm-model-lab.yml`, `opencode-agent-v2-canary.yml`, `opencode-llama-mesh-integration.yml` and `llama-mesh-pipeline-recovery.yml` under `ansible/playbooks`. Inspect their current variables and activation gates before reconciliation. Syntax validation does not authorize replaying ownership/storage cutover.
+Playbooks: `gpu-controller.yml`, `llm-model-lab.yml`, `opencode-llama-mesh-integration.yml`, `llama-mesh-pipeline-recovery.yml`, and for WatooM Code `site.yml --tags platform` and `watoom-code-parts.yml`. Inspect their current variables and activation gates before reconciliation. Syntax validation does not authorize replaying ownership/storage cutover.
 
-The controller remains the sole GPU replica writer. Preserve admission/RBAC, durable journals, credentials and the retained primary fingerprint. See [protected recovery instructions](12_BACKUP_RECOVERY.md).
+The controller remains the sole GPU replica writer. Preserve admission/RBAC, durable journals and credentials. See [backup and recovery](12_BACKUP_RECOVERY.md).
 
 Markdown operations pages feed the browser guide through `scripts/render-glance-guide.py`. HTML uses the existing hostPath; no application rollout is needed for HTML-only publication. Config/helper changes use the separate `scripts/render-glance-configmaps.py` and normal owning workflow.

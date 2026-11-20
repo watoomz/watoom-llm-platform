@@ -55,12 +55,6 @@
   when: homelab_manage_firewall | bool
   tags: [firewall]
 
-- name: "Homelab Rebuild | Host Ollama runtime"
-  ansible.builtin.include_role:
-    name: host_ollama
-  when: homelab_manage_host_ollama | bool
-  tags: [llm, ollama]
-
 - name: "Homelab Rebuild | DNS stub listener"
   ansible.builtin.import_tasks: dns.yml
   when: homelab_manage_dns_stub | bool

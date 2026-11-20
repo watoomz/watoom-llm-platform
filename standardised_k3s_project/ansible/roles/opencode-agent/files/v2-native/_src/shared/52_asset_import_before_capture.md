@@ -1,3 +1,0 @@
-## Asset import before capture
-New glTF assets require successful Godot editor import and resolved resource dependencies before captures/tests can validate their presence. The .import sidecar alone is not proof; require actual successful load with matching source and no resource errors. Large project imports use operator-owned tools/watoom-code/game_import.py in the bounded external CPU worker, never the 2GiB app shell. Request the operator receipt; do not retry OOM in app, increase app memory or copy another projects cache. Import is separate from rendered capture and full regression acceptance.
-

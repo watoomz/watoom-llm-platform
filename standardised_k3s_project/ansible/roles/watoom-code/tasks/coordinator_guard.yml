@@ -12,6 +12,27 @@
     mode: '0644'
     directory_mode: '0750'
   tags: [agent_roster]
+# One idle gate for every entry point (T-0115): re-selecting the SAME guard version is a no-op and always allowed,
+# but switching the live application to a DIFFERENT guard version requires the native idle fence, which
+# tools/watoom-code/recover-idle-admission.py holds and signals with watoom_coordinator_release_guard_held=true.
+- name: Read the currently selected coordinator guard
+  ansible.builtin.slurp:
+    src: "{{ watoom_code_root }}/config/opencode.json"
+  register: watoom_code_guard_config
+  failed_when: false
+  tags: [agent_roster]
+- name: Require the idle fence before switching guard versions
+  ansible.builtin.assert:
+    that: >-
+      (watoom_coordinator_release_guard_held | default(false) | bool)
+      or watoom_code_guard_config.content is not defined
+      or ('"/config/watoom-tools/coordinator-guard-' ~ watoom_code_guard_hash ~ '"')
+      in (watoom_code_guard_config.content | b64decode)
+    fail_msg: >-
+      The coordinator guard source changed (new version {{ watoom_code_guard_hash[:12] }}). Switching the live guard
+      needs the idle fence: run tools/watoom-code/recover-idle-admission.py --i-approve --playbook
+      watoom-code-coordinator-guard.yml (it sets watoom_coordinator_release_guard_held=true).
+  tags: [agent_roster]
 - name: Select immutable native guard and retain verified capability settings
   ansible.builtin.script:
     cmd: enable-coordinator-guard.py {{ watoom_code_root }}/config/opencode.json /config/watoom-tools/coordinator-guard-{{ watoom_code_guard_hash }}

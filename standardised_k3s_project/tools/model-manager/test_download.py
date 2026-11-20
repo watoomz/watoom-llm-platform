@@ -47,5 +47,8 @@ class Download(unittest.TestCase):
    with self.assertRaises(DownloadError): safe_path(d,"nested/a")
  def test_cancel(self):
   with tempfile.TemporaryDirectory() as d:
-   with self.assertRaises(DownloadError): fetch(d,"a/b","a"*40,self.item(b"abc"),reserve=0,cancel=lambda:True,opener=Opener(Response(b"abc")))
+   item=self.item(b"abc")
+   with self.assertRaises(DownloadError): fetch(d,"a/b","a"*40,item,reserve=0,cancel=lambda:True,opener=Opener(Response(b"abc")))
+   self.assertFalse((Path(d)/(item["path"]+".partial")).exists())
+   self.assertFalse((Path(d)/(item["path"]+".partial-validator.json")).exists())
 if __name__=="__main__": unittest.main()

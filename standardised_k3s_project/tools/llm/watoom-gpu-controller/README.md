@@ -99,3 +99,31 @@ and init container, plus the restart annotation. Only the primary fingerprint
 was refreshed; the RAM tuning and other deployment identities were preserved.
 Evidence and bounded model-load results are retained at
 `/data/ai/helper-scripts/reports/model-availability-20261021/`.
+
+## Slow model loads (2026-11-19)
+
+The models load from the spinning `/data` disk. A 27B gguf took 220-320 s in early November and 360-450 s+ by
+mid-November (slower reads, swap full, a 614-extent uncensored file). Three limits must stay above the real load time:
+
+- each model Deployment's `startupProbe` (10 s x 60-90; liveness alone killed pods mid-load and the switch went to
+  `recovery-required`),
+- `startup_timeout` in `gpu-controller.json` (1200 s; it covers init + load),
+- the client: watoom-code `providers.watoom.settings.headerTimeout/timeout` (`enable-router-discovery.py`).
+
+The primary's init container hashes its gguf once and records size/inode/mtime/ctime in
+`/data/ai/models/verified/<model>/`; it re-hashes only when the file changes (before, every start re-read 15 GB).
+Any change to a pinned Deployment's spec needs `scripts/gpu-controller-repin-primary.py --name <deploy> [--recovery] --apply`
+afterwards, and the role copy `ansible/roles/llm-model-lab/files/gpu-controller.json` kept equal to the live config.
+The router waits (`SWITCH_WAIT_SECONDS`, 900) for an in-flight switch instead of answering 503 to requests that cannot switch.
+
+## Adding a model after the cutover (2026-11-19)
+
+Do not add a hand-written model Deployment to `gpu-controller.json`. The controller refuses to start when a
+`deployment_identity` entry has no acknowledged record in `cutover-proof.json` (`cutover identity proof does not match
+deployment`) and only `llama-cpp-mm-*` deployments may enrol through the managed ledger. On 2026-11-19 two hand-written
+entries (a Qwen3.8 OpenCode LoRA and the GLB 3D Coder) crash-looped the controller for ~2 min until the previous config
+was restored. The cutover proof is a security barrier: never edit it to make an entry pass.
+
+Add new models through Model Manager (`tools/model-manager`): it creates the replicas-0 Deployment, enrols it through
+the controller's lifecycle API and publishes the router catalog. It covers GGUF models, GGUF LoRA adapters on an
+installed GGUF base (`--lora`) and MTP speculation proven from the GGUF header (T-0086).

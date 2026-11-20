@@ -1,8 +1,0 @@
----
-- name: Prepare host Ollama runtime for local LLM testing
-  hosts: homelab
-  become: true
-  gather_facts: true
-
-  roles:
-    - role: host_ollama

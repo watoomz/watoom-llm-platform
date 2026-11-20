@@ -22,6 +22,9 @@ MAX_FILE = '100m'
 NEEDED_SKILLS = ('watoom-godot-game', 'watoom-texture-layering')   # gg_terrain.py loads layer_masks.py from the sibling skill next to it
 SKIP_SKILL = ['--exclude=__pycache__/', '--exclude=test_*.py', '--exclude=fixtures/', '--exclude=*.pyc']
 SKIP_PULL = ['--exclude=.godot/', '--exclude=gg_data/jobs/', '--exclude=gg_data/export/stage/', '--exclude=gg_data/selftest*/']
+# gg_data holds cross-step continuity (style.resolved.json, world/, census.json, scatter/) that a chained from_project
+# job needs to see from the job before it; only the scratch/job-history subdirs are excluded, same as SKIP_PULL.
+SKIP_FROM_PROJECT_GG_DATA = ['--exclude=/gg_data/jobs/', '--exclude=/gg_data/export/stage/', '--exclude=/gg_data/selftest*/']
 
 
 
@@ -70,10 +73,10 @@ def failure_reason(code, driver, pulled):
     if driver is None: return 'worker exit %s and no driver.json: see native.log' % code
     if driver.get('timed_out'): return 'a step exceeded the deadline; raise deadline_sec (max 1800) or run fewer steps'
     st = driver.get('selftest') or {}
-    if st.get('exit') != 0: return 'the verify-loop selftest failed (exit %s): the loop cannot see, nothing after it can be trusted; read the step tail in result.json (the log files stay on the operator side)' % st.get('exit')
+    if st.get('exit') != 0: return 'the verify-loop selftest failed (exit %s): the loop cannot see, nothing after it can be trusted; read the step tail in result.json or the full log at logs/00-selftest.log in this job\'s output directory' % st.get('exit')
     if driver.get('failed_at'):
         s = driver['steps'][driver['failed_at'] - 1]
-        return 'step %d (%s %s) exited %s; read its tail in result.json (the log files stay on the operator side)' % (s['i'], s['script'], s['sub'], s['exit'])
+        return 'step %d (%s %s) exited %s; read its tail in result.json or the full log at logs/%02d-%s-%s.log in this job\'s output directory' % (s['i'], s['script'], s['sub'], s['exit'], s['i'], s['script'][:-3], s['sub'])
     if code != 0: return 'worker exit %s' % code
     if not pulled: return 'the results could not be copied back from Bazzite'
     return 'unknown'
@@ -109,7 +112,7 @@ def main():
             for d in reversed([staging, *[q for q in staging.parents if q != project and not q.exists()]]):
                 d.mkdir(mode=0o2770); os.chown(d, st.st_uid, st.st_gid); os.chmod(d, 0o2770)
         if spec.get('from_project'):   # the worker copies the live project itself: the model's tools cannot stage 40+ runtime files by hand
-            r = subprocess.run(['rsync', '-a', '--no-links', '--max-size=%dm' % godot_game_spec.COPY_MAX_MB, '--exclude=/.git/', '--exclude=/.godot/', '--exclude=/.opencode/', '--exclude=/gg_data/', '--exclude=/addons/gg/.import_cache/', str(project) + '/', str(staging) + '/'], capture_output=True, text=True, timeout=300)
+            r = subprocess.run(['rsync', '-a', '--no-links', '--max-size=%dm' % godot_game_spec.COPY_MAX_MB, '--exclude=/.git/', '--exclude=/.godot/', '--exclude=/.opencode/', *SKIP_FROM_PROJECT_GG_DATA, '--exclude=/addons/gg/.import_cache/', str(project) + '/', str(staging) + '/'], capture_output=True, text=True, timeout=300)
             if r.returncode: raise RuntimeError('copying the live project failed: ' + r.stderr[-300:])
             st = (project / '.opencode').stat()
             check_staging_path(project, staging)
@@ -198,6 +201,7 @@ def main():
         if parent.is_symlink() or app.exists() or app.is_symlink(): raise ValueError('.opencode/godot-game-out/' + a.godot_game_job + ' already exists; use a new job name')
         app.mkdir(mode=0o2770)
         subprocess.run(['rsync', '-a', '--no-links', str(out_local / 'project') + '/', str(app / 'project') + '/'], check=True, timeout=900) if (out_local / 'project').is_dir() else None
+        subprocess.run(['rsync', '-a', '--no-links', str(a.evidence / 'job' / 'logs') + '/', str(app / 'logs') + '/'], check=True, timeout=300) if (a.evidence / 'job' / 'logs').is_dir() else None
         files = [x for x in sorted(app.rglob('*')) if x.is_file() and not x.is_symlink()]
         for x in [parent, app, *app.rglob('*')]:
             if not x.is_symlink(): os.chown(x, st.st_uid, WORKER, follow_symlinks=False)

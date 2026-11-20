@@ -138,6 +138,11 @@ spec:
         command:
         - mktxp
         image: ghcr.io/akpw/mktxp@sha256:2b3ccb1c2bd9079b4a9d1f3ad8f854b86db3d7f8d621372f585588331300d63e
+        readinessProbe:  # T-0115: gate traffic on the port actually listening (never restarts the pod)
+          tcpSocket:
+            port: 49090
+          periodSeconds: 20
+          failureThreshold: 3
         imagePullPolicy: Always
         name: mktxp
         ports:

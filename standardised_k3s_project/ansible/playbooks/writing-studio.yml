@@ -1,0 +1,10 @@
+---
+# On via ../vars/writing-studio.yml (T-0117); converged by site.yml --tags platform.
+- name: Writing Studio (creative-writing skills via the LLM router; graphic-novel art via MOSS)
+  hosts: homelab
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../vars/writing-studio.yml
+  roles:
+    - role: writing-studio

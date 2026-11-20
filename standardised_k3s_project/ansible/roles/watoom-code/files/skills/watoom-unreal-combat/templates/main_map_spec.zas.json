@@ -1,0 +1,8 @@
+{
+ "_comment": "T-0024 (owner 2026-11-19: 'yes'): the main map L_ZAS_Terrain plays the combat wizard (BP_ZAS_WizardHero from combat_spec.zas.json, 8/8 ue_combat_check) instead of the old hand-placed, T-posing ZAS_Player (BP_WizardPlayer). BP_ZAS_MainGameMode spawns the hero at PlayerStart_Main, where ZAS_Player stood (yaw 140). Apply after combat_spec (the hero must exist): unreal_combat.py --spec main_map_spec.zas.json, then ue_run_phases.py.",
+ "content_root": "/Game/ZAS/Combat",
+ "game_mode": {"name": "BP_ZAS_MainGameMode", "pawn": "/Game/ZAS/Combat/Characters/BP_ZAS_WizardHero"},
+ "map": {"path": "/Game/Maps/L_ZAS_Terrain"},
+ "remove": ["ZAS_Player"],
+ "place": [{"player_start": true, "label": "PlayerStart_Main", "location": [148069, 174059, 8380], "rotation": [0, 140, 0]}]
+}

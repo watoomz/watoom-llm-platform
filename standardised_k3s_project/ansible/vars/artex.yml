@@ -4,8 +4,8 @@
 # from the registry, and then fails loudly if the fresh build's digest differs from the pin below (a rebuild
 # is never deployed silently). To update: review the source, set artex_image_source_commit to the reviewed
 # commit, run the playbook once (it builds, pushes and reports the new digest), then pin that digest here.
-artex_image: "127.0.0.1:5000/artex@sha256:51ed365f0cd736d0c564e14f4ced91e02a9497f19deb8fd1ce7c2b9ed081f62f"
-artex_image_source_commit: b06c261974f3892cdef01569cc6d9c8b5c6e3c2b
+artex_image: "127.0.0.1:5000/artex@sha256:0c346d7650f8a0f7fac8e9b662ec9d04040c138c25d5525805d084d1e99d0492"
+artex_image_source_commit: afbfe1b0910a17e2bd271e60862420c0f90f5e71
 
 # English-only frontend from BaaRai/ARTEX; backend remains the reviewed FailSafe commit.
 artex_frontend_source_commit: e233c02314a113f50a1d4571bc6d0bce31d2825e

@@ -8,7 +8,7 @@ summary: The single-node Kubernetes runtime, the Compose stacks that sit beside 
 
 | Property | Value |
 |---|---|
-| Node | `watoom-homelab` (control plane, sole worker) |
+| Node | `homelab-host` (control plane, sole worker) |
 | Version | `v1.36.3+k3s1`, containerd `2.3.2-k3s2` |
 | Kernel | `7.2.7-200.fc44.x86_64` |
 | System components | CoreDNS, Traefik, local-path-provisioner, metrics-server |

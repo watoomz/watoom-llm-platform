@@ -8,7 +8,7 @@
     mode: '0750'
 - name: Install native SearXNG web search provider
   ansible.builtin.copy:
-    src: "{{ role_path }}/../opencode-agent/files/v2-native/plugins/searxng-search/"
+    src: "{{ role_path }}/../watoom-code/files/native/plugins/searxng-search/"
     dest: "{{ watoom_code_root }}/config/plugins/searxng-search/"
     owner: '1001'
     group: '1001'

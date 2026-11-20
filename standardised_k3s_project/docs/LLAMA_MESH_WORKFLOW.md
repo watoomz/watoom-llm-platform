@@ -27,22 +27,21 @@ scripts/llama-mesh prepare /data/ai/assets/generated/llama-mesh/YOUR_RUN --size-
 
 The CPU-only Blender process uses one thread, disables visible CUDA devices, has a 180-second timeout, and uses factory settings. It welds extremely close vertices, recalculates normals, triangulates, creates starting UVs and a neutral material. It scales the largest dimension to size_cm and places the pivot at the XY centre and bottom Z. It creates preview.blend, unreal.fbx, blender-report.json and blender.log. It does not generate textures, collision geometry, rigs, animation or .uasset files. Prepared outputs are not overwritten; ingest into a fresh run to retry or choose another size. Preserve logs for failures.
 
-## Production generation after G3H
+## Production generation
 
-Use the connected OpenCode watoom-llama-mesh MCP namespace and its synchronous
+Use the connected WatooM Code `watoom-llama-mesh` MCP and its synchronous
 generate tool. Supply one stable request_id; retry an uncertain request with
 the same ID. The host bridge and exclusive GPU controller perform model
 switching, memory-release barriers, durable recovery and Qwen restoration.
 
-Do not use the legacy GUI/model-manager activation path or direct-backend
-scripts/llama-mesh generate on a controller-managed host. These legacy commands
-now refuse before mutation. Offline validate, ingest and prepare remain
+Do not activate the Mesh backend through the model picker or run
+`scripts/llama-mesh generate` directly on a controller-managed host; those paths
+refuse before changing anything. Offline validate, ingest and prepare remain
 available, and the production pipeline reuses this parser.
 
-The verified 12 October G3H acceptance is recorded in
-tools/llm/watoom-gpu-controller/README.md. Its synchronous generation returned
-a validated cube and restored Qwen. That evidence supersedes this workflow's
-earlier generation limitations; it does not establish general asset quality.
+Controller acceptance is recorded in `tools/llm/watoom-gpu-controller/README.md`:
+synchronous generation returns a validated mesh and restores the previous model.
+It does not establish general asset quality.
 
 ## Import into Unreal
 
@@ -54,14 +53,14 @@ VERIFIED: offline parser tests and a synthetic cube exported through installed B
 
 UNVERIFIED: general model generation quality, output completion rates and import into your Unreal project. Those require an idle test window. The installed Blender reports a colour-management configuration warning but successfully completes the geometry export/re-import; no system Blender configuration was changed.
 
-## Current production ownership and recovery
+## Ownership and recovery
 
-Verified 13 October 2026. Maintained bridge/adapter/pipeline source is under `ansible/roles/llm-model-lab/files`; runtime helpers are under `/data/ai/helper-scripts`. GPU-controller source and tests are `tools/llm/watoom-gpu-controller`.
+Maintained bridge/adapter/pipeline source is under `ansible/roles/llm-model-lab/files`; runtime helpers are under `/data/ai/helper-scripts`. GPU-controller source and tests are `tools/llm/watoom-gpu-controller`.
 
 Weights: `/data/ai/models/gguf/llama-mesh/LLaMA-Mesh-Q8_0.gguf`. Production job records: `/data/ai/llama-mesh/jobs`. Production generated assets: `/data/ai/assets/generated/opencode-mesh`; preserve `raw/`, `cleaned/` and `game-ready/` stages. Offline ingestion retains its separate `generated/llama-mesh` root.
 
 Services: `watoom-gpu-controller.service` and `watoom-opencode-mesh-bridge.service` are active. `watoom-gpu-controller-credentials.timer` rotates credentials. `watoom-llama-mesh-recovery.service` is a successful oneshot and is normally inactive after completion.
 
-Do not reset ownership, replay storage cutover, delete durable state/receipts, force replicas, or invoke historical competing writers. Preserve `/data/ai/helper-scripts/state/qwen-runtime-baseline.json` and current controller state/journals. Read controller/worker state first; follow [baseline recovery](baselines/pre-new-agent-engine-20261013.md).
+Do not reset ownership, replay storage cutover, delete durable state or receipts, or force replicas. Preserve `/data/ai/helper-scripts/state/qwen-runtime-baseline.json` and the controller state and journals; read controller and worker state first.
 
 The accepted G3H cube proves the bounded production path, not general character quality, rigging, textures or Unreal import. Validate each generated asset structurally and visually before game integration.

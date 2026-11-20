@@ -102,9 +102,13 @@ spec:
         - --repeat-last-n
         - '256'
         - --n-cpu-ffn
-        - '4'
+        - '0'
         - --reasoning
         - 'off'
+        - --mmproj
+        - /models/mmproj-Ornith-1.5-9B-BF16.gguf
+        - --image-max-tokens
+        - '1024'
         env:
         - name: TZ
           value: Australia/Brisbane
@@ -121,7 +125,7 @@ spec:
         - name: LLAMA_ARG_ALIAS
           value: ornith-1.5-9b-q8
         - name: LLAMA_ARG_CTX_SIZE
-          value: '131072'
+          value: '262144'
         - name: LLAMA_ARG_N_GPU_LAYERS
           value: all
         - name: LLAMA_ARG_CACHE_TYPE_K
@@ -154,6 +158,16 @@ spec:
           periodSeconds: 10
           timeoutSeconds: 10
           failureThreshold: 24
+        # 2026-11-19: a load from the spinning disk takes ~5 min (Ornith); liveness (120 s + 6 x 30 s) killed it
+        # after a successful load. The startup probe allows 15 min; liveness starts after it.
+        startupProbe:
+          failureThreshold: 90
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          periodSeconds: 10
+          timeoutSeconds: 10
         livenessProbe:
           httpGet:
             path: /health
@@ -303,9 +317,13 @@ spec:
         - --repeat-last-n
         - '256'
         - --n-cpu-ffn
-        - '4'
+        - '0'
         - --reasoning
         - 'off'
+        - --mmproj
+        - /models/mmproj-BF16.gguf
+        - --image-max-tokens
+        - '1024'
         - --chat-template-file
         - /chat-template/defiant-fable.jinja
         env:
@@ -324,7 +342,7 @@ spec:
         - name: LLAMA_ARG_ALIAS
           value: qwen35-defiant-fable-9b-q8
         - name: LLAMA_ARG_CTX_SIZE
-          value: '131072'
+          value: '262144'
         - name: LLAMA_ARG_N_GPU_LAYERS
           value: all
         - name: LLAMA_ARG_CACHE_TYPE_K
@@ -357,6 +375,16 @@ spec:
           periodSeconds: 10
           timeoutSeconds: 10
           failureThreshold: 24
+        # 2026-11-19: a load from the spinning disk takes ~5 min (Ornith); liveness (120 s + 6 x 30 s) killed it
+        # after a successful load. The startup probe allows 15 min; liveness starts after it.
+        startupProbe:
+          failureThreshold: 90
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          periodSeconds: 10
+          timeoutSeconds: 10
         livenessProbe:
           httpGet:
             path: /health
@@ -510,9 +538,13 @@ spec:
         - --repeat-last-n
         - '256'
         - --n-cpu-ffn
-        - '4'
+        - '0'
         - --reasoning
         - 'off'
+        - --mmproj
+        - /models/mmproj-Gemma-4-E4B-Uncensored-HauhauCS-Aggressive-f16.gguf
+        - --image-max-tokens
+        - '1024'
         env:
         - name: TZ
           value: Australia/Brisbane
@@ -562,6 +594,16 @@ spec:
           periodSeconds: 10
           timeoutSeconds: 10
           failureThreshold: 24
+        # 2026-11-19: a load from the spinning disk takes ~5 min (Ornith); liveness (120 s + 6 x 30 s) killed it
+        # after a successful load. The startup probe allows 15 min; liveness starts after it.
+        startupProbe:
+          failureThreshold: 90
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          periodSeconds: 10
+          timeoutSeconds: 10
         livenessProbe:
           httpGet:
             path: /health
@@ -772,6 +814,15 @@ spec:
           periodSeconds: 10
           timeoutSeconds: 10
           failureThreshold: 30
+        # 2026-11-19: same startup allowance as the other llama-cpp models (liveness killed slow loads).
+        startupProbe:
+          failureThreshold: 90
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          periodSeconds: 10
+          timeoutSeconds: 10
         livenessProbe:
           httpGet:
             path: /health
@@ -917,7 +968,7 @@ spec:
         - --repeat-penalty
         - '1.0'
         - --n-cpu-ffn
-        - '4'
+        - '0'
         - --reasoning
         - 'off'
         env:
@@ -969,6 +1020,16 @@ spec:
           periodSeconds: 10
           timeoutSeconds: 10
           failureThreshold: 24
+        # 2026-11-19: a load from the spinning disk takes ~5 min (Ornith); liveness (120 s + 6 x 30 s) killed it
+        # after a successful load. The startup probe allows 15 min; liveness starts after it.
+        startupProbe:
+          failureThreshold: 90
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          periodSeconds: 10
+          timeoutSeconds: 10
         livenessProbe:
           httpGet:
             path: /health

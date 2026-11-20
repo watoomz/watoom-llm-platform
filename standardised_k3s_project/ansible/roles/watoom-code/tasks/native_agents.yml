@@ -1,10 +1,10 @@
 ---
-# The restructured native agents (watoom-workflow/builder/critic/investigator/reviewer)
+# All native agents
 # are assembled from single-source fragments under
-# opencode-agent/files/v2-native/_src/ (shared blocks + per-role fragments, ordered
+# watoom-code/files/native/_src/ (shared blocks + per-role fragments, ordered
 # by _src/assembly.json). The .md under .../agents/ are generated artifacts; this
 # step regenerates them from _src so the source of truth stays authoritative, then
-# the copy below installs every agent .md (creative-writer/kali are not templated).
+# the copy below installs every agent .md.
 - name: Assemble restructured native agent definitions from single-source fragments
   ansible.builtin.command:
     cmd: 'python3 {{ role_path }}/../../../scripts/render-native-agents.py'
@@ -22,7 +22,7 @@
     owner: '1001'
     group: '1001'
     mode: '0644'
-  loop: "{{ query('ansible.builtin.fileglob', role_path ~ '/../opencode-agent/files/v2-native/agents/*.md') }}"
+  loop: "{{ query('ansible.builtin.fileglob', role_path ~ '/../watoom-code/files/native/agents/*.md') }}"
   tags: [agent_roster]
 
 - name: Create maintained capture template directory
@@ -57,7 +57,7 @@
 
 - name: Install native OpenSpec skill instructions
   ansible.builtin.copy:
-    src: '{{ role_path }}/../opencode-agent/files/v2-native/skills/watoom-openspec/SKILL.md'
+    src: '{{ role_path }}/../watoom-code/files/native/skills/watoom-openspec/SKILL.md'
     dest: '{{ watoom_code_root }}/config/skills/watoom-openspec/SKILL.md'
     owner: "{{ watoom_code_uid }}"
     group: "{{ watoom_code_gid }}"
@@ -66,7 +66,7 @@
 
 - name: Install native OpenSpec Discord notifier
   ansible.builtin.copy:
-    src: '{{ role_path }}/../opencode-agent/files/v2-native/tools/watoom-openspec-notify.py'
+    src: '{{ role_path }}/../watoom-code/files/native/tools/watoom-openspec-notify.py'
     dest: '{{ watoom_code_root }}/config/watoom-tools/watoom-openspec-notify.py'
     owner: "{{ watoom_code_uid }}"
     group: "{{ watoom_code_gid }}"

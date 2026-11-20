@@ -48,14 +48,35 @@ ue_combat_check --net with BP_ZAS_Gunslinger as the pawn: 6/6. One shot from 4 m
 8 x 9 pellets, 54-81 landed per shot (spread 6 deg, some pellets miss, head pellets x1.5); client shot hits the server dummy.
 The check now has a gun pass (each gun of the loadout, switched to with NextWeaponAction) and counts only characters of
 another team as targets (the friendly Rogue NPC is not one).
-Tracer beams (User.BeamEnd) are NOT generated yet: binding a module input to a user parameter needs the Niagara
-toolset actions (epic_set_stack_input_data) that ue-mcp 1.4.13 on the rig does not have.
+Tracer beams (User.BeamEnd): binding a module input to a user parameter needs the Niagara toolset actions
+(niagara.epic_set_stack_input_data). They exist only with the engine plugin NiagaraToolsets enabled in the project
+(tools/rig-ue-mcp/project_plugins.json, live since 2026-11-19 with ue-mcp 1.4.14); without it they are "Unknown action".
+unreal_niagara_fx.py recipes `tracer` (TracerFx of Rifle/Pistol/Shotgun: NS_Rifle_Tracer) and `lightning` (ProjectileFx of a
+Hitscan spell, drawn by the same MulticastTracer: WizardLightning, 35 damage, 25 mana; ue_combat_check PASS) copy the engine
+DynamicBeam emitter, add the user variable BeamEnd (niagara.epic_add_user_variables, bare name) and set inputs the plain
+set_module_input cannot reach as HLSL expressions (epic_set_stack_input_data, NiagaraExt_StackInputData_HlslExpression):
+- Beam End is an offset in the SYSTEM's local axes (measured with capture_sim_cache: a world BeamEnd was added to the system
+  position, and turned with the system's yaw), while MulticastTracer sends the world hit point, so the input is
+  `mul(float4(User.BeamEnd, 1.0), Engine.Owner.SystemWorldToLocal).xyz` (verified at yaw 0/30/90: the beam ends exactly on it).
+- Beam Width is a FloatFromCurve dynamic input (set_module_input: "not found"): an HLSL constant replaces it.
+- The beam template has no InitializeParticle: its colour is ParticleUpdate/Color/Color; it shows for Loop Duration (Once).
+
+Bow (`Kind: "Bow"`, T-0074): fires like a Semi gun through UWatooMGA_Gun (ammo = arrows: MagazineSize 1 = one nocked arrow,
+StartingReserveAmmo, reload = nock with ReloadMontage/ReloadSeconds), but each shot spawns an AWatooMProjectile arrow at the
+MuzzleSocket aimed where the view ray lands: ProjectileSpeed (cm/s), ProjectileGravityScale, ProjectileMesh (its +X flies
+forward), TracerFx as the arrow's trail, Range sets the lifespan. On impact: Damage x HeadshotMultiplier when the arrow lands
+within 25 cm of HeadBone, ImpactFx at the point. `WeaponData::UsesAmmo()` (Gun or Bow) replaced every Gun-only check
+(magazine, reserve, reload, ammo pickups). ue_combat_check.py checks a bow like a gun (its arrow must land the damage).
 
 `AWatooMPortal` (T-0015): a walk-in trigger box (BoxExtent) that teleports a pawn to Destination facing DestinationYaw,
 server-side, ignoring a pawn for CooldownSeconds after any portal sent it; optional looping Fx. Placed by
 watoom-texture-layering/scripts/unreal_dungeon.py for the dungeon under the mountain arch (verified in PIE both ways).
 
 ## Pitfalls (each one cost a test round)
+- ue-mcp 1.4.14 changed the default PIE instance: `pie.inject_input` / `inject_input_start` without `pie_instance` (and
+  `pie.view_trace` without `pieInstance`) report success but reach no player. Every melee/spell check failed while
+  `gas.trace_ability_activation ... activate:true` showed the abilities themselves were fine (2026-11-19). Always pass
+  instance 0 for the standalone/host player (ue_combat_check.py does).
 - The first PIE session after new blueprints were created can fire nothing (wizard hero, 2026-11-19: 4 FAILs with no mana
   spent; the next session passed 8/8). ue_combat_check.py now runs a throw-away warm-up session first (`--no-warmup` skips it).
 - **Mesh sideways in the capsule.** Unreal humanoid meshes face +Y with the root at the feet; a Character faces +X with its capsule
@@ -166,10 +187,42 @@ A model is only right for a weapon when its pack has animations for it. Check th
    `animation.get_bone_transform` (world pie, space component) on a foot moves between samples (measured: the foot swings
    40-60 cm and lifts up to 30 cm). A PIE screenshot shows only the player's camera, so judge by these numbers.
 
+6. Or run `tools/rig-ue-mcp/ue_roam_check.py --from-calls <calls.json> [--labels ...]`: every placed character with
+   Wander.bEnabled is sampled in PIE; PASS = the pelvis/Hips travelled > 1 m and a foot moved > 3 cm in component space.
+
+Unrigged creatures (statues, scans; 2026-11-19, the T-Rex and Spinosaurus statue packs and a scanned theropod):
+blender-character-rigging `creature_rig.py` (tailed bipeds: fit, 22-bone skeleton, skin) -> blender-pbr-materials
+`build_pbr_material.py` -> blender-animation `creature_gait.py --export-dir` (Idle/Walk/Run/Roar/Attack, one FBX per clip,
+textures embedded) -> rig_import_fbx_character.py -> ue_mesh_body.py -> spec anim_set {idle: Idle, fwd: Walk} (a real idle,
+so give Wander a WaitMin/WaitMax pause) -> ue_roam_check.py. Measured: travel 16-24 m in 20 s, foot swing 36-126 cm.
+- A rig exported in METRES imports with the armature as a top bone at scale 100 while every clip plays it at scale 1: in game
+  the skeleton shrank 100x (pelvis at Z 3.6 cm, feet moving ~1 cm, the creature slid along unanimated; FBX_SCALE_ALL did not
+  help). creature_gait.py now converts to centimetres (scene unit scale 0.01, rig x100 applied, location keys x100) before it
+  exports. Check after an import: animation.get_bone_transform of the pelvis in component space must read the hip height in cm.
+- Never `asset.delete force` a mesh that placed actors use: the force path nulls the references inside the level too, and the
+  actors keep the null as an instance override (pie.anim_state: "No AnimInstance"). Delete the actors, re-import, re-place.
+Keep land creatures out of lakes as well as the sea: Wander.MinGroundZ above the lake surface (the dinosaurs use 9000).
+
 Statues and props beside creatures: a `place` entry with `static_mesh` (+ rotation, uniform `scale`) becomes a StaticMeshActor.
 The owned dinosaur "theme park statue" packs are static FBX (no skeleton, no clips): import with `asset.import_static_mesh`
 (it takes no `save`), check `asset.get_mesh_bounds` (the Spinosaurus came in 1.9 m long; x8 = ~15 m, life size), seat it at
 ground + half-height*scale on a spot that is flat over the whole footprint, then `ue_stray_check.py --no-foliage`.
+
+Any other Blueprint actor (a pack's own ambient actor): a `place` entry with `actor` (/Game/ path) + optional `rotation` and
+`properties` ({name: value}, set with level.set_actor_property after placing). Fish in the lakes (T-0020, 2026-11-19):
+`templates/fish_spec.zas.json` puts 15 Arapaima Gigas (owned Fab pack, its BP_FishWander: wanders WanderRadius around its start,
++-HeightRange) in the 4 lakes of L_ZAS_Terrain. Lakes are WaterBodyLake actors whose own location is the world origin (their
+bounds are useless); the shape is the WaterSpline: level.get_spline_info points[].worldLocation (centre = mean, radius = nearest
+point, water Z = point z). Spots: the deepest of 24 ring samples (15/35/55 % of the radius) at least 2.5 m under the water
+(landscape.get_height_at_point -> `height`, merged layers), >= 30 % of the radius apart; start halfway down, WanderRadius
+<= 40 % of the lake, HeightRange <= (depth - 1.5 m) / 2. Check: `ue_roam_check.py --from-calls fish_calls.json --labels ...
+--root-bones root --limb-bones c_tail_02_x --below <water Z>` (15/15 PASS: travel 5-24 m, body swing 6-46 cm, all under water).
+Use a body bone: the tail tip c_tail_07_x read frozen on two lakes' fish although they swam.
+
+Floating village (owner report 2026-11-19 "buildings and other assets in the sky"): the BP_BLD_house_* / BP_PROP_* Blueprint
+actors are not StaticMeshActors, so `ue_stray_check.py`'s default --classes never looked at them. Pass them in --classes
+(level.get_actors_by_class matches the Blueprint class name); --apply seated 4 houses, the well, the chest and the campfire
+(6.5-10 m up) on the ground.
 
 `UWatooMWanderComponent` (on every WatooMCombatCharacter, off by default): server-only; picks a random point within Radius of
 the start (traced ground, not below MinGroundZ), walks there with AddMovementInput (the AI controller that placed characters get

@@ -2,7 +2,7 @@
   "namespace": "llama-cpp",
   "primary": "llama-cpp-swift-qwen38-coder",
   "mesh": "llama-cpp-llama-mesh",
-  "startup_timeout": 600,
+  "startup_timeout": 1200,
   "stop_timeout": 180,
   "released_gpu_max_mib": 1500,
   "state_root": "/data/ai/helper-scripts/state/gpu-controller",
@@ -35,35 +35,35 @@
   "deployment_identity": {
     "llama-cpp-swift-qwen38-coder": {
       "uid": "39fea07a-a271-4899-b8c1-ccb7dfe6f740",
-      "spec_sha256": "cd898fc822bca6a5940615edc8dfc9d8080955bcac4deb3f3a48831f1ad28538"
+      "spec_sha256": "41d9b576e03c3ebb3334cd79724f984ebb7c6a28c985ea40f55f709d2ca51458"
     },
     "llama-cpp-llama-mesh": {
       "uid": "db86c806-3d5b-403a-8f83-1ed6e0be6525",
-      "spec_sha256": "0b559ad10992458231eadc16d2ba1bd0427e7edba33300775c5118369e7738ee"
+      "spec_sha256": "a91a1a01b997d46a92d25bf34b4df2cf919fc9b3c3367652c1b63580b15158d8"
     },
     "llama-cpp-qwen38-atomic": {
       "uid": "4afe5080-0de6-465f-9101-c4d5128ff9d9",
-      "spec_sha256": "8059d2e096f870d5a42f7974ed08ef6dd6472c564c482e9bb3b59a2bf795a5da"
+      "spec_sha256": "9e463fa7763425ab4f4e59c1ad336e069d45be9967bac12fe98fa306d78b64ff"
     },
     "llama-cpp-qwen38-uncensored-mtp": {
       "uid": "e2887c0b-ed64-41f8-8805-8552c8ea006d",
-      "spec_sha256": "c1f41e8d19760031888ff906b6e865c1e8c88cf05892fd9652317fe612d848d5"
+      "spec_sha256": "250f3def2be5bf74b027046a5621b920c152cc4ef8d5ee9775de3251627d570d"
     },
     "llama-cpp-ornith-15-9b": {
       "uid": "6f030cec-6c65-4d37-9d05-547de4a52b5b",
-      "spec_sha256": "d6c85e4d64b20c301d53f54a6e85b24418edef4d6398273106e0093241e390cd"
+      "spec_sha256": "00724507019a76f5e3958ab0cdfc3f814091984e1598c84d3118c1766cde406a"
     },
     "llama-cpp-qwen35-defiant-fable-9b": {
       "uid": "66e134bd-07e2-445c-898f-eefe07188601",
-      "spec_sha256": "574a3f910717590b1b1cecfa83fb70646525e06f1447c129c013308a081bc6a9"
+      "spec_sha256": "5028a23899c0a6cc79b8a617160c5f203bbf5dc4ec99436189a71768883e8bbc"
     },
     "llama-cpp-gemma-4-e4b": {
       "uid": "25942184-e403-4a5f-9bbe-4795869f8027",
-      "spec_sha256": "c73aad7cf8963fc36b38b018fa65f8007e6986c23938c80f397c093bed13b3eb"
+      "spec_sha256": "ca8c5c6b182a0c558c3cc1bd54c4d5d9c2c9069043499988b9dd56303157f5af"
     },
     "llama-cpp-tiel-coder-35b-a3b-mtp": {
       "uid": "8821eabd-e369-402c-86f6-0420b81c51d4",
-      "spec_sha256": "94662c140faac1f10889854f4daa0bf7bddba029ab8b891f02d9f3b3fa34a73e"
+      "spec_sha256": "e629c98a3b44a1e511f30d85157045006b15ca03c2e519b333e0916a52c584fd"
     }
   },
   "cutover_required": true,

@@ -757,10 +757,10 @@ spec:
             items:
               - key: vector.yaml
                 path: vector.yaml
-        # Legacy file-run history was retired. Keep its optional collector empty;
-        # current container log mounts below remain the live telemetry source.
         - name: runs
-          emptyDir: {}
+          hostPath:
+            path: /data/ai/projects/legacy-workspaces/opencode-workspace/.opencode-runs
+            type: Directory
         - name: var-log-containers
           hostPath:
             path: /var/log/containers

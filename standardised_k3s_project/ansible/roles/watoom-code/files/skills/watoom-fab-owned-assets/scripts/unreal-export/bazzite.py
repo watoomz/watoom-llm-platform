@@ -82,7 +82,7 @@ def inhibit(name,seconds,why):
     The worker suspends when idle, which drops SSH and kills a running job's results."""
     unit=name+'-inhibit'
     cmd=['systemd-run','--quiet','--collect','--unit='+unit,'-p','RuntimeMaxSec=%d'%seconds,'--',
-         '/usr/bin/systemd-inhibit','--what=idle:sleep','--mode=block','--who=watoom-homelab','--why='+why,'/usr/bin/sleep',str(seconds)]
+         '/usr/bin/systemd-inhibit','--what=idle:sleep','--mode=block','--who=homelab-host','--why='+why,'/usr/bin/sleep',str(seconds)]
     sh(' '.join(shlex.quote(x) for x in cmd),timeout=60,check=True,sudo=True)
     return unit
 
@@ -175,7 +175,7 @@ KEEP_AWAKE_UNIT="""[Unit]
 Description=Keep Bazzite available as the homelab build/export worker (blocks automatic idle suspend only)
 After=systemd-logind.service
 [Service]
-ExecStart=/usr/bin/systemd-inhibit --what=idle --mode=block --who=watoom-homelab --why=Homelab-worker-stays-available /usr/bin/sleep infinity
+ExecStart=/usr/bin/systemd-inhibit --what=idle --mode=block --who=homelab-host --why=Homelab-worker-stays-available /usr/bin/sleep infinity
 Restart=always
 RestartSec=10
 [Install]
@@ -192,7 +192,7 @@ def keep_awake(enable=True):
         sh('sh -c %s'%shlex.quote('systemctl daemon-reload && systemctl enable --now %s.service'%KEEP_AWAKE),timeout=60,check=True,sudo=True)
     else:
         sh('sh -c %s'%shlex.quote('systemctl disable --now %s.service; rm -f /etc/systemd/system/%s.service; systemctl daemon-reload'%(KEEP_AWAKE,KEEP_AWAKE)),timeout=60,sudo=True)
-    return sh('systemctl is-active %s.service; systemd-inhibit --list --no-pager | grep -c watoom-homelab'%KEEP_AWAKE,timeout=60).stdout.split()
+    return sh('systemctl is-active %s.service; systemd-inhibit --list --no-pager | grep -c homelab-host'%KEEP_AWAKE,timeout=60).stdout.split()
 
 if __name__=='__main__':
     if os.geteuid()!=0:

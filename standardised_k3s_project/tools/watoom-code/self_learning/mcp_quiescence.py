@@ -1,19 +1,36 @@
 """Quiesce only inspected, idle Mesh stdio adapters through native MCP lifecycle APIs."""
-import json,time,urllib.parse
-SERVER='watoom-llama-mesh'
-ADAPTER_SHA256='fcf46b72701405233b6849e426b657606bf848e43de5cefef37bfe5481cff738'
-def endpoint(directory,action=None):
- base='/api/mcp' if action is None else '/api/experimental/mcp/'+SERVER+'/'+action
- return base+'?'+urllib.parse.urlencode({'location[directory]':directory})
-def connected(m,directory):
- return any(x['name']==SERVER and x.get('status',{}).get('status')=='connected' for x in m.request(endpoint(directory))['data'])
-def quiesce(m,state,save):
- if not m.request('/api/session/deployment-guard')['data']['held']:raise RuntimeError('Native admission fence required before MCP quiescence')
- if m.request('/api/session/active')['data']:raise RuntimeError('Active sessions prevent MCP quiescence')
- if not state.get('owner'):raise RuntimeError('Owned native admission token required')
- m.exec("import os,json,sys,pathlib;v=json.loads(pathlib.Path(os.environ['WATOOM_DEPLOYMENT_GATE_FILE']).read_text());assert v=={'version':1,'owner':sys.argv[1]},'Admission fence belongs to another operation'",state['owner'])
- if 'mcp_connections' not in state:
-  code="""import pathlib,os,json,hashlib
+
+import json, time, urllib.parse
+
+SERVER = "watoom-llama-mesh"
+ADAPTER_SHA256 = "fcf46b72701405233b6849e426b657606bf848e43de5cefef37bfe5481cff738"
+
+
+def endpoint(directory, action=None):
+    base = "/api/mcp" if action is None else "/api/experimental/mcp/" + SERVER + "/" + action
+    return base + "?" + urllib.parse.urlencode({"location[directory]": directory})
+
+
+def connected(m, directory):
+    return any(
+        x["name"] == SERVER and x.get("status", {}).get("status") == "connected"
+        for x in m.request(endpoint(directory))["data"]
+    )
+
+
+def quiesce(m, state, save):
+    if not m.request("/api/session/deployment-guard")["data"]["held"]:
+        raise RuntimeError("Native admission fence required before MCP quiescence")
+    if m.request("/api/session/active")["data"]:
+        raise RuntimeError("Active sessions prevent MCP quiescence")
+    if not state.get("owner"):
+        raise RuntimeError("Owned native admission token required")
+    m.exec(
+        "import os,json,sys,pathlib;v=json.loads(pathlib.Path(os.environ['WATOOM_DEPLOYMENT_GATE_FILE']).read_text());assert v=={'version':1,'owner':sys.argv[1]},'Admission fence belongs to another operation'",
+        state["owner"],
+    )
+    if "mcp_connections" not in state:
+        code = """import pathlib,os,json,hashlib
 result=[]
 script=pathlib.Path('/config/watoom-tools/watoom-llama-mesh.py')
 for p in pathlib.Path('/proc').iterdir():
@@ -28,20 +45,31 @@ for p in pathlib.Path('/proc').iterdir():
  except FileNotFoundError:continue
 print(json.dumps(result))
 """
-  entries=json.loads(m.exec(code))
-  for entry in entries:
-   if entry['adapter_sha256']!=ADAPTER_SHA256:raise RuntimeError('Mesh adapter differs from inspected synchronous implementation')
-   if not connected(m,entry['directory']):raise RuntimeError('Idle adapter lacks matching native connection')
-  state['mcp_connections']=entries;save(state)
- for entry in state['mcp_connections']:
-  if connected(m,entry['directory']):m.request(endpoint(entry['directory'],'disconnect'),{})
- deadline=time.monotonic()+15
- while m.transport()['processes']:
-  if time.monotonic()>deadline:raise RuntimeError('Application processes remain after native MCP disconnect; no processes killed')
-  time.sleep(0.5)
- state['mcp_quiesced']=True;save(state)
-def restore(m,state,save):
- for entry in state.get('mcp_connections',[]):
-  if not connected(m,entry['directory']):m.request(endpoint(entry['directory'],'connect'),{})
-  if not connected(m,entry['directory']):raise RuntimeError('Original MCP connection did not recover')
- state['mcp_restored']=True;save(state)
+        entries = json.loads(m.exec(code))
+        for entry in entries:
+            if entry["adapter_sha256"] != ADAPTER_SHA256:
+                raise RuntimeError("Mesh adapter differs from inspected synchronous implementation")
+            if not connected(m, entry["directory"]):
+                raise RuntimeError("Idle adapter lacks matching native connection")
+        state["mcp_connections"] = entries
+        save(state)
+    for entry in state["mcp_connections"]:
+        if connected(m, entry["directory"]):
+            m.request(endpoint(entry["directory"], "disconnect"), {})
+    deadline = time.monotonic() + 15
+    while m.transport()["processes"]:
+        if time.monotonic() > deadline:
+            raise RuntimeError("Application processes remain after native MCP disconnect; no processes killed")
+        time.sleep(0.5)
+    state["mcp_quiesced"] = True
+    save(state)
+
+
+def restore(m, state, save):
+    for entry in state.get("mcp_connections", []):
+        if not connected(m, entry["directory"]):
+            m.request(endpoint(entry["directory"], "connect"), {})
+        if not connected(m, entry["directory"]):
+            raise RuntimeError("Original MCP connection did not recover")
+    state["mcp_restored"] = True
+    save(state)

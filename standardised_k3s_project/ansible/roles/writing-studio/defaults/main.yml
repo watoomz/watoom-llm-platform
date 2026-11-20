@@ -1,0 +1,54 @@
+---
+# Writing Studio (T-0099). Default OFF like creation-studio/moss-image: nothing is installed unless
+# writing_studio_enabled is true. A host service bound to the k3s cni0 bridge, published by the Glance route
+# manifests/10-infrastructure/glance/writing-studio-route.yml at https://glance.internal.homelab.example/writing/.
+writing_studio_enabled: false
+writing_studio_start: false        # install the unit but only start it when this is also true
+writing_studio_project_root: "{{ project_root | default('/data/github/watoom-standardised-homelab/standardised_k3s_project') }}"
+writing_studio_host: 10.242.0.1
+writing_studio_port: 8793
+writing_studio_pod_firewall: true  # pod-subnet-only rule for the Glance route, same policy as creation-studio
+
+# Writing: the existing LLM router (ClusterIP, same address creation-studio uses). The page lists the router's
+# language models; the default is the primary so a request does not switch the GPU unless the writer asks.
+writing_studio_router_base: http://10.243.133.2:8000
+writing_studio_default_model: swift-qwen38-coder
+# Graphic-novel art: the existing MOSS Image Studio API (same-origin, no auth), as creation-studio does.
+writing_studio_moss_base: http://10.242.0.1:8791
+
+# The 25 creative-writing skills are copied from the repository (the same source the WatooM Code skills playbook
+# deploys), so the studio and WatooM Code always share one SKILL.md.
+writing_studio_skill_source: "{{ writing_studio_project_root }}/ansible/roles/watoom-code/files/skills"
+writing_studio_skills:
+  - creative-writing
+  - adaptation
+  - chapter-writing
+  - character-management
+  - discovery-drafting
+  - editorial-review
+  - feedback-triage
+  - genre-craft
+  - interactive-fiction
+  - line-editing
+  - plot-structure
+  - premise-workshop
+  - publishing
+  - reader-panel
+  - revision-continuity
+  - scene-craft
+  - series-continuity
+  - story-init
+  - story-maintenance
+  - submission
+  - theme-craft
+  - verse-craft
+  - voice-style
+  - watoom-prompt-writing
+  - worldbuilding
+writing_studio_root: /data/ai/writing-studio
+writing_studio_skills_dir: "{{ writing_studio_root }}/skills"
+writing_studio_output_dir: "{{ writing_studio_root }}/output"
+
+# Dedicated non-root service account (next free id after creation-studio's 1013).
+writing_studio_uid: 1014
+writing_studio_gid: 1014

@@ -257,9 +257,9 @@
       "mode": "ansible",
       "playbooks": [
         "watoom-code.yml",
-        "watoom-code-agents.yml",
+        "watoom-code-parts.yml:agents",
         "watoom-code-coordinator-guard.yml",
-        "watoom-code-image-scope.yml",
+        "watoom-code-parts.yml:image_scope",
         "watoom-native-skills.yml"
       ],
       "description": "Restore app, memory and Toolkit via independently pinned images; install plugins/agents/skills; verify native health before resuming sessions"
@@ -269,7 +269,7 @@
       "mode": "ansible",
       "playbooks": [
         "watoom-code-game-worker.yml",
-        "watoom-code-image-review.yml",
+        "watoom-code-parts.yml:image_review",
         "watoom-code-fab-assets.yml",
         "watoom-workstation-render-stage.yml",
         "watoom-code-memory-embeddings.yml",

@@ -125,6 +125,7 @@
     - docker_host_manage_containerd_storage | bool
     - ansible_facts['selinux']['status'] | default('disabled') == 'enabled'
     - docker_host_containerd_selinux_equivalence.rc != 0
+  changed_when: true  # mutating command; already guarded by its when/creates
 
 - name: "Docker host | Restore containerd SELinux context"
   ansible.builtin.command:

@@ -1,0 +1,63 @@
+---
+# Platform converge (T-0115): every long-running component's own playbook, each under its own tag.
+# Imported by site.yml under the `never` tag, so a plain `site.yml` run is unchanged (base layers only) and
+#   ansible-run playbooks/site.yml --tags platform            converges the whole platform
+#   ansible-run playbooks/site.yml --tags tickets_board       converges one component
+# Action playbooks (game, dispatcharr, cloudflare) and gated/one-off playbooks stay separate on purpose.
+
+- name: Converge watoom-code
+  ansible.builtin.import_playbook: watoom-code.yml
+  tags: [never, platform, watoom_code]
+
+- name: Converge watoom-native-skills
+  ansible.builtin.import_playbook: watoom-native-skills.yml
+  tags: [never, platform, native_skills]
+
+# model-manager and gpu-controller are NOT converged here: model-manager requires reviewed immutable artifacts
+# (tools/model-manager/manage.py / cutover.py) and gpu-controller a reviewed cutover (gpu_controller_cutover_verified;
+# run playbooks/gpu-controller.yml through its cutover gates) (T-0115 fix).
+# creation-studio, writing-studio and moss-image are enabled through their ansible/vars/<app>.yml files.
+
+- name: Converge creation-studio
+  ansible.builtin.import_playbook: creation-studio.yml
+  tags: [never, platform, creation_studio]
+
+- name: Converge writing-studio
+  ansible.builtin.import_playbook: writing-studio.yml
+  tags: [never, platform, writing_studio]
+
+- name: Converge tickets-board
+  ansible.builtin.import_playbook: tickets-board.yml
+  tags: [never, platform, tickets_board]
+
+- name: Converge skill-editor
+  ansible.builtin.import_playbook: skill-editor.yml
+  tags: [never, platform, skill_editor]
+
+- name: Converge artex
+  ansible.builtin.import_playbook: artex.yml
+  tags: [never, platform, artex]
+
+- name: Converge moss-image
+  ansible.builtin.import_playbook: moss-image.yml
+  tags: [never, platform, moss_image]
+
+- name: Converge llm-bge-embeddings
+  ansible.builtin.import_playbook: llm-bge-embeddings.yml
+  tags: [never, platform, bge_embeddings]
+
+- name: Converge watoom-kali-workbench-mcp
+  ansible.builtin.import_playbook: watoom-kali-workbench-mcp.yml
+  tags: [never, platform, kali_workbench]
+
+- name: Converge watoom-platform-alerts
+  ansible.builtin.import_playbook: watoom-platform-alerts.yml
+  tags: [never, platform, platform_alerts]
+
+- name: Converge watoom-node-textfile
+  ansible.builtin.import_playbook: watoom-node-textfile.yml
+  tags: [never, platform, node_textfile]
+
+- name: Converge watoom-backup-offhost
+  ansible.builtin.import_playbook: watoom-backup-offhost.yml
+  tags: [never, platform, backup_offhost]

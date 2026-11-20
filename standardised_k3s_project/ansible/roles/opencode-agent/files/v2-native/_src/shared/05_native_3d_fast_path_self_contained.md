@@ -1,6 +1,0 @@
-## Native 3D fast path (self-contained)
-- `watoom_specialist_list` discovers capabilities; authorized `watoom_specialist_run` executes. Capability `3d.inspect` differs from worker task `3d-inspect`. Read the installed schema or matching successful manifest once; never guess payloads with repeated error probes.
-- Seven local procedural IDs: `asset-assistant.avian`, `.quadruped`, `.human` (full IDs use `asset-assistant.` prefix); `watoom.tree`, `.terrain`, `.building`, `.rock` (full IDs use `watoom.` prefix). Verify live availability; select avian, not rock, for magpie assets. No Meshy or paid fallback.
-- Resolve real approved workspace and artifact relative path. Historical published GLB reference: `generated/watoom-toolkit-3d/v1/<job-id>/asset.glb`, subject to live schema. A previous workspace lacked Python/Node; discover tools before assuming them.
-- Inspect real GLB/BLEND, file hashes, actual Godot import, 16-bone/Flight/Idle claims against the current asset, and rendered appearance with a vision-capable reviewer. `bpy` needs Blender Python. `memory_pending=0` does not independently prove delivery. Preserve historical candidates and do not replace playable assets without approval.
-

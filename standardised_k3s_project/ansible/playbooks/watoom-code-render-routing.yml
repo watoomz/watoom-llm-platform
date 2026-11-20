@@ -21,20 +21,13 @@
         group: '1001'
         mode: '0644'
         directory_mode: '0750'
-    - name: Apply only the owned default-capture block to managed execution agents
-      ansible.builtin.blockinfile:
-        path: '/data/ai/watoom-code/config/agents/{{ item }}.md'
-        marker: '<!-- {mark} WATOOM DEFAULT CAPTURE RECIPE -->'
-        block: "{{ lookup('ansible.builtin.file', '../roles/watoom-code/files/skills/asset-image-clip-capture/references/default-recipe.md') }}"
-        owner: '1001'
-        group: '1001'
-        mode: '0644'
-      loop: [watoom-workflow, watoom-builder]
+    # T-0117: the capture recipe is no longer injected into agent prompts; agents load the
+    # asset-image-clip-capture skill (references/default-recipe.md) when they need it.
     - name: Apply only the maintained critic step budget
       ansible.builtin.lineinfile:
         path: /data/ai/watoom-code/config/agents/watoom-critic.md
         regexp: '^steps: [0-9]+$'
-        line: "{{ lookup('ansible.builtin.file', '../roles/opencode-agent/files/v2-native/agents/watoom-critic.md') | regex_search('(?m)^steps: [0-9]+$') }}"
+        line: "{{ lookup('ansible.builtin.file', '../roles/watoom-code/files/native/agents/watoom-critic.md') | regex_search('(?m)^steps: [0-9]+$') }}"
         owner: '1001'
         group: '1001'
         mode: '0644'

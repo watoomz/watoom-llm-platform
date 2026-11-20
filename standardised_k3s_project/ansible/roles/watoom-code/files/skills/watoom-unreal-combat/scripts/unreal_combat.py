@@ -37,7 +37,9 @@ tools/rig-ue-mcp/README.md "Building a C++ code plugin"). Everything a game adds
                                                                          (e.g. a hand-placed pawn the game mode's hero replaces)
    "place": [{"character": "BP_Dummy", "label": "Dummy_1", "location": [x, y, z], "rotation": [0, 180, 0]},
              {"item": "Medkit", "label": "Pickup_Medkit_1", "location": [x, y, z], "respawn": 30},   -> AWatooMPickup
-             {"static_mesh": "/Game/.../SM_Statue", "label": "Statue_1", "location": [x, y, z], "rotation": [...], "scale": 8}]}
+             {"static_mesh": "/Game/.../SM_Statue", "label": "Statue_1", "location": [x, y, z], "rotation": [...], "scale": 8},
+             {"player_start": true, "label": "PlayerStart_Main", "location": [x, y, z], "rotation": [0, yaw, 0]},
+             {"actor": "/Game/Pack/BP_Ambient", "label": "Fish_1", "location": [x, y, z], "properties": {"WanderRadius": 800}}]}
                                                                          -> a StaticMeshActor (statues, props next to creatures)
 
 "anim_sets" (any skeleton): one 2D blend space per stance (X = Direction -180..180, Y = Speed 0..speed; idle on the speed-0
@@ -377,6 +379,28 @@ def build(spec, root, notes=None):
                 if p.get("respawn"):
                     calls.append(["level.set_actor_property", {"actorLabel": p["label"], "propertyName": "RespawnSeconds",
                                                                "value": float(p["respawn"])}])
+                continue
+            if "actor" in p:
+                # any Blueprint actor (a pack's own ambient actor, e.g. BP_FishWander) with instance properties
+                bp = p["actor"]
+                if not bp.startswith("/Game/"):
+                    raise ValueError("place: actor %r must be a /Game/ Blueprint path" % bp)
+                a = {"actorClass": "%s.%s_C" % (bp, bp.rsplit("/", 1)[1]), "label": p["label"], "onConflict": "skip",
+                     "location": {"x": x, "y": y, "z": z}}
+                if "rotation" in p:
+                    pi, ya, ro = p["rotation"]
+                    a["rotation"] = {"pitch": pi, "yaw": ya, "roll": ro}
+                calls.append(["level.place_actor", a])
+                for prop, value in sorted(p.get("properties", {}).items()):
+                    calls.append(["level.set_actor_property", {"actorLabel": p["label"], "propertyName": prop, "value": value}])
+                continue
+            if p.get("player_start"):
+                # where the game mode's pawn spawns (a map without one spawns it at the world origin)
+                a = {"actorClass": "PlayerStart", "label": p["label"], "onConflict": "skip", "location": {"x": x, "y": y, "z": z}}
+                if "rotation" in p:
+                    pi, ya, ro = p["rotation"]
+                    a["rotation"] = {"pitch": pi, "yaw": ya, "roll": ro}
+                calls.append(["level.place_actor", a])
                 continue
             if "static_mesh" in p:
                 a = {"actorClass": "StaticMeshActor", "label": p["label"], "onConflict": "skip", "staticMesh": p["static_mesh"],

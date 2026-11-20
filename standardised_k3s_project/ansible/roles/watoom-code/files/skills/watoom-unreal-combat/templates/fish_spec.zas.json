@@ -1,0 +1,279 @@
+{
+ "_comment": "T-0020 (owner 2026-11-19: download approved): Arapaima Gigas (Fab 88bdceb6, owned, copied with rig_copy_pack.py) swimming in the four lakes of L_ZAS_Terrain, using the pack's own BP_FishWander (wanders around its start point; WanderRadius/HeightRange). Spots: deepest points on rings at 15/35/55 % of each lake's radius (bed from landscape.get_height_at_point, merged layers, >= 2.5 m below the water), >= 30 % of the radius apart; each fish starts halfway between bed and surface, radius <= 40 % of the lake, height range <= half the depth minus 75 cm.",
+ "content_root": "/Game/ZAS/Creatures",
+ "map": {
+  "path": "/Game/Maps/L_ZAS_Terrain"
+ },
+ "place": [
+  {
+   "actor": "/Game/Arapaima_Gigas/Blueprints/BP_FishWander",
+   "label": "ZAS_Arapaima_1_1",
+   "location": [
+    179612,
+    167568,
+    7971
+   ],
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "properties": {
+    "WanderRadius": 1500.0,
+    "HeightRange": 300.0
+   }
+  },
+  {
+   "actor": "/Game/Arapaima_Gigas/Blueprints/BP_FishWander",
+   "label": "ZAS_Arapaima_1_2",
+   "location": [
+    175943,
+    167352,
+    7971
+   ],
+   "rotation": [
+    0,
+    37,
+    0
+   ],
+   "properties": {
+    "WanderRadius": 1500.0,
+    "HeightRange": 300.0
+   }
+  },
+  {
+   "actor": "/Game/Arapaima_Gigas/Blueprints/BP_FishWander",
+   "label": "ZAS_Arapaima_1_3",
+   "location": [
+    178365,
+    163213,
+    8042
+   ],
+   "rotation": [
+    0,
+    74,
+    0
+   ],
+   "properties": {
+    "WanderRadius": 1500.0,
+    "HeightRange": 300.0
+   }
+  },
+  {
+   "actor": "/Game/Arapaima_Gigas/Blueprints/BP_FishWander",
+   "label": "ZAS_Arapaima_1_4",
+   "location": [
+    177190,
+    171707,
+    8074
+   ],
+   "rotation": [
+    0,
+    111,
+    0
+   ],
+   "properties": {
+    "WanderRadius": 1500.0,
+    "HeightRange": 300.0
+   }
+  },
+  {
+   "actor": "/Game/Arapaima_Gigas/Blueprints/BP_FishWander",
+   "label": "ZAS_Arapaima_1_5",
+   "location": [
+    184359,
+    168904,
+    8174
+   ],
+   "rotation": [
+    0,
+    148,
+    0
+   ],
+   "properties": {
+    "WanderRadius": 1500.0,
+    "HeightRange": 300.0
+   }
+  },
+  {
+   "actor": "/Game/Arapaima_Gigas/Blueprints/BP_FishWander",
+   "label": "ZAS_Arapaima_1_6",
+   "location": [
+    171197,
+    166016,
+    8174
+   ],
+   "rotation": [
+    0,
+    185,
+    0
+   ],
+   "properties": {
+    "WanderRadius": 1500.0,
+    "HeightRange": 300.0
+   }
+  },
+  {
+   "actor": "/Game/Arapaima_Gigas/Blueprints/BP_FishWander",
+   "label": "ZAS_Arapaima_2_1",
+   "location": [
+    184989,
+    260432,
+    5190
+   ],
+   "rotation": [
+    0,
+    222,
+    0
+   ],
+   "properties": {
+    "WanderRadius": 1500.0,
+    "HeightRange": 300.0
+   }
+  },
+  {
+   "actor": "/Game/Arapaima_Gigas/Blueprints/BP_FishWander",
+   "label": "ZAS_Arapaima_2_2",
+   "location": [
+    185935,
+    259591,
+    5232
+   ],
+   "rotation": [
+    0,
+    259,
+    0
+   ],
+   "properties": {
+    "WanderRadius": 1500.0,
+    "HeightRange": 300.0
+   }
+  },
+  {
+   "actor": "/Game/Arapaima_Gigas/Blueprints/BP_FishWander",
+   "label": "ZAS_Arapaima_2_3",
+   "location": [
+    184571,
+    258835,
+    5274
+   ],
+   "rotation": [
+    0,
+    296,
+    0
+   ],
+   "properties": {
+    "WanderRadius": 1500.0,
+    "HeightRange": 300.0
+   }
+  },
+  {
+   "actor": "/Game/Arapaima_Gigas/Blueprints/BP_FishWander",
+   "label": "ZAS_Arapaima_3_1",
+   "location": [
+    133469,
+    101167,
+    8360
+   ],
+   "rotation": [
+    0,
+    333,
+    0
+   ],
+   "properties": {
+    "WanderRadius": 1500.0,
+    "HeightRange": 300.0
+   }
+  },
+  {
+   "actor": "/Game/Arapaima_Gigas/Blueprints/BP_FishWander",
+   "label": "ZAS_Arapaima_3_2",
+   "location": [
+    133068,
+    99636,
+    8383
+   ],
+   "rotation": [
+    0,
+    10,
+    0
+   ],
+   "properties": {
+    "WanderRadius": 1500.0,
+    "HeightRange": 300.0
+   }
+  },
+  {
+   "actor": "/Game/Arapaima_Gigas/Blueprints/BP_FishWander",
+   "label": "ZAS_Arapaima_3_3",
+   "location": [
+    134376,
+    100362,
+    8406
+   ],
+   "rotation": [
+    0,
+    47,
+    0
+   ],
+   "properties": {
+    "WanderRadius": 1500.0,
+    "HeightRange": 300.0
+   }
+  },
+  {
+   "actor": "/Game/Arapaima_Gigas/Blueprints/BP_FishWander",
+   "label": "ZAS_Arapaima_4_1",
+   "location": [
+    198082,
+    112253,
+    8237
+   ],
+   "rotation": [
+    0,
+    84,
+    0
+   ],
+   "properties": {
+    "WanderRadius": 1500.0,
+    "HeightRange": 300.0
+   }
+  },
+  {
+   "actor": "/Game/Arapaima_Gigas/Blueprints/BP_FishWander",
+   "label": "ZAS_Arapaima_4_2",
+   "location": [
+    196237,
+    114566,
+    8258
+   ],
+   "rotation": [
+    0,
+    121,
+    0
+   ],
+   "properties": {
+    "WanderRadius": 1500.0,
+    "HeightRange": 300.0
+   }
+  },
+  {
+   "actor": "/Game/Arapaima_Gigas/Blueprints/BP_FishWander",
+   "label": "ZAS_Arapaima_4_3",
+   "location": [
+    194072,
+    113300,
+    8344
+   ],
+   "rotation": [
+    0,
+    158,
+    0
+   ],
+   "properties": {
+    "WanderRadius": 1500.0,
+    "HeightRange": 300.0
+   }
+  }
+ ]
+}

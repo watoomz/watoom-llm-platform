@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {mkdtemp,mkdir,writeFile,readFile,rm,symlink,chown} from "node:fs/promises";
 import {join} from "node:path";
 import {execFileSync} from "node:child_process";
-import {executeGameWorker,gameSourceFingerprint,validateGameWorkerInput} from "./guard-source/index.js";
+import {executeGameWorker,gameSourceFingerprint,validateGameWorkerInput} from "../../ansible/roles/watoom-code/files/coordinator-guard/index.js";
 const root=await mkdtemp('/data/ai/projects/games/.worker-bridge-test-');
 try {
  await mkdir(join(root,'scripts'));await writeFile(join(root,'project.godot'),'[application]');await writeFile(join(root,'scripts/test_runner.gd'),'extends SceneTree');

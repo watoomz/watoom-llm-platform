@@ -84,7 +84,7 @@ K3s will automatically add the cluster internal Pod and Service IP ranges and cl
 ```
 HTTP_PROXY=http://your-proxy.example.com:8888
 HTTPS_PROXY=http://your-proxy.example.com:8888
-NO_PROXY=127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+NO_PROXY=127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.250.0/16
 ```
 
 If you want to configure the proxy settings for containerd without affecting K3s and the Kubelet, you can prefix the variables with `CONTAINERD_`:
@@ -92,7 +92,7 @@ If you want to configure the proxy settings for containerd without affecting K3s
 ```
 CONTAINERD_HTTP_PROXY=http://your-proxy.example.com:8888
 CONTAINERD_HTTPS_PROXY=http://your-proxy.example.com:8888
-CONTAINERD_NO_PROXY=127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+CONTAINERD_NO_PROXY=127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.250.0/16
 ```
 
 ## Using Docker as the Container Runtime

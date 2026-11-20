@@ -7,6 +7,7 @@ def gpu_controller_check(model_id="swift-qwen38-coder",allow_switch=False):
     if result.get('allowed') is not True:raise RuntimeError('GPU owned or controller unavailable')
 import os
 import ssl
+from collections import deque
 import time
 import threading
 import urllib.error
@@ -79,6 +80,44 @@ VISIBLE_MODELS = {
 START_TIMEOUT = int(os.environ.get("START_TIMEOUT_SECONDS", "240"))
 STOP_TIMEOUT = int(os.environ.get("STOP_TIMEOUT_SECONDS", "120"))
 SWITCH_LOCK_TIMEOUT = int(os.environ.get("SWITCH_LOCK_TIMEOUT_SECONDS", "300"))
+# 2026-11-19: while the controller switches models (5-7 min for a 27B gguf read fresh from disk) it handles one request
+# at a time, so every other request's begin-inference timed out after 10 s and the router answered 503: watoom-code saw a
+# burst of 503s and gave up. A request now WAITS while a switch this router started is in flight, up to this many seconds.
+SWITCH_WAIT_SECONDS = int(os.environ.get("SWITCH_WAIT_SECONDS", "900"))
+SWITCHES_IN_FLIGHT = [0]
+SWITCHES_IN_FLIGHT_LOCK = threading.Lock()
+
+
+def switch_in_progress():
+    with SWITCHES_IN_FLIGHT_LOCK:
+        return SWITCHES_IN_FLIGHT[0] > 0 or MODEL_SWITCH_LOCK.locked()
+
+
+def begin_inference(client, deployment, allow_switch):
+    """begin-inference lease; a request that may switch counts as an in-flight switch; any other request that fails
+    while a switch is in flight retries every 5 s until it ends or SWITCH_WAIT_SECONDS pass (then the error stands)."""
+    deadline = time.monotonic() + SWITCH_WAIT_SECONDS
+    waited = False
+    while True:
+        if allow_switch:
+            with SWITCHES_IN_FLIGHT_LOCK:
+                SWITCHES_IN_FLIGHT[0] += 1
+        try:
+            lease = client.call('begin-inference', deployment=deployment, allow_switch=allow_switch)['lease']
+            if waited:
+                print("[MODEL-SWITCH] action=waited-for-switch deployment=" + deployment, flush=True)
+            return lease
+        except Exception:
+            if allow_switch or time.monotonic() >= deadline or not switch_in_progress():
+                raise
+            if not waited:
+                print("[MODEL-SWITCH] action=wait-for-switch deployment=" + deployment, flush=True)
+            waited = True
+            time.sleep(5)
+        finally:
+            if allow_switch:
+                with SWITCHES_IN_FLIGHT_LOCK:
+                    SWITCHES_IN_FLIGHT[0] -= 1
 
 # ThreadingHTTPServer processes requests concurrently. GPU model lifecycle
 # changes must therefore be serialized independently of inference traffic.
@@ -332,17 +371,71 @@ def ensure_model(model_id, allow_switch=False):
 
 
 
+# 2026-11-19 (owner): WatooM Code's per-model context budget scales with the model's real llama-server context: a 128K
+# server (the ~17 GB 27B models) gets 100K in WatooM Code, a smaller model with a bigger server context proportionally
+# more (256K -> 200K). The Deployment's --ctx-size / LLAMA_ARG_CTX_SIZE is the source (cached; RBAC: get deployments).
+DEFAULT_APPLICATION_CONTEXT = int(os.environ.get("DEFAULT_APPLICATION_CONTEXT", "100000"))
+APPLICATION_CONTEXT_RATIO = 100000 / 131072
+
+
+def application_budget(served):
+    # never below the previous fixed budget (min(served, 100000)), so no model loses context
+    return max(min(served, 100000), int(served * APPLICATION_CONTEXT_RATIO) // 1000 * 1000) if served else None
+DEPLOYMENT_CONTEXT_TTL = 300
+DEPLOYMENT_CONTEXT = {}
+DEPLOYMENT_CONTEXT_LOCK = threading.Lock()
+
+
+def server_context(container):
+    args = container.get("args") or []
+    for index, arg in enumerate(args):
+        if arg in ("--ctx-size", "-c") and index + 1 < len(args):
+            return int(args[index + 1])
+    for env in container.get("env") or []:
+        if env.get("name") == "LLAMA_ARG_CTX_SIZE" and env.get("value"):
+            return int(env["value"])
+    return None
+
+
+def server_vision(container):
+    """True when llama-server loads a vision projector (--mmproj / LLAMA_ARG_MMPROJ) (T-0095)."""
+    if "--mmproj" in (container.get("args") or []):
+        return True
+    return any(env.get("name") == "LLAMA_ARG_MMPROJ" and env.get("value") for env in container.get("env") or [])
+
+
+def deployment_facts(name):
+    """{"context": served --ctx-size, "vision": bool} from the Deployment; cached, last value kept on errors."""
+    now = time.time()
+    with DEPLOYMENT_CONTEXT_LOCK:
+        cached = DEPLOYMENT_CONTEXT.get(name)
+    if cached and now - cached[0] < DEPLOYMENT_CONTEXT_TTL:
+        return cached[1]
+    try:
+        container = deploy(name)["spec"]["template"]["spec"]["containers"][0]
+        value = {"context": server_context(container), "vision": server_vision(container)}
+    except Exception:
+        value = cached[1] if cached else {"context": None, "vision": None}
+    with DEPLOYMENT_CONTEXT_LOCK:
+        DEPLOYMENT_CONTEXT[name] = (now, value)
+    return value
+
+
 def model_list():
     data = []
     for model_id, name in VISIBLE_MODELS.items():
+        spec = MODELS.get(MODEL_ALIASES.get(model_id, model_id), {})
+        facts = deployment_facts(spec["deployment"]) if spec.get("deployment") else {"context": None, "vision": None}
+        served = facts["context"]
         data.append({
             "id": model_id,
             "object": "model",
             "created": 0,
             "owned_by": "llm-router",
             "name": name,
-            "context_limit": MODELS.get(model_id,{}).get("context_limit"),
-            "application_context": MODELS.get(model_id,{}).get("application_context",100000),
+            "context_limit": spec.get("context_limit"),
+            "application_context": application_budget(served) or spec.get("application_context") or DEFAULT_APPLICATION_CONTEXT,
+            "vision": facts["vision"],
         })
     return {"object": "list", "data": data}
 
@@ -423,6 +516,57 @@ def refresh_managed_catalog():
     except FileNotFoundError:
         if _MANAGED_IDS:raise RuntimeError("Managed catalog disappeared")
 
+PERF_WINDOW_SECONDS = 86400
+PERF_EVENTS = deque(maxlen=10000)
+PERF_LOCK = threading.Lock()
+
+def sse_has_generated_output(line):
+    if not line.startswith(b"data:"):
+        return False
+    raw = line.partition(b":")[2].strip()
+    if not raw or raw == b"[DONE]":
+        return False
+    try:
+        event = json.loads(raw)
+        for choice in event.get("choices", []):
+            delta = choice.get("delta") or {}
+            if any(delta.get(key) for key in ("content", "reasoning_content", "tool_calls", "function_call")) or choice.get("text"):
+                return True
+    except (ValueError, AttributeError, TypeError):
+        return False
+    return False
+
+
+def record_perf(effort, status, latency_ms, ttft_ms):
+    row = {"at": time.time(), "effort": effort, "status": int(status),
+           "latency_ms": round(latency_ms, 1), "ttft_ms": round(ttft_ms, 1) if ttft_ms is not None else None}
+    with PERF_LOCK:
+        PERF_EVENTS.append(row)
+
+def performance_summary(now=None):
+    now = time.time() if now is None else now
+    with PERF_LOCK:
+        rows = [r.copy() for r in PERF_EVENTS if now - r["at"] <= PERF_WINDOW_SECONDS]
+    result = {}
+    for effort in ("low", "medium", "high", "xhigh", "unset", "other"):
+        group = [r for r in rows if (r["effort"] if r["effort"] in ("low", "medium", "high", "xhigh", "unset") else "other") == effort]
+        if not group:
+            result[effort] = {"requests": 0, "latency_p50_ms": None, "latency_p95_ms": None, "ttft_p50_ms": None,
+                              "errors": 0, "http_503": 0, "generation_tokens_per_second": None,
+                              "prompt_tokens_per_second": None}
+            continue
+        latencies = sorted(r["latency_ms"] for r in group)
+        ttfts = sorted(r["ttft_ms"] for r in group if r["ttft_ms"] is not None)
+        percentile = lambda values, q: values[max(0, min(len(values)-1, int(q*len(values)+.999999)-1))] if values else None
+        result[effort] = {"requests": len(group), "latency_p50_ms": round(percentile(latencies, .50), 1),
+                          "latency_p95_ms": round(percentile(latencies, .95), 1),
+                          "ttft_p50_ms": round(percentile(ttfts, .50), 1) if ttfts else None,
+                          "errors": sum(r["status"] >= 400 for r in group),
+                          "http_503": sum(r["status"] == 503 for r in group),
+                          "generation_tokens_per_second": None, "prompt_tokens_per_second": None}
+    return {"window_seconds": PERF_WINDOW_SECONDS, "generated": now, "levels": result}
+
+
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
@@ -439,6 +583,12 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         refresh_managed_catalog()
+        if self.path == "/performance":
+            self.send_json(200, performance_summary())
+            return
+        if self.path == "/healthz":
+            self.send_json(200, {"status": "ok"})
+            return
         if self.path in ("/health", "/"):
             self.send_json(200, {"status": "ok", "active_deployment": active_deployment()})
             return
@@ -501,6 +651,11 @@ class Handler(BaseHTTPRequestHandler):
         self.proxy("POST")
 
     def proxy(self, method):
+        performance_started = time.monotonic()
+        performance_effort = "unset"
+        performance_enabled = False
+        performance_status = 503
+        performance_ttft = None
         length = int(self.headers.get("Content-Length", "0"))
         body = self.rfile.read(length) if length else b""
         model_id = DEFAULT_MODEL
@@ -526,6 +681,9 @@ class Handler(BaseHTTPRequestHandler):
                     and model_id != ACTIVE_MODEL_ALIAS
                 )
                 stream_requested = payload.get("stream") is True
+                performance_enabled = method == "POST" and self.path in ("/v1/chat/completions", "/v1/completions")
+                raw_effort = payload.get("reasoning_effort")
+                performance_effort = str(raw_effort).lower() if raw_effort is not None else "unset"
 
 
                 if model_id == ACTIVE_MODEL_ALIAS:
@@ -541,6 +699,8 @@ class Handler(BaseHTTPRequestHandler):
                                 }
                             },
                         )
+                        if performance_enabled:
+                            record_perf(performance_effort, 503, (time.monotonic() - performance_started) * 1000, None)
                         return
                     model_id = active_model_id
 
@@ -634,13 +794,15 @@ class Handler(BaseHTTPRequestHandler):
                     }
                 },
             )
+            if performance_enabled:
+                record_perf(performance_effort, 429, (time.monotonic() - performance_started) * 1000, None)
             return
 
         lease=None
         try:
             canonical=MODEL_ALIASES.get(model_id,model_id)
             request_account=GPUClient('/gpu-controller/router.sock',timeout=1500 if allow_request_switch else 10)
-            lease=request_account.call('begin-inference',deployment=MODELS[canonical]['deployment'],allow_switch=allow_request_switch)['lease']
+            lease=begin_inference(request_account,MODELS[canonical]['deployment'],allow_request_switch)
             gpu_controller_check(model_id,allow_request_switch)
             target = active_only_target or ensure_model(
                 model_id, allow_switch=allow_request_switch
@@ -659,6 +821,7 @@ class Handler(BaseHTTPRequestHandler):
                 req.remove_header("Authorization")
                 req.add_header("Authorization","Bearer "+Path(key_file).read_text().strip())
             with urllib.request.urlopen(req, timeout=600) as response:
+                performance_status = response.status
                 content_type = response.headers.get(
                     "Content-Type",
                     "",
@@ -691,11 +854,18 @@ class Handler(BaseHTTPRequestHandler):
                     )
                     self.end_headers()
 
+                    event_buffer = b""
                     while True:
                         chunk = response.read(8192)
-
                         if not chunk:
                             break
+                        event_buffer += chunk
+                        while b"\n" in event_buffer:
+                            line, event_buffer = event_buffer.split(b"\n", 1)
+                            if performance_ttft is None and sse_has_generated_output(line):
+                                performance_ttft = (time.monotonic() - performance_started) * 1000
+                        if performance_ttft is None and sse_has_generated_output(event_buffer):
+                            performance_ttft = (time.monotonic() - performance_started) * 1000
 
                         self.wfile.write(
                             f"{len(chunk):X}\r\n".encode("ascii")
@@ -733,6 +903,7 @@ class Handler(BaseHTTPRequestHandler):
                     self.wfile.write(data)
 
         except urllib.error.HTTPError as exc:
+            performance_status = exc.code
             self.send_response(exc.code)
             data = exc.read()
             self.send_header("Content-Type", exc.headers.get("Content-Type", "application/json"))
@@ -740,11 +911,15 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(data)
         except Exception as exc:
+            performance_status = 503
             try:
                 self.send_json(503, {"error": str(exc), "model": model_id})
             except (BrokenPipeError, ConnectionResetError):
                 pass
         finally:
+            if performance_enabled:
+                record_perf(performance_effort, performance_status,
+                            (time.monotonic() - performance_started) * 1000, performance_ttft)
             if lease:
                 try:request_account.call('end-inference',lease=lease)
                 except Exception:

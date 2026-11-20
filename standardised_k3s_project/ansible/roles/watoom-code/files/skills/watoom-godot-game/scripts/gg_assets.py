@@ -86,6 +86,19 @@ def safe_source(entry):
     return p
 
 
+def gltf_external_refs(path):
+    """Relative-path buffer/image URIs a .gltf references outside itself (data: URIs and http(s) are not local files)."""
+    with open(path) as f:
+        doc = json.load(f)
+    out = []
+    for key in ("buffers", "images"):
+        for item in doc.get(key) or []:
+            uri = item.get("uri")
+            if uri and not re.match(r"^(data|https?):", uri):
+                out.append(uri)
+    return out
+
+
 def use(models, asset, project, slot, allow_large=False, replace=False, max_mb=DEFAULT_MAX_MB):
     project = os.path.abspath(project)
     if not SLOT_RE.match(slot):
@@ -97,6 +110,10 @@ def use(models, asset, project, slot, allow_large=False, replace=False, max_mb=D
         close = [m["id"] for m in models if asset.lower()[:12] in m["id"].lower()][:5]
         raise gg_godot.Refused("no asset %r in the model index%s" % (asset, "; similar: " + ", ".join(close) if close else ""))
     src = safe_source(entry)
+    if entry["ext"] == "gltf":
+        refs = gltf_external_refs(src)
+        if refs:
+            raise gg_godot.Refused("%s is a .gltf with external file(s) not in the index (%s): copying just the .gltf would leave it broken (missing mesh/texture data). Prefer the pack's .glb of the same model if one exists, or ask for the pack to be converted to .glb" % (asset, ", ".join(refs[:5])))
     if entry["bytes"] > max_mb * 1024 * 1024 and not allow_large:
         raise gg_godot.Refused("%s is %.0f MB (limit %.0f): every worker job syncs the whole project; pick a smaller model or pass --allow-large and keep it out of scratch copies" % (asset, entry["bytes"] / 1048576.0, max_mb))
     lib = os.path.join(project, "assets", "library")

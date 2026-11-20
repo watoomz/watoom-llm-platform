@@ -2,3 +2,17 @@
 skip_list:
   - var-naming
   - package-latest
+# Reported but not fatal: cosmetic naming/spacing, plus rules that need a per-task decision (file modes,
+# partial become, handlers).
+warn_list:
+  - name[template]
+  - name[missing]
+  - name[casing]
+  - name[play]
+  - jinja[spacing]
+  - key-order[task]
+  - yaml[line-length]
+  - no-handler
+  - risky-file-permissions
+  - partial-become[task]
+  - command-instead-of-module

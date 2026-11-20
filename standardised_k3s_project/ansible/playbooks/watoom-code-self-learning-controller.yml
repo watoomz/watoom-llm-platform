@@ -1,6 +1,6 @@
 ---
 - name: Arm only the reviewed learning recovery checkpoint
-  hosts: watoom-homelab
+  hosts: homelab-host
   become: true
   gather_facts: false
   tasks:

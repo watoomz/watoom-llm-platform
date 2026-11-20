@@ -10,7 +10,7 @@
       kubernetes.core.k8s_info:
         api_version: v1
         kind: Secret
-        namespace: opencode
+        namespace: glance  # same LAN cert as every watoom-tls copy; opencode namespace retired (T-0115)
         name: watoom-tls
       register: lan_tls
       no_log: true

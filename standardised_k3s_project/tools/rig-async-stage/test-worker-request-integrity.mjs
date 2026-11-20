@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {mkdtemp,mkdir,writeFile,readFile,rm} from "node:fs/promises";
 import {join} from "node:path";
 import {createHash} from "node:crypto";
-import {assertAllowed,assertWorkerProtocolAccess,validateWorkerRequestIdentity,executeGameWorker} from "./guard-source/index.js";
+import {assertAllowed,assertWorkerProtocolAccess,validateWorkerRequestIdentity,executeGameWorker} from "../../ansible/roles/watoom-code/files/coordinator-guard/index.js";
 for(const folder of ["worker-requests","rig-worker-requests","asset-capture-requests","esp32-requests"]) {
  for(const name of ["write","edit"])assert.throws(()=>assertWorkerProtocolAccess(name,{path:`/project/.opencode/${folder}/request.json`}),/WORKER_PROTOCOL_READ_ONLY/);
  assert.throws(()=>assertWorkerProtocolAccess("shell",{command:`python3 -c 'open(".opencode/${folder}/request.json","w").write("bad")'`}),/WORKER_PROTOCOL_READ_ONLY/);

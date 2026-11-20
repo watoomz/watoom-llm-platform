@@ -11,6 +11,7 @@ rules:
   document-start: disable
   line-length:
     max: 160
+    level: warning  # long commands/prompt strings are common in tasks (T-0115); still reported
   braces:
     min-spaces-inside: 0
     max-spaces-inside: 1

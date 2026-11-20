@@ -31,7 +31,7 @@ watoom-code pod --Bearer token--> proxy 10.242.0.1:15354 --> lab 127.0.0.1:15353
 
 ## Deploy runbook (exact commands)
 
-Paths: `LAB=watoom-homelab (10.99.20.225)`, repo `/data/github/watoom-standardised-homelab/standardised_k3s_project`, rig engine `F:\AI\Unreal5.8\UE_5.8`.
+Paths: `LAB=homelab-host (10.99.20.225)`, repo `/data/github/watoom-standardised-homelab/standardised_k3s_project`, rig engine `F:\AI\Unreal5.8\UE_5.8`.
 
 1. **Rig (Windows).** Epic Games Launcher > Library > Fab Library: install "NWIRO - AI Integration Kit" and "One-Click Level Generator" to UE 5.8. In the editor
    enable Nwiro Integration Kit, One-Click Level Generator, PythonScriptPlugin, WebBrowserWidget and PCG, then restart. Check `Test-NetConnection 127.0.0.1 -Port 5353` is True.

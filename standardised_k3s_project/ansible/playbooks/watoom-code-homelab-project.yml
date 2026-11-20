@@ -1,6 +1,6 @@
 ---
 - name: Maintain the Homelab LLM checkout and native policy only
-  hosts: watoom-homelab
+  hosts: homelab-host
   become: true
   gather_facts: false
   vars_files:

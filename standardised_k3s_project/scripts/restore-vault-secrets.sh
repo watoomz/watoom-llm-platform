@@ -11,7 +11,7 @@ ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 VAULT_FILE="${VAULT_FILE:-$ROOT/secrets-vault/env.local.vault}"
 OUT_FILE="${OUT_FILE:-$ROOT/secrets/.env.local}"
-VAULT_PASSWORD_FILE="${VAULT_PASSWORD_FILE:-/data/secrets/watoom-homelab/ansible-vault-password.txt}"
+VAULT_PASSWORD_FILE="${VAULT_PASSWORD_FILE:-/data/secrets/homelab-host/ansible-vault-password.txt}"
 
 if [[ ! -f "$VAULT_FILE" ]]; then
   echo "ERROR: missing vault file: $VAULT_FILE" >&2

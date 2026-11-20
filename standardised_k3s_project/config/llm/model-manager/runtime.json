@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "source_commit": "5061244e06cd999a2853ff2e08b10a3d901143ee",
+  "source_commit": "fb30af68f19364dbae15d7cfced2af538fa78bfd",
   "cpu_image": {
-    "image": "127.0.0.1:5000/watoom-model-manager@sha256:eb321eeaef1de9286d581b036d85af48fcf030b95fe6537495346db6f9d0bd78",
-    "source_commit": "5061244e06cd999a2853ff2e08b10a3d901143ee",
-    "note": "Built from source; generation stage reporting plus real published image path in job results"
+    "image": "127.0.0.1:5000/watoom-model-manager@sha256:e1570b1a88f15b8236e02a0e4cd6714a20250ec8da22db9b14d4cccbb8bf3248",
+    "source_commit": "fb30af68f19364dbae15d7cfced2af538fa78bfd",
+    "note": "T-0098: prune_native_profiles now reads WatooM Code's 'providers' key (falling back to the older 'provider'), so removals actually prune the agent profile; staged and validated (evidence t0098-fb30af68, test_broker 144/144) before production promotion"
   },
   "sdxl_image": {
     "image": "127.0.0.1:5000/watoom-model-manager-sdxl-runner@sha256:16aab4548d0ce2f3e9cc875361ad20f147c0189a879c95186c90252e77834e79",

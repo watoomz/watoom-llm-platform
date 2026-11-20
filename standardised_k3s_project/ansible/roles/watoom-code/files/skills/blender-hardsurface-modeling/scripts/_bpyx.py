@@ -7,6 +7,7 @@ Every skill script follows one contract:
   run(**kwargs) -> dict          # call from MCP / Python (import the module)
   blender -b f.blend -P x.py -- --arg v   # CLI: prints one line "@@JSON@@{...}"
 """
+
 import argparse
 import json
 import sys
@@ -18,7 +19,7 @@ MARK = "@@JSON@@"
 
 def argv():
     """Arguments after '--' (Blender ignores them)."""
-    return sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+    return sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
 
 
 def _default(o):
@@ -61,8 +62,7 @@ def cli(run, p):
 
 def add_common(p, save=True):
     """--objects / --save flags shared by most scripts."""
-    p.add_argument("--objects", nargs="*", default=None,
-                   help="object names (default: selected, else all meshes)")
+    p.add_argument("--objects", nargs="*", default=None, help="object names (default: selected, else all meshes)")
     if save:
         p.add_argument("--save", default=None, help="save .blend to this path after run")
     return p
@@ -134,6 +134,7 @@ def r(v, n=4):
     if isinstance(v, float):
         return round(v, n)
     return [round(x, n) for x in v]
+
 
 # Shared admitted-worker policy for CPU and RIG OptiX execution.
 from worker_profile import configure_device, verify_external, descriptor

@@ -6,5 +6,5 @@
   tasks:
     - name: Reconcile only authorized mesh integration
       ansible.builtin.include_role:
-        name: opencode-agent
-        tasks_from: mesh_integration
+        name: llm-model-lab
+        tasks_from: mesh_bridge

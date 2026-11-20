@@ -1,0 +1,160 @@
+{
+  "groups": ["Start", "Plan & build", "Write", "Revise & review", "Publish", "Verse & prompts"],
+  "skills": {
+    "creative-writing": {"group": "Start", "title": "Creative writing (router)", "mode": "chat",
+      "intro": "Describe what you want to make (a story, chapter, edit, world, graphic novel or illustration brief) and the router picks the right approach.",
+      "starter": "I want to write a graphic novel about a lighthouse keeper who finds a door in the sea. Where should I start?"},
+    "story-init": {"group": "Start", "title": "Start a new story", "mode": "form",
+      "intro": "Set up a new fiction project: title, genre, premise and the files a story project needs.",
+      "fields": [
+        {"id": "title", "label": "Working title", "type": "text", "placeholder": "The Salt Door"},
+        {"id": "genre", "label": "Genre and audience", "type": "text", "placeholder": "Adult literary fantasy"},
+        {"id": "premise", "label": "Premise or idea", "type": "textarea", "placeholder": "A lighthouse keeper finds a door in the sea that opens only at low tide..."},
+        {"id": "format", "label": "Format", "type": "select", "options": ["Novel", "Novella", "Short story", "Graphic novel", "Serial", "Interactive fiction"]},
+        {"id": "notes", "label": "Anything else", "type": "textarea", "placeholder": "Tone, comparable books, length target"}]},
+    "premise-workshop": {"group": "Start", "title": "Premise workshop", "mode": "chat",
+      "intro": "Brainstorm and stress-test a story idea or logline in conversation.",
+      "starter": "What if a city's dreams were collected each morning and sold at market? Is this strong enough for a novel?"},
+    "discovery-drafting": {"group": "Start", "title": "Discovery drafting", "mode": "chat",
+      "intro": "Write without an outline: find the story kernel, push through dead ends, reconcile what you discovered.",
+      "starter": "I'm pantsing a mystery and I'm stuck at chapter 6 - my detective has no next move."},
+
+    "plot-structure": {"group": "Plan & build", "title": "Plot structure", "mode": "form",
+      "intro": "Build or repair a plot arc, act structure, timeline, pacing and foreshadowing.",
+      "fields": [
+        {"id": "story", "label": "Story summary", "type": "textarea", "placeholder": "Who wants what, what stands in the way, how it ends (if known)"},
+        {"id": "framework", "label": "Framework", "type": "select", "options": ["Let the model choose", "Three-act", "Save the Cat", "Hero's journey", "Seven-point", "Snowflake", "Kishotenketsu"]},
+        {"id": "problem", "label": "What you need", "type": "textarea", "placeholder": "Full outline / fix the sagging middle / place the midpoint / track foreshadowing"}]},
+    "character-management": {"group": "Plan & build", "title": "Characters", "mode": "form",
+      "intro": "Create or update characters: profiles, arcs, relationships, family trees and timelines.",
+      "fields": [
+        {"id": "name", "label": "Character name(s)", "type": "text", "placeholder": "Mara Quell"},
+        {"id": "role", "label": "Role in the story", "type": "text", "placeholder": "Protagonist, lighthouse keeper, 34"},
+        {"id": "known", "label": "What you know so far", "type": "textarea", "placeholder": "Backstory, wants, fears, quirks, relationships"},
+        {"id": "task", "label": "What you need", "type": "select", "options": ["Full profile", "Character arc", "Relationship map", "Family tree", "Timeline", "Voice sample"]}]},
+    "worldbuilding": {"group": "Plan & build", "title": "Worldbuilding", "mode": "form",
+      "intro": "Locations, magic and technology systems, politics, religion, economy, history and maps.",
+      "fields": [
+        {"id": "world", "label": "The world so far", "type": "textarea", "placeholder": "Setting, era, tone, what already exists"},
+        {"id": "element", "label": "What to build", "type": "select", "options": ["Location", "Magic system", "Technology", "Political system", "Religion", "Culture", "Economy", "History", "Map and travel"]},
+        {"id": "details", "label": "Requirements and constraints", "type": "textarea", "placeholder": "Hard rules, costs, what the plot needs from it"}]},
+    "theme-craft": {"group": "Plan & build", "title": "Theme", "mode": "chat",
+      "intro": "Find and sharpen the controlling idea, the lie the protagonist believes, motifs and the antagonist as argument.",
+      "starter": "My story is about grief, but it feels like a topic rather than a theme. Help me find the argument."},
+    "genre-craft": {"group": "Plan & build", "title": "Genre craft", "mode": "form",
+      "intro": "Genre conventions and reader promises: mystery fair play, romance beats, thriller clocks, horror dread, MG/YA, SF.",
+      "fields": [
+        {"id": "genre", "label": "Genre", "type": "select", "options": ["Mystery", "Romance", "Thriller", "Horror", "Science fiction", "Fantasy", "Middle grade", "Young adult", "Literary", "Other"]},
+        {"id": "story", "label": "Your story", "type": "textarea", "placeholder": "Premise and where you are"},
+        {"id": "question", "label": "Question", "type": "textarea", "placeholder": "Are my clues fair? Where do the romance beats go? Is the dread building?"}]},
+    "series-continuity": {"group": "Plan & build", "title": "Series and sequels", "mode": "form",
+      "intro": "Sequels, prequels, spin-offs and carrying characters and threads across books.",
+      "fields": [
+        {"id": "previous", "label": "What happened before", "type": "textarea", "placeholder": "Summary of the earlier book(s), open threads, character states"},
+        {"id": "next", "label": "The next book", "type": "textarea", "placeholder": "Sequel, prequel or companion; what you want it to do"}]},
+    "interactive-fiction": {"group": "Plan & build", "title": "Interactive fiction", "mode": "form",
+      "intro": "Branching stories, choice graphs and gamebooks (Twine, Ink).",
+      "fields": [
+        {"id": "premise", "label": "Premise", "type": "textarea", "placeholder": "Who the reader plays and what is at stake"},
+        {"id": "shape", "label": "Branch shape", "type": "select", "options": ["Branch and bottleneck", "Time cave", "Gauntlet", "Open map", "Let the model choose"]},
+        {"id": "format", "label": "Output", "type": "select", "options": ["Choice graph plan", "Ink script", "Twine (Harlowe)", "Plain prose with choices"]},
+        {"id": "notes", "label": "Notes", "type": "textarea", "placeholder": "Length, endings, tracked state"}]},
+
+    "chapter-writing": {"group": "Write", "title": "Write a chapter", "mode": "form",
+      "intro": "Outline and draft a chapter or scene in prose.",
+      "fields": [
+        {"id": "context", "label": "Story so far", "type": "textarea", "placeholder": "Summary and the end of the previous chapter"},
+        {"id": "beats", "label": "This chapter", "type": "textarea", "placeholder": "Beats, POV character, what must change"},
+        {"id": "style", "label": "Voice and style", "type": "text", "placeholder": "Close third, past tense, spare and wry"},
+        {"id": "length", "label": "Length", "type": "select", "options": ["Outline only", "About 1,000 words", "About 2,500 words", "About 4,000 words"]}]},
+    "scene-craft": {"group": "Write", "title": "Scene craft", "mode": "form",
+      "intro": "Plan or fix a scene: goal-conflict-disaster, sequel scenes, subtext, deep POV, exposition and flashbacks.",
+      "fields": [
+        {"id": "scene", "label": "The scene (draft or plan)", "type": "textarea", "placeholder": "Paste the scene or describe it"},
+        {"id": "problem", "label": "What to work on", "type": "select", "options": ["Plan the scene", "Dialogue subtext", "Deep POV", "Info dump / exposition", "Flashback or time skip", "Pacing", "Ending hook"]}]},
+    "voice-style": {"group": "Write", "title": "Voice and style", "mode": "form",
+      "intro": "Style sheets, house style, character voices and voice drift.",
+      "fields": [
+        {"id": "sample", "label": "Prose sample", "type": "textarea", "placeholder": "A page or two of your prose"},
+        {"id": "task", "label": "What you need", "type": "select", "options": ["Create a style sheet", "Check voice consistency", "Distinguish character voices", "British vs American spelling", "Prose lint"]}]},
+
+    "revision-continuity": {"group": "Revise & review", "title": "Revision and continuity", "mode": "form",
+      "intro": "Developmental and structural revision, reverse outlines, continuity and timeline checks.",
+      "fields": [
+        {"id": "text", "label": "Chapter(s) or summary", "type": "textarea", "placeholder": "Paste the text, or chapter summaries"},
+        {"id": "facts", "label": "Known facts to check against", "type": "textarea", "placeholder": "Character states, dates, injuries, who knows what"},
+        {"id": "task", "label": "Task", "type": "select", "options": ["Continuity check", "Reverse outline", "Developmental edit", "Structural revision plan", "Timeline audit"]}]},
+    "line-editing": {"group": "Revise & review", "title": "Line editing", "mode": "form",
+      "intro": "Tighten and polish prose, copyedit and proofread.",
+      "fields": [
+        {"id": "text", "label": "Text", "type": "textarea", "placeholder": "Paste the passage"},
+        {"id": "pass", "label": "Pass", "type": "select", "options": ["Line edit (style and rhythm)", "Copyedit (grammar, consistency)", "Proofread (typos only)", "Dialogue punctuation"]},
+        {"id": "keep", "label": "Keep", "type": "text", "placeholder": "Voice quirks or dialect to preserve"}]},
+    "editorial-review": {"group": "Revise & review", "title": "Editorial review", "mode": "form",
+      "intro": "Sensitivity and authenticity reads, real people, defamation, lyrics and permissions.",
+      "fields": [
+        {"id": "text", "label": "Passage or description", "type": "textarea", "placeholder": "The text or the portrayal you are unsure about"},
+        {"id": "concern", "label": "Concern", "type": "select", "options": ["Sensitivity / authenticity", "Cultural review", "Real people / defamation", "Quotes, lyrics and permissions", "General editorial read"]}]},
+    "reader-panel": {"group": "Revise & review", "title": "Simulated reader panel", "mode": "form",
+      "intro": "A simulated beta read by genre-reader personas before real beta readers.",
+      "fields": [
+        {"id": "text", "label": "Opening or chapter", "type": "textarea", "placeholder": "Paste the pages"},
+        {"id": "readers", "label": "Readers", "type": "text", "placeholder": "Cosy-mystery fan, skeptical literary reader, teen fantasy reader"}]},
+    "feedback-triage": {"group": "Revise & review", "title": "Feedback triage", "mode": "form",
+      "intro": "Synthesize alpha/beta reader feedback into what to fix, what to ignore and why.",
+      "fields": [
+        {"id": "feedback", "label": "Reader feedback", "type": "textarea", "placeholder": "Paste notes from each reader"},
+        {"id": "goals", "label": "Your goals for the book", "type": "textarea", "placeholder": "What the book must do; what you will not change"}]},
+    "story-maintenance": {"group": "Revise & review", "title": "Story maintenance", "mode": "form",
+      "intro": "Project health: summaries, word counts, name and clue checks, importing an existing manuscript.",
+      "fields": [
+        {"id": "material", "label": "Project material", "type": "textarea", "placeholder": "Chapter list, notes or manuscript excerpt"},
+        {"id": "task", "label": "Task", "type": "select", "options": ["Summarize the project", "Name consistency check", "Clue / setup check", "Pacing check", "Plan an import"]}]},
+
+    "submission": {"group": "Publish", "title": "Querying and submission", "mode": "form",
+      "intro": "Query letters, pitches, synopses, blurbs and comparable titles.",
+      "fields": [
+        {"id": "book", "label": "The book", "type": "textarea", "placeholder": "Title, genre, word count, premise, ending"},
+        {"id": "piece", "label": "Write", "type": "select", "options": ["Query letter", "One-page synopsis", "Back-cover blurb", "Elevator pitch", "Comparable titles"]},
+        {"id": "author", "label": "About you (optional)", "type": "textarea", "placeholder": "Short bio for the query"}]},
+    "publishing": {"group": "Publish", "title": "Self-publishing", "mode": "chat",
+      "intro": "ISBNs, copyright pages, metadata, BISAC, keywords, KDP, IngramSpark, going wide.",
+      "starter": "I'm self-publishing a fantasy novel. Should I go KDP Select or wide, and what metadata do I need?"},
+    "adaptation": {"group": "Publish", "title": "Adaptation", "mode": "form",
+      "intro": "Audiobook narration scripts, pronunciation guides, screenplays and graphic-novel scripts.",
+      "fields": [
+        {"id": "source", "label": "Source text", "type": "textarea", "placeholder": "Paste the chapter or scene"},
+        {"id": "target", "label": "Adapt to", "type": "select", "options": ["Graphic novel script (pages and panels)", "Screenplay (Fountain)", "Audiobook narration script", "Pronunciation guide", "Picture book"]}]},
+
+    "verse-craft": {"group": "Verse & prompts", "title": "Poetry and lyrics", "mode": "form",
+      "intro": "Poems, song lyrics, forms and scansion.",
+      "fields": [
+        {"id": "subject", "label": "Subject", "type": "textarea", "placeholder": "What the poem or song is about"},
+        {"id": "form", "label": "Form", "type": "select", "options": ["Free verse", "Sonnet", "Villanelle", "Haiku sequence", "Ballad", "Limerick", "Song lyrics", "Check my scansion"]},
+        {"id": "draft", "label": "Your draft (optional)", "type": "textarea", "placeholder": "Paste a draft to revise or scan"}]},
+    "watoom-prompt-writing": {"group": "Verse & prompts", "title": "Write a task prompt", "mode": "form",
+      "intro": "Turn a writing goal into an efficient prompt for a WatooM Code writing pipeline.",
+      "fields": [
+        {"id": "goal", "label": "Goal", "type": "textarea", "placeholder": "What the pipeline should produce"},
+        {"id": "inputs", "label": "Inputs you have", "type": "textarea", "placeholder": "Files, notes, constraints"}]}
+  },
+  "art_styles": [
+    {"id": "ink-noir", "label": "Ink noir", "prefix": "high-contrast black and white graphic novel panel, heavy ink, deep shadows, cross-hatching, dramatic chiaroscuro,", "suffix": "professional comic book inking, crisp linework"},
+    {"id": "ligne-claire", "label": "Ligne claire", "prefix": "ligne claire European comic art, clean uniform outlines, flat bright colours, detailed backgrounds,", "suffix": "bande dessinee page panel, crisp and readable"},
+    {"id": "modern-comic", "label": "Modern US comic", "prefix": "modern American comic book panel, dynamic composition, bold inks, rich digital colouring,", "suffix": "professional graphic novel art, sharp detail"},
+    {"id": "manga", "label": "Manga", "prefix": "manga panel, black and white screentone, expressive line art, cinematic framing,", "suffix": "professional manga illustration, clean inks"},
+    {"id": "watercolour", "label": "Watercolour graphic novel", "prefix": "watercolour graphic novel illustration, loose ink lines, soft washes, textured paper,", "suffix": "painterly European graphic novel style"},
+    {"id": "painted", "label": "Fully painted", "prefix": "fully painted graphic novel panel, oil painting style, dramatic lighting, cinematic,", "suffix": "rich colour, high detail"},
+    {"id": "golden-age", "label": "Golden-age pulp", "prefix": "1940s golden age comic panel, halftone dots, bold primary colours, pulp adventure,", "suffix": "vintage printed comic texture"},
+    {"id": "none", "label": "No style (prompt as written)", "prefix": "", "suffix": ""}
+  ],
+  "art_negative": "text, speech bubbles, captions, letters, watermark, signature, blurry, lowres, deformed hands, extra fingers, bad anatomy, jpeg artifacts",
+  "art_sizes": [
+    {"id": "page", "label": "Portrait page 832x1216", "width": 832, "height": 1216},
+    {"id": "panel", "label": "Wide panel 1216x832", "width": 1216, "height": 832},
+    {"id": "square", "label": "Square panel 1024x1024", "width": 1024, "height": 1024},
+    {"id": "splash", "label": "Tall splash 768x1344", "width": 768, "height": 1344},
+    {"id": "cinema", "label": "Cinematic strip 1344x768", "width": 1344, "height": 768}
+  ],
+  "art_defaults": {"steps": 50, "cfg": 2.5, "sampler": "er_sde"}
+}

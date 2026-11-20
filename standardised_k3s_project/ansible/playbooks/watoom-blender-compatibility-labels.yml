@@ -1,6 +1,6 @@
 ---
 - name: Label the separately installed Blender 5.2 compatibility runtime
-  hosts: watoom-homelab
+  hosts: homelab-host
   become: true
   gather_facts: false
   vars:

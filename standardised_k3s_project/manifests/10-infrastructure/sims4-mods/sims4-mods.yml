@@ -1,0 +1,206 @@
+# Sims 4 mods web (namespace sims4-mods). Captured from the live cluster 2026-11-20 (T-0115): it was running
+# with no source in the repo. Secret curseforge-api is referenced but NOT stored here; create it out of band
+# (kubernetes_secrets role / vault) before applying to a fresh cluster.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sims4-mods
+  labels:
+    app.kubernetes.io/managed-by: ansible
+    app.kubernetes.io/part-of: sims4-mods
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  finalizers:
+  - kubernetes.io/pvc-protection
+  name: sims4-mods-data
+  namespace: sims4-mods
+  labels:
+    app.kubernetes.io/managed-by: ansible
+    app.kubernetes.io/part-of: sims4-mods
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: local-path
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  finalizers:
+  - kubernetes.io/pvc-protection
+  name: sims4-mods-archives
+  namespace: sims4-mods
+  labels:
+    app.kubernetes.io/managed-by: ansible
+    app.kubernetes.io/part-of: sims4-mods
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: local-path
+  volumeMode: Filesystem
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sims4-mods-web
+  namespace: sims4-mods
+  labels:
+    app.kubernetes.io/managed-by: ansible
+    app.kubernetes.io/part-of: sims4-mods
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sims4-mods-web
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: sims4-mods-web
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - env:
+        - name: LISTEN_ADDR
+          value: :8080
+        - name: HOME
+          value: /tmp
+        - name: DB_PATH
+          value: /data/catalog.db
+        - name: CLIENT_VERSION
+          value: 1.1.1
+        - name: CURSEFORGE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: CURSEFORGE_API_KEY
+              name: curseforge-api
+              optional: true
+        image: sims4-mods/backend:20261114-client-categories-2
+        imagePullPolicy: Never
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 20
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: backend
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: 500m
+            ephemeral-storage: 128Mi
+            memory: 512Mi
+          requests:
+            cpu: 50m
+            ephemeral-storage: 32Mi
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /data
+          name: data
+        - mountPath: /archive
+          name: archives
+        - mountPath: /tmp
+          name: tmp
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        fsGroup: 10001
+        runAsGroup: 101
+        runAsNonRoot: true
+        runAsUser: 100
+        seccompProfile:
+          type: RuntimeDefault
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: sims4-mods-data
+      - name: archives
+        persistentVolumeClaim:
+          claimName: sims4-mods-archives
+      - emptyDir:
+          sizeLimit: 64Mi
+        name: tmp
+  revisionHistoryLimit: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sims4-mods-web
+  namespace: sims4-mods
+  labels:
+    app.kubernetes.io/managed-by: ansible
+    app.kubernetes.io/part-of: sims4-mods
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: http
+    port: 8080
+    protocol: TCP
+    targetPort: http
+  selector:
+    app: sims4-mods-web
+  sessionAffinity: None
+  type: ClusterIP
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: sims4-mods
+  namespace: sims4-mods
+  labels:
+    app.kubernetes.io/managed-by: ansible
+    app.kubernetes.io/part-of: sims4-mods
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - kind: Rule
+    match: Host(`sims4-mods.internal.homelab.example`)
+    services:
+    - name: sims4-mods-web
+      nativeLB: true
+      port: 8080
+  tls: {}

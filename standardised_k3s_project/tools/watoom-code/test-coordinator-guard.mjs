@@ -619,22 +619,22 @@ console.log("PASS coordinator read-only discovery budget is separate and resets 
 }
 {
 // Prompt sections are dropped by exact heading for the role/project; the rest is byte-identical.
-const text="intro\n## Universal execution contract\ncore\n## Native bounded Godot worker request\ngodot\n## Creative pipeline execution\ncreative\n";
+const text="intro\n## How you work\ncore\n## Making changes\nchange\n## Engine and asset worker routes\ngodot\n";
 assert.equal(trimSections(text,promptDrop("watoom-workflow","/data/ai/projects/games/magpie")),text);
-assert.equal(trimSections(text,promptDrop("watoom-critic","/data/ai/projects/games/magpie")),"intro\n## Universal execution contract\ncore\n## Creative pipeline execution\ncreative\n");
-assert.equal(trimSections(text,promptDrop("watoom-builder","/data/ai/projects/homelab/homelab-llm")),"intro\n## Universal execution contract\ncore\n");
-assert.equal(trimSections(text,promptDrop("watoom-kali",undefined)),"intro\n## Universal execution contract\ncore\n");
+assert.equal(trimSections(text,promptDrop("watoom-critic","/data/ai/projects/games/magpie")),"intro\n## How you work\ncore\n");
+assert.equal(trimSections(text,promptDrop("watoom-builder","/data/ai/projects/homelab/homelab-llm")),"intro\n## How you work\ncore\n## Making changes\nchange\n");
+assert.equal(trimSections(text,promptDrop("watoom-kali",undefined)),"intro\n## How you work\ncore\n## Making changes\nchange\n");
 assert(!developmentProject("/data/ai/projects/homelab") && !developmentProject("/workspace") && !developmentProject("/data/ai/projects/games/x") && ["work","writing","homelab","llm"].every(g=>developmentProject("/data/ai/projects/"+g+"/x")));
 const f=await fixture();
 const event={agent:"watoom-critic",sessionID:"s",model:{providerID:"watoom",id:"swift-qwen38-coder"},messages:[],tools:{},system:[{type:"text",text}]};
 await f.hooks.get("context")(event);
-assert(!event.system[0].text.includes("godot") && event.system[0].text.includes("creative"));
+assert(!event.system[0].text.includes("godot") && !event.system[0].text.includes("change") && event.system[0].text.includes("core"));
 // Every listed heading exists in the managed agents, so a renamed section cannot silently stay.
 const {readdir}=await import("node:fs/promises");
-const dir=new URL("../../ansible/roles/opencode-agent/files/v2-native/agents/",import.meta.url);
+const dir=new URL("../../ansible/roles/watoom-code/files/native/agents/",import.meta.url);
 const headings=new Set();
 for(const name of await readdir(dir))for(const m of (await readFile(new URL(name,dir),"utf8")).matchAll(/^## (.+)$/gm))headings.add(m[1].trim());
-for(const name of promptDrop("watoom-kali"))assert(headings.has(name),"missing heading "+name);
+for(const name of promptDrop("watoom-critic","/data/ai/projects/homelab/x"))assert(headings.has(name),"missing heading "+name);
 console.log("PASS agent prompt sections trimmed by role and project");
 }
 

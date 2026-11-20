@@ -33,7 +33,9 @@ import time
 # Identities that count as the agent/operator (the WatooM-Code models and Claude Code all commit as codex);
 # an owner fix is a commit by the owner over a path one of these authored.
 AGENT_EMAILS = ("codex@agent.example", "codex@agent.example", "codex@localhost")
-OWNER_EMAILS = ("garthcordery@gmail.com",)
+# Owner addresses come from the host-local environment (WATOOM_OWNER_EMAILS, comma-separated, set in the
+# untracked /etc/watoom/learning-curator.env); none are committed. Without it owner-fix mining is inert.
+OWNER_EMAILS = tuple(e.strip() for e in os.environ.get("WATOOM_OWNER_EMAILS", "").split(",") if e.strip())
 KINDS = ("semantic", "episodic", "procedural")
 STALE_UNUSED_DAYS = 90
 NOW = lambda: int(time.time())

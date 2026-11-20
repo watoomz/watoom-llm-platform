@@ -1,10 +1,10 @@
 {
   "product": "watoom-pipelines",
-  "version": "snapshot-2026-11-13",
+  "version": "snapshot-2026-11-20",
   "language": "internal operational guidance",
   "license": "proprietary",
   "trust_tier": "internal_doc",
-  "note": "First-party internal operational documentation owned by WatooM; this is not third-party vendor material. Each source copy below is byte-for-byte copied from the listed repository path as present in the provided workspace snapshot, read 2026-11-13 Australia/Queensland. Git commit was unavailable because this workspace .git pointer targets an absent /data/ai/projects/llm checkout; no source commit can be honestly named.",
+  "note": "First-party internal operational documentation owned by WatooM; this is not third-party vendor material. Each source copy below is byte-for-byte copied from the listed repository path, read 2026-11-20 Australia/Queensland from the canonical homelab checkout. Refreshed after the T-0117 agent prompt redesign: worker procedures now live in the watoom-worker-contracts skill.",
   "pages": [
     {
       "file": "game-worker-bridge.py",
@@ -60,15 +60,15 @@
     },
     {
       "file": "workflow-agent.md",
-      "uri": "internal:ansible/roles/opencode-agent/files/v2-native/agents/watoom-workflow.md"
+      "uri": "internal:ansible/roles/watoom-code/files/native/agents/watoom-workflow.md"
     },
     {
       "file": "builder-agent.md",
-      "uri": "internal:ansible/roles/opencode-agent/files/v2-native/agents/watoom-builder.md"
+      "uri": "internal:ansible/roles/watoom-code/files/native/agents/watoom-builder.md"
     },
     {
       "file": "worker-setup.md",
-      "uri": "internal:docs/WORKER_SETUP.md"
+      "uri": "internal:tools/git/llm-scope-overlay/docs/WORKER_SETUP.md"
     },
     {
       "file": "unreal-lane-build.py",
@@ -89,6 +89,10 @@
     {
       "file": "terrain-spec-test.py",
       "uri": "internal:tools/watoom-code/test_terrain_spec.py"
+    },
+    {
+      "file": "worker-contracts-game-worker.md",
+      "uri": "internal:ansible/roles/watoom-code/files/skills/watoom-worker-contracts/references/game-worker.md"
     }
   ]
 }

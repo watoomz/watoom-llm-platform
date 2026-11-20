@@ -13,4 +13,4 @@ Current Services include:
 
 Consumers should use `*.platform-workers.svc.cluster.local` where cluster DNS is needed.
 
-Old standalone helper Deployments, compatibility Services and legacy helper PVC/PVs were retired during the September 2026 consolidation and must not be recreated from older notes.
+Helpers run only here; do not add standalone helper Deployments, Services or PVCs elsewhere.

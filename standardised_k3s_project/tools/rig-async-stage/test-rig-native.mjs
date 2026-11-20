@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,readFile,readdir,rm} from 'node:fs/promises';
-import {executeGameWorker,assetCaptureProject} from './guard-source/index.js';
+import {executeGameWorker,assetCaptureProject} from '../../ansible/roles/watoom-code/files/coordinator-guard/index.js';
 const root=await mkdtemp('/data/ai/projects/games/.rig-stage-test-');
 try {
  await mkdir(root+'/scripts');await writeFile(root+'/project.godot','config_version=5');await writeFile(root+'/scripts/test_runner.gd','extends SceneTree');

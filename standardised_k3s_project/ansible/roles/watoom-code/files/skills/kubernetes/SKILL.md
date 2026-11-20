@@ -46,3 +46,4 @@ Create a basic KIND cluster:
 ```bash
 kind create cluster
 ```
+Homelab-specific conventions: see `references/watoom.md`.

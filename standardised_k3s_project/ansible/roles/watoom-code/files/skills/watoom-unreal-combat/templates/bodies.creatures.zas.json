@@ -76,5 +76,83 @@
    "leg_side_reach_cm": 30.8,
    "height_cm": 170.0
   }
+ },
+ "/Game/ZAS/Creatures/Animated/TRex/SK_TRex": {
+  "facing": "+Y",
+  "yaw": -90.0,
+  "CapsuleHalfHeight": 254.88,
+  "CapsuleRadius": 175.61,
+  "Mesh.RelativeLocation": "(X=15.548697,Y=22.066061,Z=-224.325654)",
+  "Mesh.RelativeRotation": "(Pitch=0.000000,Yaw=-90.000000,Roll=0.000000)",
+  "evidence": {
+   "method": "head",
+   "vector": [
+    -55.2,
+    373.2
+   ],
+   "others": [
+    [
+     "feet",
+     -8.0,
+     28.8
+    ]
+   ],
+   "legs": 8,
+   "leg_source": "named leg bones",
+   "leg_side_reach_cm": 140.5,
+   "height_cm": 509.8
+  }
+ },
+ "/Game/ZAS/Creatures/Animated/Spinosaurus/SK_Spinosaurus": {
+  "facing": "+Y",
+  "yaw": -90.0,
+  "CapsuleHalfHeight": 298.1,
+  "CapsuleRadius": 170.0,
+  "Mesh.RelativeLocation": "(X=10.773986,Y=2.023231,Z=-270.374825)",
+  "Mesh.RelativeRotation": "(Pitch=0.000000,Yaw=-90.000000,Roll=0.000000)",
+  "evidence": {
+   "method": "head",
+   "vector": [
+    -17.8,
+    547.5
+   ],
+   "others": [
+    [
+     "feet",
+     -6.8,
+     24.2
+    ]
+   ],
+   "legs": 8,
+   "leg_source": "named leg bones",
+   "leg_side_reach_cm": 136.0,
+   "height_cm": 596.2
+  }
+ },
+ "/Game/ZAS/Creatures/Animated/JurassicCreature/SK_JurassicCreature": {
+  "facing": "+Y",
+  "yaw": -90.0,
+  "CapsuleHalfHeight": 137.1,
+  "CapsuleRadius": 49.36,
+  "Mesh.RelativeLocation": "(X=-7.041593,Y=3.280389,Z=-94.139162)",
+  "Mesh.RelativeRotation": "(Pitch=0.000000,Yaw=-90.000000,Roll=0.000000)",
+  "evidence": {
+   "method": "head",
+   "vector": [
+    -131.3,
+    301.1
+   ],
+   "others": [
+    [
+     "feet",
+     -1.4,
+     -18.0
+    ]
+   ],
+   "legs": 8,
+   "leg_source": "named leg bones",
+   "leg_side_reach_cm": 27.7,
+   "height_cm": 274.2
+  }
  }
 }

@@ -8,7 +8,10 @@ extends Node3D
 @export var ortho_size := 20.0
 @export var near := 0.05
 @export var far := 1000.0
+@export var mouse_sens := 0.15        ## first_person: degrees of pitch per pixel of vertical mouse motion
+@export var max_look_deg := 85.0      ## first_person: look up/down limit
 var camera: Camera3D
+var look_pitch := 0.0                 ## first_person: degrees, + = up (mouse up and weapon recoil both change it)
 var arm: SpringArm3D
 
 func _ready() -> void:
@@ -41,6 +44,19 @@ func _ready() -> void:
 				camera.size = ortho_size
 			add_child(camera)
 	camera.current = true
+
+func _unhandled_input(e: InputEvent) -> void:
+	if mode == "first_person" and e is InputEventMouseMotion:
+		var m := e as InputEventMouseMotion
+		add_pitch(-(m.screen_relative.y if m.screen_relative != Vector2.ZERO else m.relative.y) * mouse_sens)   # see player_3d.look_delta
+
+
+## first_person look up/down (T-0066 FPS): the body turns left/right (player_3d.gd), the camera pitches here.
+func add_pitch(deg: float) -> void:
+	look_pitch = clamp(look_pitch + deg, -max_look_deg, max_look_deg)
+	if mode == "first_person" and camera != null:
+		camera.rotation_degrees.x = look_pitch
+
 
 func _process(_dt: float) -> void:
 	if mode == "top_down" or mode == "isometric":

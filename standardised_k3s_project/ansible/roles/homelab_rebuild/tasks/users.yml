@@ -34,3 +34,9 @@
     content: "{{ homelab_codex_user }} ALL=(ALL) NOPASSWD: ALL\n"
     validate: "visudo -cf %s"
   when: homelab_codex_passwordless_sudo | bool
+
+- name: "Homelab Rebuild | Remove codex passwordless sudo when not enabled"
+  ansible.builtin.file:
+    path: /etc/sudoers.d/90-codex
+    state: absent
+  when: not (homelab_codex_passwordless_sudo | bool)

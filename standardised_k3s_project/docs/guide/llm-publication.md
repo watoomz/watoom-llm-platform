@@ -1,12 +1,12 @@
 ---
 title: GitHub distribution and source provenance
 nav: GitHub publication
-summary: How the private LLM/WatooM-Code repository packages application source, custom extensions and infrastructure without runtime data or private history.
+summary: How the public LLM/WatooM-Code repository packages application source, custom extensions and infrastructure without runtime data or private history.
 ---
 
 ## Publication model
 
-The LLM environment is packaged in a separate private repository. The existing homelab repository remains private and authoritative for production IaC. The distribution is a reviewed current-source snapshot; it does not import the homelab or application's complete Git history. History may contain private instructions or data even when the current file tree appears safe.
+The LLM environment is published as a separate **public** repository, `watoom-llm-platform`, built by `tools/git/export-llm-platform.py`. The homelab repository stays private and authoritative for production IaC. The distribution is a reviewed current-source snapshot; it imports no Git history from the homelab or application repositories.
 
 The distribution includes the pinned application source and the platform project tree so custom plugins, skills, workers, UI changes, manifests, configuration inputs and deployment tooling stay together. Including a file is not an instruction to run it.
 
@@ -31,7 +31,7 @@ Use the independent pins in `ansible/vars/watoom-code.yml` for application, Tool
 - The private source explicitly named by `tools/git/private-publication-excludes.json`, including its history. Its source body stays in the existing private mechanism.
 - Dependency/build caches and generated large binaries; retained lockfiles and original license notices support rebuilding.
 
-Private GitHub visibility is not a substitute for excluding credentials. A static scanner is an aid, not proof that no secret or personal information exists. Never print matched secret values into documentation or a console log; findings should identify only paths, lines and rule IDs.
+Because the repository is public, nothing identifying may reach it: the export replaces domains, LAN/DMZ/cluster addresses, the GitHub owner and identity names with placeholders (`placeholders` in `tools/git/llm-platform-publication-policy.json`, mapped back by `tools/set-domain.py` in the export) and fails if any `forbidden_after` pattern survives. Review the export for hostnames, usernames, email addresses and home paths before every push. A static scanner is an aid, not proof that no secret or personal information exists. Never print matched secret values into documentation or a console log; findings should identify only paths, lines and rule IDs.
 
 ## Before the first push
 
@@ -41,7 +41,7 @@ Private GitHub visibility is not a substitute for excluding credentials. A stati
 4. Scan the exported bytes and inspect credential-bearing/configuration and license findings. Keep unresolved findings out of the published tree.
 5. Run documentation catalogue drift, rendering, local links and package-specific static checks.
 6. Initialise a new Git repository with no source ancestry, review its staged paths, and commit only the prepared snapshot.
-7. Create the destination as private, push a normal initial branch and verify repository visibility, branch/commit and key files through GitHub.
+7. Push a normal branch to the public repository and verify repository visibility, branch/commit and key files through GitHub.
 
 Do not use `publish-private-safe.py --publish-main` for this task: that helper targets the existing homelab `main`, requires a clean tree and has its own specific ancestry checks. The separate distribution does not change that repository's visibility or production branch.
 

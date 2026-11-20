@@ -27,6 +27,15 @@
     group: "{{ watoom_code_gid }}"
     mode: '0750'
 
+- name: Drop local Python bytecode caches so they are never shipped with skill trees
+  ansible.builtin.command:
+    cmd: find {{ role_path }}/files/skills -name __pycache__ -type d -prune -exec rm -rf {} +
+  delegate_to: localhost
+  become: false
+  run_once: true
+  changed_when: false
+  check_mode: false
+
 - name: Install owner-approved native skill trees
   ansible.builtin.copy:
     src: "skills/{{ item }}/"

@@ -1,6 +1,6 @@
 param(
   [string]$Root = 'F:\WatooM\workstation-render-stage',
-  [string]$Python = 'C:\Users\watoom\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe',
+  [string]$Python = 'C:\Users\RIG_USER\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe',
   [string]$HostAlias = 'lab',
   [ValidateSet('CPU','OPTIX')][string]$Device = 'OPTIX'
 )

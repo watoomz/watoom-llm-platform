@@ -22,8 +22,20 @@ import sys
 import tempfile
 
 REQUIRED = set('id product language version kind symbol signature summary params returns aliases constraints examples source license trust_tier status'.split())
-KINDS = set('api_class api_method api_property api_signal api_constant api_enum cli_flag operator rna_struct rna_property'.split())
+# godot/blender (extract/) have a fixed, known kind vocabulary and exact semver versions. Every other product is
+# a manuals/<product> card (see manuals/registry.json, the same list sync_manual.py's own products draw from):
+# each manual picks its own free-form kind/version taxonomy, so only OFFICIAL_KINDS/the semver regex are enforced
+# for official products -- a manual card's kind/version just needs to be the non-empty string already checked above.
+OFFICIAL_PRODUCTS = {'godot', 'blender'}
+OFFICIAL_KINDS = set('api_class api_method api_property api_signal api_constant api_enum cli_flag operator '
+                      'rna_struct rna_property import_option'.split())
+MANUAL_PRODUCTS = set(json.loads((Path(__file__).resolve().parent.parent / 'manuals' / 'registry.json').read_text())['products'])
+PRODUCTS = OFFICIAL_PRODUCTS | MANUAL_PRODUCTS
 STATUSES = {'verified', 'source_checked', 'unverified', 'quarantined'}
+# official cards are always first-party vendor data; manual cards are sourced from vendor docs or this repo's own
+# internal operational notes (never 'official' -- that tier is reserved for the extractors' direct API dumps).
+OFFICIAL_TRUST_TIERS = {'official'}
+MANUAL_TRUST_TIERS = {'vendor_doc', 'internal_doc'}
 
 
 def validate_bytes(data):
@@ -38,18 +50,26 @@ def validate_bytes(data):
             for key in ('id', 'product', 'language', 'version', 'kind', 'symbol', 'signature', 'license'):
                 if not isinstance(c[key], str) or not c[key].strip():
                     raise ValueError('invalid ' + key)
-            if c['product'] not in {'godot', 'blender'} or c['kind'] not in KINDS:
+            if c['product'] not in PRODUCTS:
                 raise ValueError('invalid product/kind')
-            if not re.fullmatch(r'\d+\.\d+\.\d+(?:[-+][\w.-]+)?', c['version']):
+            official = c['product'] in OFFICIAL_PRODUCTS
+            if official and c['kind'] not in OFFICIAL_KINDS:
+                raise ValueError('invalid product/kind')
+            if official and not re.fullmatch(r'\d+\.\d+\.\d+(?:[-+][\w.-]+)?', c['version']):
                 raise ValueError('version must be exact')
+            if c['trust_tier'] not in (OFFICIAL_TRUST_TIERS if official else MANUAL_TRUST_TIERS):
+                raise ValueError('invalid status/trust_tier')
             if c['id'] != f"{c['product']}.{c['symbol']}@{c['version']}":
                 raise ValueError('id does not match product/symbol/version')
-            if '/' in c['id'] or '\\' in c['id'] or '..' in c['id']:
+            # A bare '/' is a legitimate part of some symbols (e.g. Godot bus-parameter paths like
+            # "voice/1/cutoff_hz"); id is never used to build a filesystem path, so only '..' and '\' -- an
+            # actual traversal/escape attempt -- are rejected here.
+            if '\\' in c['id'] or '..' in c['id']:
                 raise ValueError('path traversal in card id')
             if c['id'] in seen:
                 raise ValueError('duplicate id')
             seen.add(c['id'])
-            if c['status'] not in STATUSES or c['trust_tier'] != 'official':
+            if c['status'] not in STATUSES:
                 raise ValueError('invalid status/trust_tier')
             if not isinstance(c['summary'], str) or len(c['summary']) > 300:
                 raise ValueError('invalid summary')
@@ -58,10 +78,13 @@ def validate_bytes(data):
                     raise ValueError('invalid ' + key)
             if not all(isinstance(x, str) for x in c['aliases']):
                 raise ValueError('invalid aliases')
+            # official cards carry the extractors' full shape (type/default/doc always present); manual cards
+            # (e.g. ansible's module-examples) only ever record the parameter name.
+            required_param_keys = {'name', 'type', 'default', 'doc'} if official else {'name'}
             for p in c['params']:
-                if not isinstance(p, dict) or not {'name', 'type', 'default', 'doc'} <= p.keys():
+                if not isinstance(p, dict) or not required_param_keys <= p.keys():
                     raise ValueError('invalid parameter')
-                if not all(isinstance(p[k], str) for k in ('name', 'type', 'doc')):
+                if not all(isinstance(p[k], str) for k in required_param_keys if k != 'default'):
                     raise ValueError('invalid parameter type')
             if c['returns'] is not None and not isinstance(c['returns'], str):
                 raise ValueError('invalid returns')

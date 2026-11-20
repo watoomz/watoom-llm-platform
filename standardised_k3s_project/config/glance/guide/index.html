@@ -25,7 +25,7 @@
 <tbody>
 <tr>
 <td>Host</td>
-<td><code>watoom-homelab</code>, Fedora 44 Server, AMD Ryzen 5 5500 (6C/12T), 32 GiB RAM</td>
+<td><code>homelab-host</code>, Fedora 44 Server, AMD Ryzen 5 5500 (6C/12T), 32 GiB RAM</td>
 </tr>
 <tr>
 <td>GPU</td>
@@ -66,7 +66,7 @@
   │
   └── Cloudflare Tunnel (outbound only) ◄── cloudflared connectors
                                                     │
-watoom-homelab (10.99.20.225)                        │
+homelab-host (10.99.20.225)                        │
   ├── k3s
   │    ├── Traefik :80/:443 ── *.internal.homelab.example routes
   │    ├── Pi-hole (hostNetwork :53)

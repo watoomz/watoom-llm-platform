@@ -1,0 +1,52 @@
+---
+# Default OFF: nothing is installed, enabled or started unless creation_studio_enabled is set true by the owner.
+# Same shape as ansible/roles/moss-image: a host service bound to the k3s cni0 bridge, reachable from pods
+# (the Glance route) and the host, not from the LAN.
+creation_studio_enabled: false
+creation_studio_start: false       # install the unit but only start it when this is also true
+creation_studio_project_root: "{{ project_root | default('/data/github/watoom-standardised-homelab/standardised_k3s_project') }}"
+creation_studio_host: 10.242.0.1
+creation_studio_port: 8792
+creation_studio_pod_firewall: true  # pod-subnet-only rule for the Glance route, same policy as moss-image
+
+# SDXL pipeline: proxies to the existing Model Manager HTTP API. Empty model_manager_base disables that section
+# cleanly rather than guessing at a broken one. Password file convention matches ansible/roles/model-manager
+# (manage.py's validate() uses the same path); this role only reads it, it is provisioned by that role/operator.
+creation_studio_model_manager_base: https://glance.internal.homelab.example/model-manager
+creation_studio_model_manager_origin: https://glance.internal.homelab.example
+creation_studio_model_manager_password_file: /data/ai/private/model-manager/password
+# The glance route terminates TLS with the internal watoom-tls CA (self-signed), which is not in the host's
+# system trust store. Same CA-fetch convention as tools/model-manager/browser-test.py: pulled from the
+# watoom-tls Secret, not disabling certificate verification.
+creation_studio_model_manager_ca_file: /data/ai/private/model-manager/internal-ca.pem
+creation_studio_system_ca_bundle: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem  # combined with the served cert (T-0116)
+
+# MOSS Image Studio pipeline: same-origin, no-auth internal call, exactly like moss-image's own page.
+creation_studio_moss_base: http://10.242.0.1:8791
+
+# Mesh pipeline: GPU controller telemetry (world-readable observability snapshot) plus the real
+# opencode_mesh_bridge.py Unix socket, proxied exactly as the OpenCode v2 canary's own MCP tool uses
+# it. The bridge authorizes callers by the connecting process's real UID (SO_PEERCRED) against
+# ansible/roles/llm-model-lab's llm_mesh_bridge_additional_uids allow-list -- this role's
+# dedicated service user (creation_studio_uid below) must be added to that list (owner-approved;
+# see llm-model-lab's defaults) for the socket connection to actually be authorized.
+creation_studio_mesh_observability_path: /data/ai/helper-scripts/state/gpu-controller-observability/status.json
+creation_studio_mesh_bridge_socket: /app/ai/services/opencode/home/.config/opencode/mesh-bridge/bridge.sock
+
+# GLB 3D Coder pipeline (2026-11-19): ccore/Qwen3.5-4B-GLB-3D-Coder through the existing LLM router ClusterIP (the same
+# address moss-image uses for /performance); the router asks the GPU controller for the model switch. Finished pages and
+# job records are kept in the output directory (owned by the service user). Empty router base disables the section.
+creation_studio_glb_router_base: http://10.243.133.2:8000
+creation_studio_glb_model: mm-2549a44c036d0811  # prithivMLmods/Qwen3.5-4B-GLB-3D-Coder-MTP-Repacked Q8_0, draft-mtp/2, thinking on (T-0103: 112 tok/s vs 101 for ccore Q8_0 mm-1664, which stays installed as the fallback)
+creation_studio_glb_output_dir: /data/ai/creation-studio/glb-3d-coder
+
+# Dedicated, non-root system account the service runs as (needed to be a specific, auditable UID on
+# the mesh bridge's allow-list, rather than running this network-facing proxy as root). Supplementary
+# group gid matches the OpenCode canary/WatooM Code containers' shared fsGroup (llm_mesh_bridge_gid
+# in ansible/roles/llm-model-lab/defaults/main.yml, duplicated here as a literal since that role may
+# not be in the same play) -- it already owns both the mesh-bridge socket directory and the Model
+# Manager password file on the host, so one group grants both.
+creation_studio_uid: 1013
+creation_studio_gid: 1013
+creation_studio_mesh_bridge_gid: 1009
+creation_studio_mesh_bridge_group_name: watoom-mesh-bridge

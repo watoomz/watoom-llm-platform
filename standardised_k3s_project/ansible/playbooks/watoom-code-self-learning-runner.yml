@@ -1,6 +1,6 @@
 ---
 - name: Run the reviewed learning migration independently of Codex
-  hosts: watoom-homelab
+  hosts: homelab-host
   become: true
   gather_facts: false
   vars:

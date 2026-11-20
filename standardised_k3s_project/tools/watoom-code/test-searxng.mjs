@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import plugin, {search} from "../../ansible/roles/opencode-agent/files/v2-native/plugins/searxng-search/index.js";
+import plugin, {search} from "../../ansible/roles/watoom-code/files/native/plugins/searxng-search/index.js";
 let registered;
 await plugin.setup({websearch:{transform:async fn=>fn({add:x=>registered=x})}});
 assert.equal(registered.id,"searxng");assert.equal(typeof registered.execute,"function");

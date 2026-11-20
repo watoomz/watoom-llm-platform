@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Writing Studio</title>
+<style>
+:root{--bg:#f6f5f2;--panel:#fff;--panel2:#f1efea;--ink:#1d1b18;--muted:#68625a;--line:#e0dcd4;--accent:#7a3e9d;--accent-ink:#fff;--accent-soft:#f1e8f7;--ok:#1f7a4d;--ok-soft:#e2f4ea;--warn:#8a5a00;--warn-soft:#fff3d6;--bad:#b42318;--bad-soft:#fde8e6;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#141317;--panel:#1c1b21;--panel2:#24222b;--ink:#ece9f1;--muted:#a39dad;--line:#34313c;--accent:#c79bea;--accent-ink:#141317;--accent-soft:#2f2540;--ok:#5fd39a;--ok-soft:#163326;--warn:#f2c46b;--warn-soft:#3a2f14;--bad:#ff8a80;--bad-soft:#3d1c1a;color-scheme:dark}}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+h1,h2,h3{margin:0;line-height:1.25}h1{font-size:20px}h2{font-size:17px}h3{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:14px 0 6px}
+.top{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.top .brand{flex:1;min-width:200px}.sub{color:var(--muted);font-size:13px}
+.modelbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--muted);margin-right:6px}.dot.ok{background:var(--ok)}.dot.busy{background:var(--warn)}.dot.bad{background:var(--bad)}
+.layout{display:grid;grid-template-columns:250px 1fr;gap:18px;max-width:1300px;margin:0 auto;padding:18px 20px 60px}
+nav.skills{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px 14px;align-self:start;position:sticky;top:76px;max-height:calc(100vh - 96px);overflow:auto}
+nav.skills button{display:block;width:100%;text-align:left;border:0;background:none;padding:5px 8px;border-radius:6px;color:var(--ink);font-size:14px;cursor:pointer}
+nav.skills button:hover{background:var(--panel2)}nav.skills button.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+nav.skills button .tag{float:right;font-size:11px;color:var(--muted)}
+main{display:flex;flex-direction:column;gap:18px;min-width:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+label{display:block;font-size:13px;color:var(--muted);margin-top:10px}
+input,select,textarea,button{font:inherit;color:inherit}
+input[type=text],input[type=number],select,textarea{width:100%;margin-top:4px;padding:8px 10px;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--ink)}
+textarea{min-height:90px;resize:vertical}
+button{cursor:pointer;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);font-weight:500}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0 14px}
+.msg{padding:9px 12px;border-radius:8px;margin-top:10px;font-size:14px}.msg.err{background:var(--bad-soft);color:var(--bad)}.msg.ok{background:var(--ok-soft);color:var(--ok)}.msg.info{background:var(--warn-soft);color:var(--warn)}
+.output{white-space:pre-wrap;word-wrap:break-word;background:var(--panel2);border-radius:8px;padding:12px 14px;margin-top:10px;max-height:60vh;overflow:auto;font-size:15px}
+.thinking{white-space:pre-wrap;color:var(--muted);font-size:12.5px;max-height:120px;overflow:auto;margin-top:6px}
+.chat .turn{padding:10px 12px;border-radius:8px;margin-top:8px;white-space:pre-wrap;word-wrap:break-word}
+.chat .user{background:var(--accent-soft)}.chat .assistant{background:var(--panel2)}
+.chat .who{font-size:11.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:block}
+.status{font-size:13px;color:var(--muted)}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:12px}
+.gallery figure{margin:0}.gallery img{width:100%;border-radius:8px;border:1px solid var(--line);display:block}
+.gallery figcaption{font-size:12px;color:var(--muted)}
+progress{width:100%;height:8px;accent-color:var(--accent);margin-top:8px}
+.history{font-size:13px}.history a{color:var(--accent);cursor:pointer}
+@media (max-width:820px){.layout{grid-template-columns:1fr;padding:12px}nav.skills{position:static;max-height:none}.top{padding:10px 14px}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><h1>Writing Studio</h1><div class="sub">25 creative-writing skills and graphic-novel art</div></div>
+  <div class="modelbar">
+    <span class="status" id="loaded"><span class="dot"></span>Reading the GPU…</span>
+    <select id="model" aria-label="Writing model"></select>
+    <button id="warm" title="Load this model on the GPU now, so your first request starts at once">Warm up</button>
+    <label style="margin:0" class="status"><input type="checkbox" id="thinking"> Thinking</label>
+  </div>
+</header>
+<div class="layout">
+  <nav class="skills" id="skills" aria-label="Skills"></nav>
+  <main>
+    <section class="panel" id="skillPanel">
+      <h2 id="skillTitle">Pick a skill</h2>
+      <p class="sub" id="skillIntro"></p>
+      <div id="formBox"></div>
+      <div id="chatBox" class="chat" hidden>
+        <div id="chatLog"></div>
+        <label>Your message<textarea id="chatInput"></textarea></label>
+        <div class="row"><button class="primary" id="chatSend">Send</button><button id="chatClear">New conversation</button></div>
+      </div>
+      <div id="formActions" class="row" hidden>
+        <button class="primary" id="write">Write</button>
+        <span class="status">The skill's own instructions guide the model; nothing is saved to your projects.</span>
+      </div>
+      <div id="writeMsg"></div>
+      <div id="jobBox" hidden>
+        <div class="row"><span class="status" id="jobStatus"></span><button id="cancel">Cancel</button></div>
+        <div class="thinking" id="jobThinking"></div>
+        <div class="output" id="jobOutput"></div>
+        <div class="row" id="jobActions" hidden>
+          <button id="copy">Copy</button><a id="download" download><button>Download .md</button></a>
+          <button id="toArt">Use as art scene</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="art">
+      <h2>Graphic-novel art</h2>
+      <p class="sub">MOSS Image Studio at high quality (50 steps by default). MOSS needs its own GPU session: starting one pauses the language model until you end it (or 10 idle minutes pass).</p>
+      <div class="row"><span class="status" id="mossStatus"><span class="dot"></span>Reading MOSS…</span>
+        <button id="mossStart">Start GPU session</button><button id="mossEnd">End session</button></div>
+      <label>Scene<textarea id="scene" placeholder="Panel 1: the lighthouse keeper kneels on wet rocks at low tide, a carved stone door half-buried in kelp, storm light"></textarea></label>
+      <div class="grid2">
+        <label>Style<select id="style"></select></label>
+        <label>Size<select id="size"></select></label>
+        <label>Steps<input type="number" id="steps" min="1" max="60"></label>
+        <label>CFG<input type="number" id="cfg" min="0" max="10" step="0.1"></label>
+        <label>Seed (-1 = random)<input type="number" id="seed" value="-1"></label>
+      </div>
+      <label>Negative prompt<textarea id="negative" style="min-height:50px"></textarea></label>
+      <div class="row"><button class="primary" id="paint">Generate panel</button><span class="status" id="artStatus"></span></div>
+      <progress id="artProgress" max="1" value="0" hidden></progress>
+      <div id="artMsg"></div>
+      <div class="gallery" id="gallery"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Recent writing</h2>
+      <div id="history" class="history"><p class="sub">Nothing yet.</p></div>
+    </section>
+  </main>
+</div>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+function el(tag,attrs,...kids){const n=document.createElement(tag);for(const[k,v]of Object.entries(attrs||{})){if(k==="text")n.textContent=v;else if(k.startsWith("on"))n.addEventListener(k.slice(2),v);else if(v!==null&&v!==undefined&&v!==false)n.setAttribute(k,v===true?"":v)}for(const c of kids.flat())if(c!==null&&c!==undefined)n.append(c);return n}
+async function api(path,body){
+  const r=await fetch(path,body===undefined?{}:{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const t=await r.text();let j;try{j=JSON.parse(t)}catch{j={error:{message:t.slice(0,200)}}}
+  if(!r.ok)throw new Error((j.error&&(j.error.message||j.error))||("HTTP "+r.status));return j;
+}
+function show(box,text,kind){$(box).replaceChildren(text?el("div",{class:"msg "+(kind||"err"),text}):"")}
+const LS={get(k,d){try{return JSON.parse(localStorage.getItem("ws."+k))??d}catch{return d}},set(k,v){try{localStorage.setItem("ws."+k,JSON.stringify(v))}catch{}}};
+
+let config=null,skill=null,chat=[],job=null,jobTimer=null,artJobs=LS.get("art",[]);
+
+// ------------------------------------------------ models and warm-up
+let modelsSig="";
+async function refreshModels(){
+  try{
+    const m=await api("api/models");const sig=JSON.stringify(m);if(sig===modelsSig)return;modelsSig=sig;
+    const sel=$("model"),keep=sel.value||LS.get("model",config.default_model);
+    sel.replaceChildren(...m.models.map(x=>el("option",{value:x.id,text:x.name+(x.context?" · "+Math.round(x.context/1000)+"K":"")})));
+    sel.value=m.models.some(x=>x.id===keep)?keep:m.models.some(x=>x.id===config.default_model)?config.default_model:((m.models[0]||{}).id||"");
+    const loadedName=(m.models.find(x=>x.id===m.loaded)||{}).name||m.loaded;
+    const w=m.warmup;let dot="ok",text=m.loaded?"Loaded: "+loadedName:"No model loaded";
+    if(w.state==="loading"){dot="busy";text="Warming up "+((m.models.find(x=>x.id===w.model)||{}).name||w.model)+"… ("+Math.round(Date.now()/1000-w.started)+" s)"}
+    else if(w.state==="failed"&&w.finished&&Date.now()/1000-w.finished<600){dot="bad";text="Warm-up failed: "+w.error}
+    $("loaded").replaceChildren(el("span",{class:"dot "+dot}),text);
+    $("warm").disabled=w.state==="loading";
+  }catch(e){$("loaded").replaceChildren(el("span",{class:"dot bad"}),"Router: "+e.message)}
+}
+$("model").addEventListener("change",()=>LS.set("model",$("model").value));
+$("warm").onclick=async()=>{try{await api("api/warmup",{model:$("model").value});modelsSig="";refreshModels()}catch(e){show("writeMsg",e.message)}};
+
+// ------------------------------------------------ skills
+function renderSkills(){
+  const nav=$("skills");nav.replaceChildren();
+  for(const g of config.groups){
+    nav.append(el("h3",{text:g}));
+    for(const s of config.skills.filter(x=>x.group===g))
+      nav.append(el("button",{class:skill&&skill.name===s.name?"on":"",disabled:!s.available,title:s.description||s.intro,onclick:()=>pick(s.name)},s.title,el("span",{class:"tag",text:s.mode==="chat"?"chat":""})));
+  }
+}
+function pick(name){
+  skill=config.skills.find(s=>s.name===name);LS.set("skill",name);renderSkills();
+  $("skillTitle").textContent=skill.title;$("skillIntro").textContent=skill.intro;
+  const chatMode=skill.mode==="chat";$("chatBox").hidden=!chatMode;$("formActions").hidden=chatMode;
+  $("formBox").replaceChildren();
+  if(chatMode){chat=LS.get("chat."+name,[]);renderChat();if(!chat.length&&!$("chatInput").value)$("chatInput").value=skill.starter||""}
+  else{
+    const saved=LS.get("form."+name,{});
+    const box=el("div",{class:"form"});
+    for(const f of skill.fields){
+      const input=f.type==="select"?el("select",{"data-id":f.id},...f.options.map(o=>el("option",{value:o,text:o}))):f.type==="textarea"?el("textarea",{"data-id":f.id,placeholder:f.placeholder||""}):el("input",{type:"text","data-id":f.id,placeholder:f.placeholder||""});
+      if(saved[f.id]!==undefined)input.value=saved[f.id];
+      input.addEventListener("input",saveForm);input.addEventListener("change",saveForm);
+      box.append(el("label",{},f.label,input));
+    }
+    box.append(el("label",{},"Extra instructions (optional)",el("textarea",{"data-id":"_extra",style:"min-height:50px",placeholder:"Length, tone, what to avoid"})));
+    if(saved._extra)box.lastChild.lastChild.value=saved._extra;
+    box.lastChild.lastChild.addEventListener("input",saveForm);
+    $("formBox").append(box);
+  }
+  show("writeMsg","");
+}
+function formValues(){const v={};for(const n of $("formBox").querySelectorAll("[data-id]"))v[n.dataset.id]=n.value;return v}
+function saveForm(){if(skill)LS.set("form."+skill.name,formValues())}
+function renderChat(){
+  $("chatLog").replaceChildren(...chat.map(t=>el("div",{class:"turn "+t.role},el("span",{class:"who",text:t.role==="user"?"You":"Studio"}),t.content)));
+}
+$("chatClear").onclick=()=>{chat=[];LS.set("chat."+skill.name,chat);renderChat();$("chatInput").value=skill.starter||""};
+$("chatSend").onclick=async()=>{
+  const text=$("chatInput").value.trim();if(!text)return;
+  chat.push({role:"user",content:text});renderChat();$("chatInput").value="";LS.set("chat."+skill.name,chat);
+  await start({skill:skill.name,messages:chat});
+};
+$("write").onclick=()=>start({skill:skill.name,fields:formValues()});
+
+// ------------------------------------------------ writing jobs
+async function start(body){
+  show("writeMsg","");
+  try{
+    body.model=$("model").value;body.thinking=$("thinking").checked;
+    job=await api("api/write",body);LS.set("job",job.id);follow();
+  }catch(e){show("writeMsg",e.message);if(body.messages){chat.pop();renderChat();LS.set("chat."+skill.name,chat)}}
+}
+function follow(){clearTimeout(jobTimer);poll()}
+async function poll(){
+  if(!job)return;
+  try{job=await api("api/job?id="+job.id)}catch(e){show("writeMsg",e.message);return}
+  renderJob();
+  if(["queued","waiting","thinking","writing"].includes(job.state))jobTimer=setTimeout(poll,1200);
+  else{refreshHistory();if(job.state==="done"&&skill&&skill.mode==="chat"&&job.skill===skill.name&&(chat.length&&chat[chat.length-1].role==="user")){chat.push({role:"assistant",content:job.content});LS.set("chat."+skill.name,chat);renderChat()}}
+}
+function renderJob(){
+  $("jobBox").hidden=false;
+  const words=job.content?job.content.trim().split(/\s+/).length:0;
+  const state={queued:"Queued",waiting:"Waiting for the model (it may be loading)…",thinking:"Thinking…",writing:"Writing…",done:"Done",failed:"Failed",cancelled:"Cancelled"}[job.state]||job.state;
+  const speed=job.timings&&job.timings.predicted_per_second?" · "+job.timings.predicted_per_second.toFixed(1)+" tok/s":"";
+  $("jobStatus").textContent=state+" · "+words+" words · "+job.elapsed_seconds+" s"+speed+" · "+job.model;
+  $("cancel").hidden=!["queued","waiting","thinking","writing"].includes(job.state);
+  $("jobThinking").textContent=job.state==="thinking"?job.reasoning_tail:"";
+  const out=$("jobOutput"),atEnd=out.scrollTop+out.clientHeight>=out.scrollHeight-20;
+  out.textContent=job.content||(job.error?"":"…");if(atEnd)out.scrollTop=out.scrollHeight;
+  if(job.error)show("writeMsg",job.error);
+  $("jobActions").hidden=job.state!=="done";$("download").href="api/job.md?id="+job.id;
+}
+$("cancel").onclick=async()=>{try{job=await api("api/cancel?id="+job.id,{});renderJob()}catch(e){show("writeMsg",e.message)}};
+$("copy").onclick=async()=>{try{await navigator.clipboard.writeText(job.content);show("writeMsg","Copied.","ok")}catch{show("writeMsg","Copy failed; select the text instead.")}};
+$("toArt").onclick=()=>{const sel=String(window.getSelection()||"").trim();$("scene").value=(sel||job.content).slice(0,3500);$("art").scrollIntoView({behavior:"smooth"})};
+let historySig="";
+async function refreshHistory(){
+  try{
+    const jobs=await api("api/jobs");const sig=JSON.stringify(jobs.map(j=>[j.id,j.state]));if(sig===historySig)return;historySig=sig;
+    if(!jobs.length)return;
+    $("history").replaceChildren(...jobs.map(j=>el("div",{},el("a",{text:(config.skills.find(s=>s.name===j.skill)||{title:j.skill}).title,onclick:()=>{job=j;follow()}}),
+      " · "+j.state+" · "+new Date(j.created*1000).toLocaleString()+" · "+(j.content||j.error||"").slice(0,90))));
+  }catch{}
+}
+
+// ------------------------------------------------ art (MOSS)
+async function refreshMoss(){
+  try{
+    const s=await api("api/moss/status");const sess=s.session||{};const active=sess.state==="active";
+    const text=active?"GPU session active"+(sess.idle_seconds_left?" · ends after "+Math.round(sess.idle_seconds_left/60)+" idle min":""):sess.state==="idle"?"No GPU session (the LLM has the GPU)"+(sess.detail&&sess.detail!=="LLM restored"?" · last start: "+sess.detail:""):"Session: "+sess.state+(sess.detail?" — "+sess.detail:"");
+    $("mossStatus").replaceChildren(el("span",{class:"dot "+(active?"ok":sess.state==="idle"?"":"busy")}),text);
+    $("mossStart").disabled=active||sess.state==="starting";$("mossEnd").disabled=!active;
+  }catch(e){$("mossStatus").replaceChildren(el("span",{class:"dot bad"}),"MOSS: "+e.message)}
+}
+// MOSS takes the GPU only from the primary model (controller qwen-ready): after a Warm up of another model, switch
+// back first instead of letting the session fail with the controller's "not idle (phase=model-ready)" (T-0099).
+$("mossStart").onclick=async()=>{try{
+  const m=await api("api/models");
+  if(m.loaded&&m.loaded!==config.default_model){
+    const name=(m.models.find(x=>x.id===config.default_model)||{}).name||config.default_model;
+    if(!confirm("MOSS can only take the GPU from the primary model ("+name+"), but "+m.loaded+" is loaded. Switch back to the primary now? It takes a few minutes; press Start GPU session again when it is loaded."))return;
+    await api("api/warmup",{model:config.default_model});modelsSig="";refreshModels();
+    show("artMsg","Switching back to "+name+"… press Start GPU session again when the header shows it loaded.","info");return;
+  }
+  await api("api/moss/session/start",{});refreshMoss()}catch(e){show("artMsg",e.message)}};
+$("mossEnd").onclick=async()=>{try{await api("api/moss/session/end",{});refreshMoss()}catch(e){show("artMsg",e.message)}};
+$("paint").onclick=async()=>{
+  show("artMsg","");
+  try{
+    const j=await api("api/art/generate",{scene:$("scene").value,style:$("style").value,size:$("size").value,steps:$("steps").value,cfg:$("cfg").value,seed:$("seed").value,negative:$("negative").value});
+    artJobs.unshift({id:j.id,scene:$("scene").value.slice(0,120),style:$("style").value});artJobs=artJobs.slice(0,24);LS.set("art",artJobs);pollArt(j.id);
+  }catch(e){show("artMsg",e.message)}
+};
+async function pollArt(id){
+  try{
+    const j=await api("api/moss/jobs/"+id);const running=j.status==="queued"||j.status==="running";
+    $("artProgress").hidden=!running;$("artProgress").value=j.fraction||0;
+    $("artStatus").textContent=running?(j.phase||j.status)+(j.eta_seconds?" · about "+Math.round(j.eta_seconds)+" s left":""):j.status==="done"?"Done":j.status;
+    if(j.error)show("artMsg",j.error.message||String(j.error));
+    const rec=artJobs.find(a=>a.id===id);if(rec&&j.image&&!rec.image){rec.image=j.image;LS.set("art",artJobs);renderGallery()}
+    if(running)setTimeout(()=>pollArt(id),1500);
+  }catch(e){show("artMsg",e.message)}
+}
+function renderGallery(){
+  $("gallery").replaceChildren(...artJobs.filter(a=>a.image).map(a=>el("figure",{},el("a",{href:"api/moss/images/"+a.image,target:"_blank",rel:"noopener"},el("img",{src:"api/moss/images/"+a.image,alt:a.scene,loading:"lazy"})),el("figcaption",{text:a.style+" · "+a.scene}))));
+}
+
+// ------------------------------------------------ start
+(async()=>{
+  try{config=await api("api/config")}catch(e){show("writeMsg","Could not load the studio: "+e.message);return}
+  $("style").replaceChildren(...config.art.styles.map(s=>el("option",{value:s.id,text:s.label})));
+  $("size").replaceChildren(...config.art.sizes.map(s=>el("option",{value:s.id,text:s.label})));
+  $("steps").value=config.art.defaults.steps;$("cfg").value=config.art.defaults.cfg;$("negative").value=config.art.negative;
+  renderSkills();pick(LS.get("skill","creative-writing"));
+  await refreshModels();setInterval(refreshModels,5000);
+  refreshMoss();setInterval(refreshMoss,6000);
+  refreshHistory();renderGallery();
+  const last=LS.get("job",null);if(last){try{job=await api("api/job?id="+last);renderJob();follow()}catch{}}
+  for(const a of artJobs.slice(0,3))if(!a.image)pollArt(a.id);
+})();
+</script>
+</body>
+</html>

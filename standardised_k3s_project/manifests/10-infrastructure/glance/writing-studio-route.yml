@@ -1,0 +1,76 @@
+# Writing Studio (host service, tools/writing-studio, T-0099) published under https://glance.internal.homelab.example/writing/
+# The service binds to the k3s bridge address (10.242.0.1), so only pods and the host can reach it directly.
+# Same exposure model as the creation-studio and moss-image routes: internal domain, no extra auth of its own.
+# It calls the LLM router (writing, model warm-up) and MOSS Image Studio's allow-listed API (art).
+apiVersion: v1
+kind: Service
+metadata:
+  name: writing-studio
+  namespace: glance
+spec:
+  ports:
+  - name: http
+    port: 8793
+    targetPort: 8793
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: writing-studio
+  namespace: glance
+subsets:
+- addresses:
+  - ip: 10.242.0.1
+  ports:
+  - name: http
+    port: 8793
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: writing-studio-strip
+  namespace: glance
+spec:
+  stripPrefix:
+    prefixes:
+    - /writing
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: writing-studio-slash
+  namespace: glance
+spec:
+  redirectRegex:
+    regex: ^https://glance\.internal\.watoom\.au/writing$
+    replacement: https://glance.internal.homelab.example/writing/
+    permanent: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: writing-studio
+  namespace: glance
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - kind: Rule
+    match: Host(`glance.internal.homelab.example`) && Path(`/writing`)
+    priority: 120
+    middlewares:
+    - name: writing-studio-slash
+    services:
+    - name: writing-studio
+      port: 8793
+  - kind: Rule
+    match: Host(`glance.internal.homelab.example`) && PathPrefix(`/writing/`)
+    priority: 120
+    middlewares:
+    - name: writing-studio-strip
+    services:
+    - name: writing-studio
+      nativeLB: true
+      port: 8793
+  tls:
+    secretName: watoom-tls

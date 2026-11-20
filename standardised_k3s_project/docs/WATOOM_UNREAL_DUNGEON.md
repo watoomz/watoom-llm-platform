@@ -1,6 +1,6 @@
 # WatooM Code: Unreal and dungeon pipelines
 
-Production baseline: **19 October 2026 (Australia/Brisbane)**, confirmed by the owner. WatooM Code is the GUI at https://watoom-code.internal.homelab.example. Ollama and Open WebUI are not dependencies.
+WatooM Code is the GUI at https://watoom-code.internal.homelab.example.
 
 ## Production runtime
 

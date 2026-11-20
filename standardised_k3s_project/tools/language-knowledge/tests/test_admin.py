@@ -73,6 +73,20 @@ class AdminTests(unittest.TestCase):
         for data in (b'', b'[]', b'{broken', b'null'):
             self.assertFalse(wlk.validate_bytes(data)[1]['valid'])
 
+    def test_manual_card_product_kind_trust_tier_accepted(self):
+        # A manual/procedure card (tools/language-knowledge/manuals/<product>, sync_manual.py's own shape):
+        # not an official godot/blender API card, so it needs the wider product/kind/trust_tier allow-lists,
+        # a free-form version (not semver), and params that only ever carry a name (e.g. ansible module-examples).
+        card = dict(self.card, product='watoom-unreal-combat', kind='pitfall', symbol='wander-speed-zero-pause',
+                    id='watoom-unreal-combat.wander-speed-zero-pause@snapshot-2026-11-19b', version='snapshot-2026-11-19b',
+                    trust_tier='internal_doc', params=[{'name': 'host'}])
+        self.assertTrue(wlk.validate_bytes(json.dumps(card).encode())[1]['valid'])
+        # but an official (godot/blender) card still needs the full extractor shape and exact semver.
+        bad_version = dict(self.card, version='v2', id='godot.Node.add_child@v2')
+        self.assertFalse(wlk.validate_bytes(json.dumps(bad_version).encode())[1]['valid'])
+        bad_params = dict(self.card, params=[{'name': 'x'}])
+        self.assertFalse(wlk.validate_bytes(json.dumps(bad_params).encode())[1]['valid'])
+
     def test_duplicate_and_invalid_exit(self):
         self.write([self.card, self.card])
         result = self.cli('validate', self.cards)
@@ -167,9 +181,13 @@ class AdminTests(unittest.TestCase):
         for sid in ('..', '../outside', '/tmp', 'a/b', '.', 'f' * 15, 'F' * 16, 'f' * 16 + '/../x'):
             with self.subTest(sid=sid), self.assertRaises(ValueError):
                 wlk.activate(sid, self.root)
-        for symbol in ('../evil', 'foo/evil', 'foo\\evil', 'foo..evil'):
+        for symbol in ('../evil', 'foo\\evil', 'foo..evil'):
             card = dict(self.card, symbol=symbol, id=f'godot.{symbol}@4.7.2')
             self.assertFalse(wlk.validate_bytes(json.dumps(card).encode())[1]['valid'])
+        # A bare '/' in symbol is legitimate (e.g. Godot bus-parameter paths like "voice/1/cutoff_hz");
+        # id is never used to build a filesystem path, so this must validate.
+        card = dict(self.card, symbol='foo/evil', id='godot.foo/evil@4.7.2')
+        self.assertTrue(wlk.validate_bytes(json.dumps(card).encode())[1]['valid'])
 
     def test_managed_symlinks_refused(self):
         outside = self.base / 'outside'

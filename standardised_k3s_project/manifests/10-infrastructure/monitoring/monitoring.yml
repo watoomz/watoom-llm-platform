@@ -69,9 +69,9 @@ data:
     \  static_configs:\n  - targets:\n    - vector-router-syslog.monitoring.svc.cluster.local:9598\n- job_name: kube-state-metrics\n\
     \  static_configs:\n  - targets:\n    - kube-state-metrics.monitoring.svc.cluster.local:8080\n- job_name: dcgm-exporter\n\
     \  scrape_interval: 15s\n  static_configs:\n  - targets:\n    - dcgm-exporter.monitoring.svc.cluster.local:9400\n- job_name:\
-    \ llama-cpp\n  scrape_interval: 15s\n  metrics_path: /metrics\n  kubernetes_sd_configs:\n  - role: service\n    namespaces:\n\
+    \ llama-cpp\n  scrape_interval: 15s\n  metrics_path: /metrics\n  bearer_token_file: /private/backend-key\n  kubernetes_sd_configs:\n  - role: service\n    namespaces:\n\
     \      names:\n      - llama-cpp\n  relabel_configs:\n  - source_labels:\n    - __meta_kubernetes_service_name\n    regex:\
-    \ llama-cpp-.+\n    action: keep\n  - source_labels:\n    - __meta_kubernetes_service_port_name\n    regex: http\n   \
+    \ llama-cpp-.+\n    action: keep\n  - source_labels:\n    - __meta_kubernetes_service_port_name\n    regex: http|\n   \
     \ action: keep\n  - source_labels:\n    - __meta_kubernetes_service_name\n    target_label: service\n  - source_labels:\n\
     \    - __meta_kubernetes_service_name\n    regex: llama-cpp-(.+)\n    target_label: model\n    replacement: $1\n  - target_label:\
     \ runtime\n    replacement: llama.cpp\n  - target_label: gpu\n    replacement: rtx-3080\n- job_name: llama-perf\n  scrape_interval:\
@@ -323,6 +323,11 @@ spec:
         - name: GF_SERVER_ROOT_URL
           value: https://grafana.internal.homelab.example/
         image: docker.io/grafana/grafana@sha256:ab5cb380e3ff3172d6c8bd2e7cfd31cce977d2881b260e1f5bc089bf0b759b43
+        readinessProbe:  # T-0115: gate traffic on the port actually listening (never restarts the pod)
+          tcpSocket:
+            port: 3000
+          periodSeconds: 20
+          failureThreshold: 3
         imagePullPolicy: Always
         name: grafana
         ports:
@@ -428,6 +433,11 @@ spec:
         - --storage.tsdb.retention.time=30d
         - --web.enable-lifecycle
         image: docker.io/prom/prometheus@sha256:508729e0e2d18e11fd742a5a5ca70e557b940a93948c3c95fd0123a6fd538b69
+        readinessProbe:  # T-0115: gate traffic on the port actually listening (never restarts the pod)
+          tcpSocket:
+            port: 9090
+          periodSeconds: 20
+          failureThreshold: 3
         imagePullPolicy: Always
         name: prometheus
         ports:
@@ -450,10 +460,15 @@ spec:
           readOnly: true
         - mountPath: /prometheus
           name: prometheus-data
+        - mountPath: /private/backend-key
+          name: model-manager-backend-key
+          readOnly: true
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
-      securityContext: {}
+      securityContext:
+        supplementalGroups:
+        - 1009 # watoom-mesh-bridge: group-read access to the model-manager backend-key file
       serviceAccount: prometheus
       serviceAccountName: prometheus
       terminationGracePeriodSeconds: 30
@@ -469,6 +484,10 @@ spec:
           path: /app/prometheus/data
           type: ''
         name: prometheus-data
+      - hostPath:
+          path: /data/ai/private/model-manager/backend-key
+          type: File
+        name: model-manager-backend-key
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -501,6 +520,11 @@ spec:
       hostNetwork: true
       containers:
       - image: docker.io/prom/snmp-exporter@sha256:272ff087c314fb1e384b7ba7e555f020cc0c072fb23f0dc1d1cb51b48067efdc
+        readinessProbe:  # T-0115: gate traffic on the port actually listening (never restarts the pod)
+          tcpSocket:
+            port: 9116
+          periodSeconds: 20
+          failureThreshold: 3
         imagePullPolicy: Always
         name: snmp-exporter
         ports:
@@ -553,6 +577,11 @@ spec:
         - --path.rootfs=/host
         - --collector.textfile.directory=/host/var/lib/node_exporter/textfile
         image: docker.io/prom/node-exporter@sha256:1b4e4438faca4dd7e001dd445d161a4a2091b0fededa84093b3a8dfeae1f1be0
+        readinessProbe:  # T-0115: gate traffic on the port actually listening (never restarts the pod)
+          tcpSocket:
+            port: 9100
+          periodSeconds: 20
+          failureThreshold: 3
         imagePullPolicy: Always
         name: node-exporter
         ports:

@@ -1,14 +1,12 @@
 # Validation and Change Control
 
-Current production baseline: 19 October 2026. Historical procedures retain their qualification dates.
-
 ## Ansible validation tiers
 
 | Tier | Required checks | Use |
 |---|---|---|
 | `fast` | YAML + production-profile `ansible-lint` + WatooM policy | quick/local and LLM repair loop |
 | `standard` | fast + syntax validation in configured production EE | production AAP-targeted content |
-| `full` | standard + configured safe dynamic/idempotence hook | highest-assurance change/canary |
+| `full` | standard + configured safe dynamic/idempotence hook | highest-assurance change |
 
 ```bash
 ./scripts/watoom-ansible-validate.sh fast
@@ -66,10 +64,6 @@ Do not use broad `git restore`, `reset`, `checkout`, `clean` or stash operations
 
 Use the image audit/export workflow to capture known-good live digests and detect floating references. The live image lock is a diagnostic and pinning aid; update it from verified running state rather than hand-editing historical values.
 
-## Kali security isolation, 13 October 2026
+## Kali security isolation
 
-Development-agent Kali MCP access is denied in the native, main and project configuration layers. Nine agents and all three MCP connections are preserved. Explicitly authorized security work uses a separate top-level primary `watoom-kali` session; it cannot be delegated as a child or proxied through the development coordinator.
-
-The actual security positive control returned `WATOOM_KALI_ALLOW_TEST` with exit code 0. All four development catalogs hid Kali. Builder/investigator/reviewer stale-path calls returned Unknown tool before transport; workflow voluntarily refused that probe, which is not runtime-denial evidence. Two repeated normal configuration deployments made zero changes, including the canonical deployment.
-
-Supported commands, IaC owners, precise evidence classifications and rollback: Kali security workflow. Security commit: `e73b65d436e0873860faf40ee7dac8ba26013fd0`; the earlier protected baseline tag remains unchanged.
+Only `watoom-kali` can use the Kali MCP tools. Check the live rules with `python3 scripts/verify-opencode-kali-security.py`; details in Kali security workflow.

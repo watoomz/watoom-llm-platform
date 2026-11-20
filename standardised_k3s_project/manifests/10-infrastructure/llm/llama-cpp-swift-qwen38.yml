@@ -135,6 +135,16 @@ spec:
         # previous: ghcr.io/ggml-org/llama.cpp@sha256:150b59966fb5b2cb1a8fa9d226267c56ebd22c520c7b3640331cde87f3c4fb01
         image: 127.0.0.1:5000/watoom-llamampere@sha256:3bb755f835b65f8d5e9db3ec0cd65ce860efd6633f4e0b7d6338c9b6286a8b2e
         imagePullPolicy: IfNotPresent
+        # 2026-11-19: loads grew from 220-320 s (early Nov) to 450 s+ on the shared spinning /data disk; liveness alone
+        # (180 s + 6 x 30 s) killed the primary mid-load. The startup probe allows 15 min; liveness starts after it.
+        startupProbe:
+          failureThreshold: 90
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          periodSeconds: 10
+          timeoutSeconds: 10
         livenessProbe:
           failureThreshold: 6
           httpGet:
@@ -187,14 +197,34 @@ spec:
       - command:
         - python3
         - -c
-        - "from pathlib import Path\nimport hashlib\nfiles = [('Swift-1.5-Qwen3.8-27B-Uncensored-Dynamic-MTP-UD-IQ4_XS.gguf',\
-          \ 14252844672, '9341ee462261bde1dc357ca995704b6a6541852c74c11e89ec490418cdc0051b'),\
-          \ ('mmproj-BF16.gguf', 931145888, '19acd7fcf4ee504328566eddf0f8e603ef853a205b4830209d2a4908213abdea')]\n\
-          for name,size,digest in files:\n p=Path('/models')/name\n assert p.is_file()\
-          \ and p.stat().st_size==size, 'Model/projector missing or wrong size'\n\
-          \ h=hashlib.sha256()\n with p.open('rb') as f:\n  while block:=f.read(8*1024*1024):\
-          \ h.update(block)\n assert h.hexdigest()==digest, 'Model/projector SHA256\
-          \ mismatch'\n"
+        - |
+          import hashlib, json, os
+          from pathlib import Path
+          # 2026-11-19: hashing 15 GB on EVERY start doubled the disk reads of a model switch (~3 min at ~80 MB/s). A file whose
+          # size, inode, mtime and ctime match the record of its last successful hash is not hashed again; ctime changes on
+          # any write and cannot be set back by a user, so an edited file is always re-hashed.
+          files = [('Swift-1.5-Qwen3.8-27B-Uncensored-Dynamic-MTP-UD-IQ4_XS.gguf',14252844672, '9341ee462261bde1dc357ca995704b6a6541852c74c11e89ec490418cdc0051b'),('mmproj-BF16.gguf', 931145888, '19acd7fcf4ee504328566eddf0f8e603ef853a205b4830209d2a4908213abdea')]
+          for name, size, digest in files:
+              p = Path('/models') / name
+              st = p.stat() if p.is_file() else None
+              assert st and st.st_size == size, 'Model/projector missing or wrong size'
+              key = {'name': name, 'size': st.st_size, 'ino': st.st_ino, 'mtime_ns': st.st_mtime_ns, 'ctime_ns': st.st_ctime_ns, 'sha256': digest}
+              stamp = Path('/verified') / (name + '.verified.json')
+              try:
+                  if json.loads(stamp.read_text()) == key:
+                      print('unchanged since verified:', name, flush=True)
+                      continue
+              except (OSError, ValueError):
+                  pass
+              h = hashlib.sha256()
+              with p.open('rb') as f:
+                  while block := f.read(8 * 1024 * 1024):
+                      h.update(block)
+              assert h.hexdigest() == digest, 'Model/projector SHA256 mismatch'
+              tmp = stamp.with_name(stamp.name + '.tmp')
+              tmp.write_text(json.dumps(key))
+              os.replace(tmp, stamp)
+              print('hashed and recorded:', name, flush=True)
         image: docker.io/library/python@sha256:6d43704baacd1bfbe7c295d7f13079d5d8104ed33568873133f8fc69980419df
         imagePullPolicy: IfNotPresent
         name: wait-for-model
@@ -205,6 +235,8 @@ spec:
         - mountPath: /models
           name: models
           readOnly: true
+        - mountPath: /verified
+          name: model-verified
       restartPolicy: Always
       runtimeClassName: nvidia
       schedulerName: default-scheduler
@@ -215,6 +247,10 @@ spec:
           path: /data/ai/models/gguf/swift-1.5-qwen3.8-27b-uncensored-dynamic-mtp
           type: Directory
         name: models
+      - hostPath:
+          path: /data/ai/models/verified/swift-qwen38-coder
+          type: DirectoryOrCreate
+        name: model-verified
       - hostPath:
           path: /data/ai/models/gguf/qwen3.8-27b-ascii-condensed
           type: Directory

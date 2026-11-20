@@ -4,7 +4,7 @@ nav: Operator manual
 summary: A task-first manual for running the homelab — how to check health, fix, approve, start, stop and restart things safely, what every approval gate means, and when to stop and ask the owner.
 ---
 
-This page is written for someone who did not build the system. Start at **[I want to…](#i-want-to)** and follow the links. Every command runs on the server (`watoom-homelab`) over SSH unless it says otherwise. If a step is not covered here, **stop and ask the owner**; do not improvise on the GPU, the router, secrets or Git.
+This page is written for someone who did not build the system. Start at **[I want to…](#i-want-to)** and follow the links. Every command runs on the server (`homelab-host`) over SSH unless it says otherwise. If a step is not covered here, **stop and ask the owner**; do not improvise on the GPU, the router, secrets or Git.
 
 > [!RULE]
 > Five things that are never the answer: scaling a model Deployment by hand, editing GPU-controller state, force-deleting things to "clear" them, running `git add .` / `git reset --hard` / `git clean -fd`, and pasting secrets into chat, Git or logs. Each is explained below.
@@ -248,7 +248,7 @@ Recovery tooling is read-only by default: `python3 tools/recovery/recovery.py {i
 
 ## Secrets and the vault
 
-Secrets are stored encrypted in Git (`secrets-vault/env.local.vault`); the vault password is **not** in Git (`/data/secrets/watoom-homelab/ansible-vault-password.txt`). Refer to secrets by name only — never print or paste values.
+Secrets are stored encrypted in Git (`secrets-vault/env.local.vault`); the vault password is **not** in Git (`/data/secrets/homelab-host/ansible-vault-password.txt`). Refer to secrets by name only — never print or paste values.
 
 ```bash
 scripts/check-required-secrets.sh      # confirms names exist; never prints values

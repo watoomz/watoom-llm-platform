@@ -127,6 +127,19 @@ class Spec(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'not allowed for gg_ui.py'): self.load(steps=[{'script': 'gg_ui.py', 'sub': 'frobnicate'}])
         with self.assertRaises(ValueError): self.load(steps=[{'script': 'gg_player.py', 'sub': 'smoke', 'args': ['--scene', 'res://scenes/main.tscn']}])
 
+    def test_dungeon_steps_and_pieces_dir_res_path(self):
+        self.existing_project()
+        steps = [{'script': 'gg_dungeon.py', 'sub': 'catalog-init', 'args': ['--pieces-dir', 'res://assets/kit1']},
+                  {'script': 'gg_dungeon.py', 'sub': 'layout', 'args': ['--seed', '1', '--rooms', '8']},
+                  {'script': 'gg_dungeon.py', 'sub': 'verify'}]
+        self.assertEqual(len(self.load(steps=steps)['steps']), 3)
+        self.assertEqual(self.load(steps=[{'script': 'gg_dungeon.py', 'sub': 'catalog-init', 'args': ['--pieces-dir=res://assets/kit1']}])['steps'][0]['args'], ['--pieces-dir=res://assets/kit1'])
+        for bad in (['--pieces-dir', 'res://../x'], ['--pieces-dir', '/etc/passwd'], ['--pieces-dir', 'res://a;b'], ['--out', 'x']):
+            with self.assertRaises(ValueError): self.load(steps=[{'script': 'gg_dungeon.py', 'sub': 'catalog-init', 'args': bad}])
+        with self.assertRaisesRegex(ValueError, 'not allowed for gg_dungeon.py'): self.load(steps=[{'script': 'gg_dungeon.py', 'sub': 'catalog-inspect'}])
+        # the res:// exemption is scoped to gg_dungeon.py --pieces-dir only, not to other scripts/flags
+        with self.assertRaises(ValueError): self.load(steps=[{'script': 'gg_player.py', 'sub': 'smoke', 'args': ['--pieces-dir', 'res://assets/kit1']}])
+
     def test_operator_scripts_compile(self):
         import py_compile
         for f in ('game_godot_game.py', 'godot_game_driver.py', 'godot_game_spec.py'):

@@ -1,9 +1,0 @@
----
-- name: Maintain common project image review copies
-  hosts: homelab
-  become: true
-  gather_facts: false
-  tasks:
-    - ansible.builtin.include_role:
-        name: watoom-code
-        tasks_from: image_review.yml

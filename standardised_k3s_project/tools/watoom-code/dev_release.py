@@ -40,7 +40,7 @@ def main():
     }
     varfile = a.evidence / 'ansible-vars.json'
     varfile.write_text(json.dumps(variables, indent=2))
-    command = ['ansible-playbook', '-i', 'inventories/homelab/hosts.yml', 'playbooks/watoom-code-dev.yml', '-e', '@' + str(varfile)]
+    command = ['ansible-playbook', '-i', 'inventories/homelab/hosts.yml', 'playbooks/watoom-code-parts.yml', '--tags', 'dev', '-e', '@' + str(varfile)]
     with (a.evidence / 'ansible.log').open('w') as log:
         subprocess.run(command, cwd=root / 'ansible', stdout=log, stderr=subprocess.STDOUT, check=True, timeout=600)
     if a.prepare_only:

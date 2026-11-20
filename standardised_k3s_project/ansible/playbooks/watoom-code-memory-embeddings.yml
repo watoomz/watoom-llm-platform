@@ -42,7 +42,10 @@
     # pod's own shell the whole time, never passed through an ansible variable or logged.
     - name: Export a portable, human-readable memory snapshot before stopping AgentMemory
       ansible.builtin.shell:
+        executable: /bin/bash
+        # pipefail: a failed export must fail here, not leave an empty gzip that looks like a snapshot (T-0115).
         cmd: >
+          set -o pipefail &&
           kubectl -n {{ watoom_code_namespace }} exec deploy/agentmemory --
           sh -c 'curl -sf http://localhost:3111/agentmemory/export -H "Authorization: Bearer $AGENTMEMORY_SECRET"'
           | gzip -9 > {{ snapshot_export }}
@@ -56,6 +59,7 @@
         - name: Stop AgentMemory for a consistent snapshot (clients queue in their outbox)
           ansible.builtin.command:
             argv: [kubectl, -n, "{{ watoom_code_namespace }}", scale, deployment/agentmemory, --replicas=0]
+          changed_when: true  # mutating command; already guarded by its when/creates
         - name: Wait for the AgentMemory pod to exit
           ansible.builtin.command:
             argv: [kubectl, -n, "{{ watoom_code_namespace }}", wait, --for=delete, pod, -l, app=agentmemory, --timeout=120s]
@@ -88,6 +92,7 @@
         - name: Bring AgentMemory back up after a failed stop/snapshot/reconfigure
           ansible.builtin.command:
             argv: [kubectl, -n, "{{ watoom_code_namespace }}", scale, deployment/agentmemory, --replicas=1]
+          changed_when: true  # mutating command; already guarded by its when/creates
         - name: Fail the play after restoring the service
           ansible.builtin.fail:
             msg: AgentMemory stop/snapshot/reconfigure failed; the replica count was restored to 1 and the play stopped.

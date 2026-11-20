@@ -198,13 +198,33 @@ Audited, human-approved host change requests for models.
 
 Source: [`tools/change-requests/change_request.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/change-requests/change_request.py). Description basis: module docstring.
 
-Declared CLI options: `--env`, `--no-push`, `--project`, `--reason`.
+Declared CLI options: `--no-push`, `--project`, `--reason`.
 
 ## tools/change-requests/test_change_request.py
 
 Test fixture/check: test change request. Inspect the source before use.
 
 Source: [`tools/change-requests/test_change_request.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/change-requests/test_change_request.py). Description basis: filename summary.
+
+## tools/creation-studio/creation_studio_service.py
+
+Creation Studio: a standalone web page for image and 3D-mesh generation.
+
+Source: [`tools/creation-studio/creation_studio_service.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/creation-studio/creation_studio_service.py). Description basis: module docstring.
+
+Declared CLI options: `--glb-model`, `--glb-output-dir`, `--glb-router-base`, `--host`, `--mesh-bridge-socket`, `--mesh-observability-path`, `--model-manager-base`, `--model-manager-ca-file`, `--model-manager-origin`, `--model-manager-password-file`, `--moss-base`, `--port`.
+
+## tools/creation-studio/tests/fakes.py
+
+Offline fake HTTP backends standing in for Model Manager and MOSS Image Studio.
+
+Source: [`tools/creation-studio/tests/fakes.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/creation-studio/tests/fakes.py). Description basis: module docstring.
+
+## tools/creation-studio/tests/test_service.py
+
+Test fixture/check: test service. Inspect the source before use.
+
+Source: [`tools/creation-studio/tests/test_service.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/creation-studio/tests/test_service.py). Description basis: filename summary.
 
 ## tools/dispatcharr/test_ts_dedupe.py
 
@@ -390,7 +410,7 @@ Lend idle primary model memory through the existing fenced GPU operator protocol
 
 Source: [`tools/fab/lend-model-capacity.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/fab/lend-model-capacity.py). Description basis: module docstring.
 
-Declared CLI options: `--allow-loading-primary`, `--completion-file`, `--evidence`.
+Declared CLI options: `--allow-loading-primary`, `--evidence`.
 
 ## tools/fab/owned_catalog.py
 
@@ -432,7 +452,7 @@ Refresh the single live Catalog through its supported bounded Toolkit job API.
 
 Source: [`tools/fab/reconcile-catalog.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/fab/reconcile-catalog.py). Description basis: module docstring.
 
-Declared CLI options: `--acquisition-evidence`, `--evidence`, `--verify-only`.
+Declared CLI options: `--evidence`.
 
 ## tools/fab/repair-downloader.py
 
@@ -448,7 +468,7 @@ Genuine plugin-only target build in an isolated accepted-engine CoW overlay.
 
 Source: [`tools/fab/repair-hyper-engine.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/fab/repair-hyper-engine.py). Description basis: module docstring.
 
-Declared CLI options: `--evidence`, `--finalize-target`, `--hold-capacity`, `--resume`.
+Declared CLI options: `--evidence`.
 
 ## tools/fab/resume-hyper-after-restoration.py
 
@@ -1672,9 +1692,9 @@ Source: [`tools/model-manager/gguf_header.py`](https://github.com/YOUR_GITHUB_US
 
 ## tools/model-manager/hf.py
 
-Fixed-origin Hugging Face metadata inspection. Repository text is data.
+Source component: hf. Inspect the source before use.
 
-Source: [`tools/model-manager/hf.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/model-manager/hf.py). Description basis: module docstring.
+Source: [`tools/model-manager/hf.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/model-manager/hf.py). Description basis: filename summary.
 
 ## tools/model-manager/image_mcp.py
 
@@ -1736,7 +1756,7 @@ Authenticated manager. UI has no Kubernetes or GPU-write privileges.
 
 Source: [`tools/model-manager/server.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/model-manager/server.py). Description basis: module docstring.
 
-Declared CLI options: `--broker-socket`, `--hf-token-file`, `--image-mcp-token-file`, `--listen`, `--maintenance-file`, `--models`, `--origin`, `--password-file`, `--port`, `--prefix`, `--state`.
+Declared CLI options: `--broker-socket`, `--hf-token-file`, `--image-mcp-token-file`, `--listen`, `--maintenance-file`, `--models`, `--origin`, `--password-file`, `--port`, `--prefix`, `--session-ttl-sec`, `--state`.
 
 ## tools/model-manager/settings.py
 
@@ -1836,6 +1856,12 @@ Test fixture/check: test image restoration. Inspect the source before use.
 
 Source: [`tools/model-manager/test_image_restoration.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/model-manager/test_image_restoration.py). Description basis: filename summary.
 
+## tools/model-manager/test_lora_mtp.py
+
+T-0086: GGUF LoRA adapters on an installed GGUF base, MTP speculation proven from the GGUF header, real names and the read-only all-models inventory row parsing.
+
+Source: [`tools/model-manager/test_lora_mtp.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/model-manager/test_lora_mtp.py). Description basis: module docstring.
+
 ## tools/model-manager/test_native_admission.py
 
 Test fixture/check: test native admission. Inspect the source before use.
@@ -1874,9 +1900,9 @@ Source: [`tools/model-manager/test_worker.py`](https://github.com/YOUR_GITHUB_US
 
 ## tools/model-manager/web/app.js
 
-Source component: app. Inspect the source before use.
+---------- formatting ----------
 
-Source: [`tools/model-manager/web/app.js`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/model-manager/web/app.js). Description basis: filename summary.
+Source: [`tools/model-manager/web/app.js`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/model-manager/web/app.js). Description basis: source comment.
 
 ## tools/model-manager/worker.py
 
@@ -1986,12 +2012,6 @@ Opt-in staged dispatcher: admit all RIG work, deliver receipts without blocking 
 
 Source: [`tools/rig-async-stage/bridge-source/dispatcher.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/rig-async-stage/bridge-source/dispatcher.py). Description basis: module docstring.
 
-## tools/rig-async-stage/guard-source/index.js
-
-Source component: index. Inspect the source before use.
-
-Source: [`tools/rig-async-stage/guard-source/index.js`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/rig-async-stage/guard-source/index.js). Description basis: filename summary.
-
 ## tools/rig-async-stage/install-runtime.py
 
 Install only the opt-in staged runtime after an operator-held idle queue fence.
@@ -2009,12 +2029,6 @@ Source: [`tools/rig-async-stage/provision-app.py`](https://github.com/YOUR_GITHU
 Test fixture/check: test asset capture. Inspect the source before use.
 
 Source: [`tools/rig-async-stage/test-asset-capture.mjs`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/rig-async-stage/test-asset-capture.mjs). Description basis: filename summary.
-
-## tools/rig-async-stage/test-coordinator-guard.mjs
-
-Test fixture/check: test coordinator guard. Inspect the source before use.
-
-Source: [`tools/rig-async-stage/test-coordinator-guard.mjs`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/rig-async-stage/test-coordinator-guard.mjs). Description basis: filename summary.
 
 ## tools/rig-async-stage/test-game-worker.mjs
 
@@ -2584,6 +2598,12 @@ Test fixture/check: test ue place assets. Inspect the source before use.
 
 Source: [`tools/rig-ue-mcp/test_ue_place_assets.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/rig-ue-mcp/test_ue_place_assets.py). Description basis: filename summary.
 
+## tools/rig-ue-mcp/test_ue_roam_check.py
+
+Test fixture/check: test ue roam check. Inspect the source before use.
+
+Source: [`tools/rig-ue-mcp/test_ue_roam_check.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/rig-ue-mcp/test_ue_roam_check.py). Description basis: filename summary.
+
 ## tools/rig-ue-mcp/test_ue_route.py
 
 Test fixture/check: test ue route. Inspect the source before use.
@@ -2758,6 +2778,14 @@ Source: [`tools/rig-ue-mcp/ue_place_river.py`](https://github.com/YOUR_GITHUB_US
 
 Declared CLI options: `--depth-cm`, `--hide-prefix`, `--host`, `--key-dir`, `--label`, `--material`, `--points`, `--port`, `--spline-text`, `--user`, `--width-cm`.
 
+## tools/rig-ue-mcp/ue_roam_check.py
+
+Live check in PIE that the wandering creatures of a spec really roam and animate \(unreal\_combat.py calls file\).
+
+Source: [`tools/rig-ue-mcp/ue_roam_check.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/rig-ue-mcp/ue_roam_check.py). Description basis: module docstring.
+
+Declared CLI options: `--below`, `--every`, `--from-calls`, `--keep-pie`, `--key-dir`, `--labels`, `--limb-bones`, `--root-bones`, `--samples`.
+
 ## tools/rig-ue-mcp/ue_route.py
 
 Call the rig's Unreal editor through the restricted ue-mcp SSH route, and start the editor first when it is not running \(stdlib only\).
@@ -2832,7 +2860,7 @@ Point this checkout at your own domain, network and GitHub account.
 
 Source: [`tools/set-domain.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/set-domain.py). Description basis: module docstring.
 
-Declared CLI options: `--agent-domain`, `--agent-name`, `--dmz-address`, `--domain`, `--dry-run`, `--github-owner`, `--pod-subnet`, `--subnet`, `--svc-subnet`.
+Declared CLI options: `--agent-domain`, `--agent-name`, `--dmz-address`, `--domain`, `--dry-run`, `--github-owner`, `--host-name`, `--pod-subnet`, `--rig-user`, `--subnet`, `--svc-subnet`.
 
 ## tools/set-paths.py
 
@@ -2934,7 +2962,7 @@ Restartable serial backfill of exact dummy symbols in the accepted overlay only.
 
 Source: [`tools/unreal/backfill-crash-symbols.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/unreal/backfill-crash-symbols.py). Description basis: module docstring.
 
-Declared CLI options: `--baseline-root`, `--budget-hours`, `--capacity-status`, `--engine-root`, `--evidence`, `--selection`.
+Declared CLI options: `--baseline-root`, `--budget-hours`, `--capacity-status`, `--evidence`, `--selection`.
 
 ## tools/unreal/check-crash-symbols.py
 
@@ -2942,7 +2970,7 @@ Generate one isolated Breakpad/UE symbol artifact without modifying/rebuilding t
 
 Source: [`tools/unreal/check-crash-symbols.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/unreal/check-crash-symbols.py). Description basis: module docstring.
 
-Declared CLI options: `--engine-root`, `--evidence`, `--install-placeholder`, `--memory-gib`, `--module`, `--replace-stale-from`, `--seconds`.
+Declared CLI options: `--evidence`, `--install-placeholder`, `--memory-gib`, `--module`, `--replace-stale-from`, `--seconds`.
 
 ## tools/unreal/continue-acceptance.py
 
@@ -3420,7 +3448,7 @@ Focused native application acceptance on the explicitly owned dungeon pair.
 
 Source: [`tools/watoom-code/dungeon-candidate-validation.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/watoom-code/dungeon-candidate-validation.py). Description basis: module docstring.
 
-Declared CLI options: `--case`, `--evidence`, `--phase`.
+Declared CLI options: `--case`, `--evidence`.
 
 ## tools/watoom-code/dungeon-candidate.py
 
@@ -3660,14 +3688,6 @@ Fixed installed pose helper adapter; called only inside the capture cgroup.
 
 Source: [`tools/watoom-code/pose_preparation_worker.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/watoom-code/pose_preparation_worker.py). Description basis: module docstring.
 
-## tools/watoom-code/production_consolidation.py
-
-Production evidence, verified recovery snapshots and fenced application releases. No session replay, model switching, volume deletion or competing GPU controller.
-
-Source: [`tools/watoom-code/production_consolidation.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/watoom-code/production_consolidation.py). Description basis: module docstring.
-
-Declared CLI options: `--iac-root`, `--image`, `--request-id`, `--session-id`.
-
 ## tools/watoom-code/project_access.py
 
 Restore explicit editable project paths without changing ownership or asset libraries.
@@ -3696,7 +3716,7 @@ Source component: recover idle admission. Inspect the source before use.
 
 Source: [`tools/watoom-code/recover-idle-admission.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/watoom-code/recover-idle-admission.py). Description basis: filename summary.
 
-Declared CLI options: `--evidence`, `--i-approve`, `--playbook`.
+Declared CLI options: `--evidence`, `--i-approve`.
 
 ## tools/watoom-code/recover-orphan-claim.py
 
@@ -4298,6 +4318,12 @@ Test fixture/check: test lmb provenance. Inspect the source before use.
 
 Source: [`tools/watoom-code/test-lmb-provenance.mjs`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/watoom-code/test-lmb-provenance.mjs). Description basis: filename summary.
 
+## tools/watoom-code/test-prompt-guard-consistency.mjs
+
+Test fixture/check: test prompt guard consistency. Inspect the source before use.
+
+Source: [`tools/watoom-code/test-prompt-guard-consistency.mjs`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/watoom-code/test-prompt-guard-consistency.mjs). Description basis: filename summary.
+
 ## tools/watoom-code/test-read-access.mjs
 
 Test fixture/check: test read access. Inspect the source before use.
@@ -4406,11 +4432,23 @@ Test fixture/check: test godot game spec. Inspect the source before use.
 
 Source: [`tools/watoom-code/test_godot_game_spec.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/watoom-code/test_godot_game_spec.py). Description basis: filename summary.
 
+## tools/watoom-code/test_llm_router_context.py
+
+The router's /v1/models application\_context follows each model's real llama-server context \(owner 2026-11-19\): --ctx-size or LLAMA\_ARG\_CTX\_SIZE from the Deployment scaled 100K per 128K, looked up through the public alias, 100000 when unknow
+
+Source: [`tools/watoom-code/test_llm_router_context.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/watoom-code/test_llm_router_context.py). Description basis: module docstring.
+
 ## tools/watoom-code/test_llm_router_performance.py
 
 Tests the router's embedded reasoning-level performance aggregation without starting a server.
 
 Source: [`tools/watoom-code/test_llm_router_performance.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/watoom-code/test_llm_router_performance.py). Description basis: module docstring.
+
+## tools/watoom-code/test_llm_router_switch_wait.py
+
+The router's begin\_inference waits out an in-flight model switch instead of answering 503 \(no server started\).
+
+Source: [`tools/watoom-code/test_llm_router_switch_wait.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/watoom-code/test_llm_router_switch_wait.py). Description basis: module docstring.
 
 ## tools/watoom-code/test_operator_scripts_compile.py
 
@@ -4584,6 +4622,12 @@ Test fixture/check: test model context. Inspect the source before use.
 
 Source: [`tools/watoom-code/tests/test_model_context.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/watoom-code/tests/test_model_context.py). Description basis: filename summary.
 
+## tools/watoom-code/tests/test_model_display_names.py
+
+Test fixture/check: test model display names. Inspect the source before use.
+
+Source: [`tools/watoom-code/tests/test_model_display_names.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/watoom-code/tests/test_model_display_names.py). Description basis: filename summary.
+
 ## tools/watoom-code/tests/test_native_lmb_receipts.py
 
 Isolated native qualifier receipt tests; subprocesses are mocked, Unreal never runs.
@@ -4595,12 +4639,6 @@ Source: [`tools/watoom-code/tests/test_native_lmb_receipts.py`](https://github.c
 Test fixture/check: test orphan claims. Inspect the source before use.
 
 Source: [`tools/watoom-code/tests/test_orphan_claims.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/watoom-code/tests/test_orphan_claims.py). Description basis: filename summary.
-
-## tools/watoom-code/tests/test_production_consolidation.py
-
-Test fixture/check: test production consolidation. Inspect the source before use.
-
-Source: [`tools/watoom-code/tests/test_production_consolidation.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/watoom-code/tests/test_production_consolidation.py). Description basis: filename summary.
 
 ## tools/watoom-code/tests/test_project_captures.py
 
@@ -4994,7 +5032,7 @@ WatooM generator deployment: audit -\> isolated build -\> image validation -\> s
 
 Source: [`tools/watoom-toolkit/generator_deploy.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/watoom-toolkit/generator_deploy.py). Description basis: module docstring.
 
-Declared CLI options: `--containerfile`, `--i-approve`.
+Declared CLI options: `--i-approve`.
 
 ## tools/watoom-toolkit/job_admission.py
 
@@ -5103,4 +5141,18 @@ Source: [`tools/watoom-toolkit/test_m6_inspection.py`](https://github.com/YOUR_G
 Typed fixed 3D Toolkit operations. No downloaded scripts or model runtimes are executed.
 
 Source: [`tools/watoom-toolkit/three_d.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/watoom-toolkit/three_d.py). Description basis: module docstring.
+
+## tools/writing-studio/tests/test_service.py
+
+Offline tests for Writing Studio: fake LLM router and fake MOSS over real HTTP, real skill files from the repo.
+
+Source: [`tools/writing-studio/tests/test_service.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/writing-studio/tests/test_service.py). Description basis: module docstring.
+
+## tools/writing-studio/writing_studio_service.py
+
+Writing Studio: creative writing and graphic-novel art, one page for the 25 creative-writing skills \(T-0099\).
+
+Source: [`tools/writing-studio/writing_studio_service.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/writing-studio/writing_studio_service.py). Description basis: module docstring.
+
+Declared CLI options: `--default-model`, `--host`, `--moss-base`, `--output-dir`, `--port`, `--router-base`, `--skills-dir`.
 

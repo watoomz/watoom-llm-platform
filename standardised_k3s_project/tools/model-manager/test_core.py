@@ -12,7 +12,7 @@ class Core(unittest.TestCase):
   with self.assertRaises(ValueError):parse_url("https://huggingface.co/a/b/tree/main%2F..")
  def test_baseline(self):
   m={"kind":"gguf","revision":"a"*40,"documents":{}}
-  s=propose(m); self.assertEqual(s["values"]["context"],100000); self.assertEqual(s["values"]["cache_v"],"q4_0");self.assertEqual(s["values"]["output_tokens"],4096)
+  s=propose(m); self.assertEqual(s["values"]["context"],131072); self.assertEqual(s["values"]["cache_v"],"q4_0");self.assertEqual(s["values"]["output_tokens"],4096)
   m["documents"]={"config.json":{"max_position_embeddings":8192}}
   self.assertEqual(propose(m)["values"]["context"],8192)
  def test_lora(self):

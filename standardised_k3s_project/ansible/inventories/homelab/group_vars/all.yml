@@ -1,17 +1,19 @@
 ---
 project_root: /data/github/watoom-standardised-homelab/standardised_k3s_project
 repo_root: /data/github/watoom-standardised-homelab
+# Windows game/render rig (Godot/Unreal MCP over SSH, worker jobs). One place to change it.
+rig_host: 10.99.1.44
 # Root-owned install of the backup tools; units run this copy, never a checkout,
 # so editing a clone cannot change what runs nightly until a playbook re-installs it.
 watoom_backup_libexec: /usr/local/libexec/watoom-backup
 
-homelab_hostname: watoom-homelab
+homelab_hostname: homelab-host
 homelab_timezone: Australia/Brisbane
 homelab_locale: en_GB.UTF-8
 homelab_keymap: au
 
 k3s_kubeconfig: /etc/rancher/k3s/k3s.yaml
-k3s_node_name: watoom-homelab
+k3s_node_name: homelab-host
 k3s_node_ip: 10.99.20.225
 k3s_version: v1.36.3+k3s1
 
@@ -53,6 +55,8 @@ k3s_manifest_groups:
     - manifests/10-infrastructure/traefik/traefik-crd.yml
     - manifests/10-infrastructure/traefik/traefik-dashboard.yml
     - manifests/10-infrastructure/traefik/traefik-helm.yml
+    - manifests/10-infrastructure/sims4-mods/sims4-mods.yml
+    - manifests/10-infrastructure/llm/agentmemory-retention.yml
   media:
   games:
   rbac:

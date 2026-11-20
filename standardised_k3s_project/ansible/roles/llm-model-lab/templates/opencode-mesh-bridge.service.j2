@@ -1,0 +1,22 @@
+[Unit]
+Description=Authorized OpenCode LLaMA-Mesh Unix bridge
+After=k3s.service watoom-gpu-controller.service watoom-llama-mesh-recovery.service
+Requires=k3s.service watoom-gpu-controller.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+UMask=0077
+ExecStart=/usr/bin/python3 /data/ai/helper-scripts/opencode_mesh_bridge.py --config /data/ai/helper-scripts/config/opencode-mesh-bridge.json
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/data/ai/helper-scripts/state /data/ai/llama-mesh/jobs /data/ai/assets/generated {{ llm_mesh_bridge_home }}/.config/opencode/mesh-bridge /run
+RestrictAddressFamilies=AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

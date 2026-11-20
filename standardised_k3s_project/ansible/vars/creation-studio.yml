@@ -1,0 +1,5 @@
+---
+# Owner's persisted choice (T-0117): creation-studio is on and started, like every other platform component. The role
+# defaults stay off so a fresh host installs nothing until this file says so (same pattern as vars/moss-image.yml).
+creation_studio_enabled: true
+creation_studio_start: true

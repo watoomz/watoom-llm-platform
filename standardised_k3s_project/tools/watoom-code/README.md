@@ -26,9 +26,9 @@ For localhost access run `python3 tools/watoom-code/forward.py` on the host. A l
 
 The production candidate is **not accepted** merely because staging works. Its existing configuration/MCP commands and mounts must be reviewed against the smaller CLI image and accepted before apply. `apply` requires `--i-approve`, the exact candidate checksum, the snapshot directory, and a separate production-candidate acceptance report. It deploys via the dedicated Ansible playbook and restores the captured Deployment on rollout failure. `rollback` also requires `--i-approve` and the snapshot directory. These scripts do not change inference replicas, GPU power, network settings or user databases.
 
-The existing `opencode-agent` role remains the resource owner for production. The cutover playbook is an explicit one-release operation against that exact Deployment, not a second continuously reconciling role. Persist an approved production release into its existing defaults before routine production reconciliation resumes.
+The `watoom-code` role owns the production resources. The cutover playbook is an explicit one-release operation against that exact Deployment, not a second continuously reconciling role. Persist an approved production release into its existing defaults before routine production reconciliation resumes.
 
-Optional profile components remain unavailable unless their actual runtime/adapter is installed. They are not silently enabled by catalog selection. Meshy is absent from the local-only Toolkit source and active staging image; historical images and unrelated credentials are preserved.
+Optional profile components remain unavailable unless their actual runtime/adapter is installed. They are not silently enabled by catalog selection. Meshy is not in the local-only Toolkit source or image.
 
 
 ## Native coordinator and vision evidence guard

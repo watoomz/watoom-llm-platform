@@ -1,5 +1,5 @@
 {
- "_comment": "T-0023 creatures around the beaches and creeks of L_ZAS_Terrain. Import first: tools/rig-ue-mcp/rig_import_fbx_character.py per creature (see references/combat.md 'Creatures'); bodies from ue_mesh_body.py into bodies.creatures.zas.json. Spots: shore pixels 1-4 m above sea level next to water in the live heights, >= 400 m apart. Creatures roam (Wander, never into ground below the sea surface 4849 cm) and can be killed (WatooMCombatCharacter, team 3). Spinosaurus: the owned theme-park statue (static FBX, no rig/clips; imported with asset.import_static_mesh from Saved/Import/Spinosaurus) x8 (~15 m) on the flat north shore of Lake_1 (the big lake, 4.7 ha), long side along the shore. T-Rex: same pack type, static too; a ROAMING T-Rex needs a rigged model (not owned locally).",
+ "_comment": "T-0023 creatures around the beaches and creeks of L_ZAS_Terrain. Import first: tools/rig-ue-mcp/rig_import_fbx_character.py per creature (see references/combat.md 'Creatures'); bodies from ue_mesh_body.py into bodies.creatures.zas.json. Spots: shore pixels 1-4 m above sea level next to water in the live heights, >= 400 m apart. Creatures roam (Wander, never into ground below the sea surface 4849 cm) and can be killed (WatooMCombatCharacter, team 3). Spinosaurus: the owned theme-park statue (static FBX, no rig/clips; imported with asset.import_static_mesh from Saved/Import/Spinosaurus) x8 (~15 m) on the flat north shore of Lake_1 (the big lake, 4.7 ha), long side along the shore. Dinosaurs (2026-11-19): the owned T-Rex and Spinosaurus statues and the scanned Jurassic creature were rigged and animated with blender-character-rigging creature_rig.py + blender-animation creature_gait.py (Idle/Walk/Run/Roar/Attack, walk cycle matched to 200 cm/s), imported with rig_import_fbx_character.py; they roam the dry ground east of Lake_1 (Wander.MinGroundZ 9000 keeps them out of the lake, real Idle clip shown during 2-6 s pauses). The Spinosaurus statue stays a statue.",
  "content_root": "/Game/ZAS/Creatures",
  "anim_sets": {
   "SwampMonster": {
@@ -35,6 +35,42 @@
     "Walk": {
      "idle": "/Game/ZAS/Creatures/Animated/AbyssalLeviathan/A_AbyssalLeviathan_Walk",
      "fwd": "/Game/ZAS/Creatures/Animated/AbyssalLeviathan/A_AbyssalLeviathan_Walk"
+    }
+   }
+  },
+  "TRex": {
+   "skeleton": "/Game/ZAS/Creatures/Animated/TRex/SK_TRex_Skeleton",
+   "speed": 200,
+   "default_stance": "Walk",
+   "air": "/Game/ZAS/Creatures/Animated/TRex/A_TRex_Idle",
+   "stances": {
+    "Walk": {
+     "idle": "/Game/ZAS/Creatures/Animated/TRex/A_TRex_Idle",
+     "fwd": "/Game/ZAS/Creatures/Animated/TRex/A_TRex_Walk"
+    }
+   }
+  },
+  "Spinosaurus": {
+   "skeleton": "/Game/ZAS/Creatures/Animated/Spinosaurus/SK_Spinosaurus_Skeleton",
+   "speed": 200,
+   "default_stance": "Walk",
+   "air": "/Game/ZAS/Creatures/Animated/Spinosaurus/A_Spinosaurus_Idle",
+   "stances": {
+    "Walk": {
+     "idle": "/Game/ZAS/Creatures/Animated/Spinosaurus/A_Spinosaurus_Idle",
+     "fwd": "/Game/ZAS/Creatures/Animated/Spinosaurus/A_Spinosaurus_Walk"
+    }
+   }
+  },
+  "JurassicCreature": {
+   "skeleton": "/Game/ZAS/Creatures/Animated/JurassicCreature/SK_JurassicCreature_Skeleton",
+   "speed": 200,
+   "default_stance": "Walk",
+   "air": "/Game/ZAS/Creatures/Animated/JurassicCreature/A_JurassicCreature_Idle",
+   "stances": {
+    "Walk": {
+     "idle": "/Game/ZAS/Creatures/Animated/JurassicCreature/A_JurassicCreature_Idle",
+     "fwd": "/Game/ZAS/Creatures/Animated/JurassicCreature/A_JurassicCreature_Walk"
     }
    }
   }
@@ -81,6 +117,48 @@
     "Wander.MinGroundZ": 4849.26
    },
    "anim_set": "AbyssalLeviathan"
+  },
+  "BP_ZAS_TRex": {
+   "defaults": {
+    "TeamId": 3,
+    "Mesh.SkeletalMeshAsset": "/Game/ZAS/Creatures/Animated/TRex/SK_TRex",
+    "CharacterMovement.MaxWalkSpeed": 200,
+    "Wander.bEnabled": true,
+    "Wander.Radius": 4000,
+    "Wander.SpeedScale": 1.0,
+    "Wander.WaitMin": 2,
+    "Wander.WaitMax": 6,
+    "Wander.MinGroundZ": 9000
+   },
+   "anim_set": "TRex"
+  },
+  "BP_ZAS_Spinosaurus": {
+   "defaults": {
+    "TeamId": 3,
+    "Mesh.SkeletalMeshAsset": "/Game/ZAS/Creatures/Animated/Spinosaurus/SK_Spinosaurus",
+    "CharacterMovement.MaxWalkSpeed": 200,
+    "Wander.bEnabled": true,
+    "Wander.Radius": 4000,
+    "Wander.SpeedScale": 1.0,
+    "Wander.WaitMin": 2,
+    "Wander.WaitMax": 6,
+    "Wander.MinGroundZ": 9000
+   },
+   "anim_set": "Spinosaurus"
+  },
+  "BP_ZAS_JurassicCreature": {
+   "defaults": {
+    "TeamId": 3,
+    "Mesh.SkeletalMeshAsset": "/Game/ZAS/Creatures/Animated/JurassicCreature/SK_JurassicCreature",
+    "CharacterMovement.MaxWalkSpeed": 200,
+    "Wander.bEnabled": true,
+    "Wander.Radius": 2500,
+    "Wander.SpeedScale": 1.0,
+    "Wander.WaitMin": 2,
+    "Wander.WaitMax": 6,
+    "Wander.MinGroundZ": 9000
+   },
+   "anim_set": "JurassicCreature"
   }
  },
  "bodies_file": "bodies.creatures.zas.json",
@@ -186,6 +264,62 @@
     0
    ],
    "scale": 8
+  },
+  {
+   "character": "BP_ZAS_TRex",
+   "label": "ZAS_TRex_1",
+   "location": [
+    185714,
+    179365,
+    10141
+   ],
+   "rotation": [
+    0,
+    200,
+    0
+   ]
+  },
+  {
+   "character": "BP_ZAS_Spinosaurus",
+   "label": "ZAS_Spinosaurus_1",
+   "location": [
+    185714,
+    192857,
+    10016
+   ],
+   "rotation": [
+    0,
+    160,
+    0
+   ]
+  },
+  {
+   "character": "BP_ZAS_JurassicCreature",
+   "label": "ZAS_JurassicCreature_1",
+   "location": [
+    182000,
+    188000,
+    9465
+   ],
+   "rotation": [
+    0,
+    90,
+    0
+   ]
+  },
+  {
+   "character": "BP_ZAS_JurassicCreature",
+   "label": "ZAS_JurassicCreature_2",
+   "location": [
+    180959,
+    181633,
+    9245
+   ],
+   "rotation": [
+    0,
+    270,
+    0
+   ]
   }
  ]
 }

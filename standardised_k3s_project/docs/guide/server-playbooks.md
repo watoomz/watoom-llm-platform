@@ -28,6 +28,14 @@ Source: [`ansible/playbooks/artex.yml`](https://github.com/YOUR_GITHUB_USER/wato
 
 Named steps: Deploy ARTEX \(FailSafe source build, internal ingress only\).
 
+## ansible/playbooks/creation-studio.yml
+
+Creation Studio \(SDXL \+ MOSS Image Studio proxy; Mesh telemetry only\)
+
+Source: [`ansible/playbooks/creation-studio.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/creation-studio.yml). Description basis: first named play/task.
+
+Named steps: Creation Studio \(SDXL \+ MOSS Image Studio proxy; Mesh telemetry only\).
+
 ## ansible/playbooks/creative-asset-readers.yml
 
 Maintain narrowly verified asset-reader access without changing ownership
@@ -204,6 +212,14 @@ Source: [`ansible/playbooks/opencode-llama-mesh-integration.yml`](https://github
 
 Named steps: Persist narrow OpenCode LLaMA-Mesh integration; Reconcile only authorized mesh integration.
 
+## ansible/playbooks/platform.yml
+
+Converge watoom-code
+
+Source: [`ansible/playbooks/platform.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/platform.yml). Description basis: first named play/task.
+
+Named steps: Converge watoom-code; Converge watoom-native-skills; Converge creation-studio; Converge writing-studio; Converge tickets-board; Converge skill-editor; Converge artex; Converge moss-image; Converge llm-bge-embeddings; Converge watoom-kali-workbench-mcp. Further steps are in source.
+
 ## ansible/playbooks/project-layout.yml
 
 Maintain project storage and capture viewing layout without application rollout
@@ -219,6 +235,14 @@ Share the projects folder with the rig
 Source: [`ansible/playbooks/projects-share.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/projects-share.yml). Description basis: first named play/task.
 
 Named steps: Share the projects folder with the rig.
+
+## ansible/playbooks/rebuild-homelab.yml
+
+Rebuild WatooM homelab host
+
+Source: [`ansible/playbooks/rebuild-homelab.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/rebuild-homelab.yml). Description basis: first named play/task.
+
+Named steps: Rebuild WatooM homelab host.
 
 ## ansible/playbooks/secrets.yml
 
@@ -388,14 +412,6 @@ Source: [`ansible/playbooks/watoom-code-agent-routing.yml`](https://github.com/Y
 
 Named steps: Deploy only reviewed agent routing and coordinator guard; Require native idle deployment guard; Install scoped agent routing.
 
-## ansible/playbooks/watoom-code-agents.yml
-
-Update maintained WatooM Code instructions without application rollout
-
-Source: [`ansible/playbooks/watoom-code-agents.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-agents.yml). Description basis: first named play/task.
-
-Named steps: Update maintained WatooM Code instructions without application rollout; Install native agents through the authoritative role task.
-
 ## ansible/playbooks/watoom-code-asset-capture-skill.yml
 
 Install owner-requested asset image and clip capture skill
@@ -452,22 +468,6 @@ Source: [`ansible/playbooks/watoom-code-data-access.yml`](https://github.com/YOU
 
 Named steps: Maintain agent evidence access without application rollout; Install maintained agent permissions; Apply maintained bounded receipt access.
 
-## ansible/playbooks/watoom-code-dev.yml
-
-Prepare isolated development access without replacing production services
-
-Source: [`ansible/playbooks/watoom-code-dev.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-dev.yml). Description basis: first named play/task.
-
-Named steps: Prepare isolated development access without replacing production services; Reconcile only the dedicated development workspace components.
-
-## ansible/playbooks/watoom-code-engine-inspection.yml
-
-Activate bounded owned Unreal inspection route
-
-Source: [`ansible/playbooks/watoom-code-engine-inspection.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-engine-inspection.yml). Description basis: first named play/task.
-
-Named steps: Activate bounded owned Unreal inspection route; Maintain engine inspection contract.
-
 ## ansible/playbooks/watoom-code-engineering-skills.yml
 
 Install engineering-discipline skills
@@ -516,14 +516,6 @@ Source: [`ansible/playbooks/watoom-code-guard-knowledge.yml`](https://github.com
 
 Named steps: Deploy the native coordinator guard and language-knowledge cards under the held release fence; Require native idle deployment guard; Install and select the immutable coordinator guard; Install and select the language-knowledge package and cards.
 
-## ansible/playbooks/watoom-code-guard.yml
-
-Update only native coordinator guard source and configuration
-
-Source: [`ansible/playbooks/watoom-code-guard.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-guard.yml). Description basis: first named play/task.
-
-Named steps: Update only native coordinator guard source and configuration; Apply maintained versioned guard.
-
 ## ansible/playbooks/watoom-code-homelab-project.yml
 
 Maintain the Homelab LLM checkout and native policy only
@@ -531,30 +523,6 @@ Maintain the Homelab LLM checkout and native policy only
 Source: [`ansible/playbooks/watoom-code-homelab-project.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-homelab-project.yml). Description basis: first named play/task.
 
 Named steps: Maintain the Homelab LLM checkout and native policy only; Apply project-only tasks without restarting application or inference.
-
-## ansible/playbooks/watoom-code-image-mcp.yml
-
-Maintain only the production image MCP integration
-
-Source: [`ansible/playbooks/watoom-code-image-mcp.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-image-mcp.yml). Description basis: first named play/task.
-
-Named steps: Maintain only the production image MCP integration; Install scoped image credentials and merge its MCP entry.
-
-## ansible/playbooks/watoom-code-image-review.yml
-
-Maintain common project image review copies
-
-Source: [`ansible/playbooks/watoom-code-image-review.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-image-review.yml). Description basis: first named play/task.
-
-Named steps: Maintain common project image review copies.
-
-## ansible/playbooks/watoom-code-image-scope.yml
-
-Maintain only deterministic production image prompt transport
-
-Source: [`ansible/playbooks/watoom-code-image-scope.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-image-scope.yml). Description basis: first named play/task.
-
-Named steps: Maintain only deterministic production image prompt transport; Install versioned image-scope package and merge its native plugin entry.
 
 ## ansible/playbooks/watoom-code-lan-route.yml
 
@@ -620,6 +588,14 @@ Source: [`ansible/playbooks/watoom-code-operator-commands.yml`](https://github.c
 
 Named steps: Install operator-commands guidance; Install skill directories; Restore skill labels.
 
+## ansible/playbooks/watoom-code-parts.yml
+
+Update selected watoom-code parts
+
+Source: [`ansible/playbooks/watoom-code-parts.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-parts.yml). Description basis: first named play/task.
+
+Named steps: Update selected watoom-code parts; Native agents, guard-independent agent files and OpenSpec skill; Engine inspection skill; Image MCP; Image review collector; Image prompt scope; GUI reasoning variants; Kali isolation for built-in agents; SearXNG search plugin; Engine visual diagnosis skill. Further steps are in source.
+
 ## ansible/playbooks/watoom-code-pose-worker.yml
 
 Activate fixed pose worker integration under native admission guard
@@ -636,29 +612,13 @@ Source: [`ansible/playbooks/watoom-code-read-access.yml`](https://github.com/YOU
 
 Named steps: Deploy scoped native read access under the held release fence; Require native idle deployment guard; Install immutable coordinator guard; Install managed role policies; Expose server repositories as read-only evidence.
 
-## ansible/playbooks/watoom-code-reasoning-variants.yml
-
-Update only the WatooM-Code GUI reasoning levels
-
-Source: [`ansible/playbooks/watoom-code-reasoning-variants.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-reasoning-variants.yml). Description basis: first named play/task.
-
-Named steps: Update only the WatooM-Code GUI reasoning levels; Apply maintained reasoning variants.
-
 ## ansible/playbooks/watoom-code-render-routing.yml
 
 Activate reviewed render-capture defaults under the coordinator admission fence
 
 Source: [`ansible/playbooks/watoom-code-render-routing.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-render-routing.yml). Description basis: first named play/task.
 
-Named steps: Activate reviewed render-capture defaults under the coordinator admission fence; Require admission-fenced invocation from the release coordinator; Install and select the tested immutable application-shell engine guard; Install only the shared capture skill and its maintained references; Apply only the owned default-capture block to managed execution agents; Apply only the maintained critic step budget; Restore existing container-readable labels on only the owned paths; Install external capture worker contract.
-
-## ansible/playbooks/watoom-code-searxng.yml
-
-Maintain only the native SearXNG search provider
-
-Source: [`ansible/playbooks/watoom-code-searxng.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-searxng.yml). Description basis: first named play/task.
-
-Named steps: Maintain only the native SearXNG search provider; Install the maintained search provider without replacing user settings.
+Named steps: Activate reviewed render-capture defaults under the coordinator admission fence; Require admission-fenced invocation from the release coordinator; Install and select the tested immutable application-shell engine guard; Install only the shared capture skill and its maintained references; Apply only the maintained critic step budget; Restore existing container-readable labels on only the owned paths; Install external capture worker contract.
 
 ## ansible/playbooks/watoom-code-self-learning-controller.yml
 
@@ -716,14 +676,6 @@ Source: [`ansible/playbooks/watoom-code-uploads.yml`](https://github.com/YOUR_GI
 
 Named steps: Enable durable WatooM Code uploads; Require native idle admission fence; Create private persistent upload staging; Apply existing production SELinux policy; Mount the writable upload staging directory; app; uploads.
 
-## ansible/playbooks/watoom-code-visual-diagnosis.yml
-
-Activate maintained engine visual diagnosis
-
-Source: [`ansible/playbooks/watoom-code-visual-diagnosis.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-visual-diagnosis.yml). Description basis: first named play/task.
-
-Named steps: Activate maintained engine visual diagnosis; Install maintained diagnosis skill, agent routing and templates.
-
 ## ansible/playbooks/watoom-code-workstation-capture.yml
 
 Activate the qualified workstation capture backend under native admission fence
@@ -754,7 +706,7 @@ Publish WatooM host health metrics to node-exporter
 
 Source: [`ansible/playbooks/watoom-node-textfile.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-node-textfile.yml). Description basis: first named play/task.
 
-Named steps: Publish WatooM host health metrics to node-exporter; Create the node-exporter textfile directories \(readable by nobody\); Install the failed-unit metric writer; Install the metric writer service and timer; watoom-node-textfile.service; watoom-node-textfile.timer; Enable the metric writer timer.
+Named steps: Publish WatooM host health metrics to node-exporter; Create the node-exporter textfile directories \(readable by nobody\); Install the failed-unit metric writer; Install the lifetime model-performance accumulator; Install the metric writer service and timer; watoom-node-textfile.service; watoom-node-textfile.timer; watoom-model-perf-accumulator.service; watoom-model-perf-accumulator.timer; Enable the metric writer timers.
 
 ## ansible/playbooks/watoom-platform-alerts.yml
 
@@ -787,4 +739,12 @@ Install the worker status collector
 Source: [`ansible/playbooks/worker-status.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/worker-status.yml). Description basis: first named play/task.
 
 Named steps: Install the worker status collector; Collector directories; Ensure the node-exporter textfile destination exists; Install the collector and the Bazzite access helper it reuses \(outside any checkout\); Collector service; Collector timer; Enable the timer.
+
+## ansible/playbooks/writing-studio.yml
+
+Writing Studio \(creative-writing skills via the LLM router; graphic-novel art via MOSS\)
+
+Source: [`ansible/playbooks/writing-studio.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/writing-studio.yml). Description basis: first named play/task.
+
+Named steps: Writing Studio \(creative-writing skills via the LLM router; graphic-novel art via MOSS\).
 

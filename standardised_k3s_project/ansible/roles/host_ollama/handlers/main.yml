@@ -1,7 +1,0 @@
----
-- name: Restart host ollama
-  ansible.builtin.systemd:
-    name: ollama
-    daemon_reload: true
-    enabled: "{{ host_ollama_service_enabled }}"
-    state: restarted

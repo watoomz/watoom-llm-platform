@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Niagara VFX from small recipes: projectile, impact, muzzle, area, aura (and anything built from layers) -> ue-mcp call phases.
+"""Niagara VFX from small recipes: projectile, impact, muzzle, area, aura, tracer, lightning (and anything built from layers) -> ue-mcp call phases.
 
   unreal_niagara_fx.py --spec fx.json --out fx_calls.json      then  tools/rig-ue-mcp/ue_run_phases.py fx_calls.json
   spec: {"content_root": "/Game/<Game>/Combat",
@@ -37,6 +37,13 @@ ELEMENTS = {  # HDR particle colour per damage type (Damage.Type.<Element>)
     "Arcane": (5.0, 0.8, 8.0), "Holy": (8.0, 7.0, 3.0), "Physical": (2.0, 2.0, 2.0), "Shadow": (0.6, 0.2, 1.2),
 }
 SPARK = (0.9, 0.95)
+VEC3 = "/Script/CoreUObject.Vector3f"
+# Beam End of the DynamicBeam template is an offset in the SYSTEM's local axes (measured 2026-11-19 with capture_sim_cache:
+# BeamEnd (1500,0,30000) on a system at (0,0,30000) drew to z 60000, and turned with the system's yaw). AWatooMCombatCharacter::
+# MulticastTracer sets User.BeamEnd to the WORLD hit point, so the input is this expression, not a plain link to the parameter.
+BEAM_END_TO_LOCAL = "mul(float4(User.BeamEnd, 1.0), Engine.Owner.SystemWorldToLocal).xyz"
+SCRIPTS = {"SystemSpawn": "SystemSpawnScript", "SystemUpdate": "SystemUpdateScript", "EmitterSpawn": "EmitterSpawnScript",
+           "EmitterUpdate": "EmitterUpdateScript", "ParticleSpawn": "ParticleSpawnScript", "ParticleUpdate": "ParticleUpdateScript"}
 ONCE = "NewEnumerator1"  # EmitterState "Loop Behavior" enum value of the one-shot burst templates (Infinite is NewEnumerator0)  # spark/ember layers are a little brighter than the element colour
 
 
@@ -78,6 +85,23 @@ def recipe_layers(fx):
             {"name": "Trail", "template": "LocationBasedRibbon", "add_modules": [["EmitterUpdate", "/Niagara/Modules/Emitter/SpawnPerFrame"]],
              "inputs": {INIT + "Color": colour(el, 0.8), INIT + "Lifetime": 0.35}},
         ]
+    if r in ("tracer", "lightning"):
+        # a beam from the system (spawned at the muzzle/hand) to User.BeamEnd, one short burst: Loop Behavior Once.
+        # "lightning" = a wide soft glow under a thin hot core, a little longer.
+        bolt = r == "lightning"
+        def beam(name, width, k, life):
+            return {"name": name, "template": "DynamicBeam", "switches": {"EmitterUpdate/EmitterState/Loop Behavior": ONCE},
+                    # Beam Width is driven by a FloatFromCurve dynamic input in the template, which set_module_input cannot
+                    # reach ("not found"); an HLSL constant replaces the curve (uniform width)
+                    "user_vars": {"BeamEnd": VEC3}, "expressions": {"EmitterUpdate/BeamEmitterSetup/Beam End": BEAM_END_TO_LOCAL,
+                                                                    "ParticleSpawn/BeamWidth/Beam Width": "%.2f" % (width * s)},
+                    # the beam's colour is the ParticleUpdate Color module (InitializeParticle Color is not reachable on it)
+                    # no InitializeParticle on the beam template: the beam lives while the emitter does (Loop Duration, Once)
+                    "inputs": dict({"EmitterUpdate/EmitterState/Loop Duration": life, "ParticleUpdate/Color/Color": colour(el, k),
+                                    "EmitterUpdate/SpawnBurst_Instantaneous/Spawn Count": 48 if bolt else 24})}
+        if bolt:
+            return [beam("Core", 3, 3.0, 0.18), beam("Glow", 18, 0.8, 0.22)]
+        return [beam("Beam", 2.5, 2.5, 0.08)]
     if r == "impact":
         return [
             {"name": "Sparks", "template": "OmnidirectionalBurst", "inputs": dict({
@@ -118,7 +142,7 @@ def recipe_layers(fx):
                 "ParticleSpawn/ShapeLocation/Sphere Radius": 40 * s, "ParticleSpawn/AddVelocity/Cone Angle": 10,
                 "ParticleUpdate/GravityForce/Gravity": {"x": 0, "y": 0, "z": 60}}, **_size(3, 6, s), **_life(0.8, 1.3))},
         ]
-    raise ValueError("fx recipe %r: use projectile, impact, muzzle, area, aura or give 'layers'" % r)
+    raise ValueError("fx recipe %r: use projectile, impact, muzzle, area, aura, tracer, lightning or give 'layers'" % r)
 
 
 def fx_calls(root, fx_specs):
@@ -138,7 +162,22 @@ def fx_calls(root, fx_specs):
         sp = "%s/%s" % (pkg, name)
         calls.append(["niagara.create_system_from_spec", {"name": name, "packagePath": pkg, "onConflict": "skip",
                                                           "emitters": [{"path": "%s/%s" % (epkg, e)} for e in emitters]}])
+        user_vars = {}
+        for l in layers:
+            user_vars.update(l.get("user_vars", {}))
+        if user_vars:
+            # Niagara toolset (engine plugin NiagaraToolsets must be enabled): bare names, no "User." prefix; re-adding replaces
+            calls.append(["niagara.epic_add_user_variables", {"system": {"refPath": "%s.%s" % (sp, name)}, "variablesToAdd": [
+                {"name": n, "type": {"classStructOrEnum": t}, "defaultValue": {"struct": t, "value": {"x": 0, "y": 0, "z": 0}}}
+                for n, t in sorted(user_vars.items())]}])
         for en, l in zip(emitters, layers):
+            for key, expr in sorted(l.get("expressions", {}).items()):
+                stack, module, inp = key.split("/", 2)
+                calls.append(["niagara.epic_set_stack_input_data", {"stackInputRef": {
+                    "system": {"refPath": "%s.%s" % (sp, name)}, "emitterName": en, "scriptName": SCRIPTS[stack], "moduleName": module,
+                    "rendererIndex": -1, "inputNameStack": [inp]},
+                    "inputData": {"struct": "/Script/NiagaraEditor.NiagaraExt_StackInputData_HlslExpression",
+                                  "value": {"hlslExpression": expr}}}])
             for stack, script in l.get("add_modules", []):
                 # add_module is NOT idempotent (a re-run gave SpawnPerFrame + SpawnPerFrame001, two spawners): remove the
                 # module by name first; remove_module on a missing module succeeds with alreadyRemoved.

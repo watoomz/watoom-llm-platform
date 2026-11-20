@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Find foliage and placed mesh actors that ended up somewhere wrong: in the sky, under the sea, under the ground or off the map.
 
-  ue_stray_check.py --heights live_heights.png --project profile.json [--float-cm 500] [--sink-cm 80] [--classes StaticMeshActor,SkeletalMeshActor] [--types Tree,Bush] [--apply]
+  ue_stray_check.py --heights live_heights.png --project profile.json [--float-cm 500] [--sink-cm 80] [--classes StaticMeshActor,SkeletalMeshActor,BP_BLD_,BP_PROP_] [--types Tree,Bush] [--apply]
 
 --heights must be the heights that are in the editor now (ue_heights_fetch.py). Read-only unless --apply. Two passes, one table
 (label or foliage type, x, y, z, the ground or sea Z it was compared with, the difference, the verdict):
@@ -46,6 +46,7 @@ from ue_place_assets import actor_z_for_bottom  # noqa: E402
 from heights_freshness import check_live  # noqa: E402
 
 SKIP_PREFIXES = "Lake_,Creek_,CreekRibbon_,Ocean"
+DEFAULT_CLASSES = "StaticMeshActor,SkeletalMeshActor,BP_BLD_,BP_PROP_"
 
 
 def surface_z(raw, z0, raw_per_cm, px_cm, x, y, sea_cm=None, mask=None):
@@ -132,7 +133,10 @@ def main(argv=None):
     ap.add_argument("--sea-cm", type=float, default=None, help="sea surface Z (cm); from the project profile when given; without it there is no ocean check")
     ap.add_argument("--sea-margin-cm", type=float, default=100.0, help="ocean (actors): the top of the bounds is this far under the sea surface")
     ap.add_argument("--inland-low", action="store_true", help="count any ground below the sea level as sea, also inland bowls and creek or lake beds")
-    ap.add_argument("--classes", default="StaticMeshActor,SkeletalMeshActor", help="comma separated actor classes to check")
+    # BP_BLD_/BP_PROP_: Blueprint buildings and props are not StaticMeshActors; level.get_actors_by_class falls back to a
+    # class-NAME substring when the name is not a class, so a prefix lists every BP_BLD_house_N_C. Without them the village of
+    # L_ZAS_Terrain floated 6-10 m up unreported (owner, 2026-11-19).
+    ap.add_argument("--classes", default=DEFAULT_CLASSES, help="comma separated actor classes (or class-name substrings) to check")
     ap.add_argument("--skip-prefixes", default=SKIP_PREFIXES, help="comma separated actor label prefixes left alone (flat water actors)")
     ap.add_argument("--underground-prefixes", default="", help="comma separated label prefixes of actors that BELONG under the ground "
                     "(a dungeon: unreal_dungeon.py builds <prefix>Dgn_*); never reported as buried nor moved. Profile key "

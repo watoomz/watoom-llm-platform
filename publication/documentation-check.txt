@@ -1,2 +1,2 @@
-RESULT=PASS; 126 Markdown documents, 35 guide pages
+RESULT=PASS; 71 Markdown documents, 35 guide pages
 Scope: local targets, HTML fragments/assets, duplicate IDs and dashboard anchors. External links, Markdown fragments, browser rendering and live health require separate checks.

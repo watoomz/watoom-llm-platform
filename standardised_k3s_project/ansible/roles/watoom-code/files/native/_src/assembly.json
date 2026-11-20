@@ -1,0 +1,170 @@
+{
+  "watoom-workflow": [
+    "roles/watoom-workflow/00_head.md",
+    "shared/03_agent_selection_and_handoff_boundaries.md",
+    "roles/watoom-workflow/20_special_routes.md",
+    "shared/10_how_you_work.md",
+    "shared/20_project_and_safety.md",
+    "shared/30_memory_and_tickets.md",
+    "shared/40_pixel_review.md",
+    "shared/50_execution.md",
+    "roles/watoom-workflow/90_before_done.md"
+  ],
+  "watoom-builder": [
+    "roles/watoom-builder/00_head.md",
+    "roles/watoom-builder/10_role.md",
+    "shared/60_child_role.md",
+    "shared/10_how_you_work.md",
+    "shared/20_project_and_safety.md",
+    "shared/30_memory_and_tickets.md",
+    "shared/40_pixel_review.md",
+    "shared/50_execution.md"
+  ],
+  "watoom-critic": [
+    "roles/watoom-critic/00_head.md",
+    "roles/watoom-critic/10_role.md",
+    "shared/60_child_role.md",
+    "shared/10_how_you_work.md",
+    "shared/20_project_and_safety.md",
+    "shared/30_memory_and_tickets.md",
+    "shared/40_pixel_review.md",
+    "shared/55_read_only.md"
+  ],
+  "watoom-investigator": [
+    "roles/watoom-investigator/00_head.md",
+    "roles/watoom-investigator/10_role.md",
+    "shared/60_child_role.md",
+    "shared/10_how_you_work.md",
+    "shared/20_project_and_safety.md",
+    "shared/30_memory_and_tickets.md",
+    "shared/40_pixel_review.md",
+    "shared/55_read_only.md"
+  ],
+  "watoom-reviewer": [
+    "roles/watoom-reviewer/00_head.md",
+    "roles/watoom-reviewer/10_role.md",
+    "shared/60_child_role.md",
+    "shared/10_how_you_work.md",
+    "shared/20_project_and_safety.md",
+    "shared/30_memory_and_tickets.md",
+    "shared/40_pixel_review.md",
+    "shared/55_read_only.md"
+  ],
+  "watoom-developer": [
+    "roles/watoom-developer/00_head.md",
+    "roles/watoom-developer/10_role.md",
+    "shared/60_child_role.md",
+    "shared/10_how_you_work.md",
+    "shared/20_project_and_safety.md",
+    "shared/30_memory_and_tickets.md",
+    "shared/40_pixel_review.md",
+    "shared/50_execution.md"
+  ],
+  "watoom-automation-expert": [
+    "roles/watoom-automation-expert/00_head.md",
+    "roles/watoom-automation-expert/10_role.md",
+    "shared/60_child_role.md",
+    "shared/10_how_you_work.md",
+    "shared/20_project_and_safety.md",
+    "shared/30_memory_and_tickets.md",
+    "shared/40_pixel_review.md",
+    "shared/50_execution.md"
+  ],
+  "watoom-integration-expert": [
+    "roles/watoom-integration-expert/00_head.md",
+    "roles/watoom-integration-expert/10_role.md",
+    "shared/60_child_role.md",
+    "shared/10_how_you_work.md",
+    "shared/20_project_and_safety.md",
+    "shared/30_memory_and_tickets.md",
+    "shared/40_pixel_review.md",
+    "shared/50_execution.md"
+  ],
+  "watoom-3d-modeller": [
+    "roles/watoom-3d-modeller/00_head.md",
+    "roles/watoom-3d-modeller/10_role.md",
+    "shared/60_child_role.md",
+    "shared/10_how_you_work.md",
+    "shared/20_project_and_safety.md",
+    "shared/30_memory_and_tickets.md",
+    "shared/40_pixel_review.md",
+    "shared/50_execution.md"
+  ],
+  "watoom-qa-tester": [
+    "roles/watoom-qa-tester/00_head.md",
+    "roles/watoom-qa-tester/10_role.md",
+    "shared/60_child_role.md",
+    "shared/10_how_you_work.md",
+    "shared/20_project_and_safety.md",
+    "shared/30_memory_and_tickets.md",
+    "shared/40_pixel_review.md",
+    "shared/55_read_only.md"
+  ],
+  "watoom-adversarial-tester": [
+    "roles/watoom-adversarial-tester/00_head.md",
+    "roles/watoom-adversarial-tester/10_role.md",
+    "shared/60_child_role.md",
+    "shared/10_how_you_work.md",
+    "shared/20_project_and_safety.md",
+    "shared/30_memory_and_tickets.md",
+    "shared/40_pixel_review.md",
+    "shared/55_read_only.md"
+  ],
+  "watoom-blind-tester": [
+    "roles/watoom-blind-tester/00_head.md",
+    "roles/watoom-blind-tester/10_role.md",
+    "shared/60_child_role.md",
+    "shared/10_how_you_work.md",
+    "shared/20_project_and_safety.md",
+    "shared/30_memory_and_tickets.md",
+    "shared/40_pixel_review.md",
+    "shared/55_read_only.md"
+  ],
+  "watoom-researcher": [
+    "roles/watoom-researcher/00_head.md",
+    "roles/watoom-researcher/10_role.md",
+    "shared/60_child_role.md",
+    "shared/10_how_you_work.md",
+    "shared/20_project_and_safety.md",
+    "shared/30_memory_and_tickets.md",
+    "shared/40_pixel_review.md",
+    "shared/55_read_only.md"
+  ],
+  "watoom-game-designer": [
+    "roles/watoom-game-designer/00_head.md",
+    "roles/watoom-game-designer/10_role.md",
+    "shared/60_child_role.md",
+    "shared/10_how_you_work.md",
+    "shared/20_project_and_safety.md",
+    "shared/30_memory_and_tickets.md",
+    "shared/40_pixel_review.md",
+    "shared/55_read_only.md"
+  ],
+  "watoom-systems-designer": [
+    "roles/watoom-systems-designer/00_head.md",
+    "roles/watoom-systems-designer/10_role.md",
+    "shared/60_child_role.md",
+    "shared/10_how_you_work.md",
+    "shared/20_project_and_safety.md",
+    "shared/30_memory_and_tickets.md",
+    "shared/40_pixel_review.md",
+    "shared/55_read_only.md"
+  ],
+  "watoom-kali": [
+    "roles/watoom-kali/00_head.md",
+    "roles/watoom-kali/10_role.md",
+    "shared/60_child_role.md",
+    "shared/10_how_you_work.md",
+    "shared/20_project_and_safety.md",
+    "shared/30_memory_and_tickets.md",
+    "shared/40_pixel_review.md"
+  ],
+  "watoom-creative-writer": [
+    "roles/watoom-creative-writer/00_head.md",
+    "roles/watoom-creative-writer/10_role.md",
+    "shared/10_how_you_work.md",
+    "shared/20_project_and_safety.md",
+    "shared/30_memory_and_tickets.md",
+    "shared/40_pixel_review.md"
+  ]
+}

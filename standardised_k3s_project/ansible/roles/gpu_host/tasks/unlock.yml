@@ -113,6 +113,7 @@
   when:
     - gpu_host_unlock_boot_enabled | bool
     - "('gpu_unlock.targets=' ~ gpu_host_unlock_target) not in unlock_boot_entry.stdout"
+  changed_when: true  # mutating command; already guarded by its when/creates
 
 - name: Remove this scoped opt-in when disabled
   ansible.builtin.command:
@@ -123,6 +124,7 @@
   when:
     - not (gpu_host_unlock_boot_enabled | bool)
     - "('gpu_unlock.targets=' ~ gpu_host_unlock_target) in unlock_boot_entry.stdout"
+  changed_when: true  # mutating command; already guarded by its when/creates
 
 - name: Report activation boundary
   ansible.builtin.debug:

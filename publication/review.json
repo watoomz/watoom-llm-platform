@@ -1,19 +1,9 @@
 {
   "status": "REVIEW_REQUIRED",
-  "files": 12676,
-  "excluded": 1765,
+  "files": 12533,
+  "excluded": 315,
   "quarantined_findings": [],
   "review_candidates": [
-    {
-      "path": "standardised_k3s_project/ansible/roles/opencode-agent/defaults/main.yml",
-      "rule": "literal-credential-review",
-      "line": 14
-    },
-    {
-      "path": "standardised_k3s_project/ansible/roles/opencode-agent/defaults/main.yml",
-      "rule": "literal-credential-review",
-      "line": 113
-    },
     {
       "path": "standardised_k3s_project/manifests/10-infrastructure/llm/searxng.yml",
       "rule": "literal-credential-review",
@@ -22,7 +12,7 @@
     {
       "path": "standardised_k3s_project/manifests/10-infrastructure/monitoring/mktxp.yml",
       "rule": "literal-credential-review",
-      "line": 175
+      "line": 180
     },
     {
       "path": "standardised_k3s_project/tools/language-knowledge/manuals/ansible/sources/aap/rulebook-sources.rst",

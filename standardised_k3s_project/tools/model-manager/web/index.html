@@ -1,1 +1,118 @@
-<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>WatooM Model Manager</title><link rel="stylesheet" href="/style.css"><main><h1>Model Manager</h1><p>Inspect immutable model revisions, variants, dependencies and settings. Backend context and the WatooM Code 100,000-token application budget are separate settings.</p><form id="inspect"><label>Hugging Face repository URL<input id="url" type="url" required placeholder="https://huggingface.co/owner/model"></label><button>Inspect</button></form><p id="message" role="status"></p><section id="details" hidden><h2 id="name"></h2><p id="metadata"></p><label>Revision<select id="revision"></select></label><label>Variant<select id="variant"></select></label><p id="size"></p><details><summary>Selected files and exact sizes</summary><ul id="files"></ul></details><label>Published mode<select id="preset"></select></label><p id="uncertainty"></p><h3>Settings and sources</h3><div id="settings"></div><label>Installed base (for LoRA)<select id="base"></select></label><button id="install">Download &amp; set up</button><button id="safe">Reset to safe baseline</button><button id="save">Save overrides</button><button id="reset">Restore published recommendations</button></section><h2>Installed models</h2><div id="models"></div><section id="removal" hidden><h3>Confirm model removal</h3><pre id="remove-details"></pre><label><input id="delete-files" type="checkbox">Also quarantine only the listed unshared files (zero bytes reclaimed until retention ends)</label><button id="confirm-remove">Confirm removal</button><button id="cancel-remove">Cancel</button></section><h2>Durable jobs</h2><div id="jobs"></div></main><script src="/app.js"></script></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WatooM Model Manager</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <h1>Model Manager</h1>
+    <span class="sub">Every model on the GPU, and the place to add new ones</span>
+  </div>
+  <div class="gpu" id="gpu" role="status" aria-live="polite">Reading GPU controller…</div>
+  <nav class="tabs" aria-label="Sections">
+    <a href="#models" class="tab">Models</a>
+    <a href="#add" class="tab">Add a model</a>
+    <a href="#jobs" class="tab">Jobs<span class="count" id="jobCount" hidden></span></a>
+  </nav>
+</header>
+
+<main>
+<p id="message" class="toast" role="status" aria-live="polite" hidden></p>
+
+<section id="models" class="panel">
+  <div class="panel-head">
+    <h2>Models</h2>
+    <div class="filters">
+      <input id="search" type="search" placeholder="Search name, file or id" aria-label="Search models">
+      <div class="chips" role="group" aria-label="Filter">
+        <button class="chip on" data-filter="all">All</button>
+        <button class="chip" data-filter="language">Language</button>
+        <button class="chip" data-filter="image">Image</button>
+        <button class="chip" data-filter="loaded">Loaded</button>
+        <button class="chip" data-filter="managed">Managed here</button>
+      </div>
+    </div>
+  </div>
+  <p class="note" id="systemNote" hidden></p>
+  <div class="grid" id="modelGrid"><p class="empty">Loading models…</p></div>
+</section>
+
+<section id="add" class="panel">
+  <div class="panel-head">
+    <h2>Add a model</h2>
+    <p class="sub">Paste a Hugging Face repository. Inspecting reads metadata only; nothing downloads until you install.</p>
+  </div>
+  <form id="inspect" class="inspect">
+    <label class="grow">Hugging Face repository URL
+      <input id="url" type="url" required placeholder="https://huggingface.co/owner/model">
+    </label>
+    <button class="primary" id="inspectButton">Inspect</button>
+  </form>
+
+  <div id="details" hidden>
+    <div class="repo">
+      <div>
+        <h3 id="name"></h3>
+        <div class="badges" id="repoBadges"></div>
+      </div>
+      <label class="narrow">Revision<select id="revision"></select></label>
+    </div>
+    <p class="warn" id="uncertainty" hidden></p>
+
+    <h4>1 · Choose a file</h4>
+    <div class="variants" id="variants" role="radiogroup" aria-label="Variant"></div>
+    <details class="files"><summary>Files in this choice</summary><ul id="files"></ul></details>
+
+    <div id="baseBox" hidden>
+      <h4>2 · Base model</h4>
+      <p class="sub" id="baseHelp"></p>
+      <select id="base"></select>
+    </div>
+
+    <div class="settings-head">
+      <h4 id="settingsTitle">2 · Settings</h4>
+      <label class="narrow">Published mode<select id="preset"></select></label>
+    </div>
+    <p class="sub">Each value shows where it came from. Published = the model's card or generation_config.json; Override = your saved choice; Safe = the homelab baseline.</p>
+    <div id="settings"></div>
+
+    <div class="actions">
+      <button class="primary" id="install">Download &amp; set up</button>
+      <button id="save">Save as my overrides</button>
+      <button id="reset">Use published values</button>
+      <button id="safe">Use safe baseline</button>
+    </div>
+  </div>
+</section>
+
+<section id="jobs" class="panel">
+  <div class="panel-head">
+    <h2>Jobs</h2>
+    <label class="check"><input type="checkbox" id="showAllJobs"> Show finished jobs</label>
+  </div>
+  <div id="jobList"><p class="empty">No jobs yet.</p></div>
+</section>
+</main>
+
+<dialog id="removal" aria-labelledby="removeTitle">
+  <form method="dialog">
+    <h3 id="removeTitle">Remove model</h3>
+    <p id="removeName" class="strong"></p>
+    <p class="sub">The model is stopped and unregistered from the GPU controller first. Its files stay on disk unless you choose quarantine below; nothing is deleted outright.</p>
+    <dl class="facts" id="removeFacts"></dl>
+    <details class="files"><summary>Files that would be quarantined</summary><ul id="removeFiles"></ul></details>
+    <label class="check"><input id="delete-files" type="checkbox"> Also move this model's own (unshared) files to quarantine</label>
+    <div class="actions">
+      <button value="cancel" id="cancel-remove">Keep model</button>
+      <button class="danger" id="confirm-remove" value="confirm">Remove model</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="/app.js"></script>
+</body>
+</html>

@@ -1,7 +1,0 @@
-# Managed by Ansible: host_ollama role.
-# Keep the host runtime predictable for a single-GPU homelab server.
-[Service]
-Environment="OLLAMA_HOST={{ host_ollama_host }}"
-Environment="OLLAMA_MAX_LOADED_MODELS={{ host_ollama_max_loaded_models }}"
-Environment="OLLAMA_KEEP_ALIVE={{ host_ollama_keep_alive }}"
-Environment="OLLAMA_FLASH_ATTENTION=1"

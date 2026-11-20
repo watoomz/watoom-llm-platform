@@ -3,6 +3,13 @@
 # automatically rather than by hand. sync_rig_projects.py only ever edits the rig stage's (unpinned) JSON
 # config, additively -- it never touches the hash-pinned rig-async-stage release bundle or its own project
 # list entries, and is a no-op if the rig stage is not provisioned on this host.
+- name: Install the rig project sync script to a root-owned path
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../tools/watoom-code/sync_rig_projects.py"
+    dest: /data/ai/helper-scripts/watoom-code/sync_rig_projects.py
+    owner: root
+    group: root
+    mode: '0755'
 - name: Install rig project sync timer
   ansible.builtin.copy:
     dest: /etc/systemd/system/watoom-rig-project-sync.service
@@ -12,7 +19,7 @@
       Description=Keep the rig stage's project enrollment in sync with the main game worker's project list
       [Service]
       Type=oneshot
-      ExecStart=/usr/bin/python3 {{ role_path }}/../../../tools/watoom-code/sync_rig_projects.py
+      ExecStart=/usr/bin/python3 /data/ai/helper-scripts/watoom-code/sync_rig_projects.py
       Nice=15
       CPUQuota=25%
       MemoryMax=128M

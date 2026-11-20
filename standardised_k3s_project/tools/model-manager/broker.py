@@ -26,7 +26,9 @@ def identity(obj):
 def prune_native_profiles(path,aliases,backup):
  if any(not re.fullmatch(r"mm-[a-f0-9]{16}",alias) for alias in aliases):raise ValueError("Only owned managed profiles may be removed")
  path=Path(path);raw=path.read_bytes();config=json.loads(raw)
- profiles=config.get("provider",{}).get("watoom",{}).get("models",{})
+ # WatooM Code's config keeps them under "providers" (as enable-model-context.py writes them); "provider" is the older
+ # layout. Reading only "provider" meant no removal ever pruned a profile (T-0103, 2026-11-20).
+ profiles=(config.get("providers") or config.get("provider") or {}).get("watoom",{}).get("models",{})
  removed=[alias for alias in aliases if alias in profiles]
  if not removed:return False
  backup=Path(backup);backup.parent.mkdir(parents=True,exist_ok=True,mode=0o700)
@@ -41,6 +43,36 @@ def prune_native_profiles(path,aliases,backup):
   os.replace(temporary,path)
  finally:temporary.unlink(missing_ok=True)
  return True
+LLM_KINDS=("gguf","gguf-lora")
+def application_budget(served):
+ """WatooM Code's budget for a model served at `served` tokens: 100K per 128K (owner 2026-11-19), so a 128K 27B model
+ gets 100K and a 256K small model 200K. Same rule as the router's application_budget."""
+ return max(min(served,100000),int(served*100000/131072)//1000*1000) if served else 100000
+def display_name(record,store=None):
+ """Human name for a managed install: '<repository> (<file>)', or '<adapter> on <base>' for a GGUF LoRA."""
+ if not record.get("repository"):return None
+ files=[Path(row[0]).name for row in (store.db.execute("SELECT path FROM artifacts WHERE id=?",(record["artifacts"][0],)).fetchall() if store and record.get("artifacts") else [])]
+ name=record["repository"]+(" ("+files[0]+")" if files else "")
+ if record.get("kind")=="gguf-lora" and store and record.get("dependencies"):
+  row=store.db.execute("SELECT record FROM models WHERE id=?",(record["dependencies"][0],)).fetchone()
+  if row:name=record["repository"]+" on "+json.loads(row[0])["repository"]
+ if (record.get("settings") or {}).get("speculation")=="draft-mtp":name+=" · MTP"
+ if (record.get("settings") or {}).get("projector"):name+=" · Vision"
+ return name[:200]
+def server_settings(container):
+ """The llama-server settings an inventory row shows, from a Deployment container's args and LLAMA_ARG_* env."""
+ args=list(container.get("args") or []);env={e["name"]:e.get("value") for e in container.get("env") or [] if "value" in e}
+ def arg(*flags):
+  for i,a in enumerate(args):
+   if a in flags and i+1<len(args):return args[i+1]
+  return None
+ pick=lambda flags,var:arg(*flags) or env.get(var)
+ return {"model":pick(("--model","-m"),"LLAMA_ARG_MODEL"),"lora":arg("--lora"),"mmproj":pick(("--mmproj","-mm"),"LLAMA_ARG_MMPROJ"),
+  "context":pick(("--ctx-size","-c"),"LLAMA_ARG_CTX_SIZE"),"cache_k":pick(("--cache-type-k","-ctk"),"LLAMA_ARG_CACHE_TYPE_K"),
+  "cache_v":pick(("--cache-type-v","-ctv"),"LLAMA_ARG_CACHE_TYPE_V"),"reasoning":pick(("--reasoning",),"LLAMA_ARG_REASONING"),
+  "speculation":pick(("--spec-type",),"LLAMA_ARG_SPEC_TYPE"),"draft_count":pick(("--spec-draft-n-max",),"LLAMA_ARG_SPEC_DRAFT_N_MAX"),
+  "temperature":pick(("--temp",),"LLAMA_ARG_TEMP"),"top_p":pick(("--top-p",),"LLAMA_ARG_TOP_P"),"top_k":pick(("--top-k",),"LLAMA_ARG_TOP_K"),
+  "min_p":pick(("--min-p",),"LLAMA_ARG_MIN_P"),"cpu_ffn":arg("--n-cpu-ffn")}
 class Broker:
  def __init__(self,config,store):
   self.config=config;self.store=store;self.root=Path(config["state"]);self.root.mkdir(parents=True,exist_ok=True)
@@ -87,7 +119,9 @@ class Broker:
  def publish_routes(self):
   ledger=Path(self.config["controller_state"])/"managed-models.json"
   entries=json.loads(ledger.read_text())["models"] if ledger.exists() else {}
-  routes={entry["alias"]:{"deployment":name,"url":"http://"+name+".llama-cpp.svc.cluster.local:8080","name":entry["alias"],"backend":entry["backend"],"context_limit":entry.get("context_limit"),"application_context":entry.get("application_context",100000)} for name,entry in entries.items()}
+  records={"llama-cpp-mm-"+row[0][:16]:json.loads(row[1]) for row in self.store.db.execute("SELECT id,record FROM models")}
+  # The router shows this name in its model list (and WatooM Code picks it up), so it is the real source, not the alias.
+  routes={entry["alias"]:{"deployment":name,"url":"http://"+name+".llama-cpp.svc.cluster.local:8080","name":(display_name(records[name],self.store) if name in records else None) or entry["alias"],"backend":entry["backend"],"context_limit":entry.get("context_limit"),"application_context":application_budget(records[name]["settings"].get("context")) if name in records else entry.get("application_context",100000),"vision":bool(records[name]["settings"].get("projector")) if name in records else entry.get("vision")} for name,entry in entries.items()}
   path=Path(self.config["router_view"]);path.parent.mkdir(parents=True,exist_ok=True,mode=0o755)
   previous=json.loads(path.read_text()).get("models",{}) if path.exists() else {}
   removed=set(previous)-set(routes)
@@ -96,13 +130,13 @@ class Broker:
   if application:
    if application!="/data/ai/watoom-code/config/opencode.json":raise ValueError("Unexpected application config path")
    inventory=path.parent/"context-inventory.json"
-   inventory.write_text(json.dumps({"data":[{"id":key,"context_limit":entry.get("context_limit")} for key,entry in routes.items() if entry["backend"]=="gguf"]}))
+   inventory.write_text(json.dumps({"data":[{"id":key,"name":entry["name"],"context_limit":entry.get("context_limit"),"application_context":entry.get("application_context"),"vision":entry.get("vision")} for key,entry in routes.items() if entry["backend"]=="gguf"]}))
    pruned=prune_native_profiles(application,removed,self.root/"profile-history"/(str(time.time_ns())+".json")) if removed else False
    migration=Path(__file__).parent/"enable-model-context.py"
    result=subprocess.run(["python3",str(migration),application,str(inventory),"100000"],capture_output=True,text=True,timeout=30)
    if result.returncode:raise ValueError("Application profile registration failed")
    from maintenance_guard import Maintenance
-   if pruned or result.stdout.strip()=="CHANGED":Maintenance("watoom-code","watoom-code",self.root,True,True).request("/api/location/reload",{})
+   if pruned or result.stdout.strip() in ("CHANGED","UPDATED"):Maintenance("watoom-code","watoom-code",self.root,True,True).request("/api/location/reload",{})
  def artifacts(self,record):
   artifacts=[]
   for aid in record["artifacts"]:
@@ -115,12 +149,62 @@ class Broker:
    safe_path(root,str(path.relative_to(root)))
    if path.stat().st_size!=item[1] or digest(path)!=item[2]:raise ValueError("Artifact integrity changed")
    artifacts.append({"path":str(path),"bytes":item[1],"digest":item[2]})
-  if record["kind"]=="gguf":
-   from gguf_header import context_limit
+  if record["kind"] in LLM_KINDS:
+   from gguf_header import inspect
    from settings import validate
-   limit=context_limit(artifacts[0]["path"])
-   validate(record["settings"],"gguf",max_context=limit)
+   model=artifacts[1 if record["kind"]=="gguf-lora" else 0]["path"]
+   header=inspect(model)
+   if record["kind"]=="gguf-lora":
+    adapter=inspect(artifacts[0]["path"])
+    if adapter.get("type")!="adapter" or adapter.get("adapter_type")!="lora" or adapter.get("architecture")!=header.get("architecture"):raise ValueError("Adapter does not match the base model architecture")
+   vision=False
+   if record["settings"].get("projector"):
+    projector=inspect(artifacts[-1]["path"])
+    vision=projector.get("type")=="mmproj" and bool(projector.get("vision_encoder")) and projector.get("projection_dim")==header.get("embedding_length")
+   validate(record["settings"],record["kind"],capabilities={"mtp":header["nextn_predict_layers"]>0,"vision":vision},max_context=header["context_length"])
   return artifacts
+ def inventory(self):
+  """Read-only: every model the router serves (managed or not) with its deployment, file, size and settings."""
+  config=json.loads(Path("/data/ai/helper-scripts/config/gpu-controller.json").read_text())
+  state_root=Path(self.config["controller_state"])
+  def read(path,default):
+   try:return json.loads(Path(path).read_text())
+   except (OSError,ValueError):return default
+  state=read(state_root/"state.json",{});selected=read(state_root/"selected-model.json",{}).get("deployment")
+  ledger=read(state_root/"managed-models.json",{}).get("models",{})
+  if state.get("phase")=="qwen-ready":selected=config["primary"]
+  deployments={d["metadata"]["name"]:d for d in self.kube(["get","deployment","-o","json"])["items"] if d["metadata"]["name"].startswith("llama-cpp-")}
+  volumes_pv={pv["spec"]["claimRef"]["name"]:pv["spec"].get("hostPath",{}).get("path") for pv in json.loads(subprocess.run(["kubectl","--kubeconfig",self.config["kubeconfig"],"get","pv","-o","json"],capture_output=True,text=True,timeout=45).stdout or '{"items":[]}')["items"] if pv["spec"].get("claimRef",{}).get("namespace")=="llama-cpp"}
+  router=self.kube(["get","service","llm-router","-o","json"])["spec"]["clusterIP"]
+  def fetch(path):
+   with urllib.request.urlopen("http://"+router+":8000"+path,timeout=5) as response:return json.load(response)
+  names={m["id"]:m.get("name") for m in fetch("/v1/models").get("data",[])}
+  records={"llama-cpp-mm-"+row[0][:16]:json.loads(row[1]) for row in self.store.db.execute("SELECT id,record FROM models")}
+  rows=[]
+  for model in fetch("/models").get("models",[]):
+   name=model["deployment"];deployment=deployments.get(name)
+   public=next((a for a in [model["id"],*model.get("aliases",[])] if a in names),model["id"])
+   row={"id":public,"name":names.get(public) or public,"deployment":name,"managed":name in ledger,"model_id":records[name]["id"] if name in records else None,
+        "primary":name==config["primary"],"mesh":name==config["mesh"],"loaded":name==selected and state.get("phase") in ("qwen-ready","model-ready","mesh-ready"),
+        "exists":deployment is not None}
+   if deployment:
+    spec=deployment["spec"]["template"]["spec"];container=spec["containers"][0]
+    hosts={}
+    for volume in spec.get("volumes",[]):
+     host=(volume.get("hostPath") or {}).get("path") or volumes_pv.get((volume.get("persistentVolumeClaim") or {}).get("claimName"))
+     if host:hosts[volume["name"]]=host
+    settings=server_settings(container)
+    def host_file(value):
+     for mount in container.get("volumeMounts",[]):
+      if value and mount["name"] in hosts and (value==mount["mountPath"] or value.startswith(mount["mountPath"].rstrip("/")+"/")):
+       candidate=Path(hosts[mount["name"]]) if value==mount["mountPath"] else Path(hosts[mount["name"]])/value[len(mount["mountPath"].rstrip("/"))+1:]
+       try:return {"path":str(candidate.resolve()),"bytes":candidate.resolve().stat().st_size}
+       except OSError:return {"path":str(candidate),"bytes":None}
+     return None
+    row.update(replicas=deployment["spec"].get("replicas",0),ready=deployment.get("status",{}).get("readyReplicas",0),image=container.get("image"),
+               settings=settings,file=host_file(settings["model"]),lora_file=host_file(settings["lora"]),mmproj_file=host_file(settings["mmproj"]))
+   rows.append(row)
+  return {"controller":{"phase":state.get("phase"),"owner":state.get("owner"),"uncertain":state.get("uncertain"),"selected":selected,"primary":config["primary"]},"models":rows}
  def hardware_admission(self,record):
   if shutil.disk_usage("/").free<8*1024**3:raise ValueError("Root image filesystem reserve unavailable")
   nodes=self.kube(["get","nodes","-o","json"])
@@ -160,7 +244,7 @@ class Broker:
     headers={"Authorization":"Bearer "+Path(self.config["images"]["backend_auth_file"]).read_text().strip(),"Content-Type":"application/json"}
     ledger=json.loads((Path(self.config["controller_state"])/"managed-models.json").read_text())["models"]
     base=ledger[name]["url"]
-    if record["kind"]=="gguf":
+    if record["kind"] in LLM_KINDS:
      body={"model":record["alias"],"messages":[{"role":"user","content":request["prompt"]}],"max_tokens":128,"stream":False}
      with urllib.request.urlopen(urllib.request.Request(base+"/v1/chat/completions",json.dumps(body).encode(),headers),timeout=300) as response:result=json.load(response)
      text=result["choices"][0]["message"]["content"]
@@ -234,11 +318,11 @@ class Broker:
     generation_request={"prompt":prompt}
     if "negative_prompt" in (request or {}):
      from settings import validate_negative_prompt
-     if record["kind"]=="gguf":raise ValueError("Negative prompts are image parameters")
+     if record["kind"] in LLM_KINDS:raise ValueError("Negative prompts are image parameters")
      generation_request["negative_prompt"]=validate_negative_prompt(request["negative_prompt"])
     if "settings" in (request or {}):
      from image_mcp import generation_settings
-     if record["kind"]=="gguf":raise ValueError("Image generation settings are not chat parameters")
+     if record["kind"] in LLM_KINDS:raise ValueError("Image generation settings are not chat parameters")
      generation_request["settings"]=generation_settings(request["settings"])
     return self.inference(record,generation_request,run,progress)
    if action=="register":
@@ -277,7 +361,7 @@ class Broker:
      authority=self.root/"installations";authority.mkdir(exist_ok=True,mode=0o700)
      self.snapshot(authority,modelid,{"identity":uid,"resources":[{"kind":kind,"uid":obj["metadata"]["uid"]} for kind,obj in created]})
      previous_role=self.role(name,True);self.snapshot(run,"previous-role",previous_role);save("named-rbac")
-     entry={"context_limit":record.get("max_context"),"application_context":min(100000,record["settings"].get("context",100000)),"identity":uid,"backend":"gguf" if record["kind"]=="gguf" else "sdxl","alias":alias,"url":"http://"+created[1][1]["spec"]["clusterIP"]+":8080","service_identity":identity(created[1][1])}
+     entry={"context_limit":record.get("max_context"),"application_context":application_budget(record["settings"].get("context")),"vision":bool(record["settings"].get("projector")),"identity":uid,"backend":"gguf" if record["kind"] in LLM_KINDS else "sdxl","alias":alias,"url":"http://"+created[1][1]["spec"]["clusterIP"]+":8080","service_identity":identity(created[1][1])}
      rpc(self.config["controller_socket"],{"action":"enroll-model","deployment":name,"record":entry});enrolled=True;save("enrolled");self.publish_routes()
      # Router consumes a derived view of the sole manager catalog, never hand-edited dictionaries.
      resources=[{"kind":kind,"name":name,"uid":obj["metadata"]["uid"]} for kind,obj in created]

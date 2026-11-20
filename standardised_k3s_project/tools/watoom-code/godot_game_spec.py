@@ -30,6 +30,7 @@ STEPS = {
     'gg_combat.py': {'init', 'check', 'slice', 'pickups', 'mp'},   # combat core, vertical slice, pickups, 2-process multiplayer authority (T-0065/67-72); no args need paths
     'gg_vfx.py': {'check'},   # --spec (if passed) is a path and is not allowed as a token; the built-in demo recipes cover a worker job
     # gg_anim.py is not registered: --mesh/--states carry res:// asset paths outside RES_FLAGS, so it stays a model-run-direct script like gg_assets.py find/use
+    'gg_dungeon.py': {'catalog-init', 'catalog-list', 'catalog-validate', 'layout', 'verify'},   # dungeon kit catalog + procedural grid layout (T-0059); pure logic, no engine
 }
 NO_PROJECT_FLAG = {('gg_project.py', 'doctor')}   # doctor takes no --project
 TOKEN = re.compile(r'[A-Za-z0-9_.,:+=-][A-Za-z0-9_.,:+= -]{0,127}')   # no slash, quote, $, ; | & ( ) < > or backtick: a token is never a path or shell syntax
@@ -37,7 +38,7 @@ FORBIDDEN = ('--project', '--out', '--work', '--godot', '--report', '--targets',
 MAX_STEPS, MAX_ARGS = 12, 24
 # the one place a token may hold slashes: a res:// project path, only as the value of --scene or --dir of a gg_ui.py step (it can never leave the project)
 RES_PATH = re.compile(r'res://[A-Za-z0-9_][A-Za-z0-9_/.-]{0,120}')
-RES_FLAGS = {('gg_ui.py', '--scene'), ('gg_ui.py', '--dir')}
+RES_FLAGS = {('gg_ui.py', '--scene'), ('gg_ui.py', '--dir'), ('gg_dungeon.py', '--pieces-dir')}
 
 
 def path(project, job):
@@ -117,7 +118,7 @@ def load(project, job, fresh=True):
         # Re-read after the run (fingerprint / reconcile): only the manifest itself is bound. The live project and the staging folder change while
         # the job runs (the model keeps editing), so none of their state may turn a finished PASS into a failure.
         return {'directory': pdir, 'create_directory': False, 'from_project': from_project, 'steps': steps, 'deadline_sec': deadline, 'memory_gib': memory, 'spec_sha256': hashlib.sha256(raw).hexdigest()}
-    if fresh and from_project and directory.exists() and (directory.is_symlink() or not directory.is_dir() or any(directory.iterdir())): raise ValueError('with from_project the project_dir must not exist yet or be empty: it already holds files from an earlier job. Pick a NEW project_dir for every job, e.g. .opencode/tmp/<job-name> (the worker fills it with a copy of the live project; files over %d MB, .git, .godot, .opencode and gg_data are left out)' % COPY_MAX_MB)
+    if fresh and from_project and directory.exists() and (directory.is_symlink() or not directory.is_dir() or any(directory.iterdir())): raise ValueError('with from_project the project_dir must not exist yet or be empty: it already holds files from an earlier job. Pick a NEW project_dir for every job, e.g. .opencode/tmp/<job-name> (the worker fills it with a copy of the live project; files over %d MB, .git, .godot, .opencode, gg_data/jobs, gg_data/export/stage and gg_data/selftest* are left out; the rest of gg_data, e.g. style.resolved.json/world/census.json/scatter, IS copied, so if you adopt a finished job\'s output/project back onto the live project, the next from_project job keeps that continuity instead of losing it)' % COPY_MAX_MB)
     # The model's tools cannot create an empty folder, so an init job may name one that does not exist yet: the operator creates it (INIT_STEPS).
     missing = (first['script'], first['sub']) in INIT_STEPS and not directory.exists() and not directory.is_symlink() and real_ancestor(project, directory)
     if from_project:

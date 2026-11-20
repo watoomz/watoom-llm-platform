@@ -13,7 +13,7 @@ The environment contains several different extension layers. A native applicatio
 | Application and UI customisations | Separate pinned application checkout, distributed under `application/` | Application build and `watoom-code` role | Native sessions, project picker, tool/UI integration and API schema |
 | Coordinator guard | `ansible/roles/watoom-code/files/coordinator-guard/` | Role `tasks/coordinator_guard.yml` | Native plugin hooks/storage; delegation budgets, child identity and receipts |
 | Image scope | `ansible/roles/watoom-code/files/image-scope/` | Role image-scope tasks and enable helper | Native image tool scope and presentation/review constraints |
-| Native agents | `ansible/roles/opencode-agent/files/` and WatooM role agent tasks | `watoom-code-agents.yml`, agent renderer and role | Coordinator, builder, investigator, reviewer, critic, writing and separate security scope |
+| Native agents | `ansible/roles/watoom-code/files/native/_src/` (shared modules + one core per role), rendered to `files/native/agents/` by `scripts/render-native-agents.py` | `watoom-code-parts.yml --tags agents` | Coordinator, 15 child roles, creative writer; worker procedures in the `watoom-worker-contracts` skill |
 | Native skills | `ansible/roles/watoom-code/files/skills/` plus approved source registry in role defaults | `watoom-native-skills.yml` and role `native-skills` tasks | Discoverable instructions/resources; a skill document is not a service |
 | Model/runtime capability mapping | `verified-model-capabilities.json`, `enable-verified-model-capabilities.py` and reasoning/context helpers in the role | Owning WatooM playbooks and production vars | Model IDs, provider routing, variants and verified context interfaces |
 | Toolkit | `tools/watoom-toolkit/` | WatooM role and independent Toolkit release pins | Authenticated bounded job controller; worker isolation and artifact publication |
@@ -63,7 +63,7 @@ hash-suffixed directories are release copies; maintain the owning source below.
 
 | Native plugin | Maintained source | Responsibility |
 |---|---|---|
-| `searxng-search` | `ansible/roles/opencode-agent/files/v2-native/plugins/searxng-search/` | Native web search through the configured local SearXNG service |
+| `searxng-search` | `ansible/roles/watoom-code/files/native/plugins/searxng-search/` | Native web search through the configured local SearXNG service |
 | `coordinator-guard` | `ansible/roles/watoom-code/files/coordinator-guard/` | Serial delegation, tool budgets, durable evidence and recovery boundaries |
 | `self-learning` | `tools/watoom-code/self_learning/` | Native lesson/context integration and guarded learning lifecycle |
 | `image-scope` | `ansible/roles/watoom-code/files/image-scope/` | Image operations constrained to approved project/output scope |
@@ -105,7 +105,7 @@ When Bazzite is unavailable, a request stays `QUEUED` with `waiting_since` and `
 
 Godot's capture runtime is a separately built additive Xvfb/Mesa EGL image because the production toolkit lacks Xvfb, xauth and EGL. If that image is absent, preflight reports the missing capture image/tool. The systemd user unit must allow Podman's `newuidmap`: `PrivateDevices=yes` and `NoNewPrivileges=yes` caused intermittent helper failures and are omitted. SSH exit 255 is reported as unreachable; a bare string “OOM” is not treated as evidence of a memory kill; a deadline after a script error retains the script error as the cause. Source of routing and runners is in `tools/watoom-code/`, `tools/bazzite-render-worker/`, and the owned skill's `scripts/unreal-export/`; role defaults/rendering are under `ansible/roles/watoom-code/`.
 
-Agent policy is assembled from `ansible/roles/opencode-agent/files/v2-native/_src/shared/69_language_knowledge_tools.md` and `70_bazzite_first_then_rig.md` by `scripts/render-native-agents.py`, then deployed through `ansible/playbooks/watoom-code-agents.yml`. The policy tells agents to check reference tools before guessing, keep working while jobs wait, and submit to the RIG only when status says eligible.
+Agent policy is assembled from `ansible/roles/watoom-code/files/native/_src/shared/69_language_knowledge_tools.md` and `70_bazzite_first_then_rig.md` by `scripts/render-native-agents.py`, then deployed through `ansible/playbooks/watoom-code-agents.yml`. The policy tells agents to check reference tools before guessing, keep working while jobs wait, and submit to the RIG only when status says eligible.
 
 ## MetaHuman package conversion
 

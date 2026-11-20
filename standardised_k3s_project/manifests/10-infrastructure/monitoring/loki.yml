@@ -100,7 +100,7 @@ data:
           if err != null { abort }
           sip = string!(fields.source_ip)
           public_v4 = ip_cidr_contains("0.0.0.0/0", sip) ?? false
-          private = (ip_cidr_contains("10.0.0.0/8", sip) ?? false) || (ip_cidr_contains("172.16.0.0/12", sip) ?? false) || (ip_cidr_contains("192.168.0.0/16", sip) ?? false) || (ip_cidr_contains("127.0.0.0/8", sip) ?? false) || (ip_cidr_contains("169.254.0.0/16", sip) ?? false) || (ip_cidr_contains("100.64.0.0/10", sip) ?? false)
+          private = (ip_cidr_contains("10.0.0.0/8", sip) ?? false) || (ip_cidr_contains("172.16.0.0/12", sip) ?? false) || (ip_cidr_contains("192.168.250.0/16", sip) ?? false) || (ip_cidr_contains("127.0.0.0/8", sip) ?? false) || (ip_cidr_contains("169.254.0.0/16", sip) ?? false) || (ip_cidr_contains("100.64.0.0/10", sip) ?? false)
           origin = if public_v4 && !private { "external IPv4" } else { "internal or unknown" }
           failure = fields.result != "Accepted"
           event_time = sys.timestamp
@@ -134,7 +134,7 @@ data:
           assert!(p.schema == "watoom-security-v1")
           sip = string!(p.source_ip)
           public_v4 = ip_cidr_contains("0.0.0.0/0", sip) ?? false
-          private = (ip_cidr_contains("10.0.0.0/8", sip) ?? false) || (ip_cidr_contains("172.16.0.0/12", sip) ?? false) || (ip_cidr_contains("192.168.0.0/16", sip) ?? false) || (ip_cidr_contains("127.0.0.0/8", sip) ?? false) || (ip_cidr_contains("169.254.0.0/16", sip) ?? false) || (ip_cidr_contains("100.64.0.0/10", sip) ?? false)
+          private = (ip_cidr_contains("10.0.0.0/8", sip) ?? false) || (ip_cidr_contains("172.16.0.0/12", sip) ?? false) || (ip_cidr_contains("192.168.250.0/16", sip) ?? false) || (ip_cidr_contains("127.0.0.0/8", sip) ?? false) || (ip_cidr_contains("169.254.0.0/16", sip) ?? false) || (ip_cidr_contains("100.64.0.0/10", sip) ?? false)
           origin = if public_v4 && !private { "external IPv4" } else { "internal or unknown" }
           pattern = string!(p.pattern)
           assert!(includes(["none","path_traversal_pattern","sql_injection_pattern","sensitive_path_probe","common_admin_path_probe"],pattern))
@@ -171,7 +171,7 @@ data:
           if !exists(p.DownstreamStatus) || !exists(p.ClientHost) { abort }
           sip = string!(p.ClientHost)
           public_v4 = ip_cidr_contains("0.0.0.0/0", sip) ?? false
-          private = (ip_cidr_contains("10.0.0.0/8", sip) ?? false) || (ip_cidr_contains("172.16.0.0/12", sip) ?? false) || (ip_cidr_contains("192.168.0.0/16", sip) ?? false) || (ip_cidr_contains("127.0.0.0/8", sip) ?? false) || (ip_cidr_contains("169.254.0.0/16", sip) ?? false)
+          private = (ip_cidr_contains("10.0.0.0/8", sip) ?? false) || (ip_cidr_contains("172.16.0.0/12", sip) ?? false) || (ip_cidr_contains("192.168.250.0/16", sip) ?? false) || (ip_cidr_contains("127.0.0.0/8", sip) ?? false) || (ip_cidr_contains("169.254.0.0/16", sip) ?? false)
           origin = if public_v4 && !private { "external IPv4" } else { "internal or unknown" }
           status = to_string!(p.DownstreamStatus)
           . = {
@@ -265,6 +265,11 @@ spec:
       - args:
         - -config.file=/etc/loki/loki.yml
         image: docker.io/grafana/loki@sha256:3165cecce301ce5b9b6e3530284b080934a05cd5cafac3d3d82edcb887b45ecd
+        readinessProbe:  # T-0115: gate traffic on the port actually listening (never restarts the pod)
+          tcpSocket:
+            port: 3100
+          periodSeconds: 20
+          failureThreshold: 3
         imagePullPolicy: Always
         name: loki
         ports:
@@ -330,6 +335,11 @@ spec:
         - --config
         - /etc/vector/vector.yml
         image: docker.io/timberio/vector@sha256:93761c26fa3a3793f5f200de0f4cfc6102b5e9803ab33b4830d0873ba8dbdc4f
+        readinessProbe:  # T-0115: gate traffic on the port actually listening (never restarts the pod)
+          tcpSocket:
+            port: 8686
+          periodSeconds: 20
+          failureThreshold: 3
         imagePullPolicy: Always
         name: vector
         ports:

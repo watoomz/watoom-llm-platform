@@ -6,8 +6,8 @@ The browser guide at `https://glance.internal.homelab.example/guide/` is generat
 
 | Output (`config/glance/guide/`) | Source | Renderer |
 |---|---|---|
-| `index.html`, `<page>.html`, `assets/search-index.json`, redirects (`ansible-iac.html`, retired `llm-*.html`) | `docs/guide/*.md` | `scripts/render-glance-guide.py` |
-| `software-design.html` (cross-project integration SDD; repo pointer `docs/SOFTWARE_DESIGN.md`; retired formal docs kept under `docs/llm-platform/retired-guide-pages/`) | `docs/guide/software-design.md` | `scripts/render-glance-guide.py` |
+| `index.html`, `<page>.html`, `assets/search-index.json`, redirects (`ansible-iac.html`, `llm-*.html`) | `docs/guide/*.md` | `scripts/render-glance-guide.py` |
+| `software-design.html` (cross-project integration SDD; repo pointer `docs/SOFTWARE_DESIGN.md`) | `docs/guide/software-design.md` | `scripts/render-glance-guide.py` |
 | `assets/llm-platform/*` reference downloads | `docs/llm-platform/api`, `examples`, `verification.json` | `scripts/render-glance-guide.py` |
 | `job-reference.html` | `config/glance/job-reference.json` | `scripts/render-job-reference.py` |
 | `pipeline-prompts.html` | `config/glance/pipeline-prompts.json` | `scripts/render-pipeline-prompts.py` |

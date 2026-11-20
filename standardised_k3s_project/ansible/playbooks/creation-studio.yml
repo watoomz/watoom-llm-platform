@@ -1,0 +1,10 @@
+---
+# On via ../vars/creation-studio.yml (T-0117); converged by site.yml --tags platform.
+- name: Creation Studio (SDXL + MOSS Image Studio proxy; Mesh telemetry only)
+  hosts: homelab
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../vars/creation-studio.yml
+  roles:
+    - role: creation-studio

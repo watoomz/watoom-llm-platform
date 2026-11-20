@@ -418,13 +418,17 @@ def run_phase(policy, source_inventory, evidence_path, phase_id, vars_file, outp
     os.umask(0o077); out.mkdir(mode=0o700, parents=True)
     results = []
     for name in phase['playbooks']:
-        playbook = PROJECT / 'ansible/playbooks' / name
+        # An entry is 'file.yml' or 'file.yml:tag1,tag2' (tagged parts of a combined playbook).
+        file_name, _, tags = name.partition(':')
+        playbook = PROJECT / 'ansible/playbooks' / file_name
         if not playbook.is_file():
-            raise ValueError('Owning playbook missing: ' + name)
-        with (out / (name + '.log')).open('w') as log:
+            raise ValueError('Owning playbook missing: ' + file_name)
+        args = [str(PROJECT / 'ansible-run'), 'playbooks/' + file_name, '-e', '@' + str(Path(vars_file).resolve())]
+        if tags:
+            args += ['--tags', tags]
+        with (out / (name.replace(':', '--').replace(',', '_') + '.log')).open('w') as log:
             env = dict(os.environ, ROOT=str(PROJECT))
-            result = subprocess.run([str(PROJECT / 'ansible-run'), 'playbooks/' + name, '-e', '@' + str(Path(vars_file).resolve())],
-                                    cwd=PROJECT, env=env, stdout=log, stderr=subprocess.STDOUT)
+            result = subprocess.run(args, cwd=PROJECT, env=env, stdout=log, stderr=subprocess.STDOUT)
         results.append({'playbook': name, 'exit': result.returncode})
         atomic_json(out / 'phase.json', {'phase': phase_id, 'results': results, 'scope': 'Ansible execution only, runtime acceptance still required'})
         if result.returncode:

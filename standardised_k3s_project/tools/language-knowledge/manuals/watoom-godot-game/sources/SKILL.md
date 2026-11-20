@@ -135,10 +135,34 @@ python3 scripts/gg_combat.py check    --project /abs/path/game           # pure 
 python3 scripts/gg_combat.py slice    --project /abs/path/game           # a real CharacterBody3D player+dummy: sword (melee range), gun (real PhysicsServer raycast), spell (instant at range), cooldowns, death
 python3 scripts/gg_combat.py pickups  --project /abs/path/game           # Area3D pickups granting/healing on overlap, one-shot and timed-respawn
 python3 scripts/gg_combat.py mp       --project /abs/path/game           # TWO real concurrent godot processes over ENetMultiplayerPeer: proves a client's direct call is rejected and only its rpc_id(1,...) call changes the server's own health
+python3 scripts/gg_combat.py spec     --project /abs/path/game --spec combat.json (--weapon NAME | --spell NAME)   # T-0075: load+validate a declarative weapon/spell spec (templates/combat_spec.example.json) and prove ONE named entry live -- its own delivery (melee/raycast/instant), cooldown, effect and cost, data-driven instead of hardcoded like `slice` above
 python3 scripts/gg_vfx.py   check     --project /abs/path/game           # renders projectile/muzzle/impact/aura GPUParticles3D recipes and proves each one actually drew non-flat pixels
+python3 scripts/gg_vfx.py   check     --project /abs/path/game --combat-spec combat.json   # T-0075: same render-and-measure check, fed every vfx recipe pulled straight out of a weapon/spell spec instead of a separately hand-written fx.json
 python3 scripts/gg_anim.py  check     --project /abs/path/game --mesh res://... --states idle=res://...,walk=res://...   # merges separately-exported animation glbs onto a character's own skeleton and drives an AnimationNodeStateMachine across them
 ```
-Exit codes match every other stage: 0 pass, 1 a check failed, 2 refused, 3 fatal engine log line, 4 no verdict, 5 runner failure. `gg_anim.py` is not available as a native-worker job step (its `--mesh`/`--states` carry `res://` asset paths the worker's token guard does not allow, like `gg_assets.py find`/`use`): run it in your own session. `gg_vfx.py check` has no engine process without a GPU-less render pass, so it goes through the same `selftest_gate`/renderer convention as `gg_ui.py shot`.
+Exit codes match every other stage: 0 pass, 1 a check failed, 2 refused, 3 fatal engine log line, 4 no verdict, 5 runner failure. `gg_anim.py` is not available as a native-worker job step (its `--mesh`/`--states` carry `res://` asset paths the worker's token guard does not allow, like `gg_assets.py find`/`use`): run it in your own session. `gg_vfx.py check` has no engine process without a GPU-less render pass, so it goes through the same `selftest_gate`/renderer convention as `gg_ui.py shot`. `gg_combat.py spec`'s `--spec` is also not a native-worker job step, for the same reason `gg_vfx.py check --spec`/`--combat-spec` are not: the path is not an allowed worker token.
+
+## Step 11: dungeon kit catalog and procedural layout (read `references/gg-dungeon.md`; pure logic, no engine needed)
+
+```bash
+python3 scripts/gg_dungeon.py catalog-init     --project /abs/path/game --pieces-dir res://assets/dungeon/kit1   # writes UNCLASSIFIED stubs; edit kind/footprint/sockets by hand
+python3 scripts/gg_dungeon.py catalog-list     --project /abs/path/game
+python3 scripts/gg_dungeon.py catalog-validate --project /abs/path/game
+python3 scripts/gg_dungeon.py layout           --project /abs/path/game --seed 1 --rooms 8    # deterministic for a given (catalog, seed, rooms)
+python3 scripts/gg_dungeon.py verify           --project /abs/path/game                        # independent connectivity/overlap audit; never trusts layout's own connections list
+```
+Pieces are already-converted project-local `res://` scenes: converting an owned Unreal dungeon kit to `.glb`/`.tscn` is a separate, rig-touching piece of work, not part of this stage. No render/visual check (the `gg_catalog.py inspect` equivalent) is built yet; `verify`'s pass is a statement about the grid graph only, not about what the dungeon looks like once built.
+
+## Step 12: destructible props and the first-person gun (read `references/gg-destruction.md`; FPS games, after Step 10)
+
+```bash
+python3 scripts/gg_destruction.py fracture --source /abs/path/wall.fbx --out /abs/path/game/assets/destruction/wall.glb --pieces 24
+python3 scripts/gg_destruction.py init  --project /abs/path/game     # the 24-piece test wall
+python3 scripts/gg_destruction.py check --project /abs/path/game [--model res://assets/destruction/wall.glb]
+python3 scripts/gg_destruction.py fps   --project /abs/path/game [--gun res://assets/weapons/rifle.glb]   # first-person gun slice
+python3 scripts/gg_destruction.py range --project /abs/path/game --wall res://... --gun res://... [--gun-rotation X Y Z]   # playable range scene
+```
+`fracture` needs Blender (GG_BLENDER or /data/ai/toolchains/blender): run it in your own session, not as a worker step. Exit 1 with a `warning` = the source mesh is open (`volume_ratio` far from 1). `check` exits 0 only when real gun raycasts break the prop into rigid pieces that fall, settle on the floor and leave a hole; `fps` only when the first-person gun, driven by real input, looks, fires, reloads, recoils and breaks the wall. Place a prop in a level with `addons/gg/game/destructible.gd` (`model` = the glb) and put `addons/gg/game/fps_weapon.gd` under the player's camera (`CameraRig/Camera3D`); do not write your own break or shooting code.
 
 ## Running the steps through the native worker
 

@@ -1,6 +1,6 @@
 import pathlib,json,subprocess,hashlib,shutil,os,urllib.parse
 os.umask(0o077)
-BASE=pathlib.Path(__file__).parent;ROOT=pathlib.Path('/data/ai/watoom-code-rig-jobs');NS='watoom-code-rig-jobs';ORIG='watoom-code';APP='watoom-code';FIX='/data/ai/projects/games/rig-async-qualification-20261026'
+BASE=pathlib.Path(__file__).parent;GUARD=BASE.parent.parent/'ansible/roles/watoom-code/files/coordinator-guard';ROOT=pathlib.Path('/data/ai/watoom-code-rig-jobs');NS='watoom-code-rig-jobs';ORIG='watoom-code';APP='watoom-code';FIX='/data/ai/projects/games/rig-async-qualification-20261026'
 def get(ns,kind,name):return json.loads(subprocess.check_output(['kubectl','-n',ns,'get',kind,name,'-o','json'],text=True))
 def apply(d):
  p=subprocess.run(['kubectl','apply','-f','-'],input=json.dumps(d),capture_output=True,text=True)
@@ -10,7 +10,7 @@ assert not ROOT.exists(),'Existing isolated stage must be reconciled, never repl
 for name in ('home','config','workspace','generated'):p=ROOT/name;p.mkdir(parents=True,exist_ok=True);os.chown(p,1001,1001)
 os.chown(ROOT,1001,1001)
 for name in ('agents','skills'):shutil.copytree(pathlib.Path('/data/ai/watoom-code/config')/name,ROOT/'config'/name,ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
-hash=hashlib.sha256((BASE/'guard-source/index.js').read_bytes()).hexdigest();guard=ROOT/'config/watoom-tools'/('coordinator-guard-'+hash);shutil.copytree(BASE/'guard-source',guard)
+hash=hashlib.sha256((GUARD/'index.js').read_bytes()).hexdigest();guard=ROOT/'config/watoom-tools'/('coordinator-guard-'+hash);shutil.copytree(GUARD,guard,ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
 d=json.loads(pathlib.Path('/data/ai/watoom-code/config/opencode.json').read_text());d['plugins']=[{'package':'/config/watoom-tools/coordinator-guard-'+hash,'options':{'rigAsyncStage':True,'rigGameProjects':[FIX],'verifiedVisionModels':['watoom/tiel-coder-35b-a3b-mtp']}}];d['model']='watoom/tiel-coder-35b-a3b-mtp';d.pop('watoom_specialists',None);d.pop('mcp',None);(ROOT/'config/opencode.json').write_text(json.dumps(d,indent=2)+'\n')
 for root,dirs,files in os.walk(ROOT):
  os.chown(root,1001,1001)

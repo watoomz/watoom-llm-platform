@@ -1,28 +1,32 @@
-# AI application directory layout
+# AI directory layout
 
-Current inventory and production recovery point: 13 October 2026. Historical procedures retain their qualification dates.
+Host service state lives under `/app/ai/services`, build contexts and compiler output under `/app/ai/builds`, and everything large (models, projects, assets, caches, application data) under `/data/ai`.
 
-Service state lives under `/app/ai/services`; build contexts and compiler output live under `/app/ai/builds`. Model weights, project workspaces, generated assets and large caches remain under `/data/ai`.
+## `/app/ai`
 
-| Previous path | Current path |
+| Path | Holds |
 |---|---|
-| `/app/opencode-agent-v2-canary` | `/app/ai/services/opencode` |
-| `/app/open-webui` | `/app/ai/services/open-webui` |
-| `/app/watoom-kali-mcp` | `/app/ai/services/kali/mcp` |
-| `/app/watoom-kali-workbench` | `/app/ai/services/kali/workbench` |
-| `/app/watoom-kali-console` | `/app/ai/services/kali/console` |
-| `/app/watoom-kali-agent-gateway` | `/app/ai/services/kali/agent-gateway` |
-| `/app/llama.cpp-src` | `/app/ai/builds/llama.cpp/source` |
-| `/app/llama.cpp-builds` | `/app/ai/builds/llama.cpp/builds` |
-| `/app/llama.cpp-image-sm86` | `/app/ai/builds/llama.cpp/image-sm86` |
-| `/app/llamampere-builds` | `/app/ai/builds/llamampere` |
-| `/app/pi-kali-agent-build` | `/app/ai/builds/pi-kali-agent` |
-| `/app/watoom-kali-control-image` | `/app/ai/builds/kali-control-image` |
+| `/app/ai/services/opencode/home` | Mesh bridge home (`llm_mesh_bridge_home`), including `watoom-tools/watoom-llama-mesh.py` |
+| `/app/ai/services/opencode/observability-vector` | WatooM Code observability pipeline state |
+| `/app/ai/services/agentmemory` | AgentMemory service files |
+| `/app/ai/services/kali/{mcp,workbench}` | Kali Workbench MCP and workbench state |
+| `/app/ai/builds/llama.cpp` | llama.cpp source, builds and the sm86 image context |
+| `/app/ai/builds/llamampere` | llamampere builds |
+| `/app/ai/builds/kali-workbench`, `kali-control-image` | Kali image build contexts |
 
-OpenCode V2 remains the production baseline. Kubernetes resource names and service endpoints are unchanged. There are no compatibility symlinks at old paths. Build-selection links internal to build directories are preserved.
+## `/data/ai`
 
-Ollama is retired. Open WebUI chat uses llm-router; document embeddings use the local sentence-transformer. Historical Ollama manifest: `config/retired/ollama/ollama.yml`; model data is retained under `/data/ai/artifacts/ai-app-migration-20261004-190417/originals/ollama`.
-
-Open WebUI retains the same named PVC, bound to `open-webui-data-ai-pv`; its host path is `/app/ai/services/open-webui/data`. The retired PV used Retain policy.
-
-Recovery snapshots and rollback notes: `/data/ai/artifacts/ai-app-migration-20261004-190417`.
+| Path | Holds |
+|---|---|
+| `/data/ai/watoom-code` | WatooM Code application state and `config/` (opencode.json, agents, `watoom-tools/` versioned plugins) |
+| `/data/ai/watoom-code-rig-jobs` | rig-jobs instance state |
+| `/data/ai/projects` | project workspaces, grouped by space (see [project storage](PROJECT_STORAGE.md)) |
+| `/data/ai/models` | model weights (`gguf/`), outside Git |
+| `/data/ai/assets` | shared asset catalogue, Fab downloads, generated assets |
+| `/data/ai/knowledge` | language-knowledge cards, manifests and vectors |
+| `/data/ai/llama-mesh` | Mesh job records |
+| `/data/ai/model-manager-stage`, `/data/ai/model-lab-state` | Model Manager and model-lab state |
+| `/data/ai/writing-studio`, `/data/ai/creation-studio` | studio state |
+| `/data/ai/tickets` | tickets board data |
+| `/data/ai/helper-scripts` | installed helper scripts and controller state |
+| `/data/ai/private`, `/data/ai/secrets` | private material, never in Git |

@@ -1,0 +1,742 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Creation Studio</title>
+<style>
+:root {
+  --bg: #f6f6f4; --panel: #ffffff; --ink: #1c1d1f; --muted: #6a6d73; --line: #dcdcd8;
+  --accent: #5b4fb0; --accent-ink: #ffffff; --ok: #2f7d4f; --bad: #b3261e; --chip: #efeee9;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #17181a; --panel: #212326; --ink: #ececea; --muted: #9a9da3; --line: #34363a;
+    --accent: #9d90f0; --accent-ink: #171822; --ok: #62b886; --bad: #f2877f; --chip: #2a2c30;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #17181a; --panel: #212326; --ink: #ececea; --muted: #9a9da3; --line: #34363a;
+  --accent: #9d90f0; --accent-ink: #171822; --ok: #62b886; --bad: #f2877f; --chip: #2a2c30;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { padding: 16px; border-bottom: 1px solid var(--line); display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+h1 { font-size: 18px; margin: 0; }
+header .sub { color: var(--muted); font-size: 13px; }
+main { max-width: 980px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 20px; }
+section.pipeline { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+section.pipeline > h2 { font-size: 16px; margin: 0 0 4px; }
+section.pipeline > .sub { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+textarea, input, select { width: 100%; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+textarea { min-height: 76px; resize: vertical; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); padding: 8px 14px; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; margin-top: 12px; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.bar { height: 8px; background: var(--chip); border-radius: 999px; overflow: hidden; margin: 10px 0 4px; }
+.bar > div { height: 100%; width: 0; background: var(--accent); transition: width .4s; }
+.msg { font-size: 13px; color: var(--muted); min-height: 18px; }
+.msg.err { color: var(--bad); }
+.result { margin-top: 10px; }
+.result img { max-width: 100%; border-radius: 8px; border: 1px solid var(--line); background: var(--chip); }
+.meta { font-size: 12.5px; color: var(--muted); }
+details.help { margin-top: 14px; font-size: 13px; color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 2px 12px; }
+details.help summary { cursor: pointer; color: var(--ink); font-weight: 600; padding: 8px 0; }
+details.help h4 { color: var(--ink); margin: 10px 0 2px; font-size: 13px; }
+details.help p { margin: 4px 0; }
+details.help code, details.help .preset { display: block; background: var(--chip); border-radius: 6px; padding: 6px 8px; margin: 4px 0; font: 12.5px ui-monospace, monospace; color: var(--ink); white-space: pre-wrap; }
+details.help ul { margin: 4px 0 8px 18px; padding: 0; }
+.pill { display: inline-block; font-size: 11.5px; padding: 2px 8px; border-radius: 999px; background: var(--chip); color: var(--muted); margin-left: 8px; }
+.pill.ok { color: var(--ok); } .pill.bad { color: var(--bad); }
+.blocked { border: 1px dashed var(--bad); border-radius: 8px; padding: 10px; font-size: 13px; color: var(--ink); background: var(--chip); margin-top: 10px; }
+.blocked:empty { display: none; }
+.btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.btns button.primary { margin-top: 0; }
+.actions { margin-top: 12px; }
+label.check { display: flex; gap: 8px; align-items: flex-start; color: var(--ink); }
+label.check input { width: auto; margin-top: 3px; }
+.revise { margin-top: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.revise textarea { min-height: 56px; }
+[hidden] { display: none !important; }
+pre.tail { max-height: 180px; overflow: auto; background: var(--chip); border-radius: 6px; padding: 8px; font: 12px ui-monospace, monospace; white-space: pre-wrap; word-break: break-word; margin: 6px 0 0; }
+iframe.preview { width: 100%; height: 560px; border: 1px solid var(--line); border-radius: 8px; background: #fff; margin-top: 8px; display: block; }
+.links { font-size: 13px; margin-top: 6px; display: flex; gap: 14px; flex-wrap: wrap; }
+.links a, .recent a { color: var(--accent); }
+ul.recent { list-style: none; padding: 0; margin: 6px 0 0; font-size: 13px; }
+ul.recent li { padding: 4px 0; border-top: 1px solid var(--line); display: flex; gap: 8px; align-items: baseline; }
+ul.recent li .when { color: var(--muted); font-size: 12px; white-space: nowrap; }
+ul.recent li .p { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gpunow { max-width: 980px; margin: 12px auto 0; padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; font-size: 13px; }
+.gpunow .now { font-weight: 600; }
+.gpunow ul { list-style: none; margin: 6px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 4px 14px; color: var(--muted); }
+.gpunow li b { color: var(--ink); font-weight: 600; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); margin-right: 6px; vertical-align: 1px; }
+.dot.ok { background: var(--ok); } .dot.bad { background: var(--bad); } .dot.busy { background: var(--accent); }
+dl.summary { display: grid; grid-template-columns: max-content 1fr; gap: 3px 14px; font-size: 13px; margin: 10px 0 0; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; }
+dl.summary dt { color: var(--muted); } dl.summary dd { margin: 0; overflow-wrap: anywhere; }
+dl.summary dd.bad { color: var(--bad); } dl.summary dd.ok { color: var(--ok); }
+ul.recent li .m { color: var(--muted); font-size: 12px; white-space: nowrap; }
+@media (max-width: 600px) { iframe.preview { height: 380px; } .gpunow { margin: 12px 16px 0; } ul.recent li { flex-wrap: wrap; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Creation Studio</h1>
+  <span class="sub">Image, 3D-mesh and GLB-asset generation — a thin proxy in front of Model Manager, MOSS Image Studio, the Mesh pipeline and the LLM router</span>
+</header>
+<div class="gpunow" id="gpuNowBox" aria-live="polite">
+  <div><span class="dot" id="gpuDot"></span><span class="now" id="gpuNow">Reading the GPU…</span> <span class="meta" id="gpuCtl"></span></div>
+  <ul>
+    <li><b>SDXL:</b> <span id="whatSdxl">…</span></li>
+    <li><b>MOSS:</b> <span id="whatMoss">…</span></li>
+    <li><b>Mesh:</b> <span id="whatMesh">…</span></li>
+    <li><b>GLB coder:</b> <span id="whatGlb">…</span></li>
+  </ul>
+</div>
+<main>
+
+<section class="pipeline" id="sdxl">
+  <h2>SDXL<span class="pill" id="sdxlStatus">checking…</span></h2>
+  <div class="sub">Base checkpoint, installed NSFW-3D checkpoint, and the 3d-animation-style-sdxl LoRA — generated through Model Manager's existing <code>/api/generate</code>, not a new pipeline.</div>
+  <label for="sdxlModel">Installed model (from Model Manager's catalog)</label>
+  <select id="sdxlModel"><option value="">Loading installed models…</option></select>
+  <label for="sdxlPrompt">Prompt</label>
+  <textarea id="sdxlPrompt" maxlength="4096" placeholder="A blue cube on a plain background"></textarea>
+  <button class="primary" id="sdxlGo">Generate</button>
+  <div class="bar" aria-hidden="true"><div id="sdxlBar"></div></div>
+  <div class="msg" id="sdxlMsg" role="status" aria-live="polite"></div>
+  <div class="result" id="sdxlResult"></div>
+  <details class="help">
+    <summary>How this section works</summary>
+    <ul>
+      <li><b>Makes:</b> one PNG image from your prompt with the chosen installed SDXL model.</li>
+      <li><b>Runs:</b> as a Model Manager job. It waits ("waiting native idle") until WatooM Code has nothing running, then generates.</li>
+      <li><b>Takes:</b> seconds once it has the GPU; the wait for an idle WatooM Code can be longer.</li>
+      <li><b>Output:</b> the image shows here; Model Manager keeps the verified image under <code>/data/ai/projects/images/generated</code>.</li>
+    </ul>
+  </details>
+  <details class="help">
+    <summary>Best prompts for SDXL</summary>
+    <h4>Composition and style keywords</h4>
+    <p>SDXL responds well to a short subject clause followed by comma-separated style/quality tags, roughly in order of
+    importance: subject &amp; action, setting/background, lighting, camera/lens framing, then quality boosters. Example:</p>
+    <code>a weathered stone lighthouse on a cliff at dusk, dramatic orange sky, waves crashing below, wide-angle shot, highly detailed, sharp focus, 8k</code>
+    <p>This works because SDXL's text encoder weighs earlier tokens more heavily and tags act as independent "knobs" rather
+    than a grammatical sentence — stacking unrelated clauses with commas is normal and expected, unlike natural-language
+    prompting for a chat model.</p>
+    <h4>Negative prompts</h4>
+    <p>Negative prompts remove the model's common failure modes rather than "oppose" the positive prompt. A sound general
+    SDXL negative baseline:</p>
+    <code>low quality, blurry, deformed, extra limbs, extra fingers, bad anatomy, watermark, text, jpeg artifacts, oversaturated</code>
+    <p>Add subject-specific negatives (e.g. <code>plastic skin, mannequin</code> for portraits) rather than a huge generic
+    list — an overloaded negative prompt pulls the model toward a bland "average" image.</p>
+    <h4>The installed NSFW-3D checkpoint</h4>
+    <p>Whichever model is installed under this role in Model Manager is a checkpoint fine-tune, so it already carries its
+    own stylistic bias (often a stylised 3D-render look) without extra trigger words — treat it like the base checkpoint
+    for prompting purposes, and prefer its own model card/README (if Model Manager's Inspect step surfaced one) for any
+    checkpoint-specific tags.</p>
+    <h4>The 3d-animation-style-sdxl LoRA</h4>
+    <p><strong>Trigger words are unconfirmed for this specific LoRA</strong> — its Hugging Face page
+    (<code>thejagstudio/3d-animation-style-sdxl</code>, base <code>stabilityai/stable-diffusion-xl-base-1.0</code>)
+    does not publish one. General, sound guidance for an unconfirmed SDXL LoRA:</p>
+    <ul>
+      <li>Start at LoRA weight <strong>0.6–0.8</strong> (not 1.0) and raise it only if the style is too weak; most SDXL
+      style LoRAs over-saturate or distort anatomy above ~1.0.</li>
+      <li>If the LoRA's author did publish a trigger word/phrase, put it early in the prompt, close to the subject —
+      LoRA triggers usually act like a style tag the fine-tune was trained to associate with its look.</li>
+      <li>Without a confirmed trigger, describe the desired look directly instead of guessing one
+      (e.g. <code>3D animated movie style, Pixar-like rendering, soft global illumination</code>) and compare against
+      the LoRA's gallery images on its model card to judge whether it is actually engaging.</li>
+      <li>Combine with the base checkpoint, not the NSFW-3D checkpoint, unless you have confirmed the LoRA was trained
+      against that checkpoint's distribution — a LoRA fine-tuned against one SDXL checkpoint can look subtly different
+      merged onto another.</li>
+    </ul>
+  </details>
+</section>
+
+<section class="pipeline" id="moss">
+  <h2>MOSS Image Studio<span class="pill" id="mossStatus">checking…</span></h2>
+  <div class="sub">Proxied to the existing MOSS Image Studio service — same GPU session and generation API as
+    <a id="mossLink" href="https://glance.internal.homelab.example/moss/" target="_blank" rel="noopener">its own page</a>.</div>
+  <label for="mossPreset">Camera / film look preset (optional)</label>
+  <select id="mossPreset"><option value="">No look — use the scene as written</option></select>
+  <label for="mossScene">Scene</label>
+  <textarea id="mossScene" maxlength="4000" placeholder="a waist-up portrait of a woman in her mid twenties, standing against a sunlit plaster wall"></textarea>
+  <div class="meta" id="mossSession"></div>
+  <button id="mossSessionBtn">Start GPU session</button>
+  <button class="primary" id="mossGo">Generate</button>
+  <div class="bar" aria-hidden="true"><div id="mossBar"></div></div>
+  <div class="msg" id="mossMsg" role="status" aria-live="polite"></div>
+  <div class="result" id="mossResult"></div>
+  <details class="help">
+    <summary>How this section works</summary>
+    <ul>
+      <li><b>Makes:</b> one photo-style image from the scene, optionally wrapped in a camera/film look.</li>
+      <li><b>Needs a GPU session:</b> <em>Start GPU session</em> pauses the language model, and only works while the primary
+      model is loaded (not after a Warm up of another model). The session ends with the button or after idle minutes, and the
+      language model comes back on its own.</li>
+      <li><b>Takes:</b> the first image after starting a session loads MOSS (about 1.5–2 min); after that about 35–40 s for a 50-step 832×1216 image (measured 2026-11-20).</li>
+      <li><b>Output:</b> shown here and saved by MOSS under <code>/data/ai/projects/images/moss-image/output</code>.</li>
+    </ul>
+  </details>
+  <details class="help">
+    <summary>Best prompts for MOSS Image Studio</summary>
+    <h4>The <code>look, scene, look</code> wrapping convention</h4>
+    <p>Each of the Studio's 52 presets is recipe text (the "look") that gets said once before your scene and once again
+    after it, plus the recipe's own negative prompt is appended automatically. Write <em>only what is physically in the
+    picture</em> — subject, pose, setting — and leave grain, colour cast and lens character to the preset; repeating that
+    styling yourself fights the preset instead of reinforcing it.</p>
+    <h4>Representative presets (curated and licensed — see MOSS's own page for the full 52)</h4>
+    <p>These are a sample across the Studio's four categories; the complete, authoritative list with full recipe text is
+    in <a href="https://glance.internal.homelab.example/moss/" target="_blank" rel="noopener">MOSS Image Studio</a> itself under
+    "Camera / film look":</p>
+    <div class="preset"><b>Kodak Portra 400</b> (Film stocks) — 35mm color negative film photo, warm natural skin tones, creamy highlights, soft contrast…</div>
+    <div class="preset"><b>Kodak Ektar 100</b> (Film stocks) — 35mm color negative film photo, very saturated punchy colors, vivid reds and blues, crisp…</div>
+    <div class="preset"><b>Disposable</b> (Cameras) — Overexposed snapshot, flash fired in daylight blowing out bright skin, warm yellow-green cast…</div>
+    <div class="preset"><b>Holga</b> (Cameras) — Square photo centered in the frame, with wide solid black bars on the left and right…</div>
+    <div class="preset"><b>Warm golden</b> (General looks) — Warm golden color, honey-toned highlights, soft amber shadows, gentle film grain.</div>
+    <div class="preset"><b>Faded 1970s print</b> (General looks) — Faded 1970s photo print, washed out colors drifting toward orange and magenta…</div>
+    <div class="preset"><b>Light leaks</b> (Broken film) — Red and orange light leaks streaking in from one edge of the frame, burned-out patches…</div>
+    <div class="preset"><b>Fogged film</b> (Broken film) — Fogged film, a milky white haze over the whole picture, washed-out low contrast, pale fade.</div>
+    <p>Prompts are copied from the blog author's published recipes (robertcreative.com) for private homelab use per the
+    Studio's own licence note — confirm reuse terms before redistributing them further.</p>
+  </details>
+</section>
+
+<section class="pipeline" id="mesh">
+  <h2>Mesh (3D geometry)<span class="pill" id="meshStatus">checking…</span></h2>
+  <div class="sub">LLaMA-Mesh text-to-geometry, via the existing G3H pipeline (shared with OpenCode; queue is limited).</div>
+  <label for="meshPrompt">Geometry prompt</label>
+  <textarea id="meshPrompt" maxlength="8192" placeholder="Create a simple low-poly rounded rock. Return one complete Wavefront OBJ mesh with valid vertices and triangular faces."></textarea>
+  <button class="primary" id="meshGo">Generate</button>
+  <div class="msg" id="meshMsg" role="status" aria-live="polite"></div>
+  <div class="meta" id="meshTelemetry">Reading GPU controller status…</div>
+  <div class="blocked" id="meshBlocked"></div>
+  <div class="result" id="meshResult"></div>
+  <details class="help">
+    <summary>How this section works</summary>
+    <ul>
+      <li><b>Makes:</b> rough untextured geometry (an OBJ, cleaned and converted by the Blender stage) from a text prompt.</li>
+      <li><b>Runs:</b> through the shared G3H pipeline; the GPU controller switches to LLaMA-Mesh for the run and back afterwards. The queue is shared with WatooM Code.</li>
+      <li><b>Output:</b> the pipeline's artifact links appear here when a run passes validation.</li>
+    </ul>
+  </details>
+  <details class="help">
+    <summary>Best prompts for Mesh generation</summary>
+    <h4>What the model actually produces</h4>
+    <p>LLaMA-Mesh is a language model fine-tuned to emit a Wavefront OBJ (plain text <code>v</code>/<code>f</code> lines)
+    as its chat completion, not an image-conditioned 3D model. Treat it like prompting a careful, literal-minded text
+    model for a structured file, not like an image generator.</p>
+    <h4>Keep it short, simple and low-poly-biased</h4>
+    <p>Ask for one concrete object with a simple silhouette; the model writes better geometry for forms it can describe
+    as a small number of primitives than for intricate or highly detailed scenes. The project's own verified acceptance
+    run used exactly this kind of prompt (an 8-vertex, 12-face cube), and its production skill guidance uses:</p>
+    <code>Create a simple low-poly rounded rock. Return one complete Wavefront OBJ mesh with valid vertices and triangular faces.</code>
+    <p>Useful patterns: name the object plainly ("a simple wooden chair", "a low-poly pine tree"), ask explicitly for
+    <em>triangular faces</em> (the validator requires a clean, finite, properly-indexed mesh), and avoid asking for
+    multiple unrelated objects, articulation, or fine surface detail in one prompt.</p>
+    <h4>Honest limits — do not overclaim fidelity</h4>
+    <p>The pipeline's own acceptance record describes its output as "generated prototype geometry without authored UVs
+    or textures." Expect a rough, unrigged, untextured mesh suitable for silhouette/blockout review — not a
+    game-ready asset. Every generation here would also go through the existing Blender cleanup/validation stage before
+    a GLB is produced, exactly as the pipeline already does; nothing about that validation is changed by this page.</p>
+  </details>
+</section>
+
+<section class="pipeline" id="glb">
+  <h2>GLB 3D Coder<span class="pill" id="glbStatus">checking…</span></h2>
+  <div class="sub">The GLB 3D Coder (<span id="glbModelName">ccore's fine-tune, MTP repack Q8_0</span>) through the LLM router: it writes one Three.js page that previews the
+    asset and has an <b>Export GLB</b> button for Godot. The GPU switches to this model for the run (a minute or two from cold).</div>
+  <div class="row"><span class="meta" id="glbGpu">Reading the GPU…</span>
+    <button id="glbWarm" title="Load the GLB coder on the GPU now so Generate starts at once">Warm up</button></div>
+  <label for="glbIdea">Domain / prompt idea (fills the prompt; edit it after)</label>
+  <select id="glbIdea"><option value="">Pick a domain or gallery prompt…</option></select>
+  <details class="help" id="glbBuilder">
+    <summary>Prompt builder (the model card's structure: main object first, then its parts)</summary>
+    <p>Fill in what you know; empty fields are left out. <b>Build prompt</b> writes a detailed prompt into the box below for you to edit.</p>
+    <label for="pbObject">Main object (what it is)</label>
+    <input id="pbObject" maxlength="300" placeholder="a medieval wooden treasure chest / a sci-fi hover bike / a goblin archer / a market stall">
+    <label for="pbParts">Components and parts (one per line or comma-separated)</label>
+    <textarea id="pbParts" maxlength="1500" placeholder="four plank walls and a solid bottom&#10;an arched lid on two hinges&#10;iron corner bands and a front lock plate"></textarea>
+    <div class="row">
+      <div><label for="pbColours">Colours</label><input id="pbColours" maxlength="300" placeholder="warm brown wood, dark iron, brass rivets"></div>
+      <div><label for="pbMaterials">Materials and surface look</label><input id="pbMaterials" maxlength="300" placeholder="rough planks, matte forged iron"></div>
+    </div>
+    <label for="pbLayout">Placement, size and proportions</label>
+    <input id="pbLayout" maxlength="400" placeholder="about 1 m wide, the lid hinged along the back edge, the lock centred on the front">
+    <label for="pbMove">Movement (leave empty for a static asset)</label>
+    <input id="pbMove" maxlength="400" placeholder="the lid opens about 100 degrees and closes again in a loop">
+    <label for="pbStyle">Style and extra notes</label>
+    <input id="pbStyle" maxlength="400" placeholder="stylised low-poly, readable silhouette, no extra scenery">
+    <label class="check"><input type="checkbox" id="pbSolid" checked> Ask for closed, solid geometry: every part modelled on all sides and attached (prevents missing walls or sides)</label>
+    <div class="btns actions"><button type="button" id="pbBuild">Build prompt</button><span class="meta" id="pbMsg"></span></div>
+  </details>
+  <label for="glbPrompt">Prompt</label>
+  <textarea id="glbPrompt" maxlength="8192" placeholder="Create a short iron sword with a leather-wrapped grip."></textarea>
+  <div class="meta" id="glbSettings"></div>
+  <div class="btns actions">
+    <button class="primary" id="glbGo">Generate</button>
+    <button id="glbCancel" disabled>Cancel</button>
+  </div>
+  <div class="msg" id="glbMsg" role="status" aria-live="polite"></div>
+  <div class="bar" aria-hidden="true"><div id="glbBar"></div></div>
+  <div class="meta" id="glbStats"></div>
+  <dl class="summary" id="glbSummary" hidden></dl>
+  <details id="glbLive"><summary class="meta">Live output (last lines)</summary><pre class="tail" id="glbTail"></pre></details>
+  <div class="result" id="glbResult"></div>
+  <details class="help">
+    <summary>How this section works</summary>
+    <ul>
+      <li><b>Makes:</b> one standalone Three.js web page that shows the asset and has an <b>Export GLB</b> button. The .glb itself
+      is produced in your browser when you press that button.</li>
+      <li><b>Runs:</b> through the LLM router. If another model is loaded, the GPU switches to the GLB coder first (1–3 min).</li>
+      <li><b>Takes:</b> about 4–5 minutes: ~85 s before the first token (switch + thinking starts), then ~15–19K tokens at ~95–100 tok/s (measured 2026-11-19/20).</li>
+      <li><b>Can fail silently:</b> the model sometimes writes broken JavaScript, so the preview stays blank. The page check under the
+      result reports JavaScript errors, a missing 3D canvas or a frozen page; <b>Repair with the model</b> sends the page and the
+      error back for a corrected version (a new run, usually shorter).</li>
+      <li><b>Missing walls or sides</b> are geometry the model never built, not a display fault. Orbit around the asset, write what
+      is wrong under the preview and press <b>Revise with the model</b>. The <b>Prompt builder</b> also helps: the card recommends
+      naming the main object first, then its parts, colours, materials, placement and movement.</li>
+      <li><b>Output:</b> each run is kept under <code>/data/ai/creation-studio/glb-3d-coder</code> (the .html page and a .json record).</li>
+    </ul>
+  </details>
+
+  <details class="help" id="glbRecentBox">
+    <summary>Recent GLB generations</summary>
+    <ul class="recent" id="glbRecent"></ul>
+  </details>
+  <details class="help">
+    <summary>Best prompts for the GLB 3D Coder</summary>
+    <h4>From the model card</h4>
+    <p>Start with a short idea, or for a detailed request <b>name the main object first, then describe its components,
+    colors, materials, placement and intended movement</b>. The dropdown holds all 25 of the card's domains with its prompt
+    idea for each, plus the card's gallery prompts (two of them are full detailed briefs to copy the shape of).</p>
+    <code>Create a magnetic-rail rescue engineer character. Show an adult specialist in a grounded stance wearing … Use a plain presentation without extra scenery. Keep it static.</code>
+    <h4>Animation</h4>
+    <p>Ask for animation explicitly ("with an opening animation", "a rotating objective turret") and check it is in the
+    exported GLB; otherwise the model makes the asset static, as its system prompt tells it to.</p>
+    <h4>What to expect</h4>
+    <ul>
+      <li>Answers are long: about 20K tokens on average, with thinking first. The card asks for thinking on and no output
+      limit, and that is how this page runs it (temperature 0.8, top-k 40, top-p 0.95, min-p 0, repeat penalty 1.0, its own system prompt).</li>
+      <li>Some requests need a retry or a small code fix. Materials, lighting and animation can differ between the
+      browser preview and Godot, so inspect the imported GLB.</li>
+      <li>The preview loads Three.js from cdn.jsdelivr.net in your browser and runs sandboxed (it cannot reach this page or its API).</li>
+    </ul>
+  </details>
+</section>
+
+</main>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error((j.error && j.error.message) || ("HTTP " + r.status));
+  return j;
+}
+function setMsg(el, s, err) { el.textContent = s; el.className = "msg" + (err ? " err" : ""); }
+function fmtDur(s) { s = Math.max(0, Math.round(s)); return s < 60 ? s + " s" : Math.floor(s / 60) + " min " + String(s % 60).padStart(2, "0") + " s"; }
+function fmtK(n) { return n >= 1000 ? (n / 1000).toFixed(1) + "K" : String(n); }
+
+/* ---------------- What holds the GPU, and what each Generate would do ---------------- */
+async function refreshGpuNow() {
+  const [g, m, mo] = await Promise.allSettled([api("api/glb/gpu"), api("api/mesh/status"), api("api/moss/status")]);
+  const glb = g.status === "fulfilled" ? g.value : null, mesh = m.status === "fulfilled" ? m.value : null, moss = mo.status === "fulfilled" ? mo.value : null;
+  const loaded = glb ? (glb.loaded_name || glb.loaded) : null, phase = mesh && mesh.telemetry_available ? mesh.phase : null;
+  const sess = moss && moss.session ? moss.session : null, mossActive = !!sess && sess.state === "active";
+  let now = loaded ? "On the GPU now: " + loaded : "No language model loaded";
+  if (mossActive) now = "MOSS Image Studio has the GPU (session active; the language model is paused)";
+  if (mesh && mesh.mesh_owns_gpu) now = "LLaMA-Mesh has the GPU";
+  $("gpuNow").textContent = now;
+  $("gpuDot").className = "dot " + (mesh && mesh.uncertain ? "bad" : (mossActive || (mesh && mesh.mesh_owns_gpu)) ? "busy" : (glb ? "ok" : ""));
+  $("gpuCtl").textContent = phase ? "· GPU controller: " + phase + (mesh.owner ? ", owner " + mesh.owner : "") + (mesh.uncertain ? ", UNCERTAIN" : "") : "";
+  $("whatSdxl").textContent = "queued in Model Manager; runs once WatooM Code is idle";
+  $("whatMoss").textContent = !sess ? "status unavailable" : mossActive ? "session active: Generate runs now" :
+    (phase && phase !== "qwen-ready") ? "needs the primary model loaded before Start GPU session (controller: " + phase + ")" :
+    "press Start GPU session first (pauses " + (loaded || "the language model") + ")";
+  $("whatMesh").textContent = !mesh ? "status unavailable" : !mesh.wired ? "not configured" : mesh.mesh_owns_gpu ? "loaded: Generate starts at once" :
+    "Generate switches the GPU to LLaMA-Mesh" + (loaded ? " (from " + loaded + ")" : "");
+  $("whatGlb").textContent = !glb ? "status unavailable" : glb.ready ? "loaded: Generate starts at once" :
+    "Generate switches the GPU to the GLB coder" + (loaded ? " (from " + loaded + ")" : "") + ", 1–3 min";
+}
+
+/* ---------------- SDXL ---------------- */
+let sdxlJob = null, sdxlTimer = null;
+async function sdxlRefreshModels() {
+  const sel = $("sdxlModel");
+  try {
+    const models = await api("api/sdxl/models");
+    const usable = models.filter((m) => m.registered && ["diffusion-pipeline", "diffusion-checkpoint", "lora"].includes(m.kind));
+    sel.replaceChildren();
+    if (!usable.length) { const o = document.createElement("option"); o.textContent = "No registered SDXL models yet"; sel.appendChild(o); $("sdxlStatus").textContent = "no models"; return; }
+    for (const m of usable) {
+      const o = document.createElement("option"); o.value = JSON.stringify({ id: m.id, revision: m.revision });
+      o.textContent = m.repository + " @ " + m.revision.slice(0, 10) + " (" + m.kind + ")"; sel.appendChild(o);
+    }
+    $("sdxlStatus").textContent = usable.length + " installed"; $("sdxlStatus").className = "pill ok";
+  } catch (e) { $("sdxlStatus").textContent = "unreachable"; $("sdxlStatus").className = "pill bad"; }
+}
+async function sdxlPoll() {
+  try {
+    const jobs = await api("api/sdxl/jobs");
+    const j = jobs.find((x) => x.id === sdxlJob);
+    if (!j) { setMsg($("sdxlMsg"), "Job not found."); clearInterval(sdxlTimer); sdxlTimer = null; return; }
+    if (["QUEUED", "WAITING_NATIVE_IDLE", "GENERATING"].includes(j.state)) { setMsg($("sdxlMsg"), j.state.replace(/_/g, " ").toLowerCase() + (j.stage ? " · " + j.stage : "")); return; }
+    clearInterval(sdxlTimer); sdxlTimer = null;
+    if (j.state === "GENERATION_VERIFIED") {
+      $("sdxlBar").style.width = "100%"; setMsg($("sdxlMsg"), "Done.");
+      const r = await api("api/sdxl/result?id=" + encodeURIComponent(sdxlJob));
+      const box = $("sdxlResult"); box.replaceChildren();
+      if (r.png_base64) { const img = document.createElement("img"); img.src = "data:image/png;base64," + r.png_base64; box.appendChild(img); }
+      else { const pre = document.createElement("pre"); pre.textContent = r.text || JSON.stringify(r); box.appendChild(pre); }
+    } else { setMsg($("sdxlMsg"), (j.error || j.state || "Failed."), true); $("sdxlBar").style.width = "0"; }
+  } catch (e) { setMsg($("sdxlMsg"), e.message, true); }
+}
+async function sdxlGenerate() {
+  const sel = $("sdxlModel").value; const prompt = $("sdxlPrompt").value.trim();
+  if (!sel) { setMsg($("sdxlMsg"), "Pick an installed model first.", true); return; }
+  if (!prompt) { setMsg($("sdxlMsg"), "Write a prompt first.", true); return; }
+  const { id, revision } = JSON.parse(sel);
+  $("sdxlGo").disabled = true; setMsg($("sdxlMsg"), "Submitting…"); $("sdxlBar").style.width = "0";
+  try {
+    const r = await api("api/sdxl/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, revision, prompt }) });
+    sdxlJob = r.job; sdxlTimer = setInterval(sdxlPoll, 1500); sdxlPoll();
+  } catch (e) { setMsg($("sdxlMsg"), e.message, true); } finally { $("sdxlGo").disabled = false; }
+}
+$("sdxlGo").onclick = sdxlGenerate;
+
+/* ---------------- MOSS ---------------- */
+let mossPresets = [], mossJob = null, mossTimer = null, mossSessionState = null;
+async function mossRefreshPresets() {
+  try {
+    const pr = await api("api/moss/presets"); mossPresets = pr.presets || [];
+    const sel = $("mossPreset");
+    for (const p of mossPresets) { const o = document.createElement("option"); o.value = p.id; o.textContent = p.name + " (" + p.category + ")"; sel.appendChild(o); }
+  } catch (e) { /* MOSS unreachable; status box reports it */ }
+}
+async function mossRefreshStatus() {
+  try {
+    const s = await api("api/moss/status");
+    $("mossStatus").textContent = s.engine_running ? "engine loaded" : "idle"; $("mossStatus").className = "pill ok";
+    const se = s.session;
+    if (se) {
+      mossSessionState = se.state;
+      $("mossSession").textContent = "GPU session: " + se.state + (se.detail ? " — " + se.detail : "");
+      $("mossSessionBtn").textContent = se.state === "active" ? "End GPU session" : "Start GPU session";
+      $("mossGo").disabled = se.state !== "active";
+    } else { $("mossSession").textContent = ""; }
+  } catch (e) { $("mossStatus").textContent = "unreachable"; $("mossStatus").className = "pill bad"; }
+}
+$("mossSessionBtn").onclick = async () => {
+  try { await api(mossSessionState === "active" ? "api/moss/session/end" : "api/moss/session/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }); }
+  catch (e) { setMsg($("mossMsg"), e.message, true); }
+  mossRefreshStatus();
+};
+async function mossPoll() {
+  try {
+    const j = await api("api/moss/jobs/" + mossJob);
+    $("mossBar").style.width = Math.round(100 * (j.fraction || 0)) + "%";
+    if (j.status === "queued" || j.status === "running") { setMsg($("mossMsg"), j.phase ? j.phase.replace(/_/g, " ") : "working…"); return; }
+    clearInterval(mossTimer); mossTimer = null;
+    if (j.status === "done") { setMsg($("mossMsg"), "Done."); const img = document.createElement("img"); img.src = "api/moss/images/" + j.image; $("mossResult").replaceChildren(img); }
+    else { setMsg($("mossMsg"), (j.error && j.error.message) || j.status, true); $("mossBar").style.width = "0"; }
+  } catch (e) { setMsg($("mossMsg"), e.message, true); }
+}
+async function mossGenerate() {
+  const scene = $("mossScene").value.trim();
+  if (!scene) { setMsg($("mossMsg"), "Write a scene first.", true); return; }
+  $("mossGo").disabled = true; setMsg($("mossMsg"), "Submitting…"); $("mossBar").style.width = "0";
+  try {
+    const body = { scene, preset_id: $("mossPreset").value || null };
+    const j = await api("api/moss/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    mossJob = j.id; mossTimer = setInterval(mossPoll, 1200); mossPoll();
+  } catch (e) { setMsg($("mossMsg"), e.message, true); } finally { mossRefreshStatus(); }
+}
+$("mossGo").onclick = mossGenerate;
+
+/* ---------------- Mesh ---------------- */
+let meshJob = null, meshTimer = null;
+async function meshRefreshTelemetry() {
+  try {
+    const s = await api("api/mesh/status");
+    $("meshStatus").textContent = s.wired ? "ready" : "not configured";
+    $("meshStatus").className = "pill " + (s.wired ? "ok" : "bad");
+    $("meshBlocked").textContent = s.blocker || "";
+    if (!s.telemetry_available) { $("meshTelemetry").textContent = "GPU controller telemetry is not readable from here."; return; }
+    $("meshTelemetry").textContent = "Controller phase: " + s.phase + " · owner: " + (s.owner || "none") +
+      (s.mesh_owns_gpu ? " · Mesh currently owns the GPU" : " · Mesh is not currently loaded") +
+      (s.uncertain ? " · UNCERTAIN" : "") + " (sampled " + s.sample_age_seconds + "s ago)";
+  } catch (e) { $("meshTelemetry").textContent = "Could not read GPU controller telemetry: " + e.message; }
+}
+async function meshPoll() {
+  try {
+    const j = await api("api/mesh/job?id=" + encodeURIComponent(meshJob));
+    if (!j.completion) { setMsg($("meshMsg"), (j.state || "running").replace(/_/g, " ").toLowerCase()); return; }
+    clearInterval(meshTimer); meshTimer = null;
+    const box = $("meshResult"); box.replaceChildren();
+    if (Object.keys(j.artifacts || {}).length) {
+      setMsg($("meshMsg"), "Done.");
+      const r = await api("api/mesh/result?id=" + encodeURIComponent(meshJob));
+      for (const [key, href] of Object.entries(r.artifacts || {})) {
+        const a = document.createElement("a"); a.href = href; a.textContent = key; a.target = "_blank";
+        box.appendChild(a); box.appendChild(document.createTextNode(" "));
+      }
+    } else { setMsg($("meshMsg"), "Finished without a passing result (" + j.state + ").", true); }
+  } catch (e) { setMsg($("meshMsg"), e.message, true); clearInterval(meshTimer); meshTimer = null; }
+}
+$("meshGo").onclick = async () => {
+  const prompt = $("meshPrompt").value.trim();
+  if (!prompt) { setMsg($("meshMsg"), "Write a geometry prompt first.", true); return; }
+  $("meshGo").disabled = true; setMsg($("meshMsg"), "Submitting…"); $("meshResult").replaceChildren();
+  try {
+    const r = await api("api/mesh/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt }) });
+    meshJob = r.job_id; meshTimer = setInterval(meshPoll, 2000); meshPoll();
+  } catch (e) { setMsg($("meshMsg"), e.message, true); } finally { $("meshGo").disabled = false; }
+};
+
+/* ---------------- GLB 3D Coder ---------------- */
+let glbJob = null, glbTimer = null;
+const GLB_RUNNING = ["queued", "waiting", "thinking", "writing"];
+const glbStateText = { queued: "queued", waiting: "waiting for the GPU (switching to the GLB model)…", thinking: "thinking…", writing: "writing the page…",
+  done: "Done.", failed: "Failed.", cancelled: "Cancelled." };
+async function glbLoadConfig() {
+  try {
+    const c = await api("api/glb/config");
+    const sel = $("glbIdea");
+    const groups = [["Domains and prompt ideas (model card)", c.domains.map((d) => [d.domain, d.prompt])],
+                    ["Gallery prompts (model card)", c.gallery.map((g) => [g.title, g.prompt])]];
+    for (const [label, rows] of groups) {
+      const og = document.createElement("optgroup"); og.label = label;
+      for (const [name, prompt] of rows) { const o = document.createElement("option"); o.value = prompt; o.textContent = name; og.appendChild(o); }
+      sel.appendChild(og);
+    }
+    glbModel = c.model_name && c.model_name !== c.model ? c.model_name + " (" + c.model + ")" : (c.model || "");
+    $("glbModelName").textContent = c.model_name || c.model || "";
+    const s = c.sampling;
+    $("glbSettings").textContent = "Model card settings: temperature " + s.temperature + " · top-k " + s.top_k + " · top-p " + s.top_p +
+      " · min-p " + s.min_p + " · repeat penalty " + s.repeat_penalty + " · thinking on · no output limit · its own system prompt";
+    $("glbStatus").textContent = "ready"; $("glbStatus").className = "pill ok";
+  } catch (e) { $("glbStatus").textContent = "unavailable"; $("glbStatus").className = "pill bad"; setMsg($("glbMsg"), e.message, true); }
+}
+// Generic prompt builder (T-0103): the card's advice for detailed requests, in its order: name the main object
+// first, then its components, colours, materials, placement and intended movement. Works for any asset type.
+function pbList(text) { return text.split(/\n|,(?![^()]*\))/).map((s) => s.trim().replace(/[.;]+$/, "")).filter(Boolean); }
+function pbSentence(s) { s = s.trim().replace(/[.;]+$/, ""); return s ? s.charAt(0).toUpperCase() + s.slice(1) + "." : ""; }
+function buildGlbPrompt() {
+  const v = (id) => $(id).value.trim();
+  const object = v("pbObject").replace(/^(create|make|build)\s+/i, "").replace(/[.;]+$/, "");
+  if (!object) return null;
+  const out = ["Create " + object + "."];
+  const parts = pbList(v("pbParts"));
+  if (parts.length) out.push("It has " + (parts.length === 1 ? parts[0] : parts.slice(0, -1).join(", ") + " and " + parts[parts.length - 1]) + ".");
+  if (v("pbColours")) out.push(pbSentence("Colours: " + v("pbColours")));
+  if (v("pbMaterials")) out.push(pbSentence("Materials: " + v("pbMaterials")));
+  if (v("pbLayout")) out.push(pbSentence(v("pbLayout")));
+  out.push(v("pbMove") ? pbSentence("Animate it: " + v("pbMove")) + " Include the animation in the exported GLB." : "Keep it static.");
+  if (v("pbStyle")) out.push(pbSentence(v("pbStyle")));
+  if ($("pbSolid").checked) out.push("Build every part as closed, solid geometry that is visible from all sides, with no missing walls, faces or gaps, and keep each part attached to the part it belongs to.");
+  return out.join(" ");
+}
+$("pbBuild").onclick = () => {
+  const text = buildGlbPrompt();
+  if (!text) { $("pbMsg").textContent = "Name the main object first."; return; }
+  const box = $("glbPrompt");
+  if (box.value.trim() && box.value.trim() !== text && !confirm("Replace the current prompt with the built one?")) return;
+  box.value = text; $("pbMsg").textContent = "Written into the prompt box; edit it if you like, then Generate."; box.focus();
+};
+$("glbIdea").onchange = () => {
+  const v = $("glbIdea").value; if (!v) return;
+  const box = $("glbPrompt");
+  if (box.value.trim() && box.value.trim() !== v && !confirm("Replace the current prompt with this idea?")) { $("glbIdea").value = ""; return; }
+  box.value = v; box.focus(); box.setSelectionRange(v.length, v.length);
+};
+function glbShowResult(id) {
+  const box = $("glbResult"); box.replaceChildren();
+  const frame = document.createElement("iframe");
+  frame.className = "preview"; frame.title = "Generated asset preview";
+  frame.setAttribute("sandbox", "allow-scripts allow-downloads allow-pointer-lock");
+  frame.src = "api/glb/page?id=" + encodeURIComponent(id);
+  const links = document.createElement("div"); links.className = "links";
+  const open = document.createElement("a"); open.href = frame.src; open.target = "_blank"; open.rel = "noopener"; open.textContent = "Open in a new tab";
+  const dl = document.createElement("a"); dl.href = frame.src + "&download=1"; dl.textContent = "Download the HTML";
+  const hint = document.createElement("span"); hint.className = "meta"; hint.textContent = "Use the page's own Export GLB button to save the .glb";
+  const err = document.createElement("div"); err.className = "msg"; err.setAttribute("role", "alert");
+  const errors = [];
+  // Repair / revise: a new run of the model with its own page, the page check's error (when there is one) and the
+  // owner's notes on what the render shows (missing walls, floating parts...), which no error check can see.
+  let problem = "";
+  const repairBox = document.createElement("div"); repairBox.className = "revise";
+  const notesLabel = document.createElement("label"); notesLabel.textContent = "What's wrong or what to change (optional when the page has an error)";
+  const notes = document.createElement("textarea"); notes.maxLength = 2000; notes.id = "glbNotes"; notesLabel.htmlFor = "glbNotes";
+  notes.placeholder = "e.g. The left and right walls are missing; make all four walls and the bottom solid. The lid floats above the chest.";
+  const repairRow = document.createElement("div"); repairRow.className = "btns actions";
+  const repairBtn = document.createElement("button"); repairBtn.type = "button"; repairBtn.textContent = "Revise with the model";
+  repairBtn.title = "A new run (~3–5 min): the model gets its own page, the page check's error and your notes, and writes the corrected page";
+  const repairNote = document.createElement("span"); repairNote.className = "meta";
+  repairNote.textContent = "Sends the page back with your notes" + " (and the page check's error, if any).";
+  repairRow.append(repairBtn, repairNote); repairBox.append(notesLabel, notes, repairRow);
+  const offerRepair = (text) => { problem = text; repairBtn.textContent = "Repair with the model"; repairNote.textContent = "Sends the page back with this error" + " and your notes, if any."; };
+  repairBtn.onclick = async () => {
+    if (!problem && !notes.value.trim()) { setMsg(err, "Write what's wrong or what to change first (the page check found no error).", true); return; }
+    repairBtn.disabled = true;
+    try {
+      const j = await api("api/glb/repair", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, error: problem, notes: notes.value }) });
+      clearTimeout(silent); window.onmessage = null; box.replaceChildren(); glbFollow(j.id); glbRefreshRecent();
+    } catch (e) { setMsg(err, "Could not start: " + e.message, true); repairBtn.disabled = false; }
+  };
+  glbSetCheck(id, "loading the page…", "");
+  const silent = setTimeout(() => {
+    if (errors.length) return;
+    glbSetCheck(id, "no answer from the page after 25 s: it is frozen, or still loading a heavy scene", "bad");
+    offerRepair("The page never finished starting: its script froze the browser tab (no response within 25 s). Look for an endless loop or far too much geometry.");
+  }, 25000);
+  window.onmessage = (e) => {
+    if (e.source !== frame.contentWindow || !e.data) return;
+    if (e.data.type === "glb-page-error") {
+      errors.push(e.data.message); clearTimeout(silent);
+      setMsg(err, "The model's page has a JavaScript error, so the preview may be blank: " + e.data.message +
+        ". The model wrote buggy code; Generate again (each run differs).", true);
+      glbSetCheck(id, "JavaScript error: " + errors.join(" | "), "bad");
+      offerRepair(errors.join("\n"));
+    } else if (e.data.type === "glb-page-status") {
+      clearTimeout(silent); if (errors.length) return;
+      const c = e.data.canvas, ok = c && c[0] > 0 && c[1] > 0;
+      glbSetCheck(id, "no JavaScript errors · " + (ok ? "3D canvas " + c[0] + "×" + c[1] : "no 3D canvas found") + " · " +
+        (e.data.exportButton ? "Export GLB button found" : "no Export GLB button found"), ok && e.data.exportButton ? "ok" : "bad");
+    }
+  };
+  const hide = document.createElement("button"); hide.type = "button"; hide.textContent = "Collapse";
+  hide.title = "Hide this preview again (show it from Recent)";
+  hide.onclick = () => { clearTimeout(silent); window.onmessage = null; box.replaceChildren(); $("glbSummary").hidden = true; };
+  links.append(hide, open, dl, hint); box.append(frame, err, repairBox, links);
+}
+// The card's measured average answer (thinking + page) is about 20K tokens; the time-left estimate is only that.
+const GLB_AVG_TOKENS = 20000;
+let glbModel = "", glbLast = null, glbRate = { id: null, t: 0, tok: 0, rate: 0 }, glbCheck = { id: null, text: "", cls: "" };
+// ~3.3 characters per token, measured on two runs (51249 chars = 15221 tokens; 62645 = 18953)
+const GLB_CHARS_PER_TOKEN = 3.3;
+function glbTokens(j) { return Math.round(((j.reasoning_chars || 0) + (j.content_chars || 0)) / GLB_CHARS_PER_TOKEN); }
+function glbRender(j) {
+  glbLast = j;
+  const running = GLB_RUNNING.includes(j.state);
+  $("glbGo").disabled = running; $("glbCancel").disabled = !running;
+  setMsg($("glbMsg"), j.state === "failed" ? (j.error || "Failed.") : glbStateText[j.state] || j.state, j.state === "failed");
+  const tok = glbTokens(j), now = Date.now() / 1000;
+  if (running) {
+    if (glbRate.id !== j.id) glbRate = { id: j.id, t: now, tok, rate: 0 };
+    else if (now - glbRate.t >= 1.5) {
+      const inst = (tok - glbRate.tok) / (now - glbRate.t);
+      glbRate = { id: j.id, t: now, tok, rate: glbRate.rate ? 0.7 * glbRate.rate + 0.3 * inst : inst };
+    }
+    const parts = ["elapsed " + fmtDur(j.elapsed_seconds)];
+    if (j.state === "waiting" || j.state === "queued") parts.push("loading the GLB coder onto the GPU / reading the prompt");
+    if (tok) parts.push("~" + fmtK(tok) + " tokens so far (thinking ~" + fmtK(Math.round((j.reasoning_chars || 0) / GLB_CHARS_PER_TOKEN)) + ", page ~" + fmtK(Math.round((j.content_chars || 0) / GLB_CHARS_PER_TOKEN)) + ")");
+    if (glbRate.rate > 1) {
+      parts.push(Math.round(glbRate.rate) + " tok/s");
+      parts.push(tok < GLB_AVG_TOKENS ? "~" + fmtDur((GLB_AVG_TOKENS - tok) / glbRate.rate) + " left (estimate from the card's ~20K-token average)" : "past the ~20K-token average; still writing");
+    }
+    $("glbStats").textContent = parts.join(" · ");
+    $("glbBar").style.width = (j.state === "waiting" || j.state === "queued" ? 4 : Math.min(96, 5 + 90 * tok / GLB_AVG_TOKENS)) + "%";
+    $("glbSummary").hidden = true;
+  } else {
+    $("glbStats").textContent = "";
+    $("glbBar").style.width = j.state === "done" ? "100%" : "0";
+    glbRenderSummary(j);
+  }
+  $("glbTail").textContent = j.content_tail || j.reasoning_tail || "";
+}
+function glbRenderSummary(j) {
+  const rows = [["Model", glbModel || "GLB 3D Coder"], ["Prompt", j.prompt], ["Started", new Date(j.created * 1000).toLocaleString()]];
+  if (j.repair_of) rows.splice(2, 0, ["Revision of", "run " + j.repair_of.slice(0, 8) +
+    (j.repair_error ? " · error: " + j.repair_error : "") + (j.repair_notes ? " · notes: " + j.repair_notes : "")]);
+  if (j.finished) rows.push(["Total time", fmtDur(j.finished - j.created)]);
+  if (j.first_token) rows.push(["Before the first token", fmtDur(j.first_token - j.created) + " (GPU switch, prompt)"]);
+  if (j.first_token && j.finished) rows.push(["Thinking + writing", fmtDur(j.finished - j.first_token)]);
+  const used = j.usage && j.usage.completion_tokens;
+  rows.push(["Tokens", (used ? fmtK(used) + " generated" : "~" + fmtK(glbTokens(j))) + " (thinking ~" + fmtK(Math.round((j.reasoning_chars || 0) / GLB_CHARS_PER_TOKEN)) + ", page ~" + fmtK(Math.round((j.content_chars || 0) / GLB_CHARS_PER_TOKEN)) + ")"]);
+  if (j.timings && j.timings.predicted_per_second) rows.push(["Speed", j.timings.predicted_per_second.toFixed(1) + " tok/s"]);
+  if (j.finish_reason) rows.push(["Finished because", j.finish_reason === "stop" ? "the model finished (stop)" : j.finish_reason === "length" ? "it hit the length limit: the page is cut off" : j.finish_reason, j.finish_reason === "stop" ? "" : "bad"]);
+  if (j.state === "failed") rows.push(["Error", j.error || "failed", "bad"]);
+  if (j.state === "done") rows.push(["Page", j.has_html ? "complete HTML page found" : "no complete HTML page in the answer", j.has_html ? "" : "bad"]);
+  if (j.has_html) rows.push(["Page check", glbCheck.id === j.id ? glbCheck.text : "not opened yet: press show in Recent to check it", glbCheck.id === j.id ? glbCheck.cls : ""]);
+  const dl = $("glbSummary"); dl.replaceChildren();
+  for (const [k, v, cls] of rows) { const dt = document.createElement("dt"), dd = document.createElement("dd"); dt.textContent = k; dd.textContent = v; if (cls) dd.className = cls; dl.append(dt, dd); }
+  dl.hidden = false;
+}
+function glbSetCheck(id, text, cls) { glbCheck = { id, text, cls }; if (glbLast && glbLast.id === id && !GLB_RUNNING.includes(glbLast.state)) glbRenderSummary(glbLast); }
+async function glbGpu() {
+  try {
+    const g = await api("api/glb/gpu"), w = g.warmup;
+    let text = g.ready ? "Loaded on the GPU — Generate starts at once" : "Not loaded (now: " + (g.loaded || "none") + ") — Warm up or Generate switches the GPU";
+    if (w.state === "loading") text = "Warming up… " + Math.round(Date.now() / 1000 - w.started) + " s";
+    else if (w.state === "failed" && w.finished && Date.now() / 1000 - w.finished < 600) text = "Warm-up failed: " + w.error;
+    $("glbGpu").textContent = text; $("glbWarm").disabled = g.ready || w.state === "loading";
+  } catch (e) { $("glbGpu").textContent = "GPU status unavailable: " + e.message; }
+}
+$("glbWarm").onclick = async () => {
+  try { await api("api/glb/warmup", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }); glbGpu(); }
+  catch (e) { setMsg($("glbMsg"), e.message, true); }
+};
+glbGpu(); setInterval(glbGpu, 5000);
+async function glbPoll() {
+  try {
+    const j = await api("api/glb/job?id=" + encodeURIComponent(glbJob));
+    glbRender(j);
+    if (GLB_RUNNING.includes(j.state)) return;
+    clearInterval(glbTimer); glbTimer = null;
+    if (j.has_html) glbShowResult(j.id);
+    glbRefreshRecent();
+  } catch (e) { setMsg($("glbMsg"), e.message, true); }
+}
+function glbFollow(id) { glbJob = id; if (glbTimer) clearInterval(glbTimer); glbTimer = setInterval(glbPoll, 2000); glbPoll(); }
+async function glbRefreshRecent() {
+  try {
+    const jobs = await api("api/glb/jobs");
+    const ul = $("glbRecent"); ul.replaceChildren();
+    for (const j of jobs) {
+      const li = document.createElement("li");
+      const when = document.createElement("span"); when.className = "when"; when.textContent = new Date(j.created * 1000).toLocaleString();
+      const p = document.createElement("span"); p.className = "p"; p.textContent = (j.repair_of ? "↻ revision of " + j.repair_of.slice(0, 8) + " · " : "") + j.prompt; p.title = p.textContent;
+      const act = document.createElement("a"); act.href = "#glb";
+      if (j.has_html) { act.textContent = "show"; act.onclick = (ev) => { ev.preventDefault(); glbJob = j.id; glbRender(j); glbShowResult(j.id); $("glbPrompt").value = j.prompt; }; }
+      else if (GLB_RUNNING.includes(j.state)) { act.textContent = "follow"; act.onclick = (ev) => { ev.preventDefault(); glbFollow(j.id); }; }
+      else { act.textContent = j.state; act.onclick = (ev) => { ev.preventDefault(); glbJob = j.id; glbRender(j); $("glbPrompt").value = j.prompt; }; }
+      const m = document.createElement("span"); m.className = "m";
+      const bits = [];
+      if (j.finished) bits.push(fmtDur(j.finished - j.created));
+      if (j.usage && j.usage.completion_tokens) bits.push(fmtK(j.usage.completion_tokens) + " tok");
+      if (!j.has_html && !GLB_RUNNING.includes(j.state)) bits.push(j.state === "done" ? "no page" : j.state);
+      m.textContent = bits.join(" · ");
+      li.append(when, p, m, act); ul.appendChild(li);
+    }
+    if (!jobs.length) { const li = document.createElement("li"); li.textContent = "Nothing yet."; ul.appendChild(li); }
+    const running = jobs.find((j) => GLB_RUNNING.includes(j.state));
+    if (running && !glbTimer) glbFollow(running.id);
+  } catch (e) { /* the status pill reports an unavailable section */ }
+}
+$("glbGo").onclick = async () => {
+  const prompt = $("glbPrompt").value.trim();
+  if (!prompt) { setMsg($("glbMsg"), "Write a prompt or pick an idea first.", true); return; }
+  $("glbGo").disabled = true; setMsg($("glbMsg"), "Submitting…"); $("glbResult").replaceChildren(); $("glbTail").textContent = "";
+  try { const j = await api("api/glb/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt }) }); glbFollow(j.id); }
+  catch (e) { setMsg($("glbMsg"), e.message, true); $("glbGo").disabled = false; }
+};
+$("glbCancel").onclick = async () => {
+  if (!glbJob) return;
+  try { await api("api/glb/cancel?id=" + encodeURIComponent(glbJob), { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }); glbPoll(); }
+  catch (e) { setMsg($("glbMsg"), e.message, true); }
+};
+
+(async function init() {
+  sdxlRefreshModels(); mossRefreshPresets(); mossRefreshStatus(); meshRefreshTelemetry();
+  glbLoadConfig().then(glbRefreshRecent);
+  setInterval(mossRefreshStatus, 5000); setInterval(meshRefreshTelemetry, 10000);
+  refreshGpuNow(); setInterval(refreshGpuNow, 5000);
+})();
+</script>
+</body>
+</html>

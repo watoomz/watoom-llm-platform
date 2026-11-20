@@ -17,7 +17,7 @@ MAP={
  'exploitation-lab':'kali/exploitation-lab.md',
 }
 def source_root():
- p=Path(__file__).resolve(); c=p.parent.parent/'ansible'/'roles'/'opencode-agent'/'files'/'agent-rules'
+ p=Path(__file__).resolve(); c=p.parent/'agent-rules'
  return c if c.is_dir() else p.parent/'agent-rules'
 def main():
  ap=argparse.ArgumentParser(description='Select Kali rule overlays for already-authorized capabilities')

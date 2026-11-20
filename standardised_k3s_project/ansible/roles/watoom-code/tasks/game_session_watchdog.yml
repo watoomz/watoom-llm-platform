@@ -3,14 +3,15 @@
 # the coordinator session never got the bridge's own single-shot notification -- see
 # tools/watoom-code/game_session_watchdog.py for why that notification can go unanswered. Report-only beyond
 # that one safe, idempotent action; never runs fenced recovery, never switches a model lease.
-- name: Install the game session watchdog script to a root-owned path
-  ansible.builtin.copy:
-    src: "{{ role_path }}/../../../tools/watoom-code/game_session_watchdog.py"
-    dest: /data/ai/helper-scripts/watoom-code/game_session_watchdog.py
-    owner: root
-    group: root
-    mode: '0755'
+#
+# Runs from the same root-owned release mirror as watoom-game-worker.service (game_worker.yml), not a
+# standalone copy: this script imports the sibling maintenance_guard.py, and a lone copy of it elsewhere
+# left every run failing with ModuleNotFoundError (the exact class of bug game_worker.yml's own release
+# mirror comment already warns about). game_worker.yml's sync task mirrors the whole tools/watoom-code/
+# directory -- including this script -- so it must run before this file is imported.
 - name: Install game session watchdog timer
+  vars:
+    watoom_game_session_watchdog_script: "{{ watoom_game_worker_release_root }}/standardised_k3s_project/tools/watoom-code/game_session_watchdog.py"
   ansible.builtin.copy:
     dest: /etc/systemd/system/watoom-game-session-watchdog.service
     mode: '0644'
@@ -19,7 +20,7 @@
       Description=Resend a lost game-worker resume notification, report on a stuck request
       [Service]
       Type=oneshot
-      ExecStart=/usr/bin/python3 /data/ai/helper-scripts/watoom-code/game_session_watchdog.py --report /data/ai/helper-scripts/reports/game-session-watchdog
+      ExecStart=/usr/bin/python3 {{ watoom_game_session_watchdog_script }} --report /data/ai/helper-scripts/reports/game-session-watchdog
       Nice=15
       CPUQuota=50%
       MemoryMax=256M

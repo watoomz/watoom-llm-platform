@@ -1,0 +1,68 @@
+---
+# Tagged single-purpose parts of the watoom-code role (T-0115). Replaces nine one-task patch playbooks.
+# Every part is tagged `never`, so a run must name what it updates, e.g.:
+#   ansible-run playbooks/watoom-code-parts.yml --tags agents
+#   ansible-run playbooks/watoom-code-parts.yml --tags image_scope,image_review
+# Parts: agents, dev, engine_inspection, image_mcp, image_review, image_scope, reasoning_variants, searxng,
+#        visual_diagnosis. The full role still converges with watoom-code.yml.
+- name: Update selected watoom-code parts
+  hosts: homelab
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Native agents, guard-independent agent files and OpenSpec skill
+      ansible.builtin.import_role:
+        name: watoom-code
+        tasks_from: native_agents.yml
+      tags: [never, agents]
+    - name: Engine inspection skill
+      ansible.builtin.import_role:
+        name: watoom-code
+        tasks_from: engine_inspection.yml
+      tags: [never, engine_inspection]
+    - name: Image MCP
+      ansible.builtin.import_role:
+        name: watoom-code
+        tasks_from: image-mcp.yml
+      tags: [never, image_mcp]
+    - name: Image review collector
+      ansible.builtin.import_role:
+        name: watoom-code
+        tasks_from: image_review.yml
+      tags: [never, image_review]
+    - name: Image prompt scope
+      ansible.builtin.import_role:
+        name: watoom-code
+        tasks_from: image_scope.yml
+      tags: [never, image_scope]
+    - name: GUI reasoning variants
+      ansible.builtin.import_role:
+        name: watoom-code
+        tasks_from: reasoning_variants.yml
+      tags: [never, reasoning_variants]
+    - name: Kali isolation for built-in agents
+      ansible.builtin.import_role:
+        name: watoom-code
+        tasks_from: kali_isolation.yml
+      tags: [never, kali_isolation]
+    - name: SearXNG search plugin
+      ansible.builtin.import_role:
+        name: watoom-code
+        tasks_from: searxng.yml
+      tags: [never, searxng]
+    - name: Engine visual diagnosis skill
+      ansible.builtin.import_role:
+        name: watoom-code
+        tasks_from: visual_diagnosis.yml
+      tags: [never, visual_diagnosis]
+
+- name: Update the isolated development workspace
+  hosts: homelab
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Development workspace
+      ansible.builtin.import_role:
+        name: watoom-code
+        tasks_from: dev_workspace.yml
+      tags: [never, dev]

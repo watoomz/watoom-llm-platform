@@ -27,7 +27,13 @@ registration and GPU generation. It downloads no example model weights.
 The SDXL image build installs software only and uses no GPU. Published image
 digests identify exact artifacts; a build/pull/rollout alone is not acceptance.
 
-The normal Ansible entry point is ansible/playbooks/model-manager.yml.
+The normal Ansible entry point is ansible/playbooks/model-manager.yml. **A production run must pass the production
+flags** (`-e @production-vars.json` with `model_manager_enabled=true`, `model_manager_stage_only=false`,
+`model_manager_controller_verified=true`, `model_manager_publish_route=true`); the role defaults are staging values.
+On 2026-11-19 a run with only `model_manager_enabled=true` put the production broker into stage mode (registrations
+refused, image MCP and WatooM Code profile updates off) until it was re-run with the flags. To promote a new staged
+image: set `config/llm/model-manager/runtime.json` `cpu_image`/`source_commit` to the built artifact, then run the
+playbook with those flags.
 Root broker code is installed under /app/model-manager/releases; application
 state and model data remain under /data/ai. No historical recovery overlay,
 private skill, or retained Unreal experiment is a build dependency.
@@ -78,6 +84,13 @@ with a durable recovery receipt; it does not claim reclaimed bytes. There is no
 automatic purge. Shared bases, protected recovery models and active work block
 unsafe removal. Failed or interrupted jobs retain receipts and partial data.
 
+## Parking the stage
+
+After a promotion (or when no promotion is in progress), park the stage so it does not run next to
+production; `manage.py stage` brings it back:
+
+    python3 tools/model-manager/manage.py park-stage --evidence /data/ai/helper-scripts/model-manager-builds/CHANGE
+
 ## Rollback and acceptance
 
     python3 tools/model-manager/manage.py rollback-stage --evidence /data/ai/helper-scripts/model-manager-builds/CHANGE
@@ -102,7 +115,7 @@ Production integration is not accepted by software imports or a staging rollout.
 The staged CPU application and fixture removal were exercised; new controller
 enrollment, GPU generation and production rollback still require authorized live
 validation. The current package supports GGUF text generation and SDXL image
-pipelines/checkpoints/LoRAs, not arbitrary Hugging Face architectures, SD3/Flux,
+pipelines/checkpoints/LoRAs (plus GGUF LoRA adapters and MTP speculation, below), not arbitrary Hugging Face architectures, SD3/Flux,
 pickle-only pipelines or automatic remote-code execution.
 
 After source review, promote this branch into the authoritative repository using
@@ -113,6 +126,30 @@ An activation exception does not imply that all production changes were reverted
 use the recorded transaction and gated rollback; uncertain ownership or unrelated
 edits must be reconciled rather than forced. Data-preserving rollback is never
 permission to unload an active model or overwrite independently changed state.
+
+## GGUF LoRA adapters, MTP speculation, all models and names (T-0086, 2026-11-19)
+
+- **GGUF LoRA** (`kind: gguf-lora`): a LoRA repository that publishes `.gguf` adapters (for example
+  `harness-hub/Qwen3.8-27B-opencode-adapted-GGUF`). Install the base GGUF first, then the adapter with that installed
+  base selected. Its artifacts are `[adapter, base...]`; the deployment serves the base with `--lora <adapter>`.
+  Before registration both GGUF headers must agree: the adapter is `general.type=adapter`/`adapter.type=lora` and has
+  the base's `general.architecture`. The card's `base_model` names the upstream model, not the quantized base, so it is
+  shown, not enforced. Adapters are stored under `/data/ai/models/loras/model-manager`.
+- **MTP** (`speculation: draft-mtp`, `draft_count` 1-32): only for a file whose GGUF header has
+  `<arch>.nextn_predict_layers > 0`. Inspect marks variants whose file name says MTP (`mtp_published`), which is only a
+  provisional claim for the settings form; after download `operations.install` records `capabilities.mtp` from the
+  header and validation (again in the broker and in `workload.build`) refuses `draft-mtp` without it. The deployment
+  gets `--spec-type draft-mtp --spec-draft-n-max N`; the upstream llama.cpp image supports it.
+- **All models**: `GET /api/system` asks the broker's read-only `inventory` action for every model the router serves,
+  including the pre-Model-Manager ("system") deployments, with deployment, model/LoRA/projector files and sizes, the
+  llama-server settings from args/env, and which one the controller has loaded. It never mutates anything and works in
+  staging too. The page shows system models read-only.
+- **Names**: the root-derived router catalog now carries `<repository> (<file>)` (`<adapter> on <base>` for a LoRA,
+  `· MTP` when speculating) instead of the `mm-…` alias, and the WatooM Code context migration replaces a stub entry
+  that still shows its bare id with that name.
+- **Page**: models as cards (status, kind, file, size, context, KV cache, thinking, sampling, lifecycle steps, details,
+  removal), add-a-model with variant cards and grouped settings showing each value's source, jobs with progress, speed
+  and time left, and a removal dialog. Light/dark, phone width. `browser-live.cjs` checks the new structure.
 
 ## SDXL software placement
 

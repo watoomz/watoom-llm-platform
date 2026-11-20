@@ -18,7 +18,7 @@ For features added from 2026-11-03 to 2026-11-07, start at [What's new in custom
 
 | Layer | Implementation |
 |---|---|
-| Host | `watoom-homelab`, Fedora 44 Server, AMD Ryzen 5 5500 (6C/12T), 32 GiB RAM |
+| Host | `homelab-host`, Fedora 44 Server, AMD Ryzen 5 5500 (6C/12T), 32 GiB RAM |
 | GPU | NVIDIA GeForce GPU, 20 GiB VRAM, 300 W power limit |
 | Orchestration | k3s `v1.36.3+k3s1` single node, containerd, Traefik ingress |
 | Edge stacks | Docker Compose: WireGuard, AzuraCast, browser stream publication |
@@ -38,7 +38,7 @@ Internet
   │
   └── Cloudflare Tunnel (outbound only) ◄── cloudflared connectors
                                                     │
-watoom-homelab (10.99.20.225)                        │
+homelab-host (10.99.20.225)                        │
   ├── k3s
   │    ├── Traefik :80/:443 ── *.internal.homelab.example routes
   │    ├── Pi-hole (hostNetwork :53)

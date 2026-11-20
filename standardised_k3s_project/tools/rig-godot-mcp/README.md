@@ -136,7 +136,7 @@ of the scripts themselves is still untested; the resulting rig configuration is 
 
 ## Deploy runbook (exact commands)
 
-Paths: `LAB=watoom-homelab (10.99.20.225)`, `RIG=10.99.1.44`, repo
+Paths: `LAB=homelab-host (10.99.20.225)`, `RIG=10.99.1.44`, repo
 `/data/github/watoom-standardised-homelab/standardised_k3s_project`.
 
 1. **router, as admin (management VLAN).** The live ruleset already has an explicit, logged block

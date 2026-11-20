@@ -18,7 +18,7 @@ is interrupted; partial PASS lines do not establish a passing baseline.
 Production Unreal 5.8.3 is mounted in Toolkit at `/unreal-engine`; its executable
 is `/unreal-engine/Engine/Binaries/Linux/UnrealEditor`. Host runtime:
 `/data/ai/toolchains/unreal/5.8.3/runtime-74dc43e1a653`.
-The `/data/ai/assets/unreal-engine` directory is a historical source tree.
+The `/data/ai/assets/unreal-engine` directory is not the engine workers use.
 Absence of an editor in that tree or the app does not establish engine absence.
 
 Read the installed `watoom-blender-asset-builder` skill and its request-workflow

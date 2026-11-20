@@ -14,7 +14,7 @@ The router RB5009 is the edge router. Bridge VLAN filtering separates trust zone
 | VLAN 20 · `10.99.20.0/24` | `vlan_TheHood` | Homelab LAN; server default route |
 | VLAN 30 · `10.99.30.0/24` | `vlan_wifi24` | Low-trust Wi-Fi (2.4 GHz) |
 | VLAN 40 · `10.99.40.0/24` | `vlan_wifi5` | Low-trust Wi-Fi (5 GHz) |
-| VLAN 50 · `192.168.0.0/24` | `vlan_dmz` | DMZ for public game traffic |
+| VLAN 50 · `192.168.250.0/24` | `vlan_dmz` | DMZ for public game traffic |
 | `192.168.99.0/24` | `emergency-mgmt` | Break-glass management |
 
 ## Host interfaces
@@ -45,16 +45,16 @@ Inside the cluster, CoreDNS resolves `service.namespace.svc.cluster.local`. Pi-h
 
 ## Internal HTTPS
 
-Traefik (namespace `kube-system`) is exposed by the k3s service load balancer on `10.99.20.225:80/443`. Routes are `IngressRoute` objects matching `Host(...)`, with optional `PathPrefix` for services that share the Glance host (`/guide`, `/guide-api`, `/model-manager/`, `/pi-lab`).
+Traefik (namespace `kube-system`) is exposed by the k3s service load balancer on `10.99.20.225:80/443`. Routes are `IngressRoute` objects matching `Host(...)`, with optional `PathPrefix` for services that share the Glance host (`/guide`, `/guide-api`, `/model-manager/`, the studios).
 
 | Property | Value |
 |---|---|
-| Certificate | Self-signed wildcard, `CN=*.internal.homelab.example` |
-| SANs | `*.internal.homelab.example`, `internal.homelab.example`, `10.99.20.225`, `192.168.250.225` |
-| Expiry | 24 November 2028 |
-| Secret | `watoom-tls` in each namespace that terminates TLS |
+| Certificate | Let's Encrypt wildcard, issued by cert-manager (`letsencrypt-cloudflare-prod`, Cloudflare DNS-01) |
+| SANs | `*.internal.homelab.example`, `internal.homelab.example` |
+| Renewal | automatic, about 30 days before the 90-day expiry |
+| Secret | `watoom-tls` in each namespace that terminates TLS, copied from `cert-manager/watoom-internal-wildcard-prod-tls` by `watoom-internal-tls-sync.timer` |
 
-Clients must trust the internal CA. There is no cert-manager in the cluster. `scripts/install-browser-trusted-tls.sh` implements an optional migration to Let's Encrypt via Cloudflare DNS-01; it is not active.
+Browsers trust it with no local CA. `scripts/install-browser-trusted-tls.sh` installs or repairs the whole chain.
 
 Verify what Traefik is serving:
 
@@ -82,7 +82,7 @@ Tunnel tokens are mounted from secret files and never appear in Git or documenta
 
 ## Remote access
 
-WireGuard runs as Docker `wg-easy`: UDP `51820` for tunnels, admin UI on `10.99.20.225:51821` and at `https://wireguard.internal.homelab.example`. Clients receive `10.9.0.x`, use Pi-hole for DNS and may reach `10.99.0.0/16` and `192.168.0.0/24`.
+WireGuard runs as Docker `wg-easy`: UDP `51820` for tunnels, admin UI on `10.99.20.225:51821` and at `https://wireguard.internal.homelab.example`. Clients receive `10.9.0.x`, use Pi-hole for DNS and may reach `10.99.0.0/16` and `192.168.250.0/24`.
 
 ## Checks
 

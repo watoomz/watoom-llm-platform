@@ -334,7 +334,7 @@
         "x": 0,
         "y": 5,
         "w": 24,
-        "h": 6
+        "h": 11
       },
       "targets": [
         {
@@ -424,7 +424,7 @@
       "panels": [],
       "gridPos": {
         "x": 0,
-        "y": 11,
+        "y": 16,
         "w": 24,
         "h": 1
       }
@@ -434,7 +434,7 @@
       "title": "Inference Throughput",
       "gridPos": {
         "x": 0,
-        "y": 12,
+        "y": 17,
         "w": 12,
         "h": 8
       },
@@ -500,7 +500,7 @@
       "title": "Inference Cost Per Token",
       "gridPos": {
         "x": 12,
-        "y": 12,
+        "y": 17,
         "w": 12,
         "h": 8
       },
@@ -569,7 +569,7 @@
       "panels": [],
       "gridPos": {
         "x": 0,
-        "y": 20,
+        "y": 25,
         "w": 24,
         "h": 1
       }
@@ -579,7 +579,7 @@
       "title": "Tokens · Selected Range",
       "gridPos": {
         "x": 0,
-        "y": 21,
+        "y": 26,
         "w": 8,
         "h": 7
       },
@@ -654,7 +654,7 @@
       "title": "Processing Time · Selected Range",
       "gridPos": {
         "x": 8,
-        "y": 21,
+        "y": 26,
         "w": 8,
         "h": 7
       },
@@ -717,7 +717,7 @@
       "title": "Request / Queue State",
       "gridPos": {
         "x": 16,
-        "y": 21,
+        "y": 26,
         "w": 8,
         "h": 7
       },
@@ -798,7 +798,7 @@
       "panels": [],
       "gridPos": {
         "x": 0,
-        "y": 28,
+        "y": 33,
         "w": 24,
         "h": 1
       }
@@ -808,7 +808,7 @@
       "title": "GPU Utilization",
       "gridPos": {
         "x": 0,
-        "y": 29,
+        "y": 34,
         "w": 8,
         "h": 7
       },
@@ -874,7 +874,7 @@
       "title": "GPU Memory",
       "gridPos": {
         "x": 8,
-        "y": 29,
+        "y": 34,
         "w": 8,
         "h": 7
       },
@@ -940,7 +940,7 @@
       "title": "GPU Power / Temperature",
       "gridPos": {
         "x": 16,
-        "y": 29,
+        "y": 34,
         "w": 8,
         "h": 7
       },
@@ -1026,7 +1026,7 @@
       "panels": [],
       "gridPos": {
         "x": 0,
-        "y": 36,
+        "y": 41,
         "w": 24,
         "h": 1
       }
@@ -1036,7 +1036,7 @@
       "title": "Speculative Decoding",
       "gridPos": {
         "x": 0,
-        "y": 37,
+        "y": 42,
         "w": 12,
         "h": 7
       },
@@ -1127,7 +1127,7 @@
       "title": "Runtime Internals",
       "gridPos": {
         "x": 12,
-        "y": 37,
+        "y": 42,
         "w": 12,
         "h": 7
       },
@@ -1217,7 +1217,7 @@
       "panels": [],
       "gridPos": {
         "x": 0,
-        "y": 44,
+        "y": 49,
         "w": 24,
         "h": 1
       }
@@ -1227,7 +1227,7 @@
       "title": "Prompt Eval",
       "gridPos": {
         "x": 0,
-        "y": 45,
+        "y": 50,
         "w": 4,
         "h": 5
       },
@@ -1293,7 +1293,7 @@
       "title": "Prompt Tokens",
       "gridPos": {
         "x": 4,
-        "y": 45,
+        "y": 50,
         "w": 4,
         "h": 5
       },
@@ -1359,7 +1359,7 @@
       "title": "Prompt Speed",
       "gridPos": {
         "x": 8,
-        "y": 45,
+        "y": 50,
         "w": 4,
         "h": 5
       },
@@ -1425,7 +1425,7 @@
       "title": "Prompt Cost",
       "gridPos": {
         "x": 12,
-        "y": 45,
+        "y": 50,
         "w": 4,
         "h": 5
       },
@@ -1491,7 +1491,7 @@
       "title": "Generation Eval",
       "gridPos": {
         "x": 16,
-        "y": 45,
+        "y": 50,
         "w": 4,
         "h": 5
       },
@@ -1557,7 +1557,7 @@
       "title": "Generated Tokens",
       "gridPos": {
         "x": 20,
-        "y": 45,
+        "y": 50,
         "w": 4,
         "h": 5
       },
@@ -1623,7 +1623,7 @@
       "title": "Generation Speed",
       "gridPos": {
         "x": 0,
-        "y": 50,
+        "y": 55,
         "w": 4,
         "h": 5
       },
@@ -1689,7 +1689,7 @@
       "title": "Generation Cost",
       "gridPos": {
         "x": 4,
-        "y": 50,
+        "y": 55,
         "w": 4,
         "h": 5
       },
@@ -1755,7 +1755,7 @@
       "title": "Total Request",
       "gridPos": {
         "x": 8,
-        "y": 50,
+        "y": 55,
         "w": 4,
         "h": 5
       },
@@ -1821,7 +1821,7 @@
       "title": "Total Tokens",
       "gridPos": {
         "x": 12,
-        "y": 50,
+        "y": 55,
         "w": 4,
         "h": 5
       },
@@ -1887,7 +1887,7 @@
       "title": "Graphs Reused",
       "gridPos": {
         "x": 16,
-        "y": 50,
+        "y": 55,
         "w": 4,
         "h": 5
       },
@@ -1953,7 +1953,7 @@
       "title": "Model Load",
       "gridPos": {
         "x": 20,
-        "y": 50,
+        "y": 55,
         "w": 4,
         "h": 5
       },
@@ -2021,7 +2021,7 @@
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 55,
+        "y": 60,
         "w": 24,
         "h": 1
       },
@@ -2037,7 +2037,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 56,
+        "y": 61,
         "w": 4,
         "h": 4
       },
@@ -2114,7 +2114,7 @@
       },
       "gridPos": {
         "x": 4,
-        "y": 56,
+        "y": 61,
         "w": 4,
         "h": 4
       },
@@ -2190,7 +2190,7 @@
       },
       "gridPos": {
         "x": 8,
-        "y": 56,
+        "y": 61,
         "w": 4,
         "h": 4
       },
@@ -2266,7 +2266,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 56,
+        "y": 61,
         "w": 4,
         "h": 4
       },
@@ -2325,7 +2325,7 @@
       },
       "gridPos": {
         "x": 16,
-        "y": 56,
+        "y": 61,
         "w": 4,
         "h": 4
       },
@@ -2385,7 +2385,7 @@
       },
       "gridPos": {
         "x": 20,
-        "y": 56,
+        "y": 61,
         "w": 4,
         "h": 4
       },
@@ -2445,7 +2445,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 60,
+        "y": 65,
         "w": 8,
         "h": 7
       },
@@ -2509,7 +2509,7 @@
       },
       "gridPos": {
         "x": 8,
-        "y": 60,
+        "y": 65,
         "w": 8,
         "h": 7
       },
@@ -2561,7 +2561,7 @@
       },
       "gridPos": {
         "x": 16,
-        "y": 60,
+        "y": 65,
         "w": 8,
         "h": 7
       },
@@ -2602,6 +2602,117 @@
           "sort": "none"
         }
       }
+    },
+    {
+      "id": 44,
+      "type": "row",
+      "title": "All-Time Model Performance (lifetime totals; survive restarts and Prometheus's 30d retention)",
+      "gridPos": { "x": 0, "y": 72, "w": 24, "h": 1 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 45,
+      "type": "bargauge",
+      "title": "Lifetime Avg Generation Speed (tok/s) · efficiency ranking",
+      "description": "The most efficient model, all time: lifetime generated tokens / lifetime generation wall-time, by model. Backed by watoom-model-perf-accumulator.py, which accumulates deltas from llamacpp: counters into a durable state file so the ranking survives both llama.cpp restarts and Prometheus's 30-day retention window.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 73, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "watoom_model_perf_lifetime_generated_tokens_total / clamp_min(watoom_model_perf_lifetime_generation_seconds_total, 0.001)",
+          "legendFormat": "{{model}}",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "tokps",
+          "min": 0,
+          "noValue": "No lifetime data yet",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" }
+      }
+    },
+    {
+      "id": 46,
+      "type": "bargauge",
+      "title": "Lifetime Generated Tokens · most-used model",
+      "description": "Total output tokens generated by each model since the accumulator was deployed. A volume/usage ranking, distinct from the speed ranking: a model can be fast but rarely used, or slow but heavily relied on.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 12, "y": 73, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "watoom_model_perf_lifetime_generated_tokens_total",
+          "legendFormat": "{{model}}",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "noValue": "No lifetime data yet",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" }
+      }
+    },
+    {
+      "id": 47,
+      "type": "table",
+      "title": "Lifetime Totals by Model (raw drill-down)",
+      "description": "Includes MOSS image studio (images/pixels, no tokens) alongside LLMs (tokens/seconds). The Creation Studio GLB 3D coder is not yet represented here -- it does not currently export any Prometheus metrics or register with the GPU ownership controller (see T-0104/T-0103), so there is no lifetime data to show for it.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 81, "w": 24, "h": 9 },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "auto", "cellOptions": { "type": "auto" } } },
+        "overrides": []
+      },
+      "options": { "showHeader": true, "cellHeight": "sm" },
+      "transformations": [
+        { "id": "joinByField", "options": { "byField": "model", "mode": "outer" } },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "Value #A": "Generated Tokens",
+              "Value #B": "Prompt Tokens",
+              "Value #C": "Generation Seconds",
+              "Value #D": "Images",
+              "Value #E": "Pixels",
+              "model": "Model"
+            },
+            "excludeByName": { "Time": true }
+          }
+        }
+      ],
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "watoom_model_perf_lifetime_generated_tokens_total", "legendFormat": "{{model}}", "instant": true, "range": false, "format": "table", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "watoom_model_perf_lifetime_prompt_tokens_total", "legendFormat": "{{model}}", "instant": true, "range": false, "format": "table", "refId": "B" },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "watoom_model_perf_lifetime_generation_seconds_total", "legendFormat": "{{model}}", "instant": true, "range": false, "format": "table", "refId": "C" },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "watoom_model_perf_lifetime_images_total", "legendFormat": "{{model}}", "instant": true, "range": false, "format": "table", "refId": "D" },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "watoom_model_perf_lifetime_pixels_total", "legendFormat": "{{model}}", "instant": true, "range": false, "format": "table", "refId": "E" }
+      ]
     }
   ],
   "templating": {

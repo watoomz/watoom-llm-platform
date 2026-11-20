@@ -1,0 +1,130 @@
+---
+- name: Creation Studio is disabled unless explicitly enabled
+  ansible.builtin.debug:
+    msg: "creation_studio_enabled is false: nothing installed"
+  when: not (creation_studio_enabled | bool)
+
+- name: Install Creation Studio unit and start it only on request
+  when: creation_studio_enabled | bool
+  block:
+    - name: Check the operator-owned Model Manager authentication file exists (when the SDXL pipeline is enabled)
+      ansible.builtin.stat:
+        path: "{{ creation_studio_model_manager_password_file }}"
+      register: creation_studio_mm_password
+      when: creation_studio_model_manager_base | length > 0
+    - name: Refuse to enable the SDXL pipeline without the existing Model Manager password file
+      ansible.builtin.assert:
+        that: creation_studio_mm_password.stat.isreg | default(false)
+        fail_msg: >-
+          {{ creation_studio_model_manager_password_file }} does not exist. Provision it through the existing
+          Model Manager installation (ansible/roles/model-manager) first, or set
+          creation_studio_model_manager_base: "" to disable the SDXL pipeline.
+      when: creation_studio_model_manager_base | length > 0
+    - name: Allow only the k3s pod subnet to reach the Studio port (Glance route and widget)
+      ansible.posix.firewalld:
+        zone: FedoraServer
+        rich_rule: 'rule family="ipv4" source address="10.242.0.0/24" port port="{{ creation_studio_port }}" protocol="tcp" accept'
+        permanent: true
+        immediate: true
+        state: enabled
+      when: creation_studio_pod_firewall | bool
+    - name: Ensure the dedicated Creation Studio primary group exists
+      ansible.builtin.group:
+        name: creation-studio
+        gid: "{{ creation_studio_gid }}"
+        system: true
+    - name: Ensure the shared mesh-bridge/Model-Manager-password group exists (when Mesh is wired)
+      ansible.builtin.group:
+        name: "{{ creation_studio_mesh_bridge_group_name }}"
+        gid: "{{ creation_studio_mesh_bridge_gid }}"
+        system: true
+      when: creation_studio_mesh_bridge_socket | length > 0
+    - name: Ensure the dedicated Creation Studio service user exists
+      ansible.builtin.user:
+        name: creation-studio
+        uid: "{{ creation_studio_uid }}"
+        group: creation-studio
+        groups: "{{ [creation_studio_mesh_bridge_group_name] if creation_studio_mesh_bridge_socket | length > 0 else [] }}"
+        append: true
+        system: true
+        create_home: false
+        shell: /usr/sbin/nologin
+    - name: Create the GLB 3D Coder output directory (finished pages and job records)
+      ansible.builtin.file:
+        path: "{{ creation_studio_glb_output_dir }}"
+        state: directory
+        owner: creation-studio
+        group: creation-studio
+        mode: "0750"
+      when:
+        - creation_studio_glb_router_base | length > 0
+        - creation_studio_glb_output_dir | length > 0
+    - name: Grant Creation Studio ACL traverse-only rights through the private password directories
+      # /data/ai/private and /data/ai/private/model-manager are 0700 root-only: Model Manager's own pod
+      # never needs to traverse them on the host (its hostPath volume mounts the leaf file directly,
+      # bypassing host-side ancestor permissions), but a bare host process like this one does. A scoped
+      # ACL grants exactly this one user execute-only (traverse, not list/read) rights on exactly these
+      # two directories; the directories' own 0700 mode and everyone else's access are unchanged.
+      ansible.posix.acl:
+        path: "{{ item }}"
+        entity: creation-studio
+        etype: user
+        permissions: x
+        state: present
+      loop:
+        - "{{ creation_studio_model_manager_password_file | dirname | dirname }}"
+        - "{{ creation_studio_model_manager_password_file | dirname }}"
+      when: creation_studio_model_manager_base | length > 0
+    - name: Fetch the internal TLS CA for https Model Manager calls (same approach as tools/model-manager/browser-test.py)
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Secret
+        namespace: glance
+        name: watoom-tls
+        kubeconfig: "{{ k3s_kubeconfig }}"
+      register: creation_studio_tls_secret
+      when:
+        - creation_studio_model_manager_base | length > 0
+        - creation_studio_model_manager_base is match('^https://')
+        - creation_studio_model_manager_ca_file | length > 0
+      no_log: true
+    # System roots + the served certificate (T-0116): verifies the Let's Encrypt wildcard through public roots (so an
+    # intermediate rotation at renewal cannot break it) and still trusts the old self-signed one if it is served.
+    - name: Read the host's system trust bundle
+      ansible.builtin.slurp:
+        src: "{{ creation_studio_system_ca_bundle }}"
+      register: creation_studio_system_ca
+      when:
+        - creation_studio_model_manager_base | length > 0
+        - creation_studio_model_manager_base is match('^https://')
+        - creation_studio_model_manager_ca_file | length > 0
+    - name: Write the CA bundle Creation Studio trusts for its Model Manager calls
+      ansible.builtin.copy:
+        dest: "{{ creation_studio_model_manager_ca_file }}"
+        content: "{{ (creation_studio_system_ca.content | b64decode) ~ '\n' ~ ((creation_studio_tls_secret.resources[0].data['ca.crt'] | default(creation_studio_tls_secret.resources[0].data['tls.crt'])) | b64decode) }}"
+        owner: root
+        group: "{{ creation_studio_gid }}"
+        mode: "0640"
+      when:
+        - creation_studio_model_manager_base | length > 0
+        - creation_studio_model_manager_base is match('^https://')
+        - creation_studio_model_manager_ca_file | length > 0
+      no_log: true
+    - name: Install the unit
+      ansible.builtin.template:
+        src: watoom-creation-studio.service.j2
+        dest: /etc/systemd/system/watoom-creation-studio.service
+        owner: root
+        group: root
+        mode: "0644"
+      register: creation_studio_unit
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+      when: creation_studio_unit.changed
+    - name: Start and enable only when requested
+      ansible.builtin.systemd:
+        name: watoom-creation-studio.service
+        state: "{{ 'restarted' if creation_studio_unit.changed else 'started' }}"
+        enabled: true
+      when: creation_studio_start | bool

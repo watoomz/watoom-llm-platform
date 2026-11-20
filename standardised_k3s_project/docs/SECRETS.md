@@ -1,7 +1,5 @@
 # Secrets Workflow
 
-Current inventory and production recovery point: 13 October 2026. Historical procedures retain their qualification dates.
-
 Do not commit live secret values.
 
 Ignored local inputs:
@@ -17,15 +15,15 @@ The encrypted vault file is committed for rebuilds. The vault password is not
 committed. On the current server it is stored at:
 
 ```bash
-/data/secrets/watoom-homelab/ansible-vault-password.txt
+/data/secrets/homelab-host/ansible-vault-password.txt
 ```
 
 Recommended permissions:
 
 ```bash
-sudo chgrp -R wheel /data/secrets/watoom-homelab
-sudo chmod 0750 /data/secrets/watoom-homelab
-sudo chmod 0640 /data/secrets/watoom-homelab/ansible-vault-password.txt
+sudo chgrp -R wheel /data/secrets/homelab-host
+sudo chmod 0750 /data/secrets/homelab-host
+sudo chmod 0640 /data/secrets/homelab-host/ansible-vault-password.txt
 ```
 
 Store that vault password in your password manager. On a fresh rebuild, restore
