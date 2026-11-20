@@ -4,6 +4,14 @@ from pathlib import Path
 from settings import validate
 from download import safe_path
 LLAMA_IMAGE="ghcr.io/ggml-org/llama.cpp@sha256:150b59966fb5b2cb1a8fa9d226267c56ebd22c520c7b3640331cde87f3c4fb01"
+# Swift's proven runtime (manifests/10-infrastructure/llm/llama-cpp-swift-qwen38.yml, T-0123): CUDA graphs stay ON
+# (GGML_CUDA_DISABLE_GRAPHS=1 was Swift's pre-llamAmpere rollback setting and costs decode speed, worst with MTP), and
+# prompt-cache checkpoints + a RAM cache let a hybrid (recurrent) Qwen3.5/3.8 reuse the previous turn instead of
+# re-reading the whole conversation every turn (~65k tokens / ~190 s each, measured 2026-11-21 on mm-aa6b02d9).
+# Owner's Qwen3.8 template (config/llm/qwen38-27b-chat-template.jinja: reasoning_effort xhigh|medium|low, enable_thinking),
+# installed root-owned by the model-manager role. Only a named template can be mounted.
+CHAT_TEMPLATES={"qwen38":"/app/model-manager/chat-templates/qwen38-27b.jinja"}
+SWIFT_RUNTIME_ENV=({"name":"LLAMA_ARG_CTX_CHECKPOINTS","value":"12"},{"name":"LLAMA_ARG_CACHE_RAM","value":"2048"})
 def build(record,artifacts,images,namespace="llama-cpp"):
  identity=record["id"]
  if not re.fullmatch("[a-f0-9]{64}",identity):raise ValueError("Invalid managed identity")
@@ -35,6 +43,13 @@ def build(record,artifacts,images,namespace="llama-cpp"):
   flags={"context":"--ctx-size","threads":"--threads","gpu_layers":"--gpu-layers","cache_k":"--cache-type-k","cache_v":"--cache-type-v","parallel":"--parallel","batch":"--batch-size","ubatch":"--ubatch-size","cpu_ffn":"--n-cpu-ffn","reasoning":"--reasoning","temperature":"--temp","top_p":"--top-p","top_k":"--top-k","min_p":"--min-p","presence_penalty":"--presence-penalty","repeat_penalty":"--repeat-penalty","repeat_last_n":"--repeat-last-n"}
   for k,flag in flags.items():
    if k in settings:args.extend((flag,str(settings[k])))
+  if settings.get("reasoning")=="on":args.extend(("--reasoning-effort",settings.get("reasoning_effort","low")))
+  template=settings.get("chat_template","none")
+  if template!="none":
+   path=CHAT_TEMPLATES[template]
+   volumes.append({"name":"chat-template","hostPath":{"path":path,"type":"File"}})
+   mounts.append({"name":"chat-template","mountPath":"/chat-template/"+Path(path).name,"readOnly":True})
+   args.extend(("--chat-template-file","/chat-template/"+Path(path).name))
   args.extend(("--flash-attn","on" if settings.get("flash_attention",True) else "off"))
   if settings.get("jinja",True):args.append("--jinja")
   if projector:
@@ -74,7 +89,7 @@ def build(record,artifacts,images,namespace="llama-cpp"):
    if not adapter:raise ValueError("Adapter missing")
    args.extend(("--adapter" if kind=="lora" else "--checkpoint",adapter))
  if not re.fullmatch(r"[A-Za-z0-9_./:-]+@sha256:[a-f0-9]{64}",image):raise ValueError("Digest-pinned backend image required")
- container={"name":"model","image":image,"command":command,"args":args,"ports":[{"containerPort":8080}],"volumeMounts":mounts,"resources":{"requests":{"cpu":"1","memory":"1Gi","ephemeral-storage":"64Mi","nvidia.com/gpu":1},"limits":{"cpu":"8","memory":"16Gi","ephemeral-storage":"1Gi","nvidia.com/gpu":1}},"securityContext":{"allowPrivilegeEscalation":False,"capabilities":{"drop":["ALL"]},"runAsUser":1009,"runAsGroup":1009},"readinessProbe":{"httpGet":{"path":"/health","port":8080},"periodSeconds":5},"startupProbe":{"httpGet":{"path":"/health","port":8080},"periodSeconds":10,"failureThreshold":120},"env":[{"name":"LD_LIBRARY_PATH","value":"/app/runtime/lib:/usr/local/nvidia/lib:/usr/local/nvidia/lib64"},{"name":"HF_HUB_OFFLINE","value":"1"},{"name":"TRANSFORMERS_OFFLINE","value":"1"},{"name":"HF_HOME","value":"/tmp/huggingface"},{"name":"HOME","value":"/tmp"},{"name":"XDG_CACHE_HOME","value":"/tmp/.cache"},{"name":"GGML_CUDA_DISABLE_GRAPHS","value":"1"},{"name":"LLAMA_ARG_CONT_BATCHING","value":"true" if settings.get("continuous_batching",True) else "false"}]}
+ container={"name":"model","image":image,"command":command,"args":args,"ports":[{"containerPort":8080}],"volumeMounts":mounts,"resources":{"requests":{"cpu":"1","memory":"1Gi","ephemeral-storage":"64Mi","nvidia.com/gpu":1},"limits":{"cpu":"8","memory":"16Gi","ephemeral-storage":"1Gi","nvidia.com/gpu":1}},"securityContext":{"allowPrivilegeEscalation":False,"capabilities":{"drop":["ALL"]},"runAsUser":1009,"runAsGroup":1009},"readinessProbe":{"httpGet":{"path":"/health","port":8080},"periodSeconds":5},"startupProbe":{"httpGet":{"path":"/health","port":8080},"periodSeconds":10,"failureThreshold":120},"env":[{"name":"LD_LIBRARY_PATH","value":"/app/lib:/app/runtime/lib:/usr/local/nvidia/lib:/usr/local/nvidia/lib64"},{"name":"HF_HUB_OFFLINE","value":"1"},{"name":"TRANSFORMERS_OFFLINE","value":"1"},{"name":"HF_HOME","value":"/tmp/huggingface"},{"name":"HOME","value":"/tmp"},{"name":"XDG_CACHE_HOME","value":"/tmp/.cache"},{"name":"LLAMA_ARG_CONT_BATCHING","value":"true" if settings.get("continuous_batching",True) else "false"},*(SWIFT_RUNTIME_ENV if kind in ("gguf","gguf-lora") else ())]}
  deployment={"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":name,"namespace":namespace,"labels":labels,"annotations":{"watoom.io/model-id":identity}},"spec":{"replicas":0,"selector":{"matchLabels":{"app":name}},"template":{"metadata":{"labels":labels},"spec":{"runtimeClassName":"nvidia","automountServiceAccountToken":False,"securityContext":{"fsGroup":1009},"containers":[container],"volumes":volumes}}}}
  service={"apiVersion":"v1","kind":"Service","metadata":{"name":name,"namespace":namespace,"labels":labels,"annotations":{"watoom.io/model-id":identity}},"spec":{"selector":{"app":name},"ports":[{"port":8080,"targetPort":8080}]}}
  return deployment,service,alias

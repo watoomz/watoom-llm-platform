@@ -1378,7 +1378,7 @@ OpenAI-compatible /v1/embeddings front end for a llama.cpp BGE server.
 
 Source: [`tools/llm/bge/embed_proxy.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/llm/bge/embed_proxy.py). Description basis: module docstring.
 
-Declared CLI options: `--backend`, `--batch-rate`, `--busy-file`, `--busy-rate`, `--cache-size`, `--cls-id`, `--concurrency`, `--host`, `--model`, `--port`, `--sep-id`.
+Declared CLI options: `--backend`, `--batch-rate`, `--busy-file`, `--busy-rate`, `--cache-size`, `--cls-id`, `--concurrency`, `--host`, `--max-batch-wait`, `--model`, `--port`, `--sep-id`.
 
 ## tools/llm/bge/tests/test_embed_proxy.py
 
@@ -1734,6 +1734,14 @@ Render the tracked router manifests from the authored router source.
 
 Source: [`tools/model-manager/render_router_manifest.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/model-manager/render_router_manifest.py). Description basis: module docstring.
 
+## tools/model-manager/reregister.py
+
+Operator entry point for Operations.reregister \(T-0123\): retire \+ register a Model Manager model again so it picks up the broker's current workload \(e.g. --metrics, Swift's runtime\), files and mm-\* identity kept.
+
+Source: [`tools/model-manager/reregister.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/model-manager/reregister.py). Description basis: module docstring.
+
+Declared CLI options: `--list`, `--set`.
+
 ## tools/model-manager/runtime_payload.py
 
 Pinned SDXL runtime publication on /data, not node imagefs.
@@ -1873,6 +1881,12 @@ Source: [`tools/model-manager/test_native_admission.py`](https://github.com/YOUR
 Test fixture/check: test operations. Inspect the source before use.
 
 Source: [`tools/model-manager/test_operations.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/model-manager/test_operations.py). Description basis: filename summary.
+
+## tools/model-manager/test_reasoning_variants.py
+
+Test fixture/check: test reasoning variants. Inspect the source before use.
+
+Source: [`tools/model-manager/test_reasoning_variants.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/model-manager/test_reasoning_variants.py). Description basis: filename summary.
 
 ## tools/model-manager/test_runtime_payload.py
 
@@ -4585,6 +4599,12 @@ Source: [`tools/watoom-code/tests/test_coordinator_hot_reload.py`](https://githu
 Test fixture/check: test creative release. Inspect the source before use.
 
 Source: [`tools/watoom-code/tests/test_creative_release.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/watoom-code/tests/test_creative_release.py). Description basis: filename summary.
+
+## tools/watoom-code/tests/test_game_session_watchdog.py
+
+Test fixture/check: test game session watchdog. Inspect the source before use.
+
+Source: [`tools/watoom-code/tests/test_game_session_watchdog.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/tools/watoom-code/tests/test_game_session_watchdog.py). Description basis: filename summary.
 
 ## tools/watoom-code/tests/test_game_worker_bridge.py
 

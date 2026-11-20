@@ -228,6 +228,14 @@ Source component: pre commit. Inspect the source before use.
 
 Source: [`scripts/git-hooks/pre-commit`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/git-hooks/pre-commit). Description basis: filename summary.
 
+## scripts/gpu-controller-reconfigure.py
+
+Apply a changed manifest to a STOPPED \(replicas 0\) GPU-controller model deployment and re-approve its identity.
+
+Source: [`scripts/gpu-controller-reconfigure.py`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/scripts/gpu-controller-reconfigure.py). Description basis: module docstring.
+
+Declared CLI options: `--apply`, `--deployment`, `--manifest`.
+
 ## scripts/gpu-controller-repin-primary.py
 
 Re-pin the GPU controller's approved spec digest for the primary model Deployment.

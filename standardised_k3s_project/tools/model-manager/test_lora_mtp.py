@@ -53,6 +53,26 @@ class Workload(unittest.TestCase):
  def test_plain_gguf_args_unchanged(self):
   args=self.args(build(self.record("gguf"),[{"path":"/data/ai/models/gguf/model-manager/x/m.gguf"}],IMAGES)[0])
   self.assertEqual(args[-2:],["--spec-type","none"]);self.assertNotIn("--lora",args)
+ def test_gguf_runs_swift_runtime(self):
+  # T-0123: Model Manager models run Swift's runtime: CUDA graphs on, prompt-cache checkpoints, RAM cache, /app/lib first.
+  c=build(self.record("gguf"),[{"path":"/data/ai/models/gguf/model-manager/x/m.gguf"}],IMAGES)[0]["spec"]["template"]["spec"]["containers"][0]
+  env={e["name"]:e["value"] for e in c["env"]}
+  self.assertNotIn("GGML_CUDA_DISABLE_GRAPHS",env)
+  self.assertEqual((env["LLAMA_ARG_CTX_CHECKPOINTS"],env["LLAMA_ARG_CACHE_RAM"]),("12","2048"))
+  self.assertTrue(env["LD_LIBRARY_PATH"].startswith("/app/lib:"))
+ def test_qwen_template_and_default_effort(self):
+  r=self.record("gguf");r["settings"]=dict(r["settings"],reasoning="on",reasoning_effort="low",chat_template="qwen38")
+  d=build(r,[{"path":"/data/ai/models/gguf/model-manager/x/m.gguf"}],IMAGES)[0]["spec"]["template"]["spec"]
+  args=d["containers"][0]["args"]
+  self.assertEqual(args[args.index("--reasoning-effort")+1],"low")
+  self.assertEqual(args[args.index("--chat-template-file")+1],"/chat-template/qwen38-27b.jinja")
+  self.assertIn({"name":"chat-template","hostPath":{"path":"/app/model-manager/chat-templates/qwen38-27b.jinja","type":"File"}},d["volumes"])
+  r["settings"]["chat_template"]="/etc/passwd"
+  with self.assertRaises(ValueError):build(r,[{"path":"/data/ai/models/gguf/model-manager/x/m.gguf"}],IMAGES)
+ def test_turbo_kv_is_valid_and_sized_conservatively(self):
+  from settings import validate,CACHE_BYTES
+  validate(dict(LLM,cache_k="turbo5",cache_v="turbo4"),"gguf",capabilities={"mtp":False,"vision":False},max_context=131072)
+  self.assertGreater(CACHE_BYTES["turbo5"],CACHE_BYTES["turbo4"]);self.assertGreaterEqual(CACHE_BYTES["turbo4"],CACHE_BYTES["q4_0"])
  def test_lora_serves_base_with_adapter(self):
   artifacts=[{"path":"/data/ai/models/loras/model-manager/a/adapter.gguf"},{"path":"/data/ai/models/gguf/model-manager/b/base.gguf"}]
   args=self.args(build(self.record("gguf-lora"),artifacts,IMAGES)[0])

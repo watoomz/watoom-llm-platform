@@ -32,7 +32,13 @@ export class Service extends Context.Service<
     recall: (scope: Scope, query: string, budget: number) => Effect.Effect<string[]>
   }
 >()("@opencode/NativeMemory") {}
-export type Options = { url?: string; secret?: string; required?: boolean }
+/**
+ * lifecycle mirrors every session event (step/tool/compaction/execution) into AgentMemory as a checkpoint. Off by
+ * default since 2026-11-21: they hold only message references, nothing reads them back (recall shows recorded
+ * milestones and knowledge), and ~10k writes a day made AgentMemory slow enough to fail health checks and needed an
+ * hourly retention job. The session journal keeps the same history.
+ */
+export type Options = { url?: string; secret?: string; required?: boolean; lifecycle?: boolean }
 export function layer(options: Options) {
   return Layer.effect(
     Service,
@@ -88,7 +94,7 @@ export function layer(options: Options) {
           Effect.catchCause(() => Effect.void),
         ),
       )
-      const definitions = [
+      const definitions = !options.lifecycle ? [] : [
         SessionEvent.Created,
         SessionEvent.Execution.Started,
         SessionEvent.Step.Ended,
@@ -299,7 +305,7 @@ export function layer(options: Options) {
               retrieval.lastSuccess = Date.now()
               retrieval.unavailable = false
               const values = decodeResults(result.results ?? [], knowledge).flatMap((value) => Learning.read(value) ?? [])
-              return Learning.render(Learning.current(values).slice(0, 6), budget)
+              return Learning.render(Learning.relevant(Learning.current(values), query, scope.repository).slice(0, 6), budget)
             } catch (error) {
               retrieval.failures++
               retrieval.unavailable = true
@@ -380,6 +386,7 @@ export const node = configured({
   url: process.env.AGENTMEMORY_URL,
   secret: process.env.AGENTMEMORY_SECRET,
   required: process.env.WATOOM_MEMORY_REQUIRED === "true",
+  lifecycle: process.env.WATOOM_MEMORY_LIFECYCLE === "true",
 })
 
 function decodeResults(items: { observation?: { narrative?: string } }[], scope: Scope): Envelope[] {
@@ -408,6 +415,8 @@ function decodeResults(items: { observation?: { narrative?: string } }[], scope:
   })
 }
 
+const WORKER_FAILED = new Set(["FAILED", "STALE_RESULT", "RECONCILIATION_REQUIRED"])
+
 /** Settled tool calls from one stored assistant message. */
 export function toolRecords(row: { session_id: string; time_created: number; data: string }): Learning.ToolRecord[] {
   try {
@@ -418,11 +427,16 @@ export function toolRecords(row: { session_id: string; time_created: number; dat
         id?: string
         name?: string
         time?: { completed?: number }
-        state?: { status?: string; input?: unknown; metadata?: { exit?: unknown } }
+        state?: { status?: string; input?: unknown; metadata?: { exit?: unknown; status?: unknown; worker_result?: { status?: unknown } } }
       }
       if (p.type !== "tool" || typeof p.id !== "string" || typeof p.name !== "string") return []
       if (p.state?.status !== "completed" && p.state?.status !== "error") return []
       const exit = p.state.metadata?.exit
+      // A worker job that ran and failed is a real failure even though the status call itself completed, so a
+      // known-failure lesson can cite it (T-0109: a Godot API error found only inside a worker job could not be learned).
+      const failed =
+        p.name === "watoom_game_worker" &&
+        (WORKER_FAILED.has(String(p.state.metadata?.status)) || p.state.metadata?.worker_result?.status === "FAIL")
       return [
         {
           sessionID: row.session_id,
@@ -431,6 +445,7 @@ export function toolRecords(row: { session_id: string; time_created: number; dat
           status: p.state.status,
           input: p.state.input,
           exit: typeof exit === "number" ? exit : undefined,
+          ...(failed ? { failed: true } : {}),
           time: p.time?.completed ?? row.time_created,
         },
       ]

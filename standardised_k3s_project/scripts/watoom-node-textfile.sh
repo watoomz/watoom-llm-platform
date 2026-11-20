@@ -40,6 +40,63 @@ if owner:
 elif sel:
     print('watoom_gpu_workload_active{workload="%s",kind="llm"} 1' % q(cfg.get('aliases', {}).get(sel, sel)))
 PY
+  # Readable LLM names for Grafana. Model Manager models are labelled by install ID (model="mm-2befb4fc7156646b");
+  # their router catalog carries "<repository> (<file>.gguf) · MTP", so the GGUF file stem (or a LoRA's adapter
+  # repository) is the short, distinctive label. Other models keep their ID, so every model has exactly one name.
+  python3 - <<'PY' || true
+import json, pathlib, re
+base = pathlib.Path('/data/ai/helper-scripts')
+names = {}
+try:
+    for d in json.loads((base / 'config/gpu-controller.json').read_text()).get('aliases', {}):
+        names[d.removeprefix('llama-cpp-')] = d.removeprefix('llama-cpp-')
+except (OSError, ValueError):
+    pass
+try:
+    # Every installed Model Manager LLM, registered or not: the GGUF file stem (a LoRA's adapter repository).
+    import sqlite3
+    db = sqlite3.connect('file:/data/ai/model-manager/catalog.sqlite?mode=ro', uri=True, timeout=2)
+    paths = dict(db.execute('SELECT id, path FROM artifacts'))
+    for ident, raw in db.execute('SELECT id, record FROM models'):
+        rec = json.loads(raw)
+        if rec.get('kind') == 'gguf-lora':
+            names['mm-' + ident[:16]] = (rec.get('repository') or '').split('/')[-1].removesuffix('-GGUF')[:65] + ' (LoRA)'
+        elif rec.get('kind') == 'gguf' and rec.get('artifacts'):
+            names['mm-' + ident[:16]] = pathlib.Path(paths.get(rec['artifacts'][0], '')).stem[:72] or 'mm-' + ident[:16]
+except Exception:
+    pass
+try:
+    routes = json.loads((base / 'state/model-manager-router/catalog.json').read_text()).get('models', {})
+except (OSError, ValueError):
+    routes = {}
+for alias, r in routes.items():
+    if r.get('backend') not in (None, 'gguf'):
+        continue  # image backends are not LLMs
+    full = r.get('name') or alias
+    lora = re.match(r'^[^/ ]+/([^ ]+?)(?:-GGUF)? on ', full)
+    stem = re.search(r'\(([^()]+?)\.gguf\)', full)
+    label = (lora.group(1) + ' (LoRA)') if lora else stem.group(1) if stem else full.split(' ')[0].split('/')[-1]
+    names[alias] = label[:72]
+# Remember names: re-registration (retire + register) or a failed registration briefly drops a model from the router
+# catalog, and its panels then showed the bare mm-<id>. A model keeps its last known name until it is removed.
+memo = base / 'state/llm-model-names.json'
+try:
+    known = json.loads(memo.read_text())
+except (OSError, ValueError):
+    known = {}
+known.update({k: v for k, v in names.items() if v != k})
+try:
+    tmp = memo.with_suffix('.tmp'); tmp.write_text(json.dumps(known, sort_keys=True)); tmp.replace(memo)
+except OSError:
+    pass
+names = {**{k: v for k, v in known.items() if k.startswith('mm-')}, **{k: v for k, v in names.items() if v != k or k not in known}}
+if names:
+    q = lambda v: str(v).replace('\\', '\\\\').replace('"', '\\"')
+    print('# HELP watoom_llm_model_info Readable name for each LLM model label (1 = known).')
+    print('# TYPE watoom_llm_model_info gauge')
+    for model, label in sorted(names.items()):
+        print('watoom_llm_model_info{model="%s",name="%s"} 1' % (q(model), q(label)))
+PY
   echo '# HELP watoom_node_textfile_timestamp_seconds Last successful refresh of WatooM host metrics.'
   echo '# TYPE watoom_node_textfile_timestamp_seconds gauge'
   printf 'watoom_node_textfile_timestamp_seconds %s\n' "$(date +%s)"

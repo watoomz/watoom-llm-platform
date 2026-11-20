@@ -14,6 +14,13 @@ import argparse, collections, hashlib, http.server, json, math, threading, time,
 
 WINDOW, OVERLAP = 510, 64  # tokens per window excluding [CLS]/[SEP]
 INTERACTIVE_WINDOWS = 8  # requests at or below this are queries, never paced
+# 2026-11-20: AgentMemory aborts an embedding call after ~15 s and retries. A batch that would sleep longer than this
+# is refused at once (503, nothing reserved) instead of sleeping past the client's timeout and still consuming backend
+# time for an answer nobody reads -- that backlog starved recall queries ("AgentMemory retrieval unavailable").
+MAX_BATCH_WAIT = 8.0
+
+class Busy(Exception):
+    pass
 # Request bounds (the service listens on all interfaces for the pods, with no authentication, so size is the only brake on
 # memory, tokenizer and GPU work). AgentMemory sends up to 16,000 characters per input and up to 256 inputs per call.
 MAX_BODY_BYTES = 8 * 1024 * 1024
@@ -57,10 +64,13 @@ def combine(vectors, weights):
 
 class Embedder:
     def __init__(self, backend, cls_id, sep_id, cache_size=20000, concurrency=4, post=None, batch_rate=100.0,
-                 busy_file=None, busy_rate=25.0):
+                 busy_file=None, busy_rate=25.0, max_wait=MAX_BATCH_WAIT):
         self.backend, self.cls, self.sep = backend.rstrip("/"), cls_id, sep_id
         self.cache, self.cache_size, self.lock = collections.OrderedDict(), cache_size, threading.Lock()
         self.slots = threading.BoundedSemaphore(concurrency)
+        # Batches may hold at most concurrency-1 backend slots, so a recall query always finds one free.
+        self.batch_slots = threading.BoundedSemaphore(max(1, concurrency - 1))
+        self.max_wait = max_wait
         self.post = post or self._post
         self.metrics = collections.Counter()
         self.batch_rate, self.next_free, self.pacer = batch_rate, 0.0, threading.Lock()
@@ -95,6 +105,9 @@ class Embedder:
         with self.pacer:
             now = time.monotonic()
             start = max(now, self.next_free)
+            if self.max_wait and start - now > self.max_wait:
+                self.metrics["busy_refused_batches_total"] += 1
+                raise Busy("batch pacing queue full; retry later")
             self.next_free = start + count / rate
         wait = start - now
         if wait > 0:
@@ -125,16 +138,21 @@ class Embedder:
         out = [self._cached(k) for k in keys]
         todo = [i for i, v in enumerate(out) if v is None]
         if todo:
-            with self.slots:
-                started = time.monotonic()
-                pieces, owner = [], []
+            pieces, owner = [], []
+            with self.slots:  # tokenizing is backend work too; bounded, but released before any pacing sleep
                 for i in todo:
                     tokens = self.post("/tokenize", {"content": texts[i], "add_special": False})["tokens"]
                     parts = windows(tokens)
                     self.metrics["chunked_inputs"] += len(parts) > 1
                     for part in parts:
                         pieces.append([self.cls, *part, self.sep]); owner.append(i)
+            batch = len(pieces) > INTERACTIVE_WINDOWS
+            # Pace BEFORE taking a backend slot, so a sleeping batch never blocks a query.
+            if batch:
                 self.pace(len(pieces))
+            gate = self.batch_slots if batch else threading.BoundedSemaphore(1)
+            with gate, self.slots:
+                started = time.monotonic()
                 data = self.post("/v1/embeddings", {"input": pieces})["data"]
                 vectors = [d["embedding"] for d in sorted(data, key=lambda d: d["index"])]
                 for i in todo:
@@ -177,7 +195,13 @@ def serve(embedder, host, port, model):
                 refused = check_inputs(texts)
                 if refused:
                     return self.reply(refused[0], {"error": {"message": refused[1]}})
-                vectors = embedder.embed(texts)
+                try:
+                    vectors = embedder.embed(texts)
+                except Busy as busy:
+                    self.send_response(503); self.send_header("retry-after", "10"); self.send_header("content-type", "application/json")
+                    raw = json.dumps({"error": {"message": str(busy)}}).encode()
+                    self.send_header("content-length", str(len(raw))); self.end_headers(); self.wfile.write(raw)
+                    return
                 self.reply(200, {"object": "list", "model": model,
                                  "data": [{"object": "embedding", "index": i, "embedding": v} for i, v in enumerate(vectors)]})
             except Exception as error:
@@ -197,8 +221,9 @@ def main():
     p.add_argument("--batch-rate", type=float, default=100.0, help="max windows/s for batch requests; 0 disables pacing")
     p.add_argument("--busy-file", help="GPU controller status JSON; activeRequests>0 lowers batches to --busy-rate")
     p.add_argument("--busy-rate", type=float, default=25.0, help="max batch windows/s while the primary model is busy")
+    p.add_argument("--max-batch-wait", type=float, default=MAX_BATCH_WAIT, help="refuse (503) a batch that would wait longer than this; 0 = never refuse")
     a = p.parse_args()
-    serve(Embedder(a.backend, a.cls_id, a.sep_id, a.cache_size, a.concurrency, batch_rate=a.batch_rate, busy_file=a.busy_file, busy_rate=a.busy_rate), a.host, a.port, a.model)
+    serve(Embedder(a.backend, a.cls_id, a.sep_id, a.cache_size, a.concurrency, batch_rate=a.batch_rate, busy_file=a.busy_file, busy_rate=a.busy_rate, max_wait=a.max_batch_wait), a.host, a.port, a.model)
 
 if __name__ == "__main__":
     main()

@@ -32,7 +32,6 @@ rules:
   - llama-cpp-mm-f8e679b2182aac21
   - llama-cpp-ornith-15-9b
   - llama-cpp-qwen35-defiant-fable-9b
-  - llama-cpp-qwen38-atomic
   - llama-cpp-qwen38-uncensored-mtp
   - llama-cpp-swift-qwen38-coder
   - llama-cpp-tiel-coder-35b-a3b-mtp

@@ -82,7 +82,6 @@ def main() -> int:
     state = load_state(state_path)
 
     out_lines = []
-    models_seen = set()
 
     for field, expr in LIFETIME_COUNTERS.items():
         try:
@@ -92,7 +91,6 @@ def main() -> int:
             continue
         for model, raw in values.items():
             accumulate(state, model, field, raw)
-            models_seen.add(model)
 
     try:
         moss_values = {k: prom_query(args.prometheus_url, expr) for k, expr in MOSS_COUNTERS.items()}
@@ -102,14 +100,15 @@ def main() -> int:
     for field, per_model in moss_values.items():
         for model, raw in per_model.items():
             accumulate(state, model, field, raw)
-            models_seen.add(model)
 
     save_state(state_path, state)
 
     def emit(name: str, help_text: str, field: str):
         out_lines.append(f"# HELP {name} {help_text}")
         out_lines.append(f"# TYPE {name} gauge")
-        for model in sorted(models_seen):
+        # Every accumulated model, not just the ones reporting this poll: a lifetime total must survive its model
+        # being unloaded (2026-11-20: only the loaded model was published, so the all-time panels went empty).
+        for model in sorted(state):
             value = state.get(model, {}).get(field)
             if value is not None:
                 out_lines.append(f'{name}{{model="{model}"}} {value}')

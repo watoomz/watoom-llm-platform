@@ -1,7 +1,7 @@
 ---
-watoom_code_image: "127.0.0.1:5000/watoom-code@sha256:a0c220a6c9b4fe2db2d36e8d45a7d7ffa905ab7fff140e2a9dd73cc7acf6a2fa"
-watoom_code_application_commit: 440fb4d1f9409a3c9278e9eabd27be4b657232fe
-watoom_code_image_source_commit: 0ecec40d82b618142c88aa11eef32587be823673
+watoom_code_image: "127.0.0.1:5000/watoom-code@sha256:9fb5c7a220acaa3257e4b74a7a9e514e50cb0776cc656f8206ae521fc6f33f3a"
+watoom_code_application_commit: 64bd4e2c68b1bcd7a390af5c6d3600fa6c9c5c53
+watoom_code_image_source_commit: 64bd4e2c68b1bcd7a390af5c6d3600fa6c9c5c53
 # Raised 2026-11-09: traced the OOM crash loop into @agentmemory/agentmemory@0.9.29's own load path
 # (IndexPersistence.load(), single eager call at boot) -- it deserializes the current BM25 + vector index
 # generations (confirmed via the live manifest: ~145MB + ~108MB serialized) plus mem:memories.bin (~93MB)

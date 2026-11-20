@@ -1,4 +1,4 @@
-import tempfile, unittest, unittest.mock, hashlib
+import json, tempfile, unittest, unittest.mock, hashlib
 from pathlib import Path
 from store import Store
 from operations import Operations, Blocked
@@ -94,6 +94,61 @@ class Lifecycle(unittest.TestCase):
 
         with unittest.mock.patch.object(operations.shutil, "disk_usage", fake_disk_usage):
             self.assertTrue(self.install()["registered"])
+
+    def test_reregister_retires_then_registers_keeping_files_and_identity(self):
+        r = self.install()
+        self.store.db.execute("UPDATE models SET record=json_set(record,'$.registered',json('true')) WHERE id=?", (r["id"],))
+        self.calls.clear()
+        out = self.ops.reregister(r["id"], r["revision"], {"reasoning": "on"})
+        self.assertEqual(self.calls, ["retire", "register"])
+        self.assertEqual((out["id"], out["artifacts"], out["registered"]), (r["id"], r["artifacts"], True))
+        self.assertEqual((out["settings"]["reasoning"], out["reregistered_from"]), ("on", {"reasoning": None}))
+        self.assertTrue(all(Path(p).exists() for p in self.ops.plan_remove(r["id"], r["revision"])["paths"]))
+
+    def test_reregister_can_adopt_swift_runtime_settings(self):
+        r = self.install()
+        out = self.ops.reregister(r["id"], r["revision"], {"cache_k": "turbo5", "cache_v": "turbo4", "batch": 2048, "ubatch": 1024})
+        self.assertEqual((out["settings"]["cache_k"], out["settings"]["ubatch"], out["id"]), ("turbo5", 1024, r["id"]))
+
+    def test_reregister_reproves_mtp_from_the_header_and_enables_draft_mtp(self):
+        r = self.install()
+        self.ops.metadata_reader = lambda path: {"context_length": 131072, "nextn_predict_layers": 1}
+        out = self.ops.reregister(r["id"], r["revision"], {"speculation": "draft-mtp", "draft_count": 5})
+        self.assertTrue(out["capabilities"]["mtp"])
+        self.assertEqual((out["settings"]["speculation"], out["settings"]["draft_count"]), ("draft-mtp", 5))
+        self.ops.metadata_reader = lambda path: {"context_length": 131072, "nextn_predict_layers": 0}
+        with self.assertRaises(ValueError):
+            self.ops.reregister(r["id"], r["revision"], {"speculation": "draft-mtp", "draft_count": 5})
+
+    def test_interrupted_reregister_retires_the_leftover_registration(self):
+        r = self.install()
+        record = json.loads(self.store.db.execute("SELECT record FROM models WHERE id=?", (r["id"],)).fetchone()[0])
+        record.update(registered=False, controller_identity=record.get("controller_identity") or "leftover")
+        with self.store.db:
+            self.store.db.execute("UPDATE models SET record=? WHERE id=?", (json.dumps(record), r["id"]))
+        self.calls.clear()
+        out = self.ops.reregister(r["id"], r["revision"], {"reasoning": "on"})
+        self.assertEqual(self.calls, ["retire", "register"])
+        self.assertTrue(out["registered"])
+
+    def test_reregister_refuses_other_settings_and_stale_revision(self):
+        r = self.install()
+        with self.assertRaises(Blocked):
+            self.ops.reregister(r["id"], r["revision"], {"context": 4096})
+        with self.assertRaises(Blocked):
+            self.ops.reregister(r["id"], "b" * 40)
+
+    def test_reregister_failed_register_is_recoverable(self):
+        r = self.install()
+        broker = self.ops.broker
+        self.ops.broker = lambda action, record: {"registered": False} if action == "register" else {"retired": True}
+        failed = self.ops.reregister(r["id"], r["revision"])
+        self.assertFalse(failed["registered"])
+        self.assertIn("Registration not verified", failed["registration_error"])
+        self.ops.broker = broker
+        self.calls.clear()
+        self.assertTrue(self.ops.reregister(r["id"], r["revision"])["registered"])
+        self.assertEqual(self.calls, ["register"])
 
     def test_dedup(self):
         r = self.install()

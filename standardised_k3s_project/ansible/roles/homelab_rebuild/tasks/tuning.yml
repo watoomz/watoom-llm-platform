@@ -52,6 +52,37 @@
       zram-size = min(ram, 8192)
       compression-algorithm = zstd
 
+# /tmp lives on /app, not in RAM. Fedora mounts /tmp as tmpfs (up to 50% of RAM); on this 32 GiB
+# host that RAM competes with the model servers: 2026-11-21, 5.8 GiB of scratch files and build
+# caches in /tmp filled the zram swap and the I/O thrashing restarted ~15 pods. /app (ext4, the
+# large data volume) holds it instead of the smaller root filesystem. An fstab entry for /tmp
+# makes systemd's generated tmp.mount replace the vendor tmpfs unit (do not mask tmp.mount: that
+# would block this mount too).
+- name: "Homelab Rebuild | Label the on-disk /tmp directory as tmp_t"
+  community.general.sefcontext:
+    target: "{{ homelab_tmp_dir }}(/.*)?"
+    setype: tmp_t
+    state: present
+
+- name: "Homelab Rebuild | Create the on-disk /tmp directory"
+  ansible.builtin.file:
+    path: "{{ homelab_tmp_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "1777"
+    setype: tmp_t
+
+- name: "Homelab Rebuild | Bind /tmp to the on-disk directory at boot"
+  # state: present writes fstab only; the live switch is a separate, deliberate step
+  # (copy the contents across, then detach the tmpfs) so running jobs are not cut off.
+  ansible.posix.mount:
+    path: /tmp
+    src: "{{ homelab_tmp_dir }}"
+    fstype: none
+    opts: bind,nofail,x-systemd.requires-mounts-for=/app
+    state: present
+
 - name: "Homelab Rebuild | Stop desktop services a server does not use"
   # Printing, modem, mDNS and smart-card daemons (and their socket/path activators).
   # rsyslog stays: the security log retention pipeline reads its files.

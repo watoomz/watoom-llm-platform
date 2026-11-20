@@ -2,10 +2,10 @@
 import re
 # Language-model kinds: a GGUF model, or a GGUF LoRA adapter served on an installed GGUF base (llama-server --lora).
 LLM_KINDS=("gguf","gguf-lora")
-LLM={"context":131072,"context_auto":True,"output_tokens":4096,"cache_k":"q4_0","cache_v":"q4_0","flash_attention":True,"threads":8,"gpu_layers":-1,"cpu_ffn":0,"speculation":"none","draft_count":0,"parallel":1,"batch":512,"ubatch":128,"continuous_batching":True,"reasoning":"off","jinja":True,"projector":None,"projector_gpu":False,"temperature":1.0,"top_p":0.95,"top_k":20,"min_p":0.0,"presence_penalty":0.0,"repeat_penalty":1.0,"repeat_last_n":256}
+LLM={"context":131072,"context_auto":True,"output_tokens":4096,"cache_k":"turbo5","cache_v":"turbo4","flash_attention":True,"threads":8,"gpu_layers":-1,"cpu_ffn":0,"speculation":"none","draft_count":0,"parallel":1,"batch":2048,"ubatch":1024,"continuous_batching":True,"reasoning":"off","reasoning_effort":"low","chat_template":"none","jinja":True,"projector":None,"projector_gpu":False,"temperature":1.0,"top_p":0.95,"top_k":20,"min_p":0.0,"presence_penalty":0.0,"repeat_penalty":1.0,"repeat_last_n":256}
 IMAGE={"width":1024,"height":1024,"steps":30,"guidance":7.0,"scheduler":"euler","precision":"float16","seed":0,"strength":1.0,"base_model":None}
 RANGES={"output_tokens":(128,4096),"context":(512,1048576),"threads":(1,256),"gpu_layers":(-1,999),"cpu_ffn":(0,999),"draft_count":(0,32),"parallel":(1,16),"batch":(1,8192),"ubatch":(1,8192),"temperature":(0,5),"top_p":(0,1),"top_k":(0,1000),"min_p":(0,1),"presence_penalty":(-2,2),"repeat_penalty":(0,3),"repeat_last_n":(-1,1048576),"width":(256,2048),"height":(256,2048),"steps":(1,100),"guidance":(0,30),"seed":(0,2**32-1),"strength":(0,2)}
-ENUMS={"cache_k":["q4_0","q8_0","f16"],"cache_v":["q4_0","q8_0","f16"],"speculation":["none","draft-mtp"],"reasoning":["off","on"],"scheduler":["euler","dpm"],"precision":["float16","bfloat16","float32"]}
+ENUMS={"cache_k":["turbo5","turbo4","q4_0","q8_0","f16"],"cache_v":["turbo5","turbo4","q4_0","q8_0","f16"],"speculation":["none","draft-mtp"],"reasoning":["off","on"],"reasoning_effort":["low","medium","xhigh"],"chat_template":["none","qwen38"],"scheduler":["euler","dpm"],"precision":["float16","bfloat16","float32"]}
 # 2026-11-19 (owner): 128K is the default context and smaller models get more. With context_auto the context is raised
 # after download to what fits on the GPU (fit_context), never above the model's own maximum and never below the chosen
 # value. Owner cap 2026-11-19: a model may use at most 18 GiB of the GPU's 20 GiB; the reserve inside that cap
@@ -13,7 +13,9 @@ ENUMS={"cache_k":["q4_0","q8_0","f16"],"cache_v":["q4_0","q8_0","f16"],"speculat
 GPU_VRAM_BYTES=18*1024**3
 # Measured 2026-11-19 fully on GPU: Ornith 9B 256K = weights + KV + 0.4 GiB, Defiant 9B 256K = weights + KV - 0.0 GiB.
 VRAM_RESERVE_BYTES=1*1024**3
-CACHE_BYTES={"f16":2.0,"q8_0":34/32,"q4_0":18/32}
+# turbo5/turbo4 are the llamAmpere KV types Swift runs (owner-adopted 2026-11-03, lower KLD than q4_0). Their sizes
+# are taken HIGH on purpose (6 and 5 bits/value) so context_auto can only under-fill the GPU, never overflow it.
+CACHE_BYTES={"f16":2.0,"q8_0":34/32,"q4_0":18/32,"turbo5":6/8,"turbo4":5/8}
 def kv_bytes_per_token(header,cache_k="f16",cache_v="f16"):
     """KV-cache bytes per context token. Only full-attention layers grow with context: a hybrid model (Qwen3.5/3.8:
     full_attention_interval) has block_count/interval of them, a sliding-window model (Gemma) the layers whose pattern

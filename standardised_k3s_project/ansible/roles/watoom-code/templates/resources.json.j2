@@ -153,7 +153,7 @@
                 "image": "{{ watoom_code_memory_image }}",
                 "imagePullPolicy": "IfNotPresent",
                 "livenessProbe": {
-                  "failureThreshold": 6,
+                  "failureThreshold": 18,
                   "httpGet": {
                     "path": "/agentmemory/livez",
                     "port": "http",
@@ -162,7 +162,7 @@
                   "initialDelaySeconds": 20,
                   "periodSeconds": 20,
                   "successThreshold": 1,
-                  "timeoutSeconds": 5
+                  "timeoutSeconds": 10
                 },
                 "name": "agentmemory",
                 "ports": [

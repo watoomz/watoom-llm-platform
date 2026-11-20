@@ -14,9 +14,7 @@ data:
     \ = \"/var/run/secrets/kubernetes.io/serviceaccount/token\"\nCA_PATH = \"/var/run/secrets/kubernetes.io/serviceaccount/ca.crt\"\
     \nAPI = \"https://kubernetes.default.svc\"\nMODELS = {\n    \"swift-qwen38-coder\": {\n        \"\
     deployment\": \"llama-cpp-swift-qwen38-coder\",\n        \"url\": \"http://llama-cpp-swift-qwen38-coder.llama-cpp.svc.cluster.local:8000\"\
-    ,\n        \"name\": \"Swift Qwen3.8 27B Coder 32K Stable\",\n    },\n    \"qwen38-27b-ad-iq4-xs\"\
-    : {\n        \"deployment\": \"llama-cpp-qwen38-atomic\",\n        \"url\": \"http://llama-cpp-qwen38-atomic.llama-cpp.svc.cluster.local:8000\"\
-    ,\n        \"name\": \"Qwen3.8 General Atomic AD-IQ4_XS\",\n    },\n    \"qwen38-uncensored-mtp-iq4-xs\"\
+    ,\n        \"name\": \"Swift Qwen3.8 27B Coder 32K Stable\",\n    },\n    \"qwen38-uncensored-mtp-iq4-xs\"\
     : {\n        \"deployment\": \"llama-cpp-qwen38-uncensored-mtp\",\n        \"url\": \"http://llama-cpp-qwen38-uncensored-mtp.llama-cpp.svc.cluster.local:8000\"\
     ,\n        \"name\": \"Qwen3.8 Uncensored MTP IQ4_XS\",\n    },\n    \"ornith-1.5-9b-q8\": {\n   \
     \     \"deployment\": \"llama-cpp-ornith-15-9b\",\n        \"url\": \"http://llama-cpp-ornith-15-9b.llama-cpp.svc.cluster.local:8000\"\
@@ -27,72 +25,70 @@ data:
     ,\n        \"name\": \"Gemma 4 E4B Uncensored HauhauCS Aggressive\",\n    },\n    \"tiel-coder-35b-a3b-mtp\"\
     : {\n        \"deployment\": \"llama-cpp-tiel-coder-35b-a3b-mtp\",\n        \"url\": \"http://llama-cpp-tiel-coder-35b-a3b-mtp.llama-cpp.svc.cluster.local:8000\"\
     ,\n        \"name\": \"CyberTiel Coder 35B-A3B MTP IQ4_XS\",\n    },\n}\nDEFAULT_MODEL = \"active-model\"\
-    \nACTIVE_MODEL_ALIAS = \"active-model\"\n\nMODEL_ALIASES = {\n    \"qwen38-general\": \"qwen38-27b-ad-iq4-xs\"\
-    ,\n    \"qwen38-uncensored-mtp\": \"qwen38-uncensored-mtp-iq4-xs\",\n    \"ornith-1.5-9b\": \"ornith-1.5-9b-q8\"\
-    ,\n    \"qwen35-defiant-fable-9b\": \"qwen35-defiant-fable-9b-q8\",\n    \"gemma-4-e4b\": \"gemma-4-e4b-q8-k-p\"\
-    ,\n}\nVISIBLE_MODELS = {\n    ACTIVE_MODEL_ALIAS: \"Active Homelab Model / Loaded Backend\",\n   \
-    \ \"swift-qwen38-coder\": \"Swift Qwen3.8 27B Coder / 32K Stable\",\n    \"qwen38-general\": \"Qwen3.8\
-    \ General Atomic AD-IQ4_XS\",\n    \"qwen38-uncensored-mtp\": \"Qwen3.8 Uncensored MTP IQ4_XS\",\n\
-    \    \"ornith-1.5-9b\": \"Ornith 1.5 9B Uncensored\",\n    \"qwen35-defiant-fable-9b\": \"Qwen3.5\
-    \ 9B Defiant Fable plusIQ-TOOLS\",\n    \"gemma-4-e4b\": \"Gemma 4 E4B Uncensored HauhauCS Aggressive\"\
-    ,\n    \"tiel-coder-35b-a3b-mtp\": \"CyberTiel Coder 35B-A3B MTP IQ4_XS\",\n}\nSTART_TIMEOUT = int(os.environ.get(\"\
-    START_TIMEOUT_SECONDS\", \"240\"))\nSTOP_TIMEOUT = int(os.environ.get(\"STOP_TIMEOUT_SECONDS\", \"\
-    120\"))\nSWITCH_LOCK_TIMEOUT = int(os.environ.get(\"SWITCH_LOCK_TIMEOUT_SECONDS\", \"300\"))\n# 2026-11-19:\
-    \ while the controller switches models (5-7 min for a 27B gguf read fresh from disk) it handles one\
-    \ request\n# at a time, so every other request's begin-inference timed out after 10 s and the router\
-    \ answered 503: watoom-code saw a\n# burst of 503s and gave up. A request now WAITS while a switch\
-    \ this router started is in flight, up to this many seconds.\nSWITCH_WAIT_SECONDS = int(os.environ.get(\"\
-    SWITCH_WAIT_SECONDS\", \"900\"))\nSWITCHES_IN_FLIGHT = [0]\nSWITCHES_IN_FLIGHT_LOCK = threading.Lock()\n\
-    \n\ndef switch_in_progress():\n    with SWITCHES_IN_FLIGHT_LOCK:\n        return SWITCHES_IN_FLIGHT[0]\
-    \ > 0 or MODEL_SWITCH_LOCK.locked()\n\n\ndef begin_inference(client, deployment, allow_switch):\n\
-    \    \"\"\"begin-inference lease; a request that may switch counts as an in-flight switch; any other\
-    \ request that fails\n    while a switch is in flight retries every 5 s until it ends or SWITCH_WAIT_SECONDS\
-    \ pass (then the error stands).\"\"\"\n    deadline = time.monotonic() + SWITCH_WAIT_SECONDS\n   \
-    \ waited = False\n    while True:\n        if allow_switch:\n            with SWITCHES_IN_FLIGHT_LOCK:\n\
-    \                SWITCHES_IN_FLIGHT[0] += 1\n        try:\n            lease = client.call('begin-inference',\
-    \ deployment=deployment, allow_switch=allow_switch)['lease']\n            if waited:\n           \
-    \     print(\"[MODEL-SWITCH] action=waited-for-switch deployment=\" + deployment, flush=True)\n  \
-    \          return lease\n        except Exception:\n            if allow_switch or time.monotonic()\
-    \ >= deadline or not switch_in_progress():\n                raise\n            if not waited:\n  \
-    \              print(\"[MODEL-SWITCH] action=wait-for-switch deployment=\" + deployment, flush=True)\n\
-    \            waited = True\n            time.sleep(5)\n        finally:\n            if allow_switch:\n\
-    \                with SWITCHES_IN_FLIGHT_LOCK:\n                    SWITCHES_IN_FLIGHT[0] -= 1\n\n\
-    # ThreadingHTTPServer processes requests concurrently. GPU model lifecycle\n# changes must therefore\
-    \ be serialized independently of inference traffic.\nMODEL_SWITCH_LOCK = threading.Lock()\nMODEL_SWITCH_STATE_LOCK\
-    \ = threading.Lock()\nMODEL_SWITCH_STATE = {\n    \"switching\": False,\n    \"requested_model\":\
-    \ None,\n    \"target_deployment\": None,\n    \"started_at\": None,\n    \"last_error\": None,\n\
-    }\n\nMODEL_CALL_LIMIT = int(os.environ.get(\"WATOOM_MODEL_MAX_CALLS\", \"3\"))\nMODEL_CALL_TTL_SECONDS\
-    \ = int(os.environ.get(\"WATOOM_MODEL_CALL_TTL_SECONDS\", \"900\"))\nMODEL_CALL_COUNTS = {}\nMODEL_CALL_LOCK\
-    \ = threading.Lock()\n\ndef register_model_call(request_id):\n    \"\"\"Count one HTTP model call\
-    \ for a Pi correlation id.\n\n    Requests without the WatooM correlation header are not rate-limited\
-    \ here;\n    normal Open WebUI/direct router traffic remains unaffected.  The counter is\n    intentionally\
-    \ independent of the client-supplied model-call number.\n    \"\"\"\n    if not request_id or request_id\
-    \ == \"-\":\n        return None\n    now = time.time()\n    with MODEL_CALL_LOCK:\n        stale\
-    \ = [key for key, item in MODEL_CALL_COUNTS.items()\n                 if now - item[\"last_seen\"\
-    ] > MODEL_CALL_TTL_SECONDS]\n        for key in stale:\n            MODEL_CALL_COUNTS.pop(key, None)\n\
-    \        item = MODEL_CALL_COUNTS.setdefault(request_id, {\"count\": 0, \"last_seen\": now})\n   \
-    \     item[\"count\"] += 1\n        item[\"last_seen\"] = now\n        return item[\"count\"]\ndef\
-    \ token():\n    with open(TOKEN_PATH, \"r\", encoding=\"utf-8\") as handle:\n        return handle.read().strip()\n\
-    \ndef k8s(path, method=\"GET\", body=None):\n    data = None if body is None else json.dumps(body).encode(\"\
-    utf-8\")\n    req = urllib.request.Request(API + path, data=data, method=method)\n    req.add_header(\"\
-    Authorization\", \"Bearer \" + token())\n    req.add_header(\"Accept\", \"application/json\")\n  \
-    \  if body is not None:\n        req.add_header(\"Content-Type\", \"application/merge-patch+json\"\
-    )\n    ctx = ssl.create_default_context(cafile=CA_PATH)\n    with urllib.request.urlopen(req, timeout=20,\
-    \ context=ctx) as response:\n        return json.loads(response.read().decode(\"utf-8\"))\n\ndef deploy(name):\n\
-    \    return k8s(f\"/apis/apps/v1/namespaces/{NAMESPACE}/deployments/{name}\")\n\ndef scale(name, replicas):\n\
-    \    raise RuntimeError('Direct scaling retired; GPU controller is the sole writer')\n\n\ndef is_available(name):\n\
-    \    d = deploy(name)\n    status = d.get(\"status\", {})\n    return status.get(\"readyReplicas\"\
-    , 0) >= 1 and status.get(\"availableReplicas\", 0) >= 1\n\ndef active_deployment():\n    for model\
-    \ in MODELS.values():\n        try:\n            if is_available(model[\"deployment\"]):\n       \
-    \         return model[\"deployment\"]\n        except Exception:\n            pass\n    return None\n\
-    \ndef active_model():\n    \"\"\"Return (canonical_model_id, model_spec) for the already-active backend.\n\
-    \n    This helper is intentionally read-only. It never scales deployments.\n    \"\"\"\n    deployment\
-    \ = active_deployment()\n    if not deployment:\n        return None, None\n\n    for canonical_model_id,\
-    \ model_spec in MODELS.items():\n        if model_spec[\"deployment\"] == deployment:\n          \
-    \  return canonical_model_id, model_spec\n\n    return None, None\n\n\ndef desired_replicas(name):\n\
-    \    d = deploy(name)\n    return int(\n        (d.get(\"spec\") or {}).get(\"replicas\") or 0\n \
-    \   )\n\ndef deployment_pods(name):\n    \"\"\"Return pods selected by a model Deployment.\"\"\"\n\
-    \    d = deploy(name)\n\n    selector = (\n        (d.get(\"spec\") or {})\n        .get(\"selector\"\
+    \nACTIVE_MODEL_ALIAS = \"active-model\"\n\nMODEL_ALIASES = {\n    \"qwen38-uncensored-mtp\": \"qwen38-uncensored-mtp-iq4-xs\"\
+    ,\n    \"ornith-1.5-9b\": \"ornith-1.5-9b-q8\",\n    \"qwen35-defiant-fable-9b\": \"qwen35-defiant-fable-9b-q8\"\
+    ,\n    \"gemma-4-e4b\": \"gemma-4-e4b-q8-k-p\",\n}\nVISIBLE_MODELS = {\n    ACTIVE_MODEL_ALIAS: \"\
+    Active Homelab Model / Loaded Backend\",\n    \"swift-qwen38-coder\": \"Swift Qwen3.8 27B Coder /\
+    \ 32K Stable\",\n    \"qwen38-uncensored-mtp\": \"Qwen3.8 Uncensored MTP IQ4_XS\",\n    \"ornith-1.5-9b\"\
+    : \"Ornith 1.5 9B Uncensored\",\n    \"qwen35-defiant-fable-9b\": \"Qwen3.5 9B Defiant Fable plusIQ-TOOLS\"\
+    ,\n    \"gemma-4-e4b\": \"Gemma 4 E4B Uncensored HauhauCS Aggressive\",\n    \"tiel-coder-35b-a3b-mtp\"\
+    : \"CyberTiel Coder 35B-A3B MTP IQ4_XS\",\n}\nSTART_TIMEOUT = int(os.environ.get(\"START_TIMEOUT_SECONDS\"\
+    , \"240\"))\nSTOP_TIMEOUT = int(os.environ.get(\"STOP_TIMEOUT_SECONDS\", \"120\"))\nSWITCH_LOCK_TIMEOUT\
+    \ = int(os.environ.get(\"SWITCH_LOCK_TIMEOUT_SECONDS\", \"300\"))\n# 2026-11-19: while the controller\
+    \ switches models (5-7 min for a 27B gguf read fresh from disk) it handles one request\n# at a time,\
+    \ so every other request's begin-inference timed out after 10 s and the router answered 503: watoom-code\
+    \ saw a\n# burst of 503s and gave up. A request now WAITS while a switch this router started is in\
+    \ flight, up to this many seconds.\nSWITCH_WAIT_SECONDS = int(os.environ.get(\"SWITCH_WAIT_SECONDS\"\
+    , \"900\"))\nSWITCHES_IN_FLIGHT = [0]\nSWITCHES_IN_FLIGHT_LOCK = threading.Lock()\n\n\ndef switch_in_progress():\n\
+    \    with SWITCHES_IN_FLIGHT_LOCK:\n        return SWITCHES_IN_FLIGHT[0] > 0 or MODEL_SWITCH_LOCK.locked()\n\
+    \n\ndef begin_inference(client, deployment, allow_switch):\n    \"\"\"begin-inference lease; a request\
+    \ that may switch counts as an in-flight switch; any other request that fails\n    while a switch\
+    \ is in flight retries every 5 s until it ends or SWITCH_WAIT_SECONDS pass (then the error stands).\"\
+    \"\"\n    deadline = time.monotonic() + SWITCH_WAIT_SECONDS\n    waited = False\n    while True:\n\
+    \        if allow_switch:\n            with SWITCHES_IN_FLIGHT_LOCK:\n                SWITCHES_IN_FLIGHT[0]\
+    \ += 1\n        try:\n            lease = client.call('begin-inference', deployment=deployment, allow_switch=allow_switch)['lease']\n\
+    \            if waited:\n                print(\"[MODEL-SWITCH] action=waited-for-switch deployment=\"\
+    \ + deployment, flush=True)\n            return lease\n        except Exception:\n            if allow_switch\
+    \ or time.monotonic() >= deadline or not switch_in_progress():\n                raise\n          \
+    \  if not waited:\n                print(\"[MODEL-SWITCH] action=wait-for-switch deployment=\" + deployment,\
+    \ flush=True)\n            waited = True\n            time.sleep(5)\n        finally:\n          \
+    \  if allow_switch:\n                with SWITCHES_IN_FLIGHT_LOCK:\n                    SWITCHES_IN_FLIGHT[0]\
+    \ -= 1\n\n# ThreadingHTTPServer processes requests concurrently. GPU model lifecycle\n# changes must\
+    \ therefore be serialized independently of inference traffic.\nMODEL_SWITCH_LOCK = threading.Lock()\n\
+    MODEL_SWITCH_STATE_LOCK = threading.Lock()\nMODEL_SWITCH_STATE = {\n    \"switching\": False,\n  \
+    \  \"requested_model\": None,\n    \"target_deployment\": None,\n    \"started_at\": None,\n    \"\
+    last_error\": None,\n}\n\nMODEL_CALL_LIMIT = int(os.environ.get(\"WATOOM_MODEL_MAX_CALLS\", \"3\"\
+    ))\nMODEL_CALL_TTL_SECONDS = int(os.environ.get(\"WATOOM_MODEL_CALL_TTL_SECONDS\", \"900\"))\nMODEL_CALL_COUNTS\
+    \ = {}\nMODEL_CALL_LOCK = threading.Lock()\n\ndef register_model_call(request_id):\n    \"\"\"Count\
+    \ one HTTP model call for a Pi correlation id.\n\n    Requests without the WatooM correlation header\
+    \ are not rate-limited here;\n    normal Open WebUI/direct router traffic remains unaffected.  The\
+    \ counter is\n    intentionally independent of the client-supplied model-call number.\n    \"\"\"\n\
+    \    if not request_id or request_id == \"-\":\n        return None\n    now = time.time()\n    with\
+    \ MODEL_CALL_LOCK:\n        stale = [key for key, item in MODEL_CALL_COUNTS.items()\n            \
+    \     if now - item[\"last_seen\"] > MODEL_CALL_TTL_SECONDS]\n        for key in stale:\n        \
+    \    MODEL_CALL_COUNTS.pop(key, None)\n        item = MODEL_CALL_COUNTS.setdefault(request_id, {\"\
+    count\": 0, \"last_seen\": now})\n        item[\"count\"] += 1\n        item[\"last_seen\"] = now\n\
+    \        return item[\"count\"]\ndef token():\n    with open(TOKEN_PATH, \"r\", encoding=\"utf-8\"\
+    ) as handle:\n        return handle.read().strip()\n\ndef k8s(path, method=\"GET\", body=None):\n\
+    \    data = None if body is None else json.dumps(body).encode(\"utf-8\")\n    req = urllib.request.Request(API\
+    \ + path, data=data, method=method)\n    req.add_header(\"Authorization\", \"Bearer \" + token())\n\
+    \    req.add_header(\"Accept\", \"application/json\")\n    if body is not None:\n        req.add_header(\"\
+    Content-Type\", \"application/merge-patch+json\")\n    ctx = ssl.create_default_context(cafile=CA_PATH)\n\
+    \    with urllib.request.urlopen(req, timeout=20, context=ctx) as response:\n        return json.loads(response.read().decode(\"\
+    utf-8\"))\n\ndef deploy(name):\n    return k8s(f\"/apis/apps/v1/namespaces/{NAMESPACE}/deployments/{name}\"\
+    )\n\ndef scale(name, replicas):\n    raise RuntimeError('Direct scaling retired; GPU controller is\
+    \ the sole writer')\n\n\ndef is_available(name):\n    d = deploy(name)\n    status = d.get(\"status\"\
+    , {})\n    return status.get(\"readyReplicas\", 0) >= 1 and status.get(\"availableReplicas\", 0) >=\
+    \ 1\n\ndef active_deployment():\n    for model in MODELS.values():\n        try:\n            if is_available(model[\"\
+    deployment\"]):\n                return model[\"deployment\"]\n        except Exception:\n       \
+    \     pass\n    return None\n\ndef active_model():\n    \"\"\"Return (canonical_model_id, model_spec)\
+    \ for the already-active backend.\n\n    This helper is intentionally read-only. It never scales deployments.\n\
+    \    \"\"\"\n    deployment = active_deployment()\n    if not deployment:\n        return None, None\n\
+    \n    for canonical_model_id, model_spec in MODELS.items():\n        if model_spec[\"deployment\"\
+    ] == deployment:\n            return canonical_model_id, model_spec\n\n    return None, None\n\n\n\
+    def desired_replicas(name):\n    d = deploy(name)\n    return int(\n        (d.get(\"spec\") or {}).get(\"\
+    replicas\") or 0\n    )\n\ndef deployment_pods(name):\n    \"\"\"Return pods selected by a model Deployment.\"\
+    \"\"\n    d = deploy(name)\n\n    selector = (\n        (d.get(\"spec\") or {})\n        .get(\"selector\"\
     , {})\n        .get(\"matchLabels\", {})\n    )\n\n    if not selector:\n        return []\n\n   \
     \ label_selector=\",\".join(\n        f\"{key}={value}\"\n        for key,value in sorted(selector.items())\n\
     \    )\n\n    path=(\n        f\"/api/v1/namespaces/{NAMESPACE}/pods\"\n        \"?labelSelector=\"\

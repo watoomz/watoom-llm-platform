@@ -136,6 +136,13 @@ def subprocess_runner(argv, timeout, cwd=None):
         return -9, out or "", True
 
 
+def where(entry):
+    """Godot prints the failing file on the next lines ('at: res://x.gd:12', 'GDScript backtrace'); the engine log stays
+    on the worker, so the summary must carry it or the model cannot tell which script failed (T-0114)."""
+    at = [x.strip() for x in entry.get("at") or [] if x.strip()][:2]
+    return (" [" + " | ".join(at) + "]") if at else ""
+
+
 def decide(rc, timed_out, report, result, job, strict_warnings=False):
     """Pure verdict: (code, why). Precedence 4, 3, 5."""
     classes = {f["cls"] for f in report["fatal"]}
@@ -150,7 +157,7 @@ def decide(rc, timed_out, report, result, job, strict_warnings=False):
         return 4, "result.json is for job '%s', expected '%s'" % (result.get("job"), job)
     if report["fatal"] or (strict_warnings and report["warnings"]):
         f = (report["fatal"] or report["warnings"])[0]
-        return 3, "engine log %s at line %d: %s" % (f["cls"], f["line_no"], f["text"])
+        return 3, "engine log %s at line %d: %s%s" % (f["cls"], f["line_no"], f["text"], where(f))
     if not result.get("ok"):
         return 5, "runner reported failure: %s" % result.get("error")
     return 0, "ok"

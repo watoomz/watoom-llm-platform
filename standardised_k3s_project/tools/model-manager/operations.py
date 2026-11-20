@@ -147,6 +147,56 @@ class Operations:
    record["tested"]=True;record.pop("registration_error",None)
    with self.store.db:self.store.db.execute("UPDATE models SET record=? WHERE id=?",(json.dumps(record),identity))
    return result
+ # Runtime settings a re-registration may change (reasoning; Swift's KV types and batch sizes, T-0123) while keeping the identity (and so the mm-* name that sessions and tickets
+ # use). The identity hashes the install selection; the original values are kept in record["reregistered_from"].
+ REREGISTER_OVERRIDES=("reasoning","reasoning_effort","chat_template","temperature","top_p","top_k","min_p","presence_penalty","repeat_penalty","cache_k","cache_v","batch","ubatch","speculation","draft_count")
+ def reregister(self,identity,revision,overrides=None):
+  """Retire and register again with the current broker workload (e.g. --metrics added after install), files kept.
+  The broker refuses while the GPU controller has an owner and retire refuses a running deployment (T-0123)."""
+  overrides=dict(overrides or {})
+  if any(k not in self.REREGISTER_OVERRIDES for k in overrides):raise Blocked("Only %s may change on re-registration"%", ".join(self.REREGISTER_OVERRIDES))
+  with self.exclusive():
+   row=self.store.db.execute("SELECT record FROM models WHERE id=?",(identity,)).fetchone()
+   if not row:raise Blocked("Unknown installation")
+   record=json.loads(row[0])
+   if record["revision"]!=revision:raise Blocked("Stale revision")
+   if record.get("protected"):raise Blocked("Recovery installation is protected")
+   if record["kind"] not in LLM_KINDS:raise Blocked("Re-registration is for llama.cpp models")
+   # Re-prove header facts: models installed before capability detection (e.g. mm-73306b) carry no MTP proof, so
+   # matching Swift's draft-mtp would otherwise be refused although the GGUF has the head.
+   artifacts=[self.store.db.execute("SELECT path FROM artifacts WHERE id=?",(a,)).fetchone()[0] for a in record["artifacts"]]
+   header=self.metadata_reader(artifacts[0] if record["kind"]=="gguf" else artifacts[1])   # a LoRA's artifacts are [adapter, base...]
+   if isinstance(header,dict):
+    record["capabilities"]={**(record.get("capabilities") or {"vision":False}),"mtp":(header.get("nextn_predict_layers") or 0)>0}
+   settings={**record["settings"],**overrides}
+   validate(settings,record["kind"],capabilities=record.get("capabilities"),max_context=record.get("max_context"))
+   if record.get("registered"):
+    result=self.broker("retire",record)
+    if result.get("retired") is not True:raise Blocked("Retirement not verified")
+   elif record.get("controller_identity"):
+    # An interrupted reregister saves the record unregistered while the broker still holds the prior registration
+    # (register then fails "Prior registered configuration differs"): retire that leftover; no receipt = nothing to do.
+    try:
+     result=self.broker("retire",record)
+    except Exception as e:
+     if "installation receipt required" not in str(e):raise
+    else:
+     if result.get("retired") is not True:raise Blocked("Retirement not verified")
+   changed={k:record["settings"].get(k) for k,v in overrides.items() if record["settings"].get(k)!=v}
+   if changed:record["reregistered_from"]={**changed,**record.get("reregistered_from",{})}
+   record.update(settings=settings,registered=False,configured=False)
+   record.pop("registration_error",None)
+   # Saved before register: the broker reads the record from the catalogue, and a failed register leaves a truthful
+   # unregistered record that a second reregister call completes.
+   with self.store.db:self.store.db.execute("UPDATE models SET record=? WHERE id=?",(json.dumps(record),identity))
+   try:
+    outcome=self.broker("register",record)
+    record.update(outcome)
+    if outcome.get("registered") is not True:raise Blocked("Registration not verified")
+   except Exception as e:
+    record["registration_error"]=type(e).__name__+": "+str(e)[:200]
+   with self.store.db:self.store.db.execute("UPDATE models SET record=? WHERE id=?",(json.dumps(record),identity))
+   return record
  def plan_remove(self,identity,revision):
   row=self.store.db.execute("SELECT record FROM models WHERE id=?",(identity,)).fetchone()
   if not row:raise Blocked("Unknown installation")

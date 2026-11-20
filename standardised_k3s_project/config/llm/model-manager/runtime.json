@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "source_commit": "fb30af68f19364dbae15d7cfced2af538fa78bfd",
+  "source_commit": "ebfed61aade8559c54e8387fa554cb5f907e2bb0",
   "cpu_image": {
-    "image": "127.0.0.1:5000/watoom-model-manager@sha256:e1570b1a88f15b8236e02a0e4cd6714a20250ec8da22db9b14d4cccbb8bf3248",
-    "source_commit": "fb30af68f19364dbae15d7cfced2af538fa78bfd",
-    "note": "T-0098: prune_native_profiles now reads WatooM Code's 'providers' key (falling back to the older 'provider'), so removals actually prune the agent profile; staged and validated (evidence t0098-fb30af68, test_broker 144/144) before production promotion"
+    "image": "127.0.0.1:5000/watoom-model-manager@sha256:0da6cf443fee0cbe00ab747bb7410debcc1d56d5d1b93bb05eca3057647e09dd",
+    "source_commit": "3201224b45e4e949a9b8f3d45792fedc52f031b5",
+    "note": "T-0123: GGUF models run Swift's llamAmpere runtime (CUDA graphs, ctx checkpoints + RAM prompt cache, turbo5/turbo4, ubatch 1024) and can mount the owner's qwen38 chat template with a default reasoning_effort; host reregister.py. Staged and validated (evidence t0123-3201224b, model-manager tests 151/151)."
   },
   "sdxl_image": {
     "image": "127.0.0.1:5000/watoom-model-manager-sdxl-runner@sha256:16aab4548d0ce2f3e9cc875361ad20f147c0189a879c95186c90252e77834e79",
@@ -14,8 +14,8 @@
   "defaults": {
     "context": 100000,
     "output": 4096,
-    "cache_k": "q4_0",
-    "cache_v": "q4_0"
+    "cache_k": "turbo5",
+    "cache_v": "turbo4"
   },
   "live_generation": "PASS: GGUF text, SDXL checkpoint and base-plus-LoRA; primary restoration verified",
   "sdxl_runtime": {

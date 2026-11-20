@@ -1,0 +1,16 @@
+{
+  "sourceCommit": "64bd4e2c68b1bcd7a390af5c6d3600fa6c9c5c53",
+  "baseCommit": "51a6ec509cc77fd446967234ae237458b9316768",
+  "branch": "fix/learn-unescaped-command-match",
+  "image": "127.0.0.1:5000/watoom-code@sha256:9fb5c7a220acaa3257e4b74a7a9e514e50cb0776cc656f8206ae521fc6f33f3a",
+  "supersedes": "127.0.0.1:5000/watoom-code@sha256:c90b5a4a9fe357a3c95b6679c6e19bf9ec2dd1d6dee07c157c72205c2740d5ea",
+  "bundle": "watoom-code-memory-learning-20261121.bundle",
+  "bundleSha256": "9333ba4d7311994bc6285d481108cf8a74b109d819d7e12abd7fb1966b4fdb2e",
+  "applicationOnly": true,
+  "change": "15 commits on the v2.2.5 port since 51a6ec50: session loop guard, learning evidence matches raw call text (0ecec40d), worker FAILED counts as known-failure evidence (bc9dcc7c, T-0135), efficient informative recall + fixable learn refusals (1d70327f, 802767e8, T-0139), session lifecycle events no longer mirrored into AgentMemory (64bd4e2c, WATOOM_MEMORY_LIFECYCLE=true restores).",
+  "checks": {
+    "watoomTests": "138 pass; 16 environment-only failures (Blender image, skill bundles), baseline 17",
+    "typecheck": "no errors in changed files"
+  },
+  "deployEvidence": "homelab commits b32993ff, b697d111: playbooks/watoom-code.yml ok=153 failed=0, rollouts complete 2026-11-21 08:4x"
+}

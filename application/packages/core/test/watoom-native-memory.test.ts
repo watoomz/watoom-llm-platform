@@ -25,7 +25,7 @@ test("real native event, process death before acknowledgment, reconciliation and
   } })
   const children: ReturnType<typeof Bun.spawn>[] = []
   const launch = (db: string, mode: string) => {
-    const child = Bun.spawn([process.execPath, path.join(import.meta.dirname, "fixture/watoom-memory-process.ts"), db, mode, root], { env: { ...process.env, AGENTMEMORY_URL: server.url.origin, AGENTMEMORY_SECRET: "", GOMAXPROCS: "2", WATOOM_MEMORY_TEST_PROJECT: path.basename(db) }, stdout: "pipe", stderr: "pipe" })
+    const child = Bun.spawn([process.execPath, path.join(import.meta.dirname, "fixture/watoom-memory-process.ts"), db, mode, root], { env: { ...process.env, WATOOM_MEMORY_LIFECYCLE: "true", AGENTMEMORY_URL: server.url.origin, AGENTMEMORY_SECRET: "", GOMAXPROCS: "2", WATOOM_MEMORY_TEST_PROJECT: path.basename(db) }, stdout: "pipe", stderr: "pipe" })
     children.push(child)
     return child
   }

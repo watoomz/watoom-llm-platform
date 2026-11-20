@@ -3,7 +3,7 @@
 # Every part is tagged `never`, so a run must name what it updates, e.g.:
 #   ansible-run playbooks/watoom-code-parts.yml --tags agents
 #   ansible-run playbooks/watoom-code-parts.yml --tags image_scope,image_review
-# Parts: agents, dev, engine_inspection, image_mcp, image_review, image_scope, reasoning_variants, searxng,
+# Parts: agents, dev, engine_inspection, image_mcp, image_review, image_scope, reasoning_variants, search_scope, searxng,
 #        visual_diagnosis. The full role still converges with watoom-code.yml.
 - name: Update selected watoom-code parts
   hosts: homelab
@@ -40,6 +40,11 @@
         name: watoom-code
         tasks_from: reasoning_variants.yml
       tags: [never, reasoning_variants]
+    - name: Project search scope (.rgignore per project group)
+      ansible.builtin.import_role:
+        name: watoom-code
+        tasks_from: search_scope.yml
+      tags: [never, search_scope]
     - name: Kali isolation for built-in agents
       ansible.builtin.import_role:
         name: watoom-code

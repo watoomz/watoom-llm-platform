@@ -51,6 +51,11 @@ class T(unittest.TestCase):
         r = self.run_(Fake(output="@@GG_BEGIN@@ x\nERROR: Node not inside tree.\n@@GG_DONE@@ ok=true\n"))
         self.assertEqual(r.code, 3); self.assertIn("Node not inside tree", r.why)
 
+    def test_engine_error_names_the_failing_script(self):
+        # T-0114: the engine log stays on the worker, so the summary must carry Godot's 'at: res://...' line.
+        r = self.run_(Fake(output="@@GG_BEGIN@@ x\nSCRIPT ERROR: Parse Error: inferred from a Variant value\n   at: GDScript::reload (res://scripts/combat.gd:42)\n@@GG_DONE@@ ok=true\n"))
+        self.assertEqual(r.code, 3); self.assertIn("res://scripts/combat.gd:42", r.why)
+
     def test_timeout_is_4(self):
         self.assertEqual(self.run_(Fake(timed_out=True)).code, 4)
 

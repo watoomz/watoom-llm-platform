@@ -102,5 +102,31 @@ class ProxyTests(unittest.TestCase):
         [t.start() for t in threads]; [t.join() for t in threads]
         self.assertLessEqual(peak[0], 2)
 
+    def test_overfull_pacing_queue_refuses_instead_of_sleeping_past_the_client(self):
+        e = ep.Embedder("http://x", 101, 102, post=FakeBackend(), batch_rate=10.0, max_wait=1.0)
+        e.pace(15)  # reserves 1.5 s
+        before = e.next_free
+        with self.assertRaises(ep.Busy):
+            e.pace(15)  # would wait 1.5 s > 1.0 s
+        self.assertEqual(e.next_free, before, "a refused batch reserves nothing")
+        self.assertEqual(e.pace(2), 0.0)  # queries still pass
+        self.assertEqual(e.metrics["busy_refused_batches_total"], 1)
+
+    def test_query_is_never_blocked_by_batches_holding_slots(self):
+        release, entered = threading.Event(), threading.Semaphore(0)
+        fake = FakeBackend()
+        def slow(path, body, timeout=60):
+            if path == "/v1/embeddings" and len(body["input"]) > ep.INTERACTIVE_WINDOWS:
+                entered.release(); release.wait(5)
+            return fake(path, body)
+        e = ep.Embedder("http://x", 101, 102, concurrency=2, post=slow, batch_rate=0)
+        batches = [threading.Thread(target=e.embed, args=([f"b{j} {i}" for i in range(12)],)) for j in range(3)]
+        [t.start() for t in batches]
+        self.assertTrue(entered.acquire(timeout=2))
+        started = ep.time.monotonic()
+        self.assertEqual(len(e.embed(["recall query"])), 1)
+        self.assertLess(ep.time.monotonic() - started, 1.0, "query must not wait for batch slots")
+        release.set(); [t.join() for t in batches]
+
 if __name__ == "__main__":
     unittest.main()

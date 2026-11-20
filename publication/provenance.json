@@ -1,13 +1,13 @@
 {
-  "platform_head": "9309c27635ff32a5aa9fdb693b2b16a04b3c10fa",
+  "platform_head": "8d52cea53b2707319c5d91bf3466f23cb384cff5",
   "platform_dirty_paths": [],
-  "application_commit": "440fb4d1f9409a3c9278e9eabd27be4b657232fe",
+  "application_commit": "64bd4e2c68b1bcd7a390af5c6d3600fa6c9c5c53",
   "application_origin": "https://github.com/anomalyco/opencode.git",
   "history_imported": false,
   "excluded_private_source": [
     "standardised_k3s_project/ansible/roles/watoom-code/files/skills/reverse-engineer-feature/SKILL.md"
   ],
-  "file_count": 12533,
+  "file_count": 12541,
   "symlinks": [
     {
       "path": "application/packages/app/public/apple-touch-icon-v3.png",
@@ -196,7 +196,7 @@
   ],
   "placeholder_substitutions": {
     "files": 276,
-    "replacements": 4968
+    "replacements": 4981
   },
   "review_policy": "standardised_k3s_project/tools/git/llm-platform-publication-policy.json",
   "limits": [

@@ -441,8 +441,8 @@
   },
   {
     "path": "standardised_k3s_project/ansible/playbooks/watoom-code-parts.yml",
-    "bytes": 2444,
-    "sha256": "1444dfaa8686c0f799e5d598ce16c992e7646f2c477f98f04b10f97ea1d6942c"
+    "bytes": 2653,
+    "sha256": "8a745a681ef117b2eb05f3ce3fa26d26d754f2b888ffe598bc6ab93d990d8674"
   },
   {
     "path": "standardised_k3s_project/ansible/playbooks/watoom-code-pose-worker.yml",
@@ -771,8 +771,8 @@
   },
   {
     "path": "standardised_k3s_project/ansible/roles/homelab_rebuild/tasks/tuning.yml",
-    "bytes": 3812,
-    "sha256": "443787b4d79e16ffcce62ef5308a88aaaccddae019f84d6c2829cf113429217c"
+    "bytes": 5122,
+    "sha256": "cac5c753b9b53eb9e1d741b3825333dde72e224e74854a874702b2bde3608316"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/homelab_rebuild/tasks/users.yml",
@@ -901,13 +901,13 @@
   },
   {
     "path": "standardised_k3s_project/ansible/roles/llm-model-lab/files/gpu-controller-router.py",
-    "bytes": 37092,
-    "sha256": "161020df5d3f1b5e293217482cd703a0f464dd45c6e6da9605f9baed8f05fcdf"
+    "bytes": 36768,
+    "sha256": "dbccc4f10dd2b633749fa1261a91e1869f279a596fa650e923190b9fbe536ed3"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/llm-model-lab/files/gpu-controller.json",
-    "bytes": 3912,
-    "sha256": "b5d078c3bed8cf70d820493685a6c503a974f800c6a5479fc6786db9cc2bb03b"
+    "bytes": 3562,
+    "sha256": "d1cd1439884e035580fc8436e793609b496e0fa416b70b9775e3bbfe2c542c2b"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/llm-model-lab/files/llama-mesh-pipeline.json",
@@ -976,13 +976,13 @@
   },
   {
     "path": "standardised_k3s_project/ansible/roles/model-manager/defaults/main.yml",
-    "bytes": 2038,
-    "sha256": "793dbe86a74047be501aa424514a1b622f30f6f90be2c469dc1042c9730ad390"
+    "bytes": 2162,
+    "sha256": "83e3ed8e565c7c7919ec5020e8d3ab9c6986574d44ad103355e1997cf4363cad"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/model-manager/tasks/main.yml",
-    "bytes": 8948,
-    "sha256": "deb583367b9f523f974b36ac753995745479f5f43ac80d43914a09250209b7d1"
+    "bytes": 10457,
+    "sha256": "5cd6d42afa810ffea3f906b0e12f73c9bb547c1f191c84f961ac4a1f27107621"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/model-manager/templates/broker.json.j2",
@@ -1211,8 +1211,8 @@
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/defaults/main.yml",
-    "bytes": 18116,
-    "sha256": "2dbe5d8f8d07562be0b7e3cd8d48a5b19175a6c9dba3d33dda7ce9f4b2eb9a10"
+    "bytes": 19505,
+    "sha256": "b77067f7d540fe6b310831c97a54baadbbd6ba582ef7924c6fefa43852533080"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/bind-specialist.py",
@@ -1246,8 +1246,8 @@
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/coordinator-guard/index.js",
-    "bytes": 142963,
-    "sha256": "c75f3ce3a26736993e3b207252eb63bbb8d48358ed3bf342e2f80399a5cc4f1e"
+    "bytes": 156536,
+    "sha256": "2ef95415bd5b1fde92e86cc5f81a6a78d87f4ce7a129249bed37cc9d6b106d6f"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/coordinator-guard/package.json",
@@ -1261,8 +1261,8 @@
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/enable-coordinator-guard.py",
-    "bytes": 2628,
-    "sha256": "2ae8ee8858df9e725b481e39b6b9509cb683e197c6c58e7599141e7bd67f5196"
+    "bytes": 3234,
+    "sha256": "f8536139d370a5dd7bd6a7afcd0767dff3e51cc47812b9fc1f65a1a7f17f90a1"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/enable-godot-mcp.py",
@@ -1541,13 +1541,13 @@
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/_src/shared/03_agent_selection_and_handoff_boundaries.md",
-    "bytes": 7610,
-    "sha256": "664f6db31caa7898a5db6503029003f81673190f4b812554291f17afde8742a6"
+    "bytes": 8028,
+    "sha256": "4c870b24b6d37e892b0e3a587d4ca848f302bffc979c90e876d99db8b18ae287"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/_src/shared/10_how_you_work.md",
-    "bytes": 3424,
-    "sha256": "1bd30221f58344de8552a71f14fb68b95bf44dea765a5df7acf43989cb83d299"
+    "bytes": 3997,
+    "sha256": "22bb9a2aa5584000b8ab41c9b72924bd5290ac09d9a2437534f837c1c31fea6d"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/_src/shared/20_project_and_safety.md",
@@ -1556,8 +1556,8 @@
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/_src/shared/30_memory_and_tickets.md",
-    "bytes": 1603,
-    "sha256": "d3f540b55f1297c8e28f3a24bea57bc4b3e9e26ddcc7906eb224df05721f6da1"
+    "bytes": 1806,
+    "sha256": "31dc7b4bd50035f326743e50a401e73ca0aa34a22314d55df89a1066415240df"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/_src/shared/40_pixel_review.md",
@@ -1581,88 +1581,88 @@
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/agents/watoom-3d-modeller.md",
-    "bytes": 15913,
-    "sha256": "48a38a76913a663c9b4bf674f126775d00c02eb81b9371f3e42c2e49e705a9f3"
+    "bytes": 16689,
+    "sha256": "c1a9cb15af70137e13519131c8f2b73bb5d04c0973a43dbb296fc236ffd8867b"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/agents/watoom-adversarial-tester.md",
-    "bytes": 15647,
-    "sha256": "046c2e9acf0f34718160e2836a6f3e1b164e4ff4f4b15d54a6b029f0f66e0971"
+    "bytes": 16423,
+    "sha256": "132380064ec3ce2aa2036e3ce857806ce84a875bbe07547bced48974e980fd67"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/agents/watoom-automation-expert.md",
-    "bytes": 15706,
-    "sha256": "e4949d395c53ebdc422cbb27691ec938ae8f3ff8bf2686121b273637ff2c74c2"
+    "bytes": 16482,
+    "sha256": "1eed6afe3f015f8df8994ad2309965bf3d69c3ca1d1549feb10ba05352ef1666"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/agents/watoom-blind-tester.md",
-    "bytes": 15627,
-    "sha256": "e1faecec6a148b02a44052f9208fbc9dcd357e9e7ae00cb2b0f80b5552a38f94"
+    "bytes": 16403,
+    "sha256": "7d7e049f0e889f0c39704c4cbb9be005ff933d9d6019041c5b6f2fb29dbbde7c"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/agents/watoom-builder.md",
-    "bytes": 15680,
-    "sha256": "c2af59367c02804e10c2bfba25cf5c2a83f4a53be83c8fe04a92223c9f086dbb"
+    "bytes": 16456,
+    "sha256": "c7e590a2b6cc0b88986d43d425197b3ce44d765f610d44c08c6878de86857651"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/agents/watoom-creative-writer.md",
-    "bytes": 15454,
-    "sha256": "ce42bbdf7b491bbeafc4defa159450c4ce7ab129b7c9b2aa4200f6567b5fd73e"
+    "bytes": 16230,
+    "sha256": "efcce4dab577621991186c7d904eb428da492e4c8a64e0c488a7a0ada0c50db6"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/agents/watoom-critic.md",
-    "bytes": 16361,
-    "sha256": "c7f5899239cd6c7dabb27c1d41f231f61a0c365bb99fc4d1e5c15c52e4e1f0e1"
+    "bytes": 17137,
+    "sha256": "085f161dacc7b4cf58a924f2b75bf1b26a21416e7f8a961ed00b69c93185c852"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/agents/watoom-developer.md",
-    "bytes": 15837,
-    "sha256": "23aa1e02621b7244630e72497ebe2397fb5b5499c6fc7eac6557bbed8afaf621"
+    "bytes": 16613,
+    "sha256": "53ced2180bc2c0b602c82cfe7f6bd7e287d17664f6c7630538633f567f9c33b1"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/agents/watoom-game-designer.md",
-    "bytes": 15169,
-    "sha256": "48bbb53625afdfbefc7afdb49ce3513a5c807b45a5644a0e038f6df72b531ea8"
+    "bytes": 15945,
+    "sha256": "d9b6323bedad498f50231cf3d0832a94b19c707b7255945c07ab1080dbb86ebd"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/agents/watoom-integration-expert.md",
-    "bytes": 15934,
-    "sha256": "1bddba00e10e56ca6382abc72a4b256cc784a9c0ae89151216d03c913dd4cea9"
+    "bytes": 16710,
+    "sha256": "84a25cea27e413845ad441c268452ff760af1f9408975702846e476bf350c270"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/agents/watoom-investigator.md",
-    "bytes": 14993,
-    "sha256": "be5bbdb2f27be831d5ee7781c4c5fb638d5d32cbe66debc102e68c9af6045fa2"
+    "bytes": 15769,
+    "sha256": "91ffbd3ddb6a3e2c82eddbcadd16f675858355dc55f9fbdb5fff2a4a6edd639b"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/agents/watoom-kali.md",
-    "bytes": 18966,
-    "sha256": "859cf4b4a69f5dbebd347fb1df71bb4dbd0c250164a3e77ab00859b31c0b8cbf"
+    "bytes": 19742,
+    "sha256": "3db1dad699711ffafa96e9e7a4d76a3af665890fe95fd75ac95dd7863a473b5a"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/agents/watoom-qa-tester.md",
-    "bytes": 15209,
-    "sha256": "d57f90e39d5945334094d19bb67336a022dc1515891699f7bd7e31460685bf8b"
+    "bytes": 15985,
+    "sha256": "0a6e8a26818489dce0e73ffd7b7870c31c7ca0f79d4611e13357f43d18f49daa"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/agents/watoom-researcher.md",
-    "bytes": 15257,
-    "sha256": "e8f05787d38150dafc8a986f11c6d273a8538c00a85aecb7ea7f0e319a2856d0"
+    "bytes": 16033,
+    "sha256": "e0f88bdbf192085a53d45ee29adfff3412a0e884b1a2e1f94394419c2cd73000"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/agents/watoom-reviewer.md",
-    "bytes": 15195,
-    "sha256": "0479acd2125ff0ffa92d29c869b1554f1ec045f3fb72d87d37d8f5fad264690b"
+    "bytes": 15971,
+    "sha256": "4cb110a5395cb2d0e31577f22f539949dc768835ee72db1e9b3b6efed767ca82"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/agents/watoom-systems-designer.md",
-    "bytes": 15344,
-    "sha256": "334b512e84b227c8071686ea02cab3a2df365340e3f41e22150f273c4e4ee218"
+    "bytes": 16120,
+    "sha256": "3b537b4af92562fb1af39763b6f7f992b7986904f2ce5253483d17458ad506ad"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/agents/watoom-workflow.md",
-    "bytes": 22052,
-    "sha256": "07337966591b2b79e84f31d6a86b74205670c6c3b3cc9cdca179ffe98c41e92d"
+    "bytes": 23246,
+    "sha256": "e9166da8be392fd5149fcc5b21af9845bfafc09d74e9c644525d2ae02a1ec80f"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/plugins/agentmemory-v2.ts",
@@ -1728,6 +1728,11 @@
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/native/tools/watoom-openspec-notify.py",
     "bytes": 7228,
     "sha256": "bd00297000e79439abcf96c44e1a79697679468fe6af95175585c1ababecb076"
+  },
+  {
+    "path": "standardised_k3s_project/ansible/roles/watoom-code/files/project-group.rgignore",
+    "bytes": 486,
+    "sha256": "b1bd575154c9d50c50fe1ea3f022c74e0cf081e1463d05f0eb89626e4d3255eb"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/projects/magpie-flight-godot-candidate-AGENTS.md",
@@ -4796,8 +4801,8 @@
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-godot-game/SKILL.md",
-    "bytes": 18961,
-    "sha256": "4070a5994c90e3cd0e6ca0b71426ba0fc4a463b120a8c10fce6bff9bb1252d47"
+    "bytes": 19147,
+    "sha256": "8d202486bef0764f61a3a897683078411be5d7c8228824c3185078e5f6ff7358"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-godot-game/presets/low-poly.json",
@@ -5221,8 +5226,8 @@
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-godot-game/scripts/gg_godot.py",
-    "bytes": 11397,
-    "sha256": "eba68c07265fd16b0ad4d464e70613839517b0da9a989fd1601ca25f23464391"
+    "bytes": 11780,
+    "sha256": "2bbe407caba305ef2f424c0234ecfe5a15e0207eaec92867f9d4f3a07d9f9041"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-godot-game/scripts/gg_light.py",
@@ -5341,8 +5346,8 @@
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-godot-game/scripts/test_gg_godot.py",
-    "bytes": 5048,
-    "sha256": "3c6193f07a327ca63e3b77508d8f0867cad2405df4ad3c9f78226fdfb42844ee"
+    "bytes": 5493,
+    "sha256": "71e5521c24a907267d30c1bfd1a864d1a1dbc274272cd1ba6e9133e2ece6e7b9"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-godot-game/scripts/test_gg_light.py",
@@ -6786,8 +6791,8 @@
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-worker-contracts/SKILL.md",
-    "bytes": 2190,
-    "sha256": "1322860136503e48ed0f76bf72205b5011d9e3d7e84d59466de5a1579096cdbc"
+    "bytes": 2241,
+    "sha256": "f22ccccb7ce5140cb7cbf7571b0dcda75b457c6648ca9d4082986597c880de6b"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-worker-contracts/references/assets-and-downloads.md",
@@ -6796,8 +6801,8 @@
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-worker-contracts/references/game-worker.md",
-    "bytes": 9256,
-    "sha256": "404333608d4fea569a60ac9bccf464be4e7fb71da29200e493bfecfc7ed0c218"
+    "bytes": 10293,
+    "sha256": "d6b4564a4cefd3bec625e8876bace81c67628829188ac25b54f66f0040a03b16"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/files/skills/watoom-worker-contracts/references/specialist-jobs.md",
@@ -6956,8 +6961,8 @@
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/tasks/main.yml",
-    "bytes": 16493,
-    "sha256": "81d2394e9c227f661ca11ab5ebbdcd3b475e59569ef9bde2ce302380aaa55717"
+    "bytes": 16583,
+    "sha256": "cb06867573bec4aa7cff09d6b35dc4a2f19c8d43205a227a4752e6a7fa36fd35"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/tasks/moss_image_plugin.yml",
@@ -6981,13 +6986,18 @@
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/tasks/reasoning_variants.yml",
-    "bytes": 494,
-    "sha256": "1b8f75608debb256ced50f6ccefd6a42ec46241009c87b806e383c16b02d29b9"
+    "bytes": 866,
+    "sha256": "bee677e213ea1575d7f867d6cc784c619418cf68c4de0437c6c99f5cd1f9a1b9"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/tasks/rig_project_sync.yml",
     "bytes": 2058,
     "sha256": "e9f02071429a2c802a8deb391e0da79c40ce22a9584c8e95bbd5f63338599e36"
+  },
+  {
+    "path": "standardised_k3s_project/ansible/roles/watoom-code/tasks/search_scope.yml",
+    "bytes": 334,
+    "sha256": "0818f6bf46f88eb28a3c69d59e1307a065f44d82cc5555d9f235c5a53c4a3870"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/tasks/searxng.yml",
@@ -7031,8 +7041,8 @@
   },
   {
     "path": "standardised_k3s_project/ansible/roles/watoom-code/templates/resources.json.j2",
-    "bytes": 29987,
-    "sha256": "a511548cc02ec81474daa301917d192cc86001e578e589ec2584a0760e1728c4"
+    "bytes": 29989,
+    "sha256": "5aba6eef30c4a06f8468944e25c8da349efc1bddeab0345bba9f375870bcb01d"
   },
   {
     "path": "standardised_k3s_project/ansible/roles/workstation-render-stage/defaults/main.yml",
@@ -7112,7 +7122,7 @@
   {
     "path": "standardised_k3s_project/ansible/vars/watoom-code.yml",
     "bytes": 3180,
-    "sha256": "0c7967ebcc3aed82359340a538d30837bf63fe25c346f70da972549c6b909b40"
+    "sha256": "1ed21a1f7479428065e3faf4bc6edf878de84a43b072e7bb6e50a8063dd350dc"
   },
   {
     "path": "standardised_k3s_project/ansible/vars/writing-studio.yml",
@@ -7361,13 +7371,13 @@
   },
   {
     "path": "standardised_k3s_project/config/glance/guide/assets/search-index.json",
-    "bytes": 616747,
-    "sha256": "3057523ba2fe43f7373b42b62ab48719eb0f309ddb00bdc0e65959c072ee1544"
+    "bytes": 618778,
+    "sha256": "112580050582e28f4778b0bce5d8c34d8bd9f1d4210269d8155c43de6abc08a6"
   },
   {
     "path": "standardised_k3s_project/config/glance/guide/assets/server-catalogue.json",
-    "bytes": 1335711,
-    "sha256": "b1c25f0e770d2555ae92df4e5fc50b312b17d98b274582d9c0b6eff056e46e32"
+    "bytes": 1339823,
+    "sha256": "29eef95c1f85f2a0e84b530bd8fe249fc51f7163c2ed06cf19d0cda2cef26696"
   },
   {
     "path": "standardised_k3s_project/config/glance/guide/assets/site.css",
@@ -7487,27 +7497,27 @@
   {
     "path": "standardised_k3s_project/config/glance/guide/server-catalogue.html",
     "bytes": 7409,
-    "sha256": "3f61b470717439797d71f897b0d22bc86463754c15e755ff9ad57b492ced34a9"
+    "sha256": "50ccabe2f32bc0efd126b1d32876bdebd8c2972d181b1b1d6451d45a6b130a97"
   },
   {
     "path": "standardised_k3s_project/config/glance/guide/server-playbooks.html",
-    "bytes": 74429,
-    "sha256": "117d956eee8ed4c573356e8dd46fe511e64febe366eaa3697a4c4a17b9194efe"
+    "bytes": 74450,
+    "sha256": "0750e5a716d8a1ae8dd11fb3a97c17b4e1ee64c8558ef709ff2da48f9557ec78"
   },
   {
     "path": "standardised_k3s_project/config/glance/guide/server-roles.html",
-    "bytes": 217512,
-    "sha256": "2ca927fff2f75b5faa458113927fd40eaae33c1a57c09ffcd8f21f4c0dd677ec"
+    "bytes": 217854,
+    "sha256": "94110503bfcedbc1818edc24726c0bf4ef9568231732afc7f5dfa26bbe82798d"
   },
   {
     "path": "standardised_k3s_project/config/glance/guide/server-scripts.html",
-    "bytes": 47168,
-    "sha256": "dfe0b375c8447d194cea9415c144c6a1aa356b3be7d190277fba00b5dbe14399"
+    "bytes": 47857,
+    "sha256": "2f01a660c0cef8d091f9e6c641e2fa4b3c307c716c684c23454fa397ae0e9424"
   },
   {
     "path": "standardised_k3s_project/config/glance/guide/server-tools.html",
-    "bytes": 521435,
-    "sha256": "817518cc1a6bd3a29892bcefa08ceca5cf479046416406504a75a2f23679e74c"
+    "bytes": 523452,
+    "sha256": "d18c3f932e58b9c7b4be578285dcb8604c76af00fa10de13524305ac51e73bf5"
   },
   {
     "path": "standardised_k3s_project/config/glance/guide/software-design.html",
@@ -7566,13 +7576,13 @@
   },
   {
     "path": "standardised_k3s_project/config/grafana/dashboards/opencode-local-llm.json",
-    "bytes": 122091,
-    "sha256": "7bf4ffda21735e3fb737c565618dce33239852e9fb0bd7eb60817434bbda9bf4"
+    "bytes": 113073,
+    "sha256": "4e997915e3afd917e926e540ad9d8e365bfb62a89c59be3b6e9e3d44268ab95c"
   },
   {
     "path": "standardised_k3s_project/config/grafana/dashboards/qwen38-llm-metrics.json",
-    "bytes": 71274,
-    "sha256": "afc0ae8fb2e65096f2f4e506b5ca157d1c5dd75da6be83b4900d367fd55d26b8"
+    "bytes": 87539,
+    "sha256": "88a1c9eb8ca5984091f362ed5db76201219e9e1e912d8cc380740e16302a0e77"
   },
   {
     "path": "standardised_k3s_project/config/grafana/platform-alerts/forward.json",
@@ -7616,13 +7626,13 @@
   },
   {
     "path": "standardised_k3s_project/config/llm/model-lab/models.json",
-    "bytes": 13577,
-    "sha256": "03dd3c7094698c0158d050bf479f29cb75ebd0764a1da31183dd760fdb48828c"
+    "bytes": 13546,
+    "sha256": "477f4c2d022006fabd3f8d7739266f188fa93b06ab06f992f5b15b9c47917bfa"
   },
   {
     "path": "standardised_k3s_project/config/llm/model-manager/runtime.json",
-    "bytes": 2492,
-    "sha256": "8c1c1a10490be12738d02ab08b170f7548a73c49b8795bf14dd82e8228685138"
+    "bytes": 2550,
+    "sha256": "d54b97516f33339a0a25dbacc797f7bfad69e10eebb5817a91a4cd13d1c6c303"
   },
   {
     "path": "standardised_k3s_project/config/llm/model-normalizers.json",
@@ -7952,27 +7962,27 @@
   {
     "path": "standardised_k3s_project/docs/guide/server-catalogue.md",
     "bytes": 2592,
-    "sha256": "37a51e13ebacb766f294a0de9635245e3670980ddce433692827c7875e5f9b4f"
+    "sha256": "a8907628615f2256ddf46c4f32995a13e97870a12b6bd1f7ede2e924f2b999cd"
   },
   {
     "path": "standardised_k3s_project/docs/guide/server-playbooks.md",
-    "bytes": 49819,
-    "sha256": "a22a32fa30923483cc28c747d723b8dc56370ed3eded6953f4b667a1475d2cd8"
+    "bytes": 49842,
+    "sha256": "fc96d134b9ae5c6a43bdc6bc5eeb45477ed3c72757d2ff255315d84be0953c9b"
   },
   {
     "path": "standardised_k3s_project/docs/guide/server-roles.md",
-    "bytes": 178646,
-    "sha256": "cb170fe7f56a37f4a6d35ab6a673f4ece0c9e960b348bc77769f4c32d6b15caa"
+    "bytes": 178928,
+    "sha256": "23a2ff25811cb0575c39be203ed75d4661bb260d35a7a3c46f9ad16dc08d4553"
   },
   {
     "path": "standardised_k3s_project/docs/guide/server-scripts.md",
-    "bytes": 27839,
-    "sha256": "3cba7b398df486b4ea1f8a99e3765de6c6a1c80b67691088d60b1bd5e25040e4"
+    "bytes": 28287,
+    "sha256": "bcf027a0bfaaa30c37b3404b82a7a73ab13a796a4e9495f967fdc060738a6fd8"
   },
   {
     "path": "standardised_k3s_project/docs/guide/server-tools.md",
-    "bytes": 321547,
-    "sha256": "88e412770952b1b2bf96f41751ad77db559a62f89d5523fd53d951f825fb72d4"
+    "bytes": 322856,
+    "sha256": "0ecf0e4cfc6b07021c1d42927218cebeebd3084101ad14d302c312bddd4a4a46"
   },
   {
     "path": "standardised_k3s_project/docs/guide/software-design.md",
@@ -8061,8 +8071,8 @@
   },
   {
     "path": "standardised_k3s_project/docs/server-catalogue.json",
-    "bytes": 1335711,
-    "sha256": "b1c25f0e770d2555ae92df4e5fc50b312b17d98b274582d9c0b6eff056e46e32"
+    "bytes": 1339823,
+    "sha256": "29eef95c1f85f2a0e84b530bd8fe249fc51f7163c2ed06cf19d0cda2cef26696"
   },
   {
     "path": "standardised_k3s_project/manifests/00-namespaces/namespaces.yml",
@@ -8121,18 +8131,13 @@
   },
   {
     "path": "standardised_k3s_project/manifests/10-infrastructure/llm/gpu-controller-rbac.yml",
-    "bytes": 2055,
-    "sha256": "38f91a4c6ca56fe97b5ba7e4524060c0d0630356186820f15fdda4494ca89ac9"
+    "bytes": 2027,
+    "sha256": "a809501a6074402554f26c058aff128b540b89fc99502bb0cd332d705e3931ba"
   },
   {
     "path": "standardised_k3s_project/manifests/10-infrastructure/llm/llama-cpp-network-policy.yml",
     "bytes": 3248,
     "sha256": "0416fb4f93867103ca56b03817e6a264dd0ba776988bb31ea98a595cd20b6732"
-  },
-  {
-    "path": "standardised_k3s_project/manifests/10-infrastructure/llm/llama-cpp-qwen38-atomic.yml",
-    "bytes": 16658,
-    "sha256": "717e851d4bd49b89be77e7efb77cb65a83e4ca8ce546c2e490e7f04a404188c3"
   },
   {
     "path": "standardised_k3s_project/manifests/10-infrastructure/llm/llama-cpp-qwen38-uncensored-mtp.yml",
@@ -8156,13 +8161,13 @@
   },
   {
     "path": "standardised_k3s_project/manifests/10-infrastructure/llm/llm-router-gpu-controller.yml",
-    "bytes": 48911,
-    "sha256": "f6e6da7b47f5462c7950385db27c4c74207aa837d486cca80437349a5bced993"
+    "bytes": 48525,
+    "sha256": "559faeca13997cc051d0de2e90de33c3fecd32593923a19cd924223f10d430b7"
   },
   {
     "path": "standardised_k3s_project/manifests/10-infrastructure/llm/llm-router.yml",
-    "bytes": 46434,
-    "sha256": "a3042dd5e3891605a4b432be0f4795a48d70fe2d88bc327505a31518ed031f53"
+    "bytes": 46048,
+    "sha256": "fc4cb902bccb9014485e18fea1a05acaad429900f26cde890dc9e9a5b9b8a39e"
   },
   {
     "path": "standardised_k3s_project/manifests/10-infrastructure/llm/searxng.yml",
@@ -8246,8 +8251,8 @@
   },
   {
     "path": "standardised_k3s_project/manifests/10-infrastructure/platform-workers/platform-workers.yml",
-    "bytes": 19286,
-    "sha256": "23abd182100fbea0e4107ba85b76d0c312129c7e0c4931493fb0ce4ef77a6687"
+    "bytes": 19364,
+    "sha256": "c724f90f722c9973ca163910984f6866c5c706c27b414a77eae948f379a15160"
   },
   {
     "path": "standardised_k3s_project/manifests/10-infrastructure/sims4-mods/sims4-mods.yml",
@@ -8460,6 +8465,11 @@
     "sha256": "1824e978d0b4e722fceb5a04f62a783c8af067c0feb88214b93ccf3e76280b6f"
   },
   {
+    "path": "standardised_k3s_project/scripts/gpu-controller-reconfigure.py",
+    "bytes": 7609,
+    "sha256": "89cab07774002fa3a380b217c8076b3cf2bf86434bdf232136c7654696b97f04"
+  },
+  {
     "path": "standardised_k3s_project/scripts/gpu-controller-repin-primary.py",
     "bytes": 4610,
     "sha256": "be15cea9cd18784c5218af4a5615e905c171e9865369d21168d9a6dc540bfccb"
@@ -8611,8 +8621,8 @@
   },
   {
     "path": "standardised_k3s_project/scripts/tests/test_watoom_model_perf_accumulator.py",
-    "bytes": 1678,
-    "sha256": "940838c4e97424a2bcde7c2d9612f581848d2c19e318de1703cf4bb1a2daac06"
+    "bytes": 2760,
+    "sha256": "52b08f060450c45bfe86eb058f2a3d555af1d522bb0dc8b98464caa0e2bba905"
   },
   {
     "path": "standardised_k3s_project/scripts/tool-knowledge",
@@ -8646,13 +8656,13 @@
   },
   {
     "path": "standardised_k3s_project/scripts/watoom-model-perf-accumulator.py",
-    "bytes": 5987,
-    "sha256": "b58c56e23f3f1da61252e9971a06f78fd3805673dc0566d8fc64b79e4e316857"
+    "bytes": 6112,
+    "sha256": "798734613f214494ffea6e172c5960463462d32f92f5f39403c8855be99118be"
   },
   {
     "path": "standardised_k3s_project/scripts/watoom-node-textfile.sh",
-    "bytes": 2724,
-    "sha256": "9680459ef55034ed4d8d13d83ecb2cdbab8c3d3716735c0f4f53ebb87d0d5403"
+    "bytes": 5779,
+    "sha256": "f3736229c040e2f52caf20a30239ff4d623910544be181f5b62a83ebb1c3d801"
   },
   {
     "path": "standardised_k3s_project/scripts/watoom-platform-alerts.py",
@@ -8936,13 +8946,13 @@
   },
   {
     "path": "standardised_k3s_project/tools/break-glass/break_glass.py",
-    "bytes": 28316,
-    "sha256": "6e856339002584514ef2ef1ef74422679c8aedd290fc0fe1dd597628e00cbca7"
+    "bytes": 31945,
+    "sha256": "7c6733670ab866652d698dabb8de1ee55b310a910410509bea28888d4800f686"
   },
   {
     "path": "standardised_k3s_project/tools/break-glass/test_break_glass.py",
-    "bytes": 8912,
-    "sha256": "88caea3511f820619d350d224dc9a8a1f1563d7bd6ea055d12a36e36e2e34418"
+    "bytes": 10198,
+    "sha256": "c95665ef3c34d2544c4c0fb6945deff02bf621d20aae7ad3847660917c209b8b"
   },
   {
     "path": "standardised_k3s_project/tools/change-requests/change_request.py",
@@ -12271,8 +12281,8 @@
   },
   {
     "path": "standardised_k3s_project/tools/language-knowledge/package/index.js",
-    "bytes": 10447,
-    "sha256": "b2f2efebdd3892a1b93ba5b20a7e87b6afbec3a402b6638f9bddeff6c6e3dbb0"
+    "bytes": 12950,
+    "sha256": "d99f819076cd5d66b323a63826a4c6e409666e068fc961368edac2ed1b1d1c7c"
   },
   {
     "path": "standardised_k3s_project/tools/language-knowledge/package/package.json",
@@ -12281,8 +12291,8 @@
   },
   {
     "path": "standardised_k3s_project/tools/language-knowledge/package/triggers.js",
-    "bytes": 17973,
-    "sha256": "0e01b57e0cded32419f57451a9ce850f2643be65267349e07d629572034e9e1b"
+    "bytes": 18298,
+    "sha256": "122757b9f2e157fc2bf4a169abd1ab9dd615e84e6111488cb6d8ea74b9bfff5d"
   },
   {
     "path": "standardised_k3s_project/tools/language-knowledge/tests/README.md",
@@ -12411,8 +12421,8 @@
   },
   {
     "path": "standardised_k3s_project/tools/language-knowledge/tests/triggers.test.mjs",
-    "bytes": 12974,
-    "sha256": "ca40685ca5874786c598aaad7301798e0bf58944ce5c0bd5323d93a69c1db671"
+    "bytes": 15415,
+    "sha256": "7972216b6f4a9e94bb0e7830e510a43e61babcd5afb1a2e6ca7de440a34838cb"
   },
   {
     "path": "standardised_k3s_project/tools/language-knowledge/tests/vectors.test.mjs",
@@ -12436,13 +12446,13 @@
   },
   {
     "path": "standardised_k3s_project/tools/llm/bge/embed_proxy.py",
-    "bytes": 10781,
-    "sha256": "3c3ad3f3eac0dc8b5dcc925a414c56e2fede5ffbf485e946a398ffe95611c81c"
+    "bytes": 12580,
+    "sha256": "5b87b35112b9a41ea53c5eb392151926aeb86951fba0c4fb3baf235930510eb7"
   },
   {
     "path": "standardised_k3s_project/tools/llm/bge/tests/test_embed_proxy.py",
-    "bytes": 5639,
-    "sha256": "ed22506a5fe076032865069136c0e21a1f5c1b5c3e06e0f27996097f92aa9fb5"
+    "bytes": 7116,
+    "sha256": "de940a4414642223f2f4d3b06eaa18aab5b488801a91cefdc03200bb2a176702"
   },
   {
     "path": "standardised_k3s_project/tools/llm/bge/verify_gguf.py",
@@ -12666,8 +12676,8 @@
   },
   {
     "path": "standardised_k3s_project/tools/model-manager/broker.py",
-    "bytes": 31117,
-    "sha256": "245b7a7af3d10bc3b010d669f0ffa1744a0738bf63645a0128b2f66a9a524d13"
+    "bytes": 32199,
+    "sha256": "04e86a323d28ec834523ee15ac59cb23314ea8cff23653c8e66d85eace44f5ee"
   },
   {
     "path": "standardised_k3s_project/tools/model-manager/broker_service.py",
@@ -12736,8 +12746,8 @@
   },
   {
     "path": "standardised_k3s_project/tools/model-manager/operations.py",
-    "bytes": 15243,
-    "sha256": "980f6cfb60cb945575059fa718b85d98da3a4e6a04598958659332ecae17e2a6"
+    "bytes": 19100,
+    "sha256": "7a6ffc66449758b298f1bf185c11af8ceaa9dc9a585c4ed58db8aa6f24d59803"
   },
   {
     "path": "standardised_k3s_project/tools/model-manager/package-lock.json",
@@ -12765,6 +12775,11 @@
     "sha256": "0526af687602c36ffeffe4ce101582f27a2557deb9b9be83de1eef0bc4b0096e"
   },
   {
+    "path": "standardised_k3s_project/tools/model-manager/reregister.py",
+    "bytes": 3463,
+    "sha256": "8e63538dbd20936412342f68854a98c818121ee3cadb466d47cb9636c4e2bb24"
+  },
+  {
     "path": "standardised_k3s_project/tools/model-manager/runtime_payload.py",
     "bytes": 8400,
     "sha256": "3e65bbe6da9aaa41f47f3cd9be5e63f00ce9baee5416ad7a3523fab72de26e6c"
@@ -12781,8 +12796,8 @@
   },
   {
     "path": "standardised_k3s_project/tools/model-manager/settings.py",
-    "bytes": 10778,
-    "sha256": "02f75d49ee5b2afd0a8fcd3f27569bc9a4c51fc472a4302748d4a6f9cd7a8237"
+    "bytes": 11201,
+    "sha256": "f2e9ed600aa35c495fa29975e52694418f2a0e43825a51eccb3d840fd922ac76"
   },
   {
     "path": "standardised_k3s_project/tools/model-manager/stage_fixture.py",
@@ -12806,8 +12821,8 @@
   },
   {
     "path": "standardised_k3s_project/tools/model-manager/test_core.py",
-    "bytes": 3599,
-    "sha256": "b73751a465cb7e57f4bb8fa466db90090c81d75c03120b2e949b82b66105112b"
+    "bytes": 3664,
+    "sha256": "700aeb4cca4c8d99b1cf9dfc0ba568b07973c0fe9f6f859d1bc4c8ac80c36744"
   },
   {
     "path": "standardised_k3s_project/tools/model-manager/test_cutover.py",
@@ -12861,8 +12876,8 @@
   },
   {
     "path": "standardised_k3s_project/tools/model-manager/test_lora_mtp.py",
-    "bytes": 11161,
-    "sha256": "b1a279ed207165c10fead3406abdbaa4d1133be3a40885a96ae872b8f7cbed91"
+    "bytes": 12863,
+    "sha256": "21304f6cc5fc22d0c9ffaaf08a6a8fcaa1e159e286b106e481799609cfcac9f1"
   },
   {
     "path": "standardised_k3s_project/tools/model-manager/test_native_admission.py",
@@ -12871,8 +12886,13 @@
   },
   {
     "path": "standardised_k3s_project/tools/model-manager/test_operations.py",
-    "bytes": 6202,
-    "sha256": "e9018b49554f19a24ff9fbca9bd7addeaaf7f4bcf93834624223d6c002fa4609"
+    "bytes": 9622,
+    "sha256": "803b2c55cf273f7e17d59cb8fa1005a77efb7facaafa6348946a1c06c6483e4b"
+  },
+  {
+    "path": "standardised_k3s_project/tools/model-manager/test_reasoning_variants.py",
+    "bytes": 1253,
+    "sha256": "976f6bb8c7c34c031327bc7bfc0c9a2a01700bb14dbd4a6f3f9dc99ddc55b033"
   },
   {
     "path": "standardised_k3s_project/tools/model-manager/test_runtime_payload.py",
@@ -12916,8 +12936,8 @@
   },
   {
     "path": "standardised_k3s_project/tools/model-manager/workload.py",
-    "bytes": 7765,
-    "sha256": "07d8cadc909a5cf53d83fa192600a657e93a51fcec88c2ec202a81135c3ca6cf"
+    "bytes": 9132,
+    "sha256": "6e03d76b99459756b4c9cb86a1f6ce4f7bd4cfbd03ccca534b77a02ffa94781c"
   },
   {
     "path": "standardised_k3s_project/tools/moss-image/DESIGN-gpu-controller.md",
@@ -14216,13 +14236,13 @@
   },
   {
     "path": "standardised_k3s_project/tools/watoom-code/asset_capture_bridge.py",
-    "bytes": 11238,
-    "sha256": "ccb8f44db171a0aaefd03eb4e86da37aa47b372476fa7f5fa905da5100136873"
+    "bytes": 11229,
+    "sha256": "0063adc829e5e95fcb896d0c9e0472b5ebdb068596ff6a6df99cdfc053aee6c9"
   },
   {
     "path": "standardised_k3s_project/tools/watoom-code/asset_capture_contract.py",
-    "bytes": 7690,
-    "sha256": "083c9c4674652e3045209c571cba86489eee406b6498529887126bb8e85150d7"
+    "bytes": 8299,
+    "sha256": "d912cac620773a38ecdc4c14aef9489e82ff1e8699d4cb14929d5c173c6f5cfb"
   },
   {
     "path": "standardised_k3s_project/tools/watoom-code/backup.py",
@@ -14431,8 +14451,8 @@
   },
   {
     "path": "standardised_k3s_project/tools/watoom-code/game_godot_game.py",
-    "bytes": 18068,
-    "sha256": "2eda646ad7c1d7ef90e852d828e3ea21d882a1894d397e007af84d582d478673"
+    "bytes": 20963,
+    "sha256": "96dca968d7080a51c4c4531ff95c0d13db770c04c8a05fe31543f28ea91b1329"
   },
   {
     "path": "standardised_k3s_project/tools/watoom-code/game_import.py",
@@ -14441,8 +14461,8 @@
   },
   {
     "path": "standardised_k3s_project/tools/watoom-code/game_session_watchdog.py",
-    "bytes": 8498,
-    "sha256": "fedceb701be40f3c22401fa16201935b554993ea3d9365ce85a5e5e5b44d3722"
+    "bytes": 10036,
+    "sha256": "0c853f07e41cb2e237691392eccfb592169c8547df6f78abadb762f12a97bb00"
   },
   {
     "path": "standardised_k3s_project/tools/watoom-code/game_terrain_export.py",
@@ -14461,8 +14481,8 @@
   },
   {
     "path": "standardised_k3s_project/tools/watoom-code/game_worker_bridge.py",
-    "bytes": 37915,
-    "sha256": "e946c5ad3f234fc669317a69787d7e803d69f3b37036cba30d8f05cceb5ae430"
+    "bytes": 38757,
+    "sha256": "60e06ba863ce1a03f198dbf6164cdcdc8e1eec691a983ac79958b5883e508c93"
   },
   {
     "path": "standardised_k3s_project/tools/watoom-code/godot_game_driver.py",
@@ -14471,8 +14491,8 @@
   },
   {
     "path": "standardised_k3s_project/tools/watoom-code/godot_game_spec.py",
-    "bytes": 13761,
-    "sha256": "22d9fecad48048d83dbf9dd5ab03899b989d31da30de6b47c25255d54d9ca997"
+    "bytes": 13815,
+    "sha256": "ecfcdb6ae44b4f154480f960363f470b9f42d2949d82aa677b29f8faaca0396b"
   },
   {
     "path": "standardised_k3s_project/tools/watoom-code/grant_visual_recovery.py",
@@ -15060,6 +15080,11 @@
     "sha256": "ab0b3017cfe9df3a3de3348afd98fe380b2dde6399af253ee33afba6133087ad"
   },
   {
+    "path": "standardised_k3s_project/tools/watoom-code/source/memory-learning-20261121.json",
+    "bytes": 1280,
+    "sha256": "67e0a22011e167dd577dc1447119081c1dbeafa920014029c6e42b5c35de8aaf"
+  },
+  {
     "path": "standardised_k3s_project/tools/watoom-code/source/port-v2.2.5-20261105.json",
     "bytes": 1757,
     "sha256": "2110b3c0ab79b51d97617c6090a027404817196c28ad74221a151d22310c8a7d"
@@ -15141,8 +15166,8 @@
   },
   {
     "path": "standardised_k3s_project/tools/watoom-code/test-coordinator-guard.mjs",
-    "bytes": 60783,
-    "sha256": "14fd29f3c7d65a5ba0bc1849d966f99910d9b135805d2a3914e88b186d2c2896"
+    "bytes": 67892,
+    "sha256": "1598b87e5f40c8ece84eed85c08f64667828801cbe559e67964a73f52f7a22af"
   },
   {
     "path": "standardised_k3s_project/tools/watoom-code/test-critic-only-request.mjs",
@@ -15156,13 +15181,13 @@
   },
   {
     "path": "standardised_k3s_project/tools/watoom-code/test-game-worker.mjs",
-    "bytes": 8101,
-    "sha256": "147dbcbb3f3fc8b80346814332a50b047008b8d38d40b77f70a63a391ecdcfd5"
+    "bytes": 8311,
+    "sha256": "df3538ba7df303837e9beebb11f409bb25681a1d20c615408cd526a9628c9d82"
   },
   {
     "path": "standardised_k3s_project/tools/watoom-code/test-godot-external-only.mjs",
-    "bytes": 2232,
-    "sha256": "44b546544ea23ca3c3b9150ccd0637fbdc6bafcbd0661c8795d7eb7c205959ea"
+    "bytes": 4290,
+    "sha256": "12eccd5566235640216847562cf49615554d261566fda051fed11a5def412b57"
   },
   {
     "path": "standardised_k3s_project/tools/watoom-code/test-image-scope.mjs",
@@ -15181,8 +15206,8 @@
   },
   {
     "path": "standardised_k3s_project/tools/watoom-code/test-prompt-guard-consistency.mjs",
-    "bytes": 2279,
-    "sha256": "d629c87ac1f4acbddbd5b9477d2aa8a02badade0b658740a9be5d74162895961"
+    "bytes": 2417,
+    "sha256": "a097c9b6287beb0f8e649b578ca9d81442a00fa54f24bbbe67c16193102677c8"
   },
   {
     "path": "standardised_k3s_project/tools/watoom-code/test-read-access.mjs",
@@ -15251,8 +15276,8 @@
   },
   {
     "path": "standardised_k3s_project/tools/watoom-code/test_game_godot_game.py",
-    "bytes": 6674,
-    "sha256": "10616cd3c27417bfc036a1003d92963f1cac4b780a39baf071a54e51a8bb873c"
+    "bytes": 7708,
+    "sha256": "1fa224d73b7333d0a7733c11745d83b722d7bc1ca2fabd3fd1cf3943fee5f29b"
   },
   {
     "path": "standardised_k3s_project/tools/watoom-code/test_game_terrain_export.py",
@@ -15400,9 +15425,14 @@
     "sha256": "de999ee60e6344d338215275ad006800dab9cbe7aa8a28a9dd29ccd4a7f93c82"
   },
   {
+    "path": "standardised_k3s_project/tools/watoom-code/tests/test_game_session_watchdog.py",
+    "bytes": 1980,
+    "sha256": "11e46fe829a482306842a4f7edec51f7bef2682db969b90f43b86db11e243378"
+  },
+  {
     "path": "standardised_k3s_project/tools/watoom-code/tests/test_game_worker_bridge.py",
-    "bytes": 8776,
-    "sha256": "9e9fadb679ae6205d0196e11ca20fb7878b741f2c8cd9eb04ba8ace067c5b692"
+    "bytes": 11037,
+    "sha256": "c0d5b252ff652c6786cbbe086cc31b6ee4ad9319bdae35aa0e47b893e4a3635b"
   },
   {
     "path": "standardised_k3s_project/tools/watoom-code/tests/test_image_prompt_wizard.py",
@@ -30366,8 +30396,8 @@
   },
   {
     "path": "application/packages/core/src/plugin/watoom-memory-command.ts",
-    "bytes": 7707,
-    "sha256": "35d01a9ec18a601884073dba8b04f65fcd8674ef23d436289154f53766871e37"
+    "bytes": 8134,
+    "sha256": "765c66a61abd6cfdd84a1bc4367938fecc7efb71efb2b5e5eea0161d6c1fea41"
   },
   {
     "path": "application/packages/core/src/plugin/watoom-mesh-handover.ts",
@@ -30696,8 +30726,8 @@
   },
   {
     "path": "application/packages/core/src/session/runner/loop.ts",
-    "bytes": 5348,
-    "sha256": "087364e77284c5e64162ae5e4a639682d24abb434ec3b4d76acad78081b0e080"
+    "bytes": 6794,
+    "sha256": "4aab2dc7861498fb8a29bd76ee9041bad70a9ae10c64c50c7edfd65f07ff6aa5"
   },
   {
     "path": "application/packages/core/src/session/runner/max-steps.ts",
@@ -30991,8 +31021,8 @@
   },
   {
     "path": "application/packages/core/src/tool/plugin/watoom-memory.ts",
-    "bytes": 10422,
-    "sha256": "7fbe2957561b9919103a6e9876ffd58d9b67d8a12da449f740715a1deabbf78a"
+    "bytes": 11852,
+    "sha256": "ca9b4a60a6621f7e74d98cd0d49bfa21e204d70d90f81a2075cb19bde3bb9a04"
   },
   {
     "path": "application/packages/core/src/tool/plugin/watoom-specialist.ts",
@@ -31196,8 +31226,8 @@
   },
   {
     "path": "application/packages/core/src/watoom/learning.ts",
-    "bytes": 9923,
-    "sha256": "91a5a2ac836fc75876baf9824ac843648612d1c37eaa38afb70209ddfa0e5d4b"
+    "bytes": 13591,
+    "sha256": "b8483e6e1cff57e81ec7f209d09ddc3d5c781c7c054e18e84c26f641928ffa1f"
   },
   {
     "path": "application/packages/core/src/watoom/memory-status.ts",
@@ -31216,8 +31246,8 @@
   },
   {
     "path": "application/packages/core/src/watoom/native-memory.ts",
-    "bytes": 20242,
-    "sha256": "10a9b9efa71fe3f36fc444f7220c981c45cf732a69e670af796eec3ca60c8cdc"
+    "bytes": 21417,
+    "sha256": "6794ebb21462ac3f296d8eec76a10f3571c8e10b53e4c4434bf2b70dc6a28eb4"
   },
   {
     "path": "application/packages/core/src/watoom/ownership-status.ts",
@@ -32835,6 +32865,11 @@
     "sha256": "a5e2a0f6980bbd224df96f989ee3c5761cc50c399a6ec497e2aa837b75cdcd8a"
   },
   {
+    "path": "application/packages/core/test/session-loop-reason.test.ts",
+    "bytes": 2307,
+    "sha256": "015f972843cf8e236b64d0932972254051b842f4f03d49d0317b4150a716ee43"
+  },
+  {
     "path": "application/packages/core/test/session-loop.test.ts",
     "bytes": 6349,
     "sha256": "ed18ca227f079b10a2a0c491bee10ffe330891effe0216befa956837bb6053ff"
@@ -33366,18 +33401,23 @@
   },
   {
     "path": "application/packages/core/test/watoom-learning.test.ts",
-    "bytes": 11147,
-    "sha256": "f6d428d3def04681935f0668aea30f72fe55e9348a35275175dcfcb586d36432"
+    "bytes": 15162,
+    "sha256": "7fdcf0582db696336974f6d63d38f38384df7e6165ad040b5118cab6bb2820f8"
   },
   {
     "path": "application/packages/core/test/watoom-memory-command.test.ts",
-    "bytes": 4827,
-    "sha256": "72220c812ad919c8adf3c07c0edb4d661ae73dae463052a99333f1ddcc8e5860"
+    "bytes": 4928,
+    "sha256": "4d4b7eea2d9d2ff2553dc8e602e1e39bb290dd2bc7084eb70900943eecab7f1d"
   },
   {
     "path": "application/packages/core/test/watoom-memory-lifecycle.test.ts",
-    "bytes": 2855,
-    "sha256": "5fe68a4e59c585ec9add6b76c9ab1035f3cf08fb0d09043539bd260ca5320fee"
+    "bytes": 2886,
+    "sha256": "c51fe798a3bdb6a529c8b1d8ca31876f279ef316666b28d961b99acdb97c271e"
+  },
+  {
+    "path": "application/packages/core/test/watoom-memory-recall-output.test.ts",
+    "bytes": 953,
+    "sha256": "23500fc5150a747c54082c44d43b77e4353a3fe810c2d1563b930ad8e61cfc85"
   },
   {
     "path": "application/packages/core/test/watoom-memory.test.ts",
@@ -33396,8 +33436,8 @@
   },
   {
     "path": "application/packages/core/test/watoom-native-memory.test.ts",
-    "bytes": 4701,
-    "sha256": "95c7abf29c8e068f82dee11c98419af56f3b2dc969a847a02db613e02618bcba"
+    "bytes": 4734,
+    "sha256": "8c27b49c0eddecbb6c1e01cfcbe3f93dde08e1ea316c66f6a384a90d57f46c60"
   },
   {
     "path": "application/packages/core/test/watoom-operational-migration.test.ts",

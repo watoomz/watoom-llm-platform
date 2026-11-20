@@ -27,6 +27,18 @@ class Pure(unittest.TestCase):
         source = pathlib.Path(O.__file__).read_text()
         self.assertNotIn("'--exclude=/gg_data/'", source)
 
+    def test_large_files_skipped_by_the_copy_are_listed_for_the_rig(self):
+        # T-0134: main.tscn needs a 245 MB hero.glb; the copy drops files over COPY_MAX_MB, so they go to Bazzite directly.
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(O.godot_game_spec, 'COPY_MAX_MB', 1):
+            root = pathlib.Path(d)
+            for name, size in (('assets/hero.glb', 3), ('assets/a b.glb', 2), ('small.gd', 0), ('.godot/imported/x.scn', 3), ('.opencode/tmp/big', 3), ('gg_data/jobs/j/big', 3)):
+                (root / name).parent.mkdir(parents=True, exist_ok=True)
+                (root / name).write_bytes(b'x' * (size * 1024 * 1024 + (1 if size else 10)))
+            self.assertEqual(O.large_files(root), ['assets/a b.glb', 'assets/hero.glb'])
+            send, skipped = O.plan_large(root, O.large_files(root), 3 * 1024 * 1024)
+            self.assertEqual(([x['path'] for x in send], skipped), (['assets/a b.glb'], ['assets/hero.glb']))
+            self.assertRegex(send[0]['sha256'], '^[0-9a-f]{64}$')
+
     def test_failure_reason_priority(self):
         d = {'selftest': {'exit': 0}, 'steps': [{'i': 1, 'script': 'gg_player.py', 'sub': 'smoke', 'exit': 1}], 'failed_at': 1, 'timed_out': False}
         self.assertIn('timeout', O.failure_reason(None, d, True))

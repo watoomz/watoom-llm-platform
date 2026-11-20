@@ -35,6 +35,8 @@
   loop: "{{ watoom_code_project_groups }}"
   register: watoom_group_labels
   changed_when: "'Relabeled' in watoom_group_labels.stdout"
+- name: Search scope for project groups
+  ansible.builtin.include_tasks: search_scope.yml
 - name: Require isolated staging and immutable release
   ansible.builtin.assert:
     that:

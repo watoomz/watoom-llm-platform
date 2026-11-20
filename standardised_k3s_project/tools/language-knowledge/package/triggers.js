@@ -9,7 +9,10 @@ const ERROR_RULES = [
   // Godot (GDScript runtime/parser and CLI)
   {product: "godot", re: /Invalid call\. Nonexistent function '([A-Za-z_]\w*)' in base '([A-Za-z_][\w.]*)'/g, to: (m) => ({kind: "symbol", query: `${m[2]}.${m[1]}`})},
   {product: "godot", re: /Cannot find member "([A-Za-z_]\w*)" in base "([A-Za-z_][\w.]*)"/g, to: (m) => ({kind: "symbol", query: `${m[2]}.${m[1]}`})},
-  {product: "godot", re: /Invalid (?:access to property or key|get index) '([A-Za-z_]\w*)'[^\n]{0,40}?(?:base object of type|on base:?) '([A-Za-z_]\w*)/g, to: (m) => ({kind: "symbol", query: `${m[2]}.${m[1]}`})},
+  // 2026-11-20: also assignments and set-index ("Invalid assignment of property or key 'repeat' with value of type 'int'
+  // on a base object of type 'ImageTexture'"), the error behind a multi-round texture-tiling guess; the gap before the
+  // base type is longer there, so allow up to 80 characters.
+  {product: "godot", re: /Invalid (?:(?:access to|assignment of) property or key|[gs]et index) '([A-Za-z_]\w*)'[^\n]{0,80}?(?:base object of type|on base:?) '([A-Za-z_]\w*)/g, to: (m) => ({kind: "symbol", query: `${m[2]}.${m[1]}`})},
   {product: "godot", re: /(?:Function|The method) "([A-Za-z_]\w*)\(\)" (?:not found in base|isn't declared in the current class)(?: ([A-Za-z_]\w*))?/g, to: (m) => ({kind: "symbol", query: m[2] ? `${m[2]}.${m[1]}` : m[1]})},
   {product: "godot", re: /Identifier "([A-Za-z_]\w*)" not declared in the current scope/g, to: (m) => ({kind: "symbol", query: m[1]})},
   {product: "godot", re: /(?:Unrecognized|Unknown|Invalid) (?:command[- ]line )?(?:option|argument)s?[:\s]+'?"?(--?[A-Za-z][\w-]*)/gi, to: (m) => ({kind: "command", query: m[1]})},

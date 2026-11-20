@@ -409,7 +409,7 @@ Install canonical project and capture layout
 - [`ansible/roles/watoom-code/tasks/main.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/tasks/main.yml)
 - [`ansible/roles/watoom-code/defaults/main.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/defaults/main.yml)
 
-Source files: 1165. All paths and hashes are in the downloadable inventory.
+Source files: 1167. All paths and hashes are in the downloadable inventory.
 
 | Task file | Purpose declared in source |
 |---|---|
@@ -436,6 +436,7 @@ Source files: 1165. All paths and hashes are in the downloadable inventory.
 | [`ansible/roles/watoom-code/tasks/project_layout.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/tasks/project_layout.yml) | Inspect dedicated image project directory |
 | [`ansible/roles/watoom-code/tasks/reasoning_variants.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/tasks/reasoning_variants.yml) | Offer xhigh, medium, low and off reasoning variants without replacing user settings |
 | [`ansible/roles/watoom-code/tasks/rig_project_sync.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/tasks/rig_project_sync.yml) | Install the rig project sync script to a root-owned path |
+| [`ansible/roles/watoom-code/tasks/search_scope.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/tasks/search_scope.yml) | Keep engine caches and per-job project copies out of WatooM-Code searches |
 | [`ansible/roles/watoom-code/tasks/searxng.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/tasks/searxng.yml) | Create native SearXNG plugin directory |
 | [`ansible/roles/watoom-code/tasks/self_learning_curator.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/tasks/self_learning_curator.yml) | Validate the curator repository is an absolute path |
 | [`ansible/roles/watoom-code/tasks/self_learning_recovery.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/roles/watoom-code/tasks/self_learning_recovery.yml) | Install the learning recovery script to a root-owned path |

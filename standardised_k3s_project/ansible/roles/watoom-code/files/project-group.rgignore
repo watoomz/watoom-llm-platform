@@ -1,0 +1,7 @@
+# Managed by Ansible (watoom-code search_scope.yml). WatooM-Code's grep/glob run ripgrep, which honours this file for
+# every project below this group. Each Godot job leaves a full project copy, so a game project held 13,595 files for
+# 476 real ones and project-wide searches timed out (2026-11-20). Job logs and result.json stay searchable, and a
+# search given an explicit path inside a skipped folder still works.
+**/.godot/
+**/.opencode/tmp/
+**/.opencode/godot-game-out/*/project/

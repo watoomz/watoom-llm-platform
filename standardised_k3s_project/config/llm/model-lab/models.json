@@ -9,7 +9,6 @@
   "model_max_calls": 3,
   "exclusive_gpu_deployments": [
     "llama-cpp-swift-qwen38-coder",
-    "llama-cpp-qwen38-atomic",
     "llama-cpp-qwen38-uncensored-mtp",
     "llama-cpp-qwen38"
   ],

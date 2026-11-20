@@ -12,7 +12,7 @@
   ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 7,
+  "version": 10,
   "refresh": "5s",
   "time": {
     "from": "now-6h",
@@ -74,9 +74,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "max by (model) (up{job=\"llama-cpp\",service!~\".*test.*\"} == 1)",
+          "expr": "(\n(\nmax by (model) (label_replace(watoom_gpu_workload_active{kind=\"llm\"} == 1, \"model\", \"$1\", \"workload\", \"llama-cpp-(.+)\") or (up{job=\"llama-cpp\",service!~\".*test.*\"} == 1))\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nmax by (model) (label_replace(watoom_gpu_workload_active{kind=\"llm\"} == 1, \"model\", \"$1\", \"workload\", \"llama-cpp-(.+)\") or (up{job=\"llama-cpp\",service!~\".*test.*\"} == 1))\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "{{model}}",
+          "legendFormat": "{{name}}",
           "range": false,
           "refId": "A"
         },
@@ -98,7 +98,7 @@
     },
     {
       "type": "stat",
-      "title": "Prompt tok/s · Active",
+      "title": "Prompt tok/s \u00b7 Active",
       "gridPos": {
         "x": 8,
         "y": 0,
@@ -139,9 +139,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(\n  sum by (model) (\n    rate(llamacpp:prompt_tokens_total{job=\"llama-cpp\",service!~\".*test.*\"}[2m])\n  )\n  /\n  clamp_min(\n    sum by (model) (\n      rate(llamacpp:prompt_seconds_total{job=\"llama-cpp\",service!~\".*test.*\"}[2m])\n    ),\n    0.001\n  )\n)\nand on (model)\n(\n  max by (model) (up{job=\"llama-cpp\",service!~\".*test.*\"} == 1)\n)",
+          "expr": "(\n(\n# Native llama.cpp /metrics where the model exports it; otherwise (Model Manager models registered before --metrics)\n# the latest rate parsed from its server log by Vector; 0 while a loaded model has not served a request yet.\n(\n  (\n    sum by (model) (rate(llamacpp:prompt_tokens_total{job=\"llama-cpp\",service!~\".*test.*\"}[2m]))\n    /\n    clamp_min(sum by (model) (rate(llamacpp:prompt_seconds_total{job=\"llama-cpp\",service!~\".*test.*\"}[2m])), 0.001)\n  )\n  or\n  max by (model) (last_over_time(watoom_llama_slot_last_prompt_tokens_per_second{job=\"llama-perf\"}[6h]))\n  or\n  0 * (\n  max by (model) (label_replace(watoom_gpu_workload_active{kind=\"llm\"} == 1, \"model\", \"$1\", \"workload\", \"llama-cpp-(.+)\"))\n  or\n  max by (model) (up{job=\"llama-cpp\",service!~\".*test.*\"} == 1)\n)\n)\nand on (model)\n(\n  max by (model) (label_replace(watoom_gpu_workload_active{kind=\"llm\"} == 1, \"model\", \"$1\", \"workload\", \"llama-cpp-(.+)\"))\n  or\n  max by (model) (up{job=\"llama-cpp\",service!~\".*test.*\"} == 1)\n)\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\n# Native llama.cpp /metrics where the model exports it; otherwise (Model Manager models registered before --metrics)\n# the latest rate parsed from its server log by Vector; 0 while a loaded model has not served a request yet.\n(\n  (\n    sum by (model) (rate(llamacpp:prompt_tokens_total{job=\"llama-cpp\",service!~\".*test.*\"}[2m]))\n    /\n    clamp_min(sum by (model) (rate(llamacpp:prompt_seconds_total{job=\"llama-cpp\",service!~\".*test.*\"}[2m])), 0.001)\n  )\n  or\n  max by (model) (last_over_time(watoom_llama_slot_last_prompt_tokens_per_second{job=\"llama-perf\"}[6h]))\n  or\n  0 * (\n  max by (model) (label_replace(watoom_gpu_workload_active{kind=\"llm\"} == 1, \"model\", \"$1\", \"workload\", \"llama-cpp-(.+)\"))\n  or\n  max by (model) (up{job=\"llama-cpp\",service!~\".*test.*\"} == 1)\n)\n)\nand on (model)\n(\n  max by (model) (label_replace(watoom_gpu_workload_active{kind=\"llm\"} == 1, \"model\", \"$1\", \"workload\", \"llama-cpp-(.+)\"))\n  or\n  max by (model) (up{job=\"llama-cpp\",service!~\".*test.*\"} == 1)\n)\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "{{model}}",
+          "legendFormat": "{{name}}",
           "range": false,
           "refId": "A"
         }
@@ -150,7 +150,7 @@
     },
     {
       "type": "stat",
-      "title": "Generation tok/s · Active",
+      "title": "Generation tok/s \u00b7 Active",
       "gridPos": {
         "x": 12,
         "y": 0,
@@ -191,9 +191,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(\n  sum by (model) (\n    rate(llamacpp:tokens_predicted_total{job=\"llama-cpp\",service!~\".*test.*\"}[2m])\n  )\n  /\n  clamp_min(\n    sum by (model) (\n      rate(llamacpp:tokens_predicted_seconds_total{job=\"llama-cpp\",service!~\".*test.*\"}[2m])\n    ),\n    0.001\n  )\n)\nand on (model)\n(\n  max by (model) (up{job=\"llama-cpp\",service!~\".*test.*\"} == 1)\n)",
+          "expr": "(\n(\n# Native llama.cpp /metrics where the model exports it; otherwise (Model Manager models registered before --metrics)\n# the latest rate parsed from its server log by Vector; 0 while a loaded model has not served a request yet.\n(\n  (\n    sum by (model) (rate(llamacpp:tokens_predicted_total{job=\"llama-cpp\",service!~\".*test.*\"}[2m]))\n    /\n    clamp_min(sum by (model) (rate(llamacpp:tokens_predicted_seconds_total{job=\"llama-cpp\",service!~\".*test.*\"}[2m])), 0.001)\n  )\n  or\n  max by (model) (last_over_time(watoom_llama_slot_last_generated_tokens_per_second{job=\"llama-perf\"}[6h]))\n  or\n  0 * (\n  max by (model) (label_replace(watoom_gpu_workload_active{kind=\"llm\"} == 1, \"model\", \"$1\", \"workload\", \"llama-cpp-(.+)\"))\n  or\n  max by (model) (up{job=\"llama-cpp\",service!~\".*test.*\"} == 1)\n)\n)\nand on (model)\n(\n  max by (model) (label_replace(watoom_gpu_workload_active{kind=\"llm\"} == 1, \"model\", \"$1\", \"workload\", \"llama-cpp-(.+)\"))\n  or\n  max by (model) (up{job=\"llama-cpp\",service!~\".*test.*\"} == 1)\n)\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\n# Native llama.cpp /metrics where the model exports it; otherwise (Model Manager models registered before --metrics)\n# the latest rate parsed from its server log by Vector; 0 while a loaded model has not served a request yet.\n(\n  (\n    sum by (model) (rate(llamacpp:tokens_predicted_total{job=\"llama-cpp\",service!~\".*test.*\"}[2m]))\n    /\n    clamp_min(sum by (model) (rate(llamacpp:tokens_predicted_seconds_total{job=\"llama-cpp\",service!~\".*test.*\"}[2m])), 0.001)\n  )\n  or\n  max by (model) (last_over_time(watoom_llama_slot_last_generated_tokens_per_second{job=\"llama-perf\"}[6h]))\n  or\n  0 * (\n  max by (model) (label_replace(watoom_gpu_workload_active{kind=\"llm\"} == 1, \"model\", \"$1\", \"workload\", \"llama-cpp-(.+)\"))\n  or\n  max by (model) (up{job=\"llama-cpp\",service!~\".*test.*\"} == 1)\n)\n)\nand on (model)\n(\n  max by (model) (label_replace(watoom_gpu_workload_active{kind=\"llm\"} == 1, \"model\", \"$1\", \"workload\", \"llama-cpp-(.+)\"))\n  or\n  max by (model) (up{job=\"llama-cpp\",service!~\".*test.*\"} == 1)\n)\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "{{model}}",
+          "legendFormat": "{{name}}",
           "range": false,
           "refId": "A"
         }
@@ -325,7 +325,7 @@
     {
       "id": 6,
       "type": "state-timeline",
-      "title": "Model Activity · ACTIVE / DORMANT",
+      "title": "Model Activity \u00b7 ACTIVE / DORMANT",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -334,7 +334,7 @@
         "x": 0,
         "y": 5,
         "w": 24,
-        "h": 11
+        "h": 18
       },
       "targets": [
         {
@@ -343,23 +343,11 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "up{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}",
+          "expr": "(\n(\nmax by (model) (label_replace(watoom_gpu_workload_active{kind=\"llm\"} == 1, \"model\", \"$1\", \"workload\", \"llama-cpp-(.+)\") and on (model) up{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"})\nor\n0 * max by (model) (up{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"})\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nmax by (model) (label_replace(watoom_gpu_workload_active{kind=\"llm\"} == 1, \"model\", \"$1\", \"workload\", \"llama-cpp-(.+)\") and on (model) up{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"})\nor\n0 * max by (model) (up{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"})\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": false,
-          "legendFormat": "{{model}}",
+          "legendFormat": "{{name}}",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "watoom_gpu_workload_active{kind=\"specialist\"}",
-          "instant": false,
-          "legendFormat": "{{workload}} (GPU session)",
-          "range": true,
-          "refId": "B"
         }
       ],
       "fieldConfig": {
@@ -403,7 +391,7 @@
       "options": {
         "alignValue": "center",
         "mergeValues": true,
-        "rowHeight": 0.8,
+        "rowHeight": 0.45,
         "showValue": "always",
         "legend": {
           "displayMode": "list",
@@ -424,7 +412,7 @@
       "panels": [],
       "gridPos": {
         "x": 0,
-        "y": 16,
+        "y": 23,
         "w": 24,
         "h": 1
       }
@@ -434,7 +422,7 @@
       "title": "Inference Throughput",
       "gridPos": {
         "x": 0,
-        "y": 17,
+        "y": 24,
         "w": 12,
         "h": 8
       },
@@ -462,9 +450,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (model) (\n  rate(llamacpp:prompt_tokens_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n)\n/\nclamp_min(\n  sum by (model) (\n    rate(llamacpp:prompt_seconds_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n  ),\n  0.001\n)",
+          "expr": "(\n(\nsum by (model) (\n  rate(llamacpp:prompt_tokens_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n)\n/\nclamp_min(\n  sum by (model) (\n    rate(llamacpp:prompt_seconds_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n  ),\n  0.001\n)\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nsum by (model) (\n  rate(llamacpp:prompt_tokens_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n)\n/\nclamp_min(\n  sum by (model) (\n    rate(llamacpp:prompt_seconds_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n  ),\n  0.001\n)\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": false,
-          "legendFormat": "Prompt · {{model}}",
+          "legendFormat": "Prompt \u00b7 {{name}}",
           "range": true,
           "refId": "A"
         },
@@ -474,9 +462,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (model) (\n  rate(llamacpp:tokens_predicted_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n)\n/\nclamp_min(\n  sum by (model) (\n    rate(llamacpp:tokens_predicted_seconds_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n  ),\n  0.001\n)",
+          "expr": "(\n(\nsum by (model) (\n  rate(llamacpp:tokens_predicted_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n)\n/\nclamp_min(\n  sum by (model) (\n    rate(llamacpp:tokens_predicted_seconds_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n  ),\n  0.001\n)\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nsum by (model) (\n  rate(llamacpp:tokens_predicted_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n)\n/\nclamp_min(\n  sum by (model) (\n    rate(llamacpp:tokens_predicted_seconds_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n  ),\n  0.001\n)\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": false,
-          "legendFormat": "Generate · {{model}}",
+          "legendFormat": "Generate \u00b7 {{name}}",
           "range": true,
           "refId": "B"
         }
@@ -500,7 +488,7 @@
       "title": "Inference Cost Per Token",
       "gridPos": {
         "x": 12,
-        "y": 17,
+        "y": 24,
         "w": 12,
         "h": 8
       },
@@ -528,9 +516,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "1000 *\nsum by (model) (\n  rate(llamacpp:prompt_seconds_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n)\n/\nclamp_min(\n  sum by (model) (\n    rate(llamacpp:prompt_tokens_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n  ),\n  0.001\n)",
+          "expr": "(\n(\n1000 *\nsum by (model) (\n  rate(llamacpp:prompt_seconds_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n)\n/\nclamp_min(\n  sum by (model) (\n    rate(llamacpp:prompt_tokens_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n  ),\n  0.001\n)\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\n1000 *\nsum by (model) (\n  rate(llamacpp:prompt_seconds_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n)\n/\nclamp_min(\n  sum by (model) (\n    rate(llamacpp:prompt_tokens_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n  ),\n  0.001\n)\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": false,
-          "legendFormat": "Prompt ms/token · {{model}}",
+          "legendFormat": "Prompt ms/token \u00b7 {{name}}",
           "range": true,
           "refId": "A"
         },
@@ -540,9 +528,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "1000 *\nsum by (model) (\n  rate(llamacpp:tokens_predicted_seconds_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n)\n/\nclamp_min(\n  sum by (model) (\n    rate(llamacpp:tokens_predicted_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n  ),\n  0.001\n)",
+          "expr": "(\n(\n1000 *\nsum by (model) (\n  rate(llamacpp:tokens_predicted_seconds_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n)\n/\nclamp_min(\n  sum by (model) (\n    rate(llamacpp:tokens_predicted_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n  ),\n  0.001\n)\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\n1000 *\nsum by (model) (\n  rate(llamacpp:tokens_predicted_seconds_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n)\n/\nclamp_min(\n  sum by (model) (\n    rate(llamacpp:tokens_predicted_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n  ),\n  0.001\n)\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": false,
-          "legendFormat": "Generate ms/token · {{model}}",
+          "legendFormat": "Generate ms/token \u00b7 {{name}}",
           "range": true,
           "refId": "B"
         }
@@ -569,17 +557,17 @@
       "panels": [],
       "gridPos": {
         "x": 0,
-        "y": 25,
+        "y": 32,
         "w": 24,
         "h": 1
       }
     },
     {
       "type": "stat",
-      "title": "Tokens · Selected Range",
+      "title": "Tokens \u00b7 Selected Range",
       "gridPos": {
         "x": 0,
-        "y": 26,
+        "y": 33,
         "w": 8,
         "h": 7
       },
@@ -616,9 +604,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (model) (increase(llamacpp:prompt_tokens_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__range]))",
+          "expr": "(\n(\nsum by (model) (increase(llamacpp:prompt_tokens_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__range]))\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nsum by (model) (increase(llamacpp:prompt_tokens_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__range]))\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "Prompt · {{model}}",
+          "legendFormat": "Prompt \u00b7 {{name}}",
           "range": false,
           "refId": "A"
         },
@@ -628,9 +616,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (model) (increase(llamacpp:tokens_predicted_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__range]))",
+          "expr": "(\n(\nsum by (model) (increase(llamacpp:tokens_predicted_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__range]))\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nsum by (model) (increase(llamacpp:tokens_predicted_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__range]))\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "Generated · {{model}}",
+          "legendFormat": "Generated \u00b7 {{name}}",
           "range": false,
           "refId": "B"
         },
@@ -640,9 +628,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (model) (increase(llamacpp:prompt_tokens_cached_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__range]))",
+          "expr": "(\n(\nsum by (model) (increase(llamacpp:prompt_tokens_cached_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__range]))\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nsum by (model) (increase(llamacpp:prompt_tokens_cached_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__range]))\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "Cached · {{model}}",
+          "legendFormat": "Cached \u00b7 {{name}}",
           "range": false,
           "refId": "C"
         }
@@ -651,10 +639,10 @@
     },
     {
       "type": "stat",
-      "title": "Processing Time · Selected Range",
+      "title": "Processing Time \u00b7 Selected Range",
       "gridPos": {
         "x": 8,
-        "y": 26,
+        "y": 33,
         "w": 8,
         "h": 7
       },
@@ -691,9 +679,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (model) (increase(llamacpp:prompt_seconds_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__range]))",
+          "expr": "(\n(\nsum by (model) (increase(llamacpp:prompt_seconds_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__range]))\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nsum by (model) (increase(llamacpp:prompt_seconds_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__range]))\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "Prompt · {{model}}",
+          "legendFormat": "Prompt \u00b7 {{name}}",
           "range": false,
           "refId": "A"
         },
@@ -703,9 +691,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (model) (increase(llamacpp:tokens_predicted_seconds_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__range]))",
+          "expr": "(\n(\nsum by (model) (increase(llamacpp:tokens_predicted_seconds_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__range]))\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nsum by (model) (increase(llamacpp:tokens_predicted_seconds_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__range]))\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "Generation · {{model}}",
+          "legendFormat": "Generation \u00b7 {{name}}",
           "range": false,
           "refId": "B"
         }
@@ -717,7 +705,7 @@
       "title": "Request / Queue State",
       "gridPos": {
         "x": 16,
-        "y": 26,
+        "y": 33,
         "w": 8,
         "h": 7
       },
@@ -745,9 +733,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "llamacpp:requests_processing{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}",
+          "expr": "(\n(\nllamacpp:requests_processing{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nllamacpp:requests_processing{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": false,
-          "legendFormat": "Processing · {{model}}",
+          "legendFormat": "Processing \u00b7 {{name}}",
           "range": true,
           "refId": "A"
         },
@@ -757,9 +745,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "llamacpp:requests_deferred{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}",
+          "expr": "(\n(\nllamacpp:requests_deferred{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nllamacpp:requests_deferred{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": false,
-          "legendFormat": "Deferred · {{model}}",
+          "legendFormat": "Deferred \u00b7 {{name}}",
           "range": true,
           "refId": "B"
         },
@@ -769,9 +757,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "llamacpp:n_busy_slots_per_decode{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}",
+          "expr": "(\n(\nllamacpp:n_busy_slots_per_decode{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nllamacpp:n_busy_slots_per_decode{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": false,
-          "legendFormat": "Busy slots · {{model}}",
+          "legendFormat": "Busy slots \u00b7 {{name}}",
           "range": true,
           "refId": "C"
         }
@@ -798,7 +786,7 @@
       "panels": [],
       "gridPos": {
         "x": 0,
-        "y": 33,
+        "y": 40,
         "w": 24,
         "h": 1
       }
@@ -808,7 +796,7 @@
       "title": "GPU Utilization",
       "gridPos": {
         "x": 0,
-        "y": 34,
+        "y": 41,
         "w": 8,
         "h": 7
       },
@@ -874,7 +862,7 @@
       "title": "GPU Memory",
       "gridPos": {
         "x": 8,
-        "y": 34,
+        "y": 41,
         "w": 8,
         "h": 7
       },
@@ -940,7 +928,7 @@
       "title": "GPU Power / Temperature",
       "gridPos": {
         "x": 16,
-        "y": 34,
+        "y": 41,
         "w": 8,
         "h": 7
       },
@@ -1026,7 +1014,7 @@
       "panels": [],
       "gridPos": {
         "x": 0,
-        "y": 41,
+        "y": 48,
         "w": 24,
         "h": 1
       }
@@ -1036,7 +1024,7 @@
       "title": "Speculative Decoding",
       "gridPos": {
         "x": 0,
-        "y": 42,
+        "y": 49,
         "w": 12,
         "h": 7
       },
@@ -1077,9 +1065,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (model) (\n  rate(llamacpp:spec_decode_num_draft_tokens_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n)",
+          "expr": "(\n(\nsum by (model) (\n  rate(llamacpp:spec_decode_num_draft_tokens_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n)\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nsum by (model) (\n  rate(llamacpp:spec_decode_num_draft_tokens_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n)\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": false,
-          "legendFormat": "Draft tok/s · {{model}}",
+          "legendFormat": "Draft tok/s \u00b7 {{name}}",
           "range": true,
           "refId": "A"
         },
@@ -1089,9 +1077,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (model) (\n  rate(llamacpp:spec_decode_num_accepted_tokens_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n)",
+          "expr": "(\n(\nsum by (model) (\n  rate(llamacpp:spec_decode_num_accepted_tokens_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n)\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nsum by (model) (\n  rate(llamacpp:spec_decode_num_accepted_tokens_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n)\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": false,
-          "legendFormat": "Accepted tok/s · {{model}}",
+          "legendFormat": "Accepted tok/s \u00b7 {{name}}",
           "range": true,
           "refId": "B"
         },
@@ -1101,9 +1089,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "100 *\nsum by (model) (\n  rate(llamacpp:spec_decode_num_accepted_tokens_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n)\n/\nclamp_min(\n  sum by (model) (\n    rate(llamacpp:spec_decode_num_draft_tokens_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n  ),\n  0.001\n)",
+          "expr": "(\n(\n100 *\nsum by (model) (\n  rate(llamacpp:spec_decode_num_accepted_tokens_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n)\n/\nclamp_min(\n  sum by (model) (\n    rate(llamacpp:spec_decode_num_draft_tokens_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n  ),\n  0.001\n)\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\n100 *\nsum by (model) (\n  rate(llamacpp:spec_decode_num_accepted_tokens_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n)\n/\nclamp_min(\n  sum by (model) (\n    rate(llamacpp:spec_decode_num_draft_tokens_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval])\n  ),\n  0.001\n)\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": false,
-          "legendFormat": "Acceptance % · {{model}}",
+          "legendFormat": "Acceptance % \u00b7 {{name}}",
           "range": true,
           "refId": "C"
         }
@@ -1127,7 +1115,7 @@
       "title": "Runtime Internals",
       "gridPos": {
         "x": 12,
-        "y": 42,
+        "y": 49,
         "w": 12,
         "h": 7
       },
@@ -1176,9 +1164,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "max by (model) (llamacpp:n_tokens_max{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"})",
+          "expr": "(\n(\nmax by (model) (llamacpp:n_tokens_max{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"})\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nmax by (model) (llamacpp:n_tokens_max{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"})\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "Max sequence · {{model}}",
+          "legendFormat": "Max sequence \u00b7 {{name}}",
           "range": false,
           "refId": "A"
         },
@@ -1188,9 +1176,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (model) (increase(llamacpp:n_decode_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__range]))",
+          "expr": "(\n(\nsum by (model) (increase(llamacpp:n_decode_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__range]))\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nsum by (model) (increase(llamacpp:n_decode_total{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__range]))\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "Decode calls · {{model}}",
+          "legendFormat": "Decode calls \u00b7 {{name}}",
           "range": false,
           "refId": "B"
         },
@@ -1200,9 +1188,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "avg by (model) (\n  avg_over_time(\n    llamacpp:n_busy_slots_per_decode{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval]\n  )\n)",
+          "expr": "(\n(\navg by (model) (\n  avg_over_time(\n    llamacpp:n_busy_slots_per_decode{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval]\n  )\n)\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\navg by (model) (\n  avg_over_time(\n    llamacpp:n_busy_slots_per_decode{job=\"llama-cpp\",service!~\".*test.*\",model=~\"$model\"}[$__rate_interval]\n  )\n)\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "Avg busy slots · {{model}}",
+          "legendFormat": "Avg busy slots \u00b7 {{name}}",
           "range": false,
           "refId": "C"
         }
@@ -1217,7 +1205,7 @@
       "panels": [],
       "gridPos": {
         "x": 0,
-        "y": 49,
+        "y": 56,
         "w": 24,
         "h": 1
       }
@@ -1227,7 +1215,7 @@
       "title": "Prompt Eval",
       "gridPos": {
         "x": 0,
-        "y": 50,
+        "y": 57,
         "w": 4,
         "h": 5
       },
@@ -1278,9 +1266,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "llama_perf_prompt_eval_milliseconds{job=\"llama-perf\",model=~\"$model\"}",
+          "expr": "(\n(\nllama_perf_prompt_eval_milliseconds{job=\"llama-perf\",model=~\"$model\"}\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nllama_perf_prompt_eval_milliseconds{job=\"llama-perf\",model=~\"$model\"}\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "{{model}}",
+          "legendFormat": "{{name}}",
           "range": false,
           "refId": "A"
         }
@@ -1293,7 +1281,7 @@
       "title": "Prompt Tokens",
       "gridPos": {
         "x": 4,
-        "y": 50,
+        "y": 57,
         "w": 4,
         "h": 5
       },
@@ -1344,9 +1332,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "llama_perf_prompt_tokens{job=\"llama-perf\",model=~\"$model\"}",
+          "expr": "(\n(\nllama_perf_prompt_tokens{job=\"llama-perf\",model=~\"$model\"}\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nllama_perf_prompt_tokens{job=\"llama-perf\",model=~\"$model\"}\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "{{model}}",
+          "legendFormat": "{{name}}",
           "range": false,
           "refId": "A"
         }
@@ -1359,7 +1347,7 @@
       "title": "Prompt Speed",
       "gridPos": {
         "x": 8,
-        "y": 50,
+        "y": 57,
         "w": 4,
         "h": 5
       },
@@ -1410,9 +1398,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "llama_perf_prompt_tokens_per_second{job=\"llama-perf\",model=~\"$model\"}",
+          "expr": "(\n(\nllama_perf_prompt_tokens_per_second{job=\"llama-perf\",model=~\"$model\"}\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nllama_perf_prompt_tokens_per_second{job=\"llama-perf\",model=~\"$model\"}\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "{{model}}",
+          "legendFormat": "{{name}}",
           "range": false,
           "refId": "A"
         }
@@ -1425,7 +1413,7 @@
       "title": "Prompt Cost",
       "gridPos": {
         "x": 12,
-        "y": 50,
+        "y": 57,
         "w": 4,
         "h": 5
       },
@@ -1476,9 +1464,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "llama_perf_prompt_milliseconds_per_token{job=\"llama-perf\",model=~\"$model\"}",
+          "expr": "(\n(\nllama_perf_prompt_milliseconds_per_token{job=\"llama-perf\",model=~\"$model\"}\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nllama_perf_prompt_milliseconds_per_token{job=\"llama-perf\",model=~\"$model\"}\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "{{model}}",
+          "legendFormat": "{{name}}",
           "range": false,
           "refId": "A"
         }
@@ -1491,7 +1479,7 @@
       "title": "Generation Eval",
       "gridPos": {
         "x": 16,
-        "y": 50,
+        "y": 57,
         "w": 4,
         "h": 5
       },
@@ -1542,9 +1530,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "llama_perf_eval_milliseconds{job=\"llama-perf\",model=~\"$model\"}",
+          "expr": "(\n(\nllama_perf_eval_milliseconds{job=\"llama-perf\",model=~\"$model\"}\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nllama_perf_eval_milliseconds{job=\"llama-perf\",model=~\"$model\"}\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "{{model}}",
+          "legendFormat": "{{name}}",
           "range": false,
           "refId": "A"
         }
@@ -1557,7 +1545,7 @@
       "title": "Generated Tokens",
       "gridPos": {
         "x": 20,
-        "y": 50,
+        "y": 57,
         "w": 4,
         "h": 5
       },
@@ -1608,9 +1596,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "llama_perf_generated_tokens{job=\"llama-perf\",model=~\"$model\"}",
+          "expr": "(\n(\nllama_perf_generated_tokens{job=\"llama-perf\",model=~\"$model\"}\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nllama_perf_generated_tokens{job=\"llama-perf\",model=~\"$model\"}\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "{{model}}",
+          "legendFormat": "{{name}}",
           "range": false,
           "refId": "A"
         }
@@ -1623,7 +1611,7 @@
       "title": "Generation Speed",
       "gridPos": {
         "x": 0,
-        "y": 55,
+        "y": 62,
         "w": 4,
         "h": 5
       },
@@ -1674,9 +1662,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "llama_perf_generated_tokens_per_second{job=\"llama-perf\",model=~\"$model\"}",
+          "expr": "(\n(\nllama_perf_generated_tokens_per_second{job=\"llama-perf\",model=~\"$model\"}\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nllama_perf_generated_tokens_per_second{job=\"llama-perf\",model=~\"$model\"}\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "{{model}}",
+          "legendFormat": "{{name}}",
           "range": false,
           "refId": "A"
         }
@@ -1689,7 +1677,7 @@
       "title": "Generation Cost",
       "gridPos": {
         "x": 4,
-        "y": 55,
+        "y": 62,
         "w": 4,
         "h": 5
       },
@@ -1740,9 +1728,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "llama_perf_eval_milliseconds_per_token{job=\"llama-perf\",model=~\"$model\"}",
+          "expr": "(\n(\nllama_perf_eval_milliseconds_per_token{job=\"llama-perf\",model=~\"$model\"}\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nllama_perf_eval_milliseconds_per_token{job=\"llama-perf\",model=~\"$model\"}\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "{{model}}",
+          "legendFormat": "{{name}}",
           "range": false,
           "refId": "A"
         }
@@ -1755,7 +1743,7 @@
       "title": "Total Request",
       "gridPos": {
         "x": 8,
-        "y": 55,
+        "y": 62,
         "w": 4,
         "h": 5
       },
@@ -1806,9 +1794,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "llama_perf_total_milliseconds{job=\"llama-perf\",model=~\"$model\"}",
+          "expr": "(\n(\nllama_perf_total_milliseconds{job=\"llama-perf\",model=~\"$model\"}\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nllama_perf_total_milliseconds{job=\"llama-perf\",model=~\"$model\"}\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "{{model}}",
+          "legendFormat": "{{name}}",
           "range": false,
           "refId": "A"
         }
@@ -1821,7 +1809,7 @@
       "title": "Total Tokens",
       "gridPos": {
         "x": 12,
-        "y": 55,
+        "y": 62,
         "w": 4,
         "h": 5
       },
@@ -1872,9 +1860,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "llama_perf_total_tokens{job=\"llama-perf\",model=~\"$model\"}",
+          "expr": "(\n(\nllama_perf_total_tokens{job=\"llama-perf\",model=~\"$model\"}\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nllama_perf_total_tokens{job=\"llama-perf\",model=~\"$model\"}\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "{{model}}",
+          "legendFormat": "{{name}}",
           "range": false,
           "refId": "A"
         }
@@ -1887,7 +1875,7 @@
       "title": "Graphs Reused",
       "gridPos": {
         "x": 16,
-        "y": 55,
+        "y": 62,
         "w": 4,
         "h": 5
       },
@@ -1938,9 +1926,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "llama_perf_graphs_reused{job=\"llama-perf\",model=~\"$model\"}",
+          "expr": "(\n(\nllama_perf_graphs_reused{job=\"llama-perf\",model=~\"$model\"}\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nllama_perf_graphs_reused{job=\"llama-perf\",model=~\"$model\"}\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "{{model}}",
+          "legendFormat": "{{name}}",
           "range": false,
           "refId": "A"
         }
@@ -1953,7 +1941,7 @@
       "title": "Model Load",
       "gridPos": {
         "x": 20,
-        "y": 55,
+        "y": 62,
         "w": 4,
         "h": 5
       },
@@ -2004,9 +1992,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "1000 * (llama_perf_model_loaded_elapsed_seconds{job=\"llama-perf\",model=~\"$model\"} - llama_perf_model_load_start_elapsed_seconds{job=\"llama-perf\",model=~\"$model\"})",
+          "expr": "(\n(\n1000 * (llama_perf_model_loaded_elapsed_seconds{job=\"llama-perf\",model=~\"$model\"} - llama_perf_model_load_start_elapsed_seconds{job=\"llama-perf\",model=~\"$model\"})\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\n1000 * (llama_perf_model_loaded_elapsed_seconds{job=\"llama-perf\",model=~\"$model\"} - llama_perf_model_load_start_elapsed_seconds{job=\"llama-perf\",model=~\"$model\"})\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
           "instant": true,
-          "legendFormat": "{{model}}",
+          "legendFormat": "{{name}}",
           "range": false,
           "refId": "A"
         }
@@ -2017,11 +2005,11 @@
     {
       "id": 34,
       "type": "row",
-      "title": "MOSS Image Studio (image generation — no tokens; throughput is images and seconds per image)",
+      "title": "MOSS Image Studio (image generation \u2014 no tokens; throughput is images and seconds per image)",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 60,
+        "y": 67,
         "w": 24,
         "h": 1
       },
@@ -2037,7 +2025,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 61,
+        "y": 68,
         "w": 4,
         "h": 4
       },
@@ -2114,7 +2102,7 @@
       },
       "gridPos": {
         "x": 4,
-        "y": 61,
+        "y": 68,
         "w": 4,
         "h": 4
       },
@@ -2190,7 +2178,7 @@
       },
       "gridPos": {
         "x": 8,
-        "y": 61,
+        "y": 68,
         "w": 4,
         "h": 4
       },
@@ -2266,7 +2254,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 61,
+        "y": 68,
         "w": 4,
         "h": 4
       },
@@ -2325,7 +2313,7 @@
       },
       "gridPos": {
         "x": 16,
-        "y": 61,
+        "y": 68,
         "w": 4,
         "h": 4
       },
@@ -2385,7 +2373,7 @@
       },
       "gridPos": {
         "x": 20,
-        "y": 61,
+        "y": 68,
         "w": 4,
         "h": 4
       },
@@ -2438,14 +2426,14 @@
     {
       "id": 41,
       "type": "timeseries",
-      "title": "Images generated · per 15m",
+      "title": "Images generated \u00b7 per 15m",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
         "x": 0,
-        "y": 65,
+        "y": 72,
         "w": 8,
         "h": 7
       },
@@ -2502,14 +2490,14 @@
     {
       "id": 42,
       "type": "timeseries",
-      "title": "Average seconds per image · 15m",
+      "title": "Average seconds per image \u00b7 15m",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
         "x": 8,
-        "y": 65,
+        "y": 72,
         "w": 8,
         "h": 7
       },
@@ -2554,14 +2542,14 @@
     {
       "id": 43,
       "type": "timeseries",
-      "title": "Sampling steps/s · 5m",
+      "title": "Sampling steps/s \u00b7 5m",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
         "x": 16,
-        "y": 65,
+        "y": 72,
         "w": 8,
         "h": 7
       },
@@ -2607,22 +2595,38 @@
       "id": 44,
       "type": "row",
       "title": "All-Time Model Performance (lifetime totals; survive restarts and Prometheus's 30d retention)",
-      "gridPos": { "x": 0, "y": 72, "w": 24, "h": 1 },
+      "gridPos": {
+        "x": 0,
+        "y": 79,
+        "w": 24,
+        "h": 1
+      },
       "collapsed": false,
       "panels": []
     },
     {
       "id": 45,
       "type": "bargauge",
-      "title": "Lifetime Avg Generation Speed (tok/s) · efficiency ranking",
+      "title": "Lifetime Avg Generation Speed (tok/s) \u00b7 efficiency ranking",
       "description": "The most efficient model, all time: lifetime generated tokens / lifetime generation wall-time, by model. Backed by watoom-model-perf-accumulator.py, which accumulates deltas from llamacpp: counters into a durable state file so the ranking survives both llama.cpp restarts and Prometheus's 30-day retention window.",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 0, "y": 73, "w": 12, "h": 8 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 80,
+        "w": 12,
+        "h": 8
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "watoom_model_perf_lifetime_generated_tokens_total / clamp_min(watoom_model_perf_lifetime_generation_seconds_total, 0.001)",
-          "legendFormat": "{{model}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(\n(\nwatoom_model_perf_lifetime_generated_tokens_total / clamp_min(watoom_model_perf_lifetime_generation_seconds_total, 0.001)\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nwatoom_model_perf_lifetime_generated_tokens_total / clamp_min(watoom_model_perf_lifetime_generation_seconds_total, 0.001)\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
+          "legendFormat": "{{name}}",
           "instant": true,
           "range": false,
           "refId": "A"
@@ -2633,7 +2637,15 @@
           "unit": "tokps",
           "min": 0,
           "noValue": "No lifetime data yet",
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
         },
         "overrides": []
       },
@@ -2641,21 +2653,38 @@
         "orientation": "horizontal",
         "displayMode": "gradient",
         "showUnfilled": true,
-        "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" }
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        }
       }
     },
     {
       "id": 46,
       "type": "bargauge",
-      "title": "Lifetime Generated Tokens · most-used model",
+      "title": "Lifetime Generated Tokens \u00b7 most-used model",
       "description": "Total output tokens generated by each model since the accumulator was deployed. A volume/usage ranking, distinct from the speed ranking: a model can be fast but rarely used, or slow but heavily relied on.",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 12, "y": 73, "w": 12, "h": 8 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 80,
+        "w": 12,
+        "h": 8
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "watoom_model_perf_lifetime_generated_tokens_total",
-          "legendFormat": "{{model}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(\n(\nwatoom_model_perf_lifetime_generated_tokens_total\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nwatoom_model_perf_lifetime_generated_tokens_total\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
+          "legendFormat": "{{name}}",
           "instant": true,
           "range": false,
           "refId": "A"
@@ -2666,7 +2695,15 @@
           "unit": "short",
           "min": 0,
           "noValue": "No lifetime data yet",
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }] }
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          }
         },
         "overrides": []
       },
@@ -2674,7 +2711,13 @@
         "orientation": "horizontal",
         "displayMode": "gradient",
         "showUnfilled": true,
-        "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" }
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        }
       }
     },
     {
@@ -2682,15 +2725,39 @@
       "type": "table",
       "title": "Lifetime Totals by Model (raw drill-down)",
       "description": "Includes MOSS image studio (images/pixels, no tokens) alongside LLMs (tokens/seconds). The Creation Studio GLB 3D coder is not yet represented here -- it does not currently export any Prometheus metrics or register with the GPU ownership controller (see T-0104/T-0103), so there is no lifetime data to show for it.",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 0, "y": 81, "w": 24, "h": 9 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 88,
+        "w": 24,
+        "h": 9
+      },
       "fieldConfig": {
-        "defaults": { "custom": { "align": "auto", "cellOptions": { "type": "auto" } } },
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
         "overrides": []
       },
-      "options": { "showHeader": true, "cellHeight": "sm" },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
       "transformations": [
-        { "id": "joinByField", "options": { "byField": "model", "mode": "outer" } },
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "model",
+            "mode": "outer"
+          }
+        },
         {
           "id": "organize",
           "options": {
@@ -2702,16 +2769,73 @@
               "Value #E": "Pixels",
               "model": "Model"
             },
-            "excludeByName": { "Time": true }
+            "excludeByName": {
+              "Time": true
+            }
           }
         }
       ],
       "targets": [
-        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "watoom_model_perf_lifetime_generated_tokens_total", "legendFormat": "{{model}}", "instant": true, "range": false, "format": "table", "refId": "A" },
-        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "watoom_model_perf_lifetime_prompt_tokens_total", "legendFormat": "{{model}}", "instant": true, "range": false, "format": "table", "refId": "B" },
-        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "watoom_model_perf_lifetime_generation_seconds_total", "legendFormat": "{{model}}", "instant": true, "range": false, "format": "table", "refId": "C" },
-        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "watoom_model_perf_lifetime_images_total", "legendFormat": "{{model}}", "instant": true, "range": false, "format": "table", "refId": "D" },
-        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "watoom_model_perf_lifetime_pixels_total", "legendFormat": "{{model}}", "instant": true, "range": false, "format": "table", "refId": "E" }
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(\n(\nwatoom_model_perf_lifetime_generated_tokens_total\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nwatoom_model_perf_lifetime_generated_tokens_total\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
+          "legendFormat": "{{name}}",
+          "instant": true,
+          "range": false,
+          "format": "table",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(\n(\nwatoom_model_perf_lifetime_prompt_tokens_total\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nwatoom_model_perf_lifetime_prompt_tokens_total\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
+          "legendFormat": "{{name}}",
+          "instant": true,
+          "range": false,
+          "format": "table",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(\n(\nwatoom_model_perf_lifetime_generation_seconds_total\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nwatoom_model_perf_lifetime_generation_seconds_total\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
+          "legendFormat": "{{name}}",
+          "instant": true,
+          "range": false,
+          "format": "table",
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(\n(\nwatoom_model_perf_lifetime_images_total\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nwatoom_model_perf_lifetime_images_total\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
+          "legendFormat": "{{name}}",
+          "instant": true,
+          "range": false,
+          "format": "table",
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(\n(\nwatoom_model_perf_lifetime_pixels_total\n)\n* on (model) group_left (name) watoom_llm_model_info\n)\nor on (model)\nlabel_replace(\n(\nwatoom_model_perf_lifetime_pixels_total\n),\n\"name\", \"$1\", \"model\", \"(.*)\")",
+          "legendFormat": "{{name}}",
+          "instant": true,
+          "range": false,
+          "format": "table",
+          "refId": "E"
+        }
       ]
     }
   ],
@@ -2725,13 +2849,13 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(up{job=\"llama-cpp\",service!~\".*test.*\"}, model)",
-        "query": "label_values(up{job=\"llama-cpp\",service!~\".*test.*\"}, model)",
+        "definition": "query_result(max by (model, name) (watoom_llm_model_info) * on (model) group_left () max by (model) (up{job=\"llama-cpp\",service!~\".*test.*\",model!~\"llama-mesh|mm-(5af2aafee6b956fe|7ca0135a77ad0c89|f8e679b2182aac21)\"}))",
+        "query": "query_result(max by (model, name) (watoom_llm_model_info) * on (model) group_left () max by (model) (up{job=\"llama-cpp\",service!~\".*test.*\",model!~\"llama-mesh|mm-(5af2aafee6b956fe|7ca0135a77ad0c89|f8e679b2182aac21)\"}))",
+        "regex": "/model=\"(?<value>[^\"]+)\".*name=\"(?<text>[^\"]+)\"/",
         "refresh": 1,
         "sort": 1,
         "multi": true,
         "includeAll": true,
-        "allValue": ".*",
         "current": {
           "selected": true,
           "text": "All",

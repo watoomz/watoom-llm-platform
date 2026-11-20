@@ -48,7 +48,8 @@ try {
   assert.equal(rearmAfterPrompt(st),false);
   for(const o of [{isChild:true,callingAgent:'watoom-builder'},{isChild:false,callingAgent:'watoom-workflow'},{isChild:false,callingAgent:'watoom-critic'}]){const z={...o,errors:3,terminalReport:true};assert.equal(rearmAfterPrompt(z),false);assert.equal(z.errors,3);}
   const f={errors:0};recordToolFailure(f,'watoom-builder','watoom_game_worker',{},'x');assert.equal(f.errors,1);
-  const e={errors:0};recordToolFailure(e,'watoom-builder','shell',{command:'rg needle /p'},'x');assert.equal(e.errors,1,'builder validation exits still count');}
+  const e={errors:0};recordToolFailure(e,'watoom-builder','shell',{command:'rg needle /p'},'x');assert.equal(e.errors,0,'a read-only search miss is information, not a failed repair');
+  const b={errors:0};recordToolFailure(b,'watoom-builder','shell',{command:'godot --headless --script run_tests.gd'},'x');assert.equal(b.errors,1,'builder validation exits still count');}
  // statuses the dispatcher really publishes: COMPLETED is a pass, STALE_RESULT is finished
  assert.match(gameWorkerGuidance('COMPLETED',{session_id:'s',job:'j'},'s',{operation:'godot-game'}).next||'',/Passed/);
  assert.match(gameWorkerGuidance('STALE_RESULT',{session_id:'s',job:'j'},'s',{operation:'godot-game'}).next||'',/FINISHED/);

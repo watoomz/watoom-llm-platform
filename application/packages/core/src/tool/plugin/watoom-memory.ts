@@ -7,6 +7,27 @@ import { Permission } from "../../permission.js"
 import { ToolFailure } from "@opencode/ai/effect"
 import { Learning } from "../../watoom/learning.js"
 import { AutoRecall } from "../../watoom/auto-recall.js"
+/**
+ * A memory with content as one compact line: a recorded milestone (watoom_memory_record) or an explicit /remember note.
+ * Anything else - the automatic session lifecycle events, which hold only message references - is dropped.
+ */
+export function milestone(item: { job?: string; content?: string }): string | undefined {
+  if (typeof item.content !== "string") return undefined
+  if (item.job?.startsWith("explicit:")) return "[remembered] " + item.content.replace(/\s+/g, " ").trim().slice(0, 600)
+  if (!item.job?.startsWith("milestone:")) return undefined
+  try {
+    const value = JSON.parse(item.content) as Record<string, unknown>
+    if (value.schema !== "watoom.milestone.v1" || typeof value.summary !== "string") return undefined
+    const refs = Array.isArray(value.sourceRefs) ? value.sourceRefs.slice(0, 4).join(", ") : ""
+    return (
+      "[" + value.kind + ", " + value.confidence + "] " + value.summary.slice(0, 400) +
+      (typeof value.nextAction === "string" && value.nextAction ? " | next: " + value.nextAction.slice(0, 200) : "") +
+      (refs ? " | refs: " + refs.slice(0, 200) : "")
+    )
+  } catch {
+    return undefined
+  }
+}
 export const Plugin = {
   id: "watoom.tool.memory",
   effect: Effect.fn("MemoryTool.Plugin")(function* (ctx: Context) {
@@ -20,7 +41,7 @@ export const Plugin = {
           name: "watoom_memory_recall",
           options: { codemode: false, permission: "watoom_memory_recall" },
           description:
-            "Retrieve learned knowledge (verified procedures, known failures, decisions) for this project directory as short summaries with references, plus this agent's own lifecycle memories. Use a specific technical query.",
+            "Retrieve learned knowledge (verified procedures, known failures, decisions) for this project directory as short summaries with references, plus this agent's own recorded goals, milestones, decisions and safe-stop handoffs. Use a specific technical query.",
           input: Schema.Struct({ query: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(1024)) }),
           output: Schema.Struct({ knowledge: Schema.Array(Schema.String), memories: Schema.Array(Schema.String) }),
           execute: (input, context) =>
@@ -35,8 +56,10 @@ export const Plugin = {
               })
               const scope = { project: location.project.id, repository: location.directory, agent: context.agent }
               const knowledge = yield* memory.recall(scope, input.query, 4000)
-              const memories = yield* memory.search(scope, input.query)
-              const output = { knowledge, memories: memories.slice(0, 8).map((memory) => JSON.stringify(memory)) }
+              // Only this agent's recorded goals/milestones/decisions/safe-stops: the automatic session lifecycle events
+              // (step/compaction/completion with message references) carry no content and cost ~4 KB per recall.
+              const memories = (yield* memory.search(scope, input.query)).flatMap((item) => milestone(item) ?? []).slice(0, 8)
+              const output = { knowledge, memories }
               return { output, content: JSON.stringify(output) }
             }).pipe(
               Effect.mapError((error) => new ToolFailure({ message: "AgentMemory retrieval unavailable", error })),

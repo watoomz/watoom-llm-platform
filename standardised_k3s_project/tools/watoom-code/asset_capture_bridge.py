@@ -1,7 +1,7 @@
 """Native declarative capture bridge, dispatched under the existing worker lock."""
 
 import json, pathlib, hashlib, os, stat, secrets, subprocess, sys, re, sqlite3, time
-from asset_capture_contract import native_proof, contained
+from asset_capture_contract import WORKER_AGENTS, native_proof, contained
 from bazzite_wait import bazzite_wait, wait_reason
 
 CONFIG = pathlib.Path("/etc/watoom-asset-capture.json")
@@ -79,7 +79,7 @@ def dispatch(m):
                     v.get("project") != name
                     or v.get("request_id") != path.stem
                     or identity(v) != path.stem
-                    or v.get("agent") not in ("watoom-workflow", "watoom-builder")
+                    or v.get("agent") not in WORKER_AGENTS
                 ):
                     continue
                 if not re.fullmatch("[A-Za-z0-9][A-Za-z0-9_-]{0,63}", v.get("job", "")):

@@ -3,6 +3,20 @@
 import hashlib, json, math, pathlib, re
 from pose_preparation_contract import preparation
 
+# Agents allowed to submit worker jobs. Must equal the coordinator guard's workerRoles (index.js), which decides who gets
+# the tools; shared by game_worker_bridge.py and asset_capture_bridge.py. test_game_worker_bridge.py checks they match. 2026-11-21: T-0107 widened the guard but not this list, so
+# watoom-developer jobs were skipped silently and showed QUEUED forever (T-0133).
+WORKER_AGENTS = frozenset(
+    {
+        "watoom-workflow",
+        "watoom-builder",
+        "watoom-developer",
+        "watoom-3d-modeller",
+        "watoom-automation-expert",
+        "watoom-integration-expert",
+    }
+)
+
 MODES = {"inspect", "still", "turntable", "animation", "pose-inspect", "pose-prepare"}
 
 

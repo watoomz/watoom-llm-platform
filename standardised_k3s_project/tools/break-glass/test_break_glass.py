@@ -113,7 +113,7 @@ class ProblemTests(unittest.TestCase):
         return {"app": {"replicas": 1, "ready": 1, "guard_file_present": False},
                 "database": {"claims": [], "inbox": 0, "running_jobs": 0, "background_jobs": 0, "unsettled_specialists": 0, "uncertain_gpu_specialists": 0},
                 "workers": {"pods": [], "jobs": [], "units": []},
-                "gpu": {"owner": None, "phase": "qwen-ready", "uncertain": False, "owner_ended": False, "dead_leases": []},
+                "gpu": {"owner": None, "phase": "qwen-ready", "uncertain": False, "owner_ended": False, "dead_leases": [], "stale_identity": []},
                 "inference": {"router_ready": 1, "selected_model": "m", "selected_model_ready": 1}}
 
     def test_healthy_has_no_problems(self):
@@ -142,6 +142,29 @@ class ProblemTests(unittest.TestCase):
         r = self.healthy()
         r["gpu"] = {"error": "ControllerUnavailable: x"}
         self.assertIn("gpu could not be inspected", bg.problems(r)[0])
+
+    def test_stale_deployment_identity_is_a_problem(self):
+        r = self.healthy()
+        r["gpu"]["stale_identity"] = ["llama-cpp-qwen38-atomic"]
+        self.assertTrue(any("stale identity record" in x and "llama-cpp-qwen38-atomic" in x for x in bg.problems(r)))
+
+    def test_missing_stale_identity_key_is_not_a_problem(self):
+        """Older in-flight report shapes (before this field existed) must not raise."""
+        r = self.healthy()
+        del r["gpu"]["stale_identity"]
+        self.assertEqual(bg.problems(r), [])
+
+
+class DeploymentIdentityTests(unittest.TestCase):
+    def test_spec_digest_ignores_replicas_but_not_other_spec_changes(self):
+        base = {"spec": {"replicas": 1, "template": {"spec": {"containers": []}}}}
+        scaled = {"spec": {"replicas": 0, "template": {"spec": {"containers": []}}}}
+        changed = {"spec": {"replicas": 1, "template": {"spec": {"containers": [{"name": "x"}]}}}}
+        self.assertEqual(bg.deployment_spec_digest(base), bg.deployment_spec_digest(scaled))
+        self.assertNotEqual(bg.deployment_spec_digest(base), bg.deployment_spec_digest(changed))
+
+    def test_repair_is_a_noop_for_an_empty_list(self):
+        self.assertEqual(bg.repair_deployment_identity([]), "no stale identity records")
 
 
 if __name__ == "__main__":

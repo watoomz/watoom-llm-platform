@@ -6,7 +6,8 @@ import {BUDGET, READ_BUDGET, CRITIC_ESCALATION_CAP, COORDINATOR_CHILDREN} from "
 
 const native = new URL("../../ansible/roles/watoom-code/files/native/", import.meta.url);
 const words = ["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen",
-  "fourteen","fifteen","sixteen","seventeen","eighteen","nineteen","twenty"];
+  "fourteen","fifteen","sixteen","seventeen","eighteen","nineteen","twenty","twenty-one","twenty-two","twenty-three",
+  "twenty-four","twenty-five","twenty-six","twenty-seven","twenty-eight","twenty-nine","thirty"];
 const shared = name => readFileSync(new URL("_src/shared/" + name, native), "utf8");
 
 const limits = shared("03_agent_selection_and_handoff_boundaries.md");

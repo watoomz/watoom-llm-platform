@@ -73,6 +73,20 @@ def server_settings(container):
   "speculation":pick(("--spec-type",),"LLAMA_ARG_SPEC_TYPE"),"draft_count":pick(("--spec-draft-n-max",),"LLAMA_ARG_SPEC_DRAFT_N_MAX"),
   "temperature":pick(("--temp",),"LLAMA_ARG_TEMP"),"top_p":pick(("--top-p",),"LLAMA_ARG_TOP_P"),"top_k":pick(("--top-k",),"LLAMA_ARG_TOP_K"),
   "min_p":pick(("--min-p",),"LLAMA_ARG_MIN_P"),"cpu_ffn":arg("--n-cpu-ffn")}
+
+REASONING_VARIANTS=Path("/data/ai/watoom-code/config/reasoning-variants.json")
+def apply_reasoning_variants(application,spec_path=None,script=None):
+ """Re-offer the owner's reasoning variants (xhigh/medium/low/off) after a registration rewrote model profiles.
+ Retire prunes a model's profile and register adds a plain one, so a re-registered thinking model lost its picker
+ variants until the watoom-code playbook ran again (mm-aa6b02, 2026-11-21). The spec is written by the watoom-code
+ role (reasoning_variants.yml); without it nothing changes. Returns True when the application config changed."""
+ spec_path=Path(spec_path or REASONING_VARIANTS)
+ if not spec_path.is_file():return False
+ script=Path(script or Path(__file__).with_name("enable-reasoning-variants.py"))
+ result=subprocess.run(["python3",str(script),application,spec_path.read_text()],capture_output=True,text=True,timeout=30)
+ if result.returncode:raise ValueError("Reasoning variant registration failed")
+ return result.stdout.strip()=="CHANGED"
+
 class Broker:
  def __init__(self,config,store):
   self.config=config;self.store=store;self.root=Path(config["state"]);self.root.mkdir(parents=True,exist_ok=True)
@@ -135,8 +149,9 @@ class Broker:
    migration=Path(__file__).parent/"enable-model-context.py"
    result=subprocess.run(["python3",str(migration),application,str(inventory),"100000"],capture_output=True,text=True,timeout=30)
    if result.returncode:raise ValueError("Application profile registration failed")
+   variants=apply_reasoning_variants(application)
    from maintenance_guard import Maintenance
-   if pruned or result.stdout.strip() in ("CHANGED","UPDATED"):Maintenance("watoom-code","watoom-code",self.root,True,True).request("/api/location/reload",{})
+   if pruned or variants or result.stdout.strip() in ("CHANGED","UPDATED"):Maintenance("watoom-code","watoom-code",self.root,True,True).request("/api/location/reload",{})
  def artifacts(self,record):
   artifacts=[]
   for aid in record["artifacts"]:

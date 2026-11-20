@@ -13,6 +13,7 @@ data:
         type: file
         include:
           - /host/var/log/pods/llama-cpp_llama-cpp-*/llama-server/*.log
+          - /host/var/log/pods/llama-cpp_llama-cpp-mm-*/model/*.log
         # WATOOM_VECTOR_PERSISTENCE_V1_BEGIN
         # Existing files resume from persistent checkpoints. When no
         # checkpoint exists, start at EOF so historical llama logs are not
@@ -30,7 +31,7 @@ data:
         source: |
           path = parse_regex!(
             .file,
-            r'^/host/var/log/pods/llama-cpp_llama-cpp-(?P<model>.+)-[a-z0-9]{8,10}-[a-z0-9]{5}_[^/]+/llama-server/[0-9]+\.log$'
+            r'^/host/var/log/pods/llama-cpp_llama-cpp-(?P<model>.+)-[a-z0-9]{8,10}-[a-z0-9]{5}_[^/]+/(?:llama-server|model)/[0-9]+\.log$'
           )
 
           .model = path.model

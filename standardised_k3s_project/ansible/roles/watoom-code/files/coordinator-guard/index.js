@@ -24,6 +24,35 @@ export function shellReadOnly(command) {
  }
  return true;
 }
+// 2026-11-20 audit: the protected-path rules (worker protocol files, read-only /data/github) reused shellReadOnly, which is
+// the strict auto-ALLOW test, so harmless inspection (`ls -la dir 2>&1 | head`, `sed -n 30,80p f`, `git log -1`, `diff a b`)
+// was rejected 100+ times in two weeks. This answers a narrower question -- can this command write anything? -- and is
+// used ONLY by those rules; it never grants permission. Expansion, substitution and real redirects still fail.
+const GIT_READ=new Set(["log","show","status","diff","rev-parse","ls-files","ls-tree","blame","cat-file","describe","branch","tag","remote","config"]);
+function segmentCannotWrite(segment) {
+ const s=segment.trim().replace(/\s+2>&1\b/g,"").replace(/\s+2>\s*\/dev\/null\b/g,"").replace(/\s+>\s*\/dev\/null(?:\s+2>&1)?\b/g,"");
+ if(!s)return true;
+ if(shellReadOnly(s))return true;
+ if(/[$`\\<>(){}]/.test(s) || s.includes("|"))return s.split("|").length<=6 && !/[$`\\<>(){}]/.test(s) && s.split("|").every(p=>segmentCannotWrite(p));
+ const tokens=[];let rest=s;
+ while(rest){const m=/^((?:[^\s'"]+|'[^']*'|"[^"]*")+)(?:\s+|$)/.exec(rest);if(!m)return false;tokens.push(m[1].replace(/'([^']*)'|"([^"]*)"/g,"$1$2"));rest=rest.slice(m[0].length);}
+ let [exe,...args]=tokens;exe=exe.replace(/^\/(?:usr\/)?bin\//,"");
+ if(exe==="cd")return true;
+ if(["diff","cmp","file","echo","printf","true","test","[","basename","dirname","sort","uniq","cut","tr","jq","nl","od","xxd","strings","tree"].includes(exe))return !(exe==="sort" && args.some(a=>/^-(?:o|-output)/.test(a)));
+ if(exe==="sed")return args.includes("-n") && !args.some(a=>/^-(?:i|-in-place)/.test(a) || /(?:^|[;}])\s*[wW]\s/.test(a) || /\/[wW]\s/.test(a));
+ if(exe==="find")return !args.some(a=>/^-(?:delete|exec|execdir|ok|okdir|fprint|fprint0|fprintf|fls)$/.test(a));
+ if(exe==="git"){let i=0;while(i<args.length && args[i].startsWith("-")){i+= (args[i]==="-C"||args[i]==="-c")?2:1;}
+  const sub=args[i];if(!GIT_READ.has(sub))return false;const more=args.slice(i+1);
+  if(sub==="branch"||sub==="tag"||sub==="remote")return more.every(a=>a.startsWith("-") && !/^-(?:d|D|m|M|-delete|-move|-set)/.test(a)) ;
+  if(sub==="config")return more.some(a=>/^--(?:get|list|get-all|get-regexp)$|^-l$/.test(a));
+  return !more.some(a=>/^--output(?:=|$)/.test(a));}
+ return false;
+}
+export function shellCannotWrite(command) {
+ if(typeof command!=="string" || !command.trim() || command.length>16000 || /[\n\r]/.test(command))return false;
+ const parts=command.split(/\s*(?:&&|\|\||;)\s*/);
+ return parts.length<=12 && parts.every(segmentCannotWrite);
+}
 export function readShellPermission(event,bindings){
  if(event.action!=="shell" || event.source?.type!=="tool")return;
  const key=JSON.stringify([event.sessionID,event.source.messageID,event.source.id]);
@@ -58,10 +87,24 @@ export async function archiveViewedImage(result,input,context,root="/data/ai/pro
 }
 
 
-export const BUDGET = 6;
-// Read-only discovery lets the coordinator finish small tasks itself instead of delegating after a few reads.
-export const READ_BUDGET = 18;
-const DISCOVERY = new Set(["read","glob","grep","list","websearch","webfetch","watoom_specialist_list"]);
+// 2026-11-20 audit: 6/18 ran out after ordinary small tickets (one edit, one test, two status polls), forcing a
+// delegation the task did not need. Status polls, read-only shell and knowledge lookups no longer spend these.
+export const BUDGET = 10;
+export const READ_BUDGET = 30;
+const DISCOVERY = new Set(["read","glob","grep","list","websearch","webfetch","watoom_specialist_list","wait"]);
+// Skills, memory and reference cards hold the procedures. They cost nothing: never budgeted, never capped, and
+// usable at the handoff gate so the coordinator can write a good child package.
+const KNOWLEDGE = new Set(["skill","watoom_skill_search","watoom_memory_recall","watoom_memory_learn","watoom_memory_remember","wlk_symbol","wlk_search","wlk_command","wlk_status","wlk_get","wlk_feedback"]);
+export const knowledgeTool = name => KNOWLEDGE.has(name);
+// A worker status check or a read-only shell is discovery, not an execution attempt.
+export function discoveryCall(name,input) {
+ if(DISCOVERY.has(name) || KNOWLEDGE.has(name))return true;
+ if(["watoom_game_worker","watoom_rig_game_job","watoom_asset_capture","watoom_esp32"].includes(name))return input?.action==="status";
+ return name==="shell" && shellReadOnly(input?.command);
+}
+// A lookup that finds nothing is information. Only every MISS_CAP-th discovery miss counts as one error, so a
+// session that keeps searching blindly still reaches the critic, but two missing files no longer force it.
+export const MISS_CAP = 6;
 const spent = state => state.direct >= BUDGET || (state.reads || 0) >= READ_BUDGET;
 // Bounded recovery: rejected guard calls must not endlessly increment recovery
 // counters. guardRejections caps the child-rejection feedback into `errors`;
@@ -457,10 +500,10 @@ export async function unverifiedRequestClaims(text,directory) {
 export function assertWorkerProtocolAccess(name,input) {
  const path=input?.path || input?.filePath || input?.file_path || "";
  if((["write","edit","apply_patch","patch"].includes(name) && (workerProtocolPath(posix.normalize(path)) || workerProtocolPath(input?.patch || input?.patchText))) ||
-    (name==="shell" && workerProtocolPath(input?.command) && !shellReadOnly(input?.command)))
+    (name==="shell" && workerProtocolPath(input?.command) && !shellCannotWrite(input?.command)))
   throw Error("WORKER_PROTOCOL_READ_ONLY: native worker request/status files are runtime-owned. Never create, edit, replace or delete them through write/edit/shell. Use the native worker request/status tool; declarative capture-jobs inputs remain writable. Read existing protocol evidence with native read or a permitted read-only shell command. Corruption requires operator reconciliation, never invented IDs or another job.");
  if((["write","edit","apply_patch","patch"].includes(name) && (sourceRepoPath(posix.normalize(path)) || sourceRepoPath(input?.patch || input?.patchText))) ||
-    (name==="shell" && sourceRepoPath(input?.command) && !shellReadOnly(input?.command)))
+    (name==="shell" && sourceRepoPath(input?.command) && !shellCannotWrite(input?.command)))
   throw Error("SOURCE_REPO_READ_ONLY: /data/github is mounted read-only for every repo under it; this is a hard mount property, not a permission to work around with another tool, a remount, or a privilege escalation attempt. It is here for reference/context only, and that stays true no matter what the owner answers below -- their reply can never grant a write here; only they, from outside this container, can actually apply anything. If something under it looks wrong (a real bug, a stale value), build the owner a COMPLETE runnable procedure, not just a description of the problem: every full absolute path under /data/github involved (never relative, never a bare filename), the exact current text and exactly what it becomes (a real diff, not a paraphrase), and every follow-up command needed to make it live -- the test to run and its exact invocation, the git add/commit/push, and if this project's own IaC applies it (an ansible-playbook command, a kubectl rollout/restart, a redeploy) the exact command line for that too, in order, so someone who does not already know this codebase could run it top to bottom. Do not stop at a prose report they might not see: call the native question tool with that complete procedure as its text so the owner sees it immediately in their own chat, the same way other questions already reach them there.");
 }
 export function validateWorkerRequestIdentity(request,filename) {
@@ -480,6 +523,69 @@ export function appGodotLaunch(command) {
  return Boolean(nested && nested[2]!==s && appGodotLaunch(nested[2]));
 }
 
+// T-0082 (2026-11-20): a model wrapped `godot --headless main.tscn` in a Python subprocess script it had just
+// written, so the shell text never named godot. Look through interpreters: inline -c/-e code, and the script
+// files they run (read from the same container the shell runs in), must not launch Godot either.
+// A call (subprocess/os/child_process) whose own arguments name godot, or an argv list that starts with godot.
+const GODOT_IN_CODE=/(?:subprocess\.\w+|Popen|os\.(?:system|exec\w*|spawn\w*|popen)|execFile(?:Sync)?|execSync|spawn(?:Sync)?|\bsystem)\s*\(\s*[^)]{0,200}?["'`\[\s,(](?:[^\s"'`]*\/)?godot(?:[0-9][0-9.]*)?(?:\.exe)?["'`\s,\]]/i;
+const GODOT_ARGV=/(?:\[|\(\s*\[)\s*(?:["'](?:[^"'\s]*\/)?godot(?:[0-9][0-9.]*)?(?:\.exe)?["']|\w*godot\w*)\s*,/i;
+const SPAWNS=/(?:subprocess\.\w+|Popen|os\.(?:system|exec\w*|spawn\w*|popen)|execFile(?:Sync)?|execSync|spawn(?:Sync)?|child_process)\s*\(/;
+export function codeLaunchesGodot(code,shell=false) {
+ const s=String(code || "");
+ if(shell)return s.split(/\n/).some(line=>!/^\s*#/.test(line) && appGodotLaunch(line));
+ return GODOT_IN_CODE.test(s) || (GODOT_ARGV.test(s) && SPAWNS.test(s));
+}
+export function indirectGodotLaunch(command,workdir,read=p=>readFileSync(p,"utf8")) {
+ const s=String(command || "");
+ const interp=String.raw`(?:[^\s;&|]*\/)?(?:python[0-9.]*|node|bash|sh|zsh|perl|ruby|deno|bun)`;
+ const inline=new RegExp(String.raw`(?:^|[;&|\s(])`+interp+String.raw`\s+(?:-[A-Za-z]*\s+)*-(?:c|e)\s+("[\s\S]*?"|'[\s\S]*?'|\S+)`,"g");
+ for(const m of s.matchAll(inline)){const code=m[1].replace(/^["']|["']$/g,"").replace(/\\n/g,"\n");if(codeLaunchesGodot(code,/(?:^|\/)(?:ba|z)?sh\s/.test(m[0].trim()+" ")))return true;}
+ let dir=workdir || "/workspace";
+ const cd=/^\s*cd\s+("[^"]+"|'[^']+'|[^\s;&|]+)\s*&&/.exec(s);
+ if(cd)dir=posix.resolve(dir,cd[1].replace(/^["']|["']$/g,""));
+ const run=new RegExp(String.raw`(?:^|[;&|\s(])`+interp+String.raw`\s+(?:-[A-Za-z]+\s+)*("[^"]+"|'[^']+'|[^\s;&|<>]+)`,"g");
+ const direct=/(?:^|[;&|]\s*|&&\s*)((?:\.{0,2}\/)[^\s;&|<>]+\.(?:py|sh|js|mjs|cjs|pl|rb))(?:\s|$)/g;
+ const targets=[...s.matchAll(run)].map(m=>m[1]).concat([...s.matchAll(direct)].map(m=>m[1]));
+ for(const raw of targets) {
+  const file=raw.replace(/^["']|["']$/g,"");
+  if(file.startsWith("-") || !/\.(?:py|sh|bash|js|mjs|cjs|pl|rb)$/.test(file))continue;
+  let code;try{code=read(posix.resolve(dir,file));}catch{continue;}
+  if(codeLaunchesGodot(String(code).slice(0,262144),/\.(?:sh|bash)$/.test(file) || /^#!.*\b(?:ba|z)?sh\b/.test(String(code))))return true;
+ }
+ return false;
+}
+
+// 2026-11-20 audit: models skipped the watoom-tickets skill and wrote board-style files (id "T-0109", no schema); ingest
+// rejected them two minutes later in a .status.json nobody read. Validate the request file at write time instead.
+const TICKET_EXAMPLE='{"schema":1,"id":"t0109-note-1","action":"note","ticket":"T-0109","model":"<your model>","text":"..."}';
+// 2026-11-20: models called skill with a skill's reference file ("watoom-worker-contracts/references/game-worker.md"),
+// got "Unable to load skill" and retried. A reference is a file the skill lists under <skill_files>: name the read.
+export function assertSkillId(name,input) {
+ if(name!=="skill")return;
+ const id=String(input?.id ?? input?.name ?? "");
+ if(!id.includes("/"))return;
+ const file=id.replace(/^\/?(?:config\/skills\/)?/,"");
+ throw Error("SKILL_REFERENCE_IS_A_FILE: skill loads only a skill name (here: "+file.split("/")[0]+"). A skill's reference is a file: call read with path /config/skills/"+file+" (the skill's <skill_files> list gives every exact path).");
+}
+
+export function assertTicketRequest(name,input) {
+ if(name!=="write")return;
+ const m=/\/\.opencode\/tickets\/([^/]+)\.json$/.exec(String(input?.path || input?.filePath || ""));
+ if(!m || m[1].endsWith(".status") || m[1]==="OPEN-TICKETS")return;
+ let v=null;try{v=JSON.parse(String(input?.content ?? ""));}catch{}
+ const problems=[];
+ if(!/^[a-z0-9][a-z0-9-]{0,63}$/.test(m[1]))problems.push("file name must be a new lower-case request id like t0109-note-1 (never the ticket number)");
+ if(!v || typeof v!=="object")problems.push("content must be one JSON object");
+ else {
+  if(v.schema!==1)problems.push('"schema":1 is required');
+  if(v.id!==m[1])problems.push('"id" must equal the file name ('+m[1]+')');
+  if(v.action!==undefined && !["status","note","change_request","move"].includes(v.action))problems.push('"action" is status, note, change_request or move (omit it to create a ticket)');
+  if(v.action===undefined && !v.title)problems.push('a create request needs "title" (to update an existing ticket use "action":"note" or "status" with "ticket":"T-NNNN")');
+  if(v.action && !/^T-\d{1,6}$/.test(String(v.ticket || "")))problems.push('"ticket":"T-NNNN" names the ticket to update');
+ }
+ if(problems.length)throw Error("TICKET_REQUEST_INVALID: "+problems.join("; ")+". A ticket request is one new file per action, e.g. "+TICKET_EXAMPLE+" (status: \"action\":\"status\",\"status\":\"doing|blocked|done\",\"note\":\"...\"). Full format: skill watoom-tickets.");
+}
+
 export function godotInspectOnly(command) {
  // Agents habitually write "cd <project> && godot ... 2>&1 | head -30". Those wrappers do not
  // change what Godot executes, so peel them before applying the strict single-command check.
@@ -497,6 +603,8 @@ export function godotInspectOnly(command) {
 
 export function assertAllowed(name, input, state, coordinator, existingChildAgent) {
   assertWorkerProtocolAccess(name,input);
+  assertTicketRequest(name,input);
+  assertSkillId(name,input);
   if(name==="shell" && state.pendingExternal && /(?:^|[;&|\s])sleep\s+\d/.test(input?.command || ""))throw Error("EXTERNAL_JOB_PENDING: do independent work or return a concise pending-job handoff. Never occupy the session with sleep/status loops; completion is delivered automatically.");
   if(name==="question" && state.simsConversationalIntake)
     throw new Error("SIMS_CONVERSATIONAL_INTAKE: ask missing questions in ordinary chat and end the turn; the next user chat reply continues the same job. Do not call a blocking question tool.");
@@ -511,6 +619,8 @@ export function assertAllowed(name, input, state, coordinator, existingChildAgen
     throw new Error("EXTERNAL_GODOT_REGRESSION_REQUIRED: full test_runner.gd must run through the bounded external operator game_validation.py worker, never the 2GiB app shell. Save a checkpoint and request the operator receipt; do not repeat an OOM or claim partial tests as PASS.");
   if(name==="shell" && appGodotLaunch(input?.command) && !godotInspectOnly(input?.command))
     throw Error("EXTERNAL_GODOT_WORKER_REQUIRED: every Godot scene, capture and executable script launch must use the bounded external worker. --headless, xvfb-run, timeout and calling it a syntax/load check do not make a scene launch safe in the2GiB app. Only standalone --version/--help or --check-only with --script/-s and no scene/import/project execution are allowed, as ONE command (optional leading cd <dir> &&, trailing 2>&1 or | head/tail -n N; no other chains, pipes or redirects), e.g. godot --headless --check-only -s scripts/main.gd with the shell workdir set to the project. Use the installed native worker operation; unsupported captures require operator worker enrollment, never local rendering.");
+  if(name==="shell" && indirectGodotLaunch(input?.command,input?.workdir))
+    throw Error("EXTERNAL_GODOT_WORKER_REQUIRED: this command runs a script (or inline -c/-e code) that launches Godot. Wrapping Godot in Python, Node or shell does not make it safe in the 2GiB app; scene, test and capture runs go through the native watoom_game_worker (load skill watoom-worker-contracts for its operations and manifest format). Do not rename the binary or hide the launch.");
   if (name === "subagent") {
     if(!coordinator && input.model!==undefined)throw new Error("CRITIC_MODEL_INHERIT: child critics must inherit the selected model; omit model.");
     if(!coordinator && (!criticCallers.has(state.callingAgent) || input.agent!=="watoom-critic"))
@@ -548,6 +658,8 @@ export function assertAllowed(name, input, state, coordinator, existingChildAgen
   if(state.isChild && ["write","edit"].includes(name) && /(?:^|\/)\.opencode\/work\//.test(input?.path || "") &&
      (!(input.path || "").includes("/children/"+state.sessionID+"/") || (input.path || "").split("/").includes("..")))
     throw new Error("COORDINATOR_CHECKPOINT_OWNER: return child findings or write only your children/<sessionID>/ area; coordinator owns canonical work state.");
+  // Knowledge lookups are free: never budgeted, never capped, and still usable at the handoff gate.
+  if(knowledgeTool(name) && ["handoff",undefined].includes(gate(state,coordinator)))return;
   if (exempt.has(name) && !gate(state,coordinator)) return;
   if (state.pendingVisual && name === "write" && reviewReceipt(input,state)) return;
   if (state.pendingVisual) {
@@ -569,8 +681,15 @@ export function assertAllowed(name, input, state, coordinator, existingChildAgen
     throw new Error(state.criticConsulted ? "RETURN_TO_COORDINATOR: repair failed after critic; return BLOCKED and exact evidence, no more work calls." : "CHILD_ESCALATION_REQUIRED: two failed executions; consult ONLY watoom-critic before another work call.");
   if (coordinator && (state.child || state.errors >= 2 || spent(state))) {
     if (name === "write" && checkpoint(input) && !state.gateCheckpointWritten) return;
-    throw new Error("COORDINATOR_HANDOFF_REQUIRED: write at most one checkpoint then call the native subagent tool; use write with verified complete checkpoint content, not an exact-string edit of stale text. Passive-tool retries do not bypass this boundary.");
+    throw new Error(handoffMessage(state));
   }
+}
+// Every gate message names the one call that clears it, so a model never has to guess the exit.
+export function handoffMessage(state) {
+  if(state.child)return "COORDINATOR_HANDOFF_REQUIRED: child "+state.child+" is unfinished. Call subagent with sessionID "+state.child+" and its recorded agent to continue it; no other work tool runs until it completes.";
+  if(state.errors>=2)return "COORDINATOR_CRITIC_REQUIRED: two failed attempts. Call subagent with agent watoom-critic, background:false, giving the failed commands, their exact errors and your question; no other work tool runs until the critic answers.";
+  const next=state.gateCheckpointWritten ? "The checkpoint is written: call subagent now" : "Write ONE checkpoint with write (complete content, never edit) to <project>/.opencode/work/<task>/progress.md, then call subagent";
+  return "COORDINATOR_HANDOFF_REQUIRED: this package used its "+BUDGET+" execution or "+READ_BUDGET+" discovery calls. If the task is already complete, reply with the final result now without a tool call. Otherwise: "+next+" with ONE implementer (see the role guide) and a self-contained prompt: goal, paths, what is done, what is left. Skill, memory and wlk_* lookups stay available and free.";
 }
 // Persistent, bounded SearXNG query deduplication. Repeated identical searches
 // within the same session are flagged after the first occurrence so the model
@@ -644,10 +763,27 @@ export function rearmAfterPrompt(state) {
  return true;
 }
 export function recordToolFailure(state,agent,name,input,message) {
- const discovery=readOnlyRoles.has(agent) && (["read","glob","grep","list","websearch","webfetch"].includes(name) || (name==="shell" && shellReadOnly(input?.command)));
+ // 2026-11-20 audit: a coordinator's missing file or empty grep used to count as a failed repair, so two lookups
+ // forced the critic gate, which then forbade the investigator the prompt told it to use for lookups.
+ const discovery=discoveryCall(name,input);
  state.lastExecutionError={tool:name,message,kind:discovery ? "discovery" : "execution"};
+ if(discovery) {
+  state.misses=(state.misses || 0)+1;
+  if(state.misses % MISS_CAP!==0)return;
+ }
  state.errors=Math.min((state.errors || 0)+1,GUARD_REJECTION_CAP);
  if(agent!=="watoom-workflow" && state.criticConsulted)state.errors=Math.min(Math.max(2,state.errors),GUARD_REJECTION_CAP);
+}
+// Rejections that only restate the current gate (call the critic, hand off, continue the child, review the image)
+// are not a failed approach: escalating them made a model that hit the handoff gate twice jump to the critic gate.
+// Rejections that refuse an approach (local Godot/Blender, writing read-only source, protocol files) still count.
+const GATE_REJECTIONS=/^(?:COORDINATOR_HANDOFF_REQUIRED|COORDINATOR_CRITIC_REQUIRED|COORDINATOR_CHILD_PENDING|COORDINATOR_SERIAL|CHILD_SESSION_REQUIRED|CHILD_AGENT_MISMATCH|UNKNOWN_CHILD_AGENT|VISION_REVIEW_REQUIRED|TICKET_REQUEST_INVALID|SKILL_REFERENCE_IS_A_FILE|SEARCH_DEDUP|CRITIC_ESCALATION_BOUND|NATIVE_CHILD_BLOCKED|VISION_CHILD_BLOCKED):/;
+export const gateRejection = message => GATE_REJECTIONS.test(String(message || ""));
+// After this many gate rejections in one package the request itself is constrained (tool_choice "required").
+export const GATE_REJECTION_CAP = 3;
+export function recordCoordinatorRejection(state,message) {
+ if(gateRejection(message)){state.gateRejections=(state.gateRejections || 0)+1;return;}
+ state.errors=Math.min((state.errors || 0)+1,GUARD_REJECTION_CAP);
 }
 export function findingsHandoff(state) {
  // Reporting evidence grants no execution authority and never satisfies visual
@@ -1014,16 +1150,18 @@ export async function install(ctx) {
             // A newly queued extra image is ordering, not a failed attempt.
             if(String(error.message).startsWith("VISION_REVIEW_QUEUED:"))return String(error.message);
             state.guardRejections=Math.min((state.guardRejections||0)+1,GUARD_REJECTION_CAP);
-            if(state.pendingVisual && (entry.name==="write" || entry.name===VISUAL_RECEIPT_TOOL) && !reviewReceipt(entry.name==="write"?input:receiptAsWrite(input,state),state))
-              state.receiptFailures=(state.receiptFailures||0)+1;
+            const badReceipt=!!state.pendingVisual && (entry.name==="write" || entry.name===VISUAL_RECEIPT_TOOL) && !reviewReceipt(entry.name==="write"?input:receiptAsWrite(input,state),state);
+            if(badReceipt)state.receiptFailures=(state.receiptFailures||0)+1;
             state.lastGuardError=String(error.message);
-            if(coordinator && state.guardRejections>=2)state.errors=Math.min(Math.max(2,state.errors),GUARD_REJECTION_CAP);
+            // An invalid visual receipt is a failed attempt, not a gate restatement.
+            if(coordinator)recordCoordinatorRejection(state,badReceipt ? "RECEIPT_INVALID: "+error.message : error.message);
             return String(error.message);
           }
           // Nested Code Mode calls share an outer call ID. Count every actual
           // executor invocation, including identical calls, so loops cannot hide.
           state.calls=[...state.calls,identity+"/"+entry.name].slice(-64);
-          if(coordinator && !exempt.has(entry.name) && !checkpoint(input)) DISCOVERY.has(entry.name) ? state.reads=(state.reads || 0)+1 : state.direct++;
+          if(knowledgeTool(entry.name))state.knowledgeUsed=true;
+          else if(coordinator && !exempt.has(entry.name) && !checkpoint(input)) discoveryCall(entry.name,input) ? state.reads=(state.reads || 0)+1 : state.direct++;
           if(state.pendingVisual && entry.name==="read") state.pendingVisual.additionalReads++;
         });
         if(denied)throw new Error(denied);
@@ -1195,7 +1333,7 @@ export async function install(ctx) {
       }
       if(!error && output?.sessionID && output.status==="completed") {
         const retainedErrors=state.childReceiptRecovery?.sessionID===output.sessionID && event.input.agent!=="watoom-critic" ? state.errors : 0;
-        state.direct=0;state.reads=0;state.errors=retainedErrors;state.child=null;state.gateCheckpointWritten=false;state.guardRejections=0;state.childReviewAttempts=0;state.childReviewBlocked=false;state.lastChildReviewError=null;
+        state.direct=0;state.reads=0;state.misses=0;state.gateRejections=0;state.errors=retainedErrors;state.child=null;state.gateCheckpointWritten=false;state.guardRejections=0;state.childReviewAttempts=0;state.childReviewBlocked=false;state.lastChildReviewError=null;
         const completedChild=await ctx.storage.get("session/"+output.sessionID);
         if(event.input.agent!=="watoom-critic" && (completedChild?.guardRejections || 0)-(state.childGuardBaseline || 0)>=2)state.errors=Math.min(Math.max(2,state.errors),GUARD_REJECTION_CAP);
         if(event.input.agent==="watoom-critic"){state.criticConsulted=true;state.criticEscalations=Math.min((state.criticEscalations||0)+1,CRITIC_ESCALATION_CAP);}
@@ -1288,7 +1426,7 @@ export async function install(ctx) {
       // not inferred from a generic image elsewhere in session context.
       if(readOnlyRoles.has(event.agent)){delete event.tools.write;delete event.tools.edit;}
       if(readOnlyRoles.has(event.agent))event.system.push({type:"text",text:"Bounded investigation: read known receipt/artifact paths first. Never recursively search all /data/ai or helper-scripts; inspect a known component directory and narrow paths/patterns after a timeout. The application container does not expose host /etc/systemd/system; absence here is not evidence a host service is absent. Report the missing host evidence to the coordinator. Native no-match results and documented grep/rg exit 1 with no error output are discovery outcomes, not failed repairs. When tools stop, return verified findings, evidence paths, exact errors and missing evidence; a failed optional discovery must not erase an already supported diagnosis. Never claim PASS or invent unavailable evidence."});
-      else event.system.push({type:"text",text:"Unlike read-only roles, a grep/rg search that legitimately finds nothing still counts as a tool failure against your error budget here -- it does not get the discovery exemption. When you need to find out whether something exists (a symbol, a file, a string) rather than confirm something you already expect to find, delegate that lookup to watoom-investigator instead of running grep/rg yourself. Only search directly for things you already expect to find, such as confirming your own edit landed."});
+      else event.system.push({type:"text",text:"A lookup that finds nothing (missing file, empty glob, grep/rg with no match, read-only shell exit 1) is information, not a failed repair: narrow the path or pattern and continue. Every "+MISS_CAP+"th miss in one package counts as one failure, so stop and rethink after repeated blind searches. Failed builds, tests, edits and worker requests count normally."});
 
       if(ctx.options?.rigAsyncStage===true && workerRoles.has(event.agent))event.system.push({type:"text",text:"RIG BACKGROUND JOBS (stage): prefer native watoom_rig_game_job for fixed Godot jobs and watoom_asset_capture for Blender captures. They return a stable queued identity immediately. Record dependencies and continue independent work; wait only when the next task actually depends on the receipt. Do not poll rapidly or submit duplicate requests. A local operator pause retains the queue. Check inputs_frozen before modifying the requested source; never accept stale receipts or unreviewed pixels."});
       const reason=gate(state,coordinator);
@@ -1296,6 +1434,8 @@ export async function install(ctx) {
         let allowed=reason==="vision" ? new Set(["subagent","read","write",VISUAL_RECEIPT_TOOL]) : new Set(["subagent"]);
         if(reason!=="vision" && (!state.gateCheckpointWritten || state.pendingVisual))allowed.add("write");
         if(reason==="vision" && state.pendingVisual.additionalReads>=2)allowed.delete("read");
+        // Free knowledge lookups stay at the handoff gate so the child package can name the right skill/procedure.
+        if(reason==="handoff")for(const name of KNOWLEDGE)allowed.add(name);
         for(const name of Object.keys(event.tools))if(!allowed.has(name))delete event.tools[name];
       }
       if(!coordinator && (state.guardRejections>=2 || state.errors>=2)) {
@@ -1334,9 +1474,14 @@ export async function install(ctx) {
           notes.push("HARD STOP: existing child repeatedly returned simulated tool calls. Return BLOCKED with child ID; do not print more tool-call XML or create replacement children.");
         }
       }
+      // 2026-11-20 audit: 55 COORDINATOR_CHECKPOINT_OWNER rejections in two weeks were children guessing
+      // children/findings.md; the rule needs children/<their own sessionID>/, which a child cannot otherwise know.
+      if(state.isChild && !readOnlyRoles.has(event.agent))notes.push("Your writable work area is <project>/.opencode/work/<task>/children/"+event.sessionID+"/ (use exactly this session ID). The coordinator owns every other file under .opencode/work, including progress.md and checkpoint files: never write or edit them; put your findings in your final reply.");
       if(!coordinator && criticCallers.has(event.agent))notes.push("Child delegation accepts ONLY agent watoom-critic, background:false, no model override, once per package. Never call explore, general, builder, investigator or workflow. After critic, further failure returns BLOCKED to parent.");
       if(coordinator && state.lastHandoff && !state.child)notes.push("Each new package starts a FRESH child; a completed child ("+state.lastHandoff.sessionID+") is not resumed, because resuming replays its whole history into context. Put what the child needs in the prompt (goal, paths, receipts) or in a .opencode/work checkpoint it can read. Your parent sessionID "+event.sessionID+" is NEVER a subagent resume target.");
-      if(coordinator)notes.push("Runtime coordinator guard: after six direct execution calls or eighteen read-only discovery calls delegate a bounded package via native subagent. Only a real completed child resets the budget; compaction/restart/user steering does not. Two execution failures require a critic. No parallel or duplicate child.");
+      if(coordinator)notes.push("Runtime coordinator guard: "+BUDGET+" direct execution calls and "+READ_BUDGET+" read-only discovery calls (reads, searches, read-only shell, worker status, wait) per package; then delegate a bounded package via native subagent. Skills, watoom_skill_search, watoom_memory_* and wlk_* cards are free and never count. Only a real completed child resets the budget; compaction/restart/user steering does not. Two failed execution attempts require a critic. No parallel or duplicate child.");
+      if((coordinator || workerRoles.has(event.agent)) && !state.knowledgeUsed && !reason && (event.tools.watoom_skill_search || event.tools.skill || event.tools.watoom_memory_recall))
+        notes.push("KNOWLEDGE FIRST (free, never counted): before your first change, call watoom_skill_search with the task intent and load the best match with skill, call watoom_memory_recall on the topic, and use wlk_search/wlk_get for project reference cards. Skills document the exact tool, manifest and worker formats; guessing them is the commonest cause of failed jobs.");
       if(coordinator && state.child) {
         const childState=await ctx.storage.get("session/"+state.child);
         if(childState?.pendingVisual) {

@@ -12,10 +12,10 @@ Read [Operations](operations.md), [installation and configuration](llm-project.m
 
 | Area | Source files | Reference |
 |---|---:|---|
-| `scripts/` | 77 | [Operator scripts](server-scripts.md) |
+| `scripts/` | 78 | [Operator scripts](server-scripts.md) |
 | `ansible/playbooks/` | 92 | [Playbooks](server-playbooks.md) |
-| `ansible/roles/` | 1309 | [Roles and deployed payloads](server-roles.md) |
-| `tools/` | 1445 | [Tools and checks](server-tools.md) |
+| `ansible/roles/` | 1311 | [Roles and deployed payloads](server-roles.md) |
+| `tools/` | 1449 | [Tools and checks](server-tools.md) |
 
 The [machine-readable inventory](/guide/assets/server-catalogue.json) records every tracked file in these four areas, including non-executable templates, fixtures, bundled dependency files, and private-source placeholders. It contains paths, file hashes and descriptions, not private instruction bodies or secret values. Untracked code candidates are included for completeness; inclusion does not claim they are committed. Runtime helper copies and external application source are outside this catalogue.
 

@@ -17,10 +17,11 @@ game project's worker-requests for two distinct failure classes, and is careful 
      itself makes), then write a sidecar `<request>.nudged` marker so it is never repeated for this status.
   2. UNDISPATCHED    - a request.json exists with no matching .status.json at all after --undispatched-after
      seconds. watoom-game-worker.timer polls every 30s when idle, so this means the worker never even picked
-     the request up. REPORT ONLY: this is a genuine pipeline hang (bridge/timer down, or a bug), not something
-     a resume prompt can fix, so it is only logged for a human/operator to look at.
+     the request up (bridge/timer down, or a bug such as T-0133's agent allow-list drift). It is reported for
+     the operator AND the coordinator gets exactly one resume prompt saying the job never ran, so it stops
+     waiting on QUEUED forever; a `<request>.undispatched` marker keeps that prompt one-shot.
 
-Read-only except for: (a) writing the `.nudged` marker (idempotency bookkeeping, not project data) and
+Read-only except for: (a) writing the `.nudged`/`.undispatched` markers (idempotency bookkeeping, not project data) and
 (b) the one resume-prompt HTTP call, which is the exact same safe, idempotent action game_worker_bridge.py
 already performs on every terminal job -- this script only resends it when the first attempt apparently did
 not get through. It never writes receipts, never touches a model lease, never replays or duplicates a request.
@@ -77,7 +78,15 @@ def scan(stale_after, undispatched_after):
             if not status.is_file():
                 age = now - req.stat().st_mtime
                 if age > undispatched_after:
-                    undispatched.append({'project': str(project), 'request': str(req), 'age_sec': round(age)})
+                    try:
+                        v = json.loads(req.read_text())
+                    except (OSError, ValueError):
+                        v = {}
+                    marker = d / (req.stem + '.undispatched')
+                    undispatched.append({'project': str(project), 'request': str(req), 'age_sec': round(age),
+                                         'session_id': v.get('session_id'), 'job': v.get('job'),
+                                         'operation': v.get('operation'), 'marker': str(marker),
+                                         'prompted': marker.exists()})
                 continue
             try:
                 doc = json.loads(status.read_text())
@@ -123,6 +132,16 @@ def nudge(m, item):
     m.request('/api/session/' + coordinator + '/prompt', {'text': text, 'resume': True})
 
 
+def nudge_undispatched(m, item):
+    coordinator = coordinator_of(m, item['session_id'])
+    text = ('The game worker never picked up ' + str(item['operation']) + ' job ' + str(item['job']) +
+            ': no status after ' + str(item['age_sec']) + 's (request ' + item['request'] + '). It did not run '
+            'and will not run, so stop waiting on QUEUED. This is a one-time notice from the session watchdog; the '
+            'operator has been told. If the result is still needed, submit it once under a NEW job name; if that '
+            'also stays QUEUED, record the blocker and continue with other work.')
+    m.request('/api/session/' + coordinator + '/prompt', {'text': text, 'resume': True})
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--stale-after', type=int, default=STALE_AFTER_DEFAULT)
@@ -133,12 +152,14 @@ def main():
 
     nudges, undispatched = scan(args.stale_after, args.undispatched_after)
     acted, failed = [], []
-    if nudges and not args.dry_run:
+    pending = [i for i in undispatched if i['session_id'] and not i['prompted']]
+    if (nudges or pending) and not args.dry_run:
         m = Maintenance('watoom-code', 'watoom-code', pathlib.Path('/tmp'), True, True)
-        for item in nudges:
+        for send, item in [(nudge, i) for i in nudges] + [(nudge_undispatched, i) for i in pending]:
             try:
-                nudge(m, item)
+                send(m, item)
                 pathlib.Path(item['marker']).touch()
+                item['prompted'] = True
                 acted.append({'job': item['job'], 'session_id': item['session_id']})
             except Exception as e:  # noqa: BLE001
                 failed.append({'job': item['job'], 'error': str(e)[:300]})

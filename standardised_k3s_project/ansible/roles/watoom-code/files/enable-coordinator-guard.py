@@ -35,6 +35,14 @@ if found:
 else:
     updated.append(entry)
 data["plugins"] = updated
+# The self-learning plugin imports gameSourceFingerprint from the guard package. Keep that import on the guard
+# selected here, so a pruned old guard version cannot stop self-learning loading (2026-11-20). Policy
+# `environment` hashes are learned-skill identity and are deliberately left unchanged.
+for value in updated:
+    if isinstance(value, dict) and "/self-learning-" in value.get("package", ""):
+        opts = value.get("options", {})
+        if isinstance(opts.get("workerGuardPackage"), str) and re.fullmatch(pattern, opts["workerGuardPackage"]):
+            opts["workerGuardPackage"] = target
 # Qualified by paired opposite-colour image probes; backend uses a read-only projector.
 models = data.setdefault("providers", {}).setdefault("watoom", {}).setdefault("models", {})
 model = models.setdefault(

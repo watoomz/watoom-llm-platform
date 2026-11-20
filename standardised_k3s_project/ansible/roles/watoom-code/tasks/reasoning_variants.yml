@@ -7,3 +7,10 @@
     executable: /usr/bin/python3
   register: watoom_code_reasoning_variants_result
   changed_when: "'CHANGED' == watoom_code_reasoning_variants_result.stdout | trim"
+- name: Record the reasoning variant spec for the Model Manager broker, which re-applies it after any registration
+  ansible.builtin.copy:
+    dest: "{{ watoom_code_root }}/config/reasoning-variants.json"
+    content: "{{ {'models': watoom_code_reasoning_models, 'variants': watoom_code_reasoning_variants} | to_json }}\n"
+    owner: root
+    group: root
+    mode: "0644"

@@ -15,7 +15,7 @@ test("explicit writes survive separate process; native milestone/delegation/comp
   }})
   const run=async(mode:string,db:string)=>{
     const child=Bun.spawn([process.execPath,path.join(import.meta.dirname,"fixture/watoom-memory-process.ts"),path.join(root,db),mode,root],
-      {env:{...process.env,AGENTMEMORY_URL:server.url.origin,AGENTMEMORY_SECRET:"",WATOOM_MEMORY_TEST_PROJECT:db,GOMAXPROCS:"2"},stdout:"pipe",stderr:"pipe"})
+      {env:{...process.env,WATOOM_MEMORY_LIFECYCLE:"true",AGENTMEMORY_URL:server.url.origin,AGENTMEMORY_SECRET:"",WATOOM_MEMORY_TEST_PROJECT:db,GOMAXPROCS:"2"},stdout:"pipe",stderr:"pipe"})
     const [rc,out,err]=await Promise.all([child.exited,new Response(child.stdout).text(),new Response(child.stderr).text()])
     if(rc)throw Error(err.slice(-4000))
     return JSON.parse(out.trim().split("\n").at(-1)!)

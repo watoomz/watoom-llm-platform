@@ -1,0 +1,10 @@
+---
+- name: Keep engine caches and per-job project copies out of WatooM-Code searches
+  ansible.builtin.copy:
+    src: project-group.rgignore
+    dest: '{{ watoom_code_project_groups_root }}/{{ item }}/.rgignore'
+    owner: root
+    group: root
+    mode: '0644'
+    setype: container_file_t
+  loop: "{{ watoom_code_project_groups }}"

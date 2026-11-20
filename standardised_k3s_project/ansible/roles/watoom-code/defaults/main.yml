@@ -23,14 +23,25 @@ watoom_code_reasoning_models:
   - swift-qwen38-coder
   - qwen38-uncensored-mtp
   - mm-73306b413506f44b
+  # nerkyor Qwen3.8-27B-Coder390 (Lynn); template checked 2026-11-20: xhigh|medium|low, enable_thinking. Its server runs
+  # --reasoning off, so the thinking variants must send enable_thinking:true (verified: without it no thinking is produced).
+  - mm-2befb4fc7156646b
+  # Unsloth Qwen3.8-27B UD and TurboFCFusion (Cold Fusion): official Qwen3.8 templates, checked in the GGUF 2026-11-20.
+  - mm-6f1168c199628118
+  - mm-aa6b02d9fb75e702
+  # Qwen3.8 OpencodeLoRA on the Unsloth base; served with the owner's qwen38 template (Model Manager chat_template, 2026-11-21).
+  - mm-88adc68f43bc4ee5
+# Sampling per mode is Qwen's official Qwen3.8 recommendation (model cards, checked 2026-11-20): thinking
+# temperature 1.0 / top_p 0.95 / top_k 20 / min_p 0 / presence 0 / repetition 1.0; non-thinking 0.7 / 0.8 / 20 / 0 / 1.5 / 1.0.
+# A server holds one sampler set, so each variant sends its own and the mode and sampling always match.
 # preserve_thinking:false (owner 2026-11-06) keeps the model thinking each turn but
 # drops older turns' thinking from context instead of re-expanding the whole trace,
 # so long sessions stay lean. enable_thinking:false ('off') disables thinking entirely.
 watoom_code_reasoning_variants:
-  - {id: xhigh, body: {reasoning_effort: xhigh, chat_template_kwargs: {preserve_thinking: false}}}
-  - {id: medium, body: {reasoning_effort: medium, chat_template_kwargs: {preserve_thinking: false}}}
-  - {id: low, body: {reasoning_effort: low, chat_template_kwargs: {preserve_thinking: false}}}
-  - {id: "off", body: {chat_template_kwargs: {enable_thinking: false}}}
+  - {id: xhigh, body: {reasoning_effort: xhigh, temperature: 1.0, top_p: 0.95, top_k: 20, min_p: 0.0, presence_penalty: 0.0, repeat_penalty: 1.0, chat_template_kwargs: {enable_thinking: true, preserve_thinking: false}}}
+  - {id: medium, body: {reasoning_effort: medium, temperature: 1.0, top_p: 0.95, top_k: 20, min_p: 0.0, presence_penalty: 0.0, repeat_penalty: 1.0, chat_template_kwargs: {enable_thinking: true, preserve_thinking: false}}}
+  - {id: low, body: {reasoning_effort: low, temperature: 1.0, top_p: 0.95, top_k: 20, min_p: 0.0, presence_penalty: 0.0, repeat_penalty: 1.0, chat_template_kwargs: {enable_thinking: true, preserve_thinking: false}}}
+  - {id: "off", body: {temperature: 0.7, top_p: 0.8, top_k: 20, min_p: 0.0, presence_penalty: 1.5, repeat_penalty: 1.0, chat_template_kwargs: {enable_thinking: false}}}
 watoom_code_router_url: http://llm-router.llama-cpp.svc.cluster.local:8000/v1
 watoom_code_apply: true
 watoom_code_rollout_timeout: 180s

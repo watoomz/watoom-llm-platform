@@ -5,6 +5,7 @@ import path from "node:path"
 import { tmpdir } from "node:os"
 import { Learning } from "../src/watoom/learning"
 import { AutoRecall } from "../src/watoom/auto-recall"
+import { toolRecords } from "../src/watoom/native-memory"
 import { Message } from "@opencode/ai/effect"
 
 const input: Learning.Input = {
@@ -32,6 +33,35 @@ describe("verified learning", () => {
     expect(Learning.verify({ ...input, evidence: [{ tool: "shell", contains: "status" }] }, [record("c2", "systemctl status x", 0)])).toContain("ran one of the listed commands")
     expect(Learning.verify(input, [])).toContain("LEARN_EVIDENCE_NOT_FOUND")
   })
+  test("recall keeps only knowledge that shares a distinctive query word; a project-only query is an overview", () => {
+    const k = (job: string, title: string, solution: string, kind: Learning.Knowledge["kind"] = "decision") =>
+      ({ id: job, job, seq: 1, kind, status: "verified", title, environment: "", problem: "", solution, commands: [], rollback: "", validatedAt: "2026-11-21", sourceSession: "ses_a" }) satisfies Learning.Knowledge
+    const worker = k("learn:compatibility:worker", "Godot game worker: from_project flag works", "Prefer from_project:true")
+    const elite = k("learn:decision:elite", "Elite chance-rolls use a dedicated rng stream", "elite_rng seeded from the injected rng")
+    const repo = "/data/ai/projects/games/idle-rpg-strip"
+    expect(Learning.relevant([worker, elite], "idle RPG strip milestone achievement toast save", repo)).toEqual([])
+    expect(Learning.relevant([worker, elite], "elite monster spawn rng", repo)).toEqual([elite])
+    expect(Learning.relevant([worker, elite], "idle-rpg-strip", repo)).toEqual([worker, elite])
+    const failure = { ...k("learn:known-failure:x", "Ticket action done is invalid", "use action:status", "known-failure"), problem: "tickets request rejected" }
+    const line = Learning.render([failure], 4000)[0]
+    expect(line).toContain("Symptom: tickets request rejected Fix: use action:status")
+    expect(line).not.toContain("ses_a")
+  })
+  test("a missing citation names the calls the model could cite instead", () => {
+    const miss = Learning.verify(input, [record("c1", "journalctl -u game-worker -n 20", 0)])
+    expect(miss).toContain("LEARN_EVIDENCE_NOT_FOUND")
+    expect(miss).toContain("journalctl -u game-worker -n 20")
+    const none = Learning.verify({ ...input, evidence: [{ tool: "write", contains: "x" }] }, [record("c1", "ls", 0)])
+    expect(none).toContain("no write call in this session; cite one of: shell")
+  })
+  test("commands and evidence with quotes or backslashes match the call exactly as it was typed", () => {
+    const command = 'curl -s --max-time 15 -o /dev/null -w "HTTP %{http_code}\\n" -X PUT --data-binary "r15 memory verify" "http://host:18080/up/r15-verify.txt"'
+    const quoted = { ...input, commands: [command], evidence: [{ tool: "shell", contains: "r15-verify.txt" }] }
+    const ok = Learning.verify(quoted, [record("c1", command, 0)])
+    expect(typeof ok === "object" && ok.status).toBe("verified")
+    expect(Learning.verify({ ...quoted, evidence: [{ tool: "shell", contains: '-w "HTTP %{http_code}' }] }, [record("c1", command, 0)])).toMatchObject({ status: "verified" })
+    expect(Learning.verify(quoted, [record("c1", 'curl -s "http://host:18080/up/other.txt" # r15-verify.txt', 0)])).toContain("ran one of the listed commands")
+  })
   test("the latest matching call is the evidence", () => {
     const value = Learning.verify(input, [record("old", "systemctl restart watoom-game-worker.timer", 0, "completed", 1), record("new", "systemctl restart watoom-game-worker.timer", 3, "completed", 2)])
     expect(value).toContain("LEARN_UNVERIFIED")
@@ -41,6 +71,18 @@ describe("verified learning", () => {
     expect(Learning.verify(failure, [record("c1", "systemctl restart watoom-game-worker.timer", 0)])).toContain("LEARN_FAILURE_EVIDENCE_REQUIRED")
     const diag = Learning.verify(failure, [record("c1", "systemctl restart watoom-game-worker.timer", 5)])
     expect(typeof diag === "object" && diag.status).toBe("diagnostic")
+  })
+  test("a worker job that ran and FAILED is failure evidence (T-0109)", () => {
+    const part = (id: string, metadata: unknown) => ({ type: "tool", id, name: "watoom_game_worker", time: { completed: 5 }, state: { status: "completed", input: { action: "status", operation: "godot-game", job: "verify-4" }, metadata } })
+    const row = { session_id: "ses_a", time_created: 1, data: JSON.stringify({ content: [part("w1", { status: "FAILED", worker_result: { status: "FAIL" } }), part("w2", { status: "COMPLETED", worker_result: { status: "PASS" } })] }) }
+    const [failedJob, passedJob] = toolRecords(row)
+    expect(failedJob.failed).toBe(true)
+    expect(passedJob.failed).toBeUndefined()
+    const failure = { ...input, kind: "known-failure" as const, commands: [], evidence: [{ tool: "watoom_game_worker", contains: "verify-4" }] }
+    const diag = Learning.verify(failure, [failedJob])
+    expect(typeof diag === "object" && diag.status).toBe("diagnostic")
+    expect(Learning.verify(failure, [passedJob])).toContain("LEARN_FAILURE_EVIDENCE_REQUIRED")
+    expect(Learning.verify({ ...input, commands: [], evidence: failure.evidence }, [failedJob])).toContain("LEARN_UNVERIFIED")
   })
   test("bounds, kinds and secrets are rejected", () => {
     expect(Learning.validate(input)).toBeUndefined()

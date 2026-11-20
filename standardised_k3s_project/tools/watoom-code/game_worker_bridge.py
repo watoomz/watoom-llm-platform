@@ -12,6 +12,7 @@ from contextlib import contextmanager
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from maintenance_guard import Maintenance
 from game_validation import atomic
+from asset_capture_contract import WORKER_AGENTS
 from lmb_provenance import ALGORITHM, receipt_report
 import datetime
 
@@ -221,7 +222,7 @@ def project_safe(path):
     )
 
 
-def read_request(path, project):
+def read_request(path, project, any_agent=False):
     try:
         fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
         with os.fdopen(fd, "r") as f:
@@ -233,7 +234,8 @@ def read_request(path, project):
             not isinstance(v, dict)
             or v.get("project") != str(project)
             or v.get("operation") not in OPERATIONS
-            or v.get("agent") not in ["watoom-workflow", "watoom-builder"]
+            or not isinstance(v.get("agent"), str)
+            or (not any_agent and v.get("agent") not in WORKER_AGENTS)
         ):
             return None
         if not all(
@@ -248,6 +250,22 @@ def read_request(path, project):
         return v
     except (OSError, ValueError, TypeError, KeyError):
         return None
+
+
+def refuse_disallowed_agent(v):
+    """True when v's agent may not submit worker jobs. Publishes FAILED once instead of dropping the request
+    silently, which left the session waiting on QUEUED forever (T-0133)."""
+    if v["agent"] in WORKER_AGENTS:
+        return False
+    if not (PRIVATE / (v["request_id"] + ".json")).exists():
+        publish(
+            v,
+            "FAILED",
+            reason="Agent %s may not submit worker jobs; ask the coordinator (watoom-workflow) to submit it" % v["agent"],
+            failure_stage="request",
+            failure_code="agent_not_allowed",
+        )
+    return True
 
 
 def cpu_client():
@@ -527,11 +545,13 @@ def main():
         for path in sorted(folder.glob("*.json")):
             if len(path.stem) != 64 or path.is_symlink() or not path.is_file() or path.stat().st_size > 16384:
                 continue
-            v = read_request(path, project)
+            v = read_request(path, project, any_agent=True)
             if v is None:
                 continue
             ident = v["request_id"]
             prior = PRIVATE / (ident + ".json")
+            if refuse_disallowed_agent(v):
+                continue
             old = None
             if prior.exists():
                 old = json.loads(prior.read_text())
@@ -807,7 +827,7 @@ def main():
                     + " and referenced actual receipt; match source revision before acceptance. This is the existing request from "
                     + v["session_id"]
                     + "; do not duplicate/replay it. A worker PASS is technical evidence only; visual criteria remain separate. If failed/stale, inspect exact evidence and repair the remaining bounded package before requesting a new revision. Continue existing project scope and preserve guards."
-                    + rig_retry_hint(project, v["operation"], failure_code),
+                    + rig_retry_hint(project, v["operation"], (result or {}).get("failure_code")),
                     "resume": True,
                 },
             )

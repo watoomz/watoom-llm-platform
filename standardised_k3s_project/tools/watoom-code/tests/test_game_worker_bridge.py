@@ -114,6 +114,45 @@ class Bridge(unittest.TestCase):
             p.write_text(json.dumps({"project": d}))
             self.assertIsNone(read_request(p, pathlib.Path(d)))
 
+    def test_worker_agents_equal_guard_worker_roles(self):
+        # T-0133: the guard grants the worker tool to workerRoles; the bridge must accept exactly those agents.
+        import re
+        from asset_capture_contract import WORKER_AGENTS
+
+        guard = pathlib.Path(__file__).resolve().parents[3] / "ansible/roles/watoom-code/files/coordinator-guard/index.js"
+        match = re.search(r"const workerRoles=new Set\(\[([^\]]*)\]\)", guard.read_text())
+        self.assertIsNotNone(match, "workerRoles not found in coordinator-guard/index.js")
+        self.assertEqual(set(re.findall(r'"([^"]+)"', match.group(1))), set(WORKER_AGENTS))
+
+    def write_request(self, folder, agent):
+        v = dict(self.v, project=str(folder), agent=agent)
+        v["request_id"] = request_identity(v)
+        p = folder / (v["request_id"] + ".json")
+        p.write_text(json.dumps(v))
+        return p, v
+
+    def test_developer_request_accepted(self):
+        with tempfile.TemporaryDirectory() as d:
+            p, v = self.write_request(pathlib.Path(d), "watoom-developer")
+            self.assertEqual(read_request(p, pathlib.Path(d)), v)
+            self.assertFalse(bridge.refuse_disallowed_agent(v))
+
+    def test_disallowed_agent_fails_once_instead_of_silent_queue(self):
+        with tempfile.TemporaryDirectory() as d, tempfile.TemporaryDirectory() as private:
+            project = pathlib.Path(d)
+            (project / ".opencode/worker-requests").mkdir(parents=True)
+            p, v = self.write_request(project, "watoom-reviewer")
+            self.assertIsNone(read_request(p, project))
+            self.assertEqual(read_request(p, project, any_agent=True), v)
+            with patch.object(bridge, "PRIVATE", pathlib.Path(private)):
+                self.assertTrue(bridge.refuse_disallowed_agent(v))
+                status = project / ".opencode/worker-requests" / (v["request_id"] + ".status.json")
+                result = json.loads(status.read_text())
+                self.assertEqual((result["status"], result["failure_code"]), ("FAILED", "agent_not_allowed"))
+                status.unlink()
+                self.assertTrue(bridge.refuse_disallowed_agent(v))
+                self.assertFalse(status.exists(), "refusal must be published once")
+
     def test_outside_project_refused(self):
         self.assertFalse(project_safe("/tmp"))
 

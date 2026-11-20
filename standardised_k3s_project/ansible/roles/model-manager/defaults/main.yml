@@ -17,7 +17,8 @@ model_manager_broker_root: /data/ai/helper-scripts/state/model-manager-broker
 model_manager_router_view: /data/ai/helper-scripts/state/model-manager-router/catalog.json
 model_manager_controller_state: /data/ai/helper-scripts/state/gpu-controller
 model_manager_controller_socket: /data/ai/helper-scripts/state/gpu-controller-private/worker.sock
-model_manager_llama_image: ghcr.io/ggml-org/llama.cpp@sha256:150b59966fb5b2cb1a8fa9d226267c56ebd22c520c7b3640331cde87f3c4fb01
+# Swift's llamAmpere build (config/llm/llamampere): turbo5/turbo4 KV, CUDA graphs, prompt-cache checkpoints (T-0123).
+model_manager_llama_image: 127.0.0.1:5000/watoom-llamampere@sha256:3bb755f835b65f8d5e9db3ec0cd65ce860efd6633f4e0b7d6338c9b6286a8b2e
 model_manager_sdxl_image: "{{ model_manager_runtime.sdxl_image.image }}"
 
 model_manager_service_name: watoom-model-manager-broker

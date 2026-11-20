@@ -53,14 +53,18 @@
   ansible.builtin.assert:
     that: model_manager_sdxl_runtime.path is match('^/data/ai/toolchains/model-manager-sdxl/[a-f0-9]{64}/bundle/rootfs/opt/conda$')
   when: model_manager_sdxl_runtime is not none
-- name: Preserve executable container labels only on the published runtime
-  ansible.builtin.file:
-    path: "{{ model_manager_sdxl_runtime.path }}"
-    state: directory
-    setype: container_file_t
-    recurse: true
-    follow: false
+# The runtime is ~7.5 GiB of files: a recursive ansible.builtin.file walk stats every file in Python and ran past
+# manage.py stage's 300 s limit under load (2026-11-21). find stops at the first unlabeled file; relabel only then.
+- name: Find published runtime files without the executable container label
+  ansible.builtin.command:
+    argv: [/usr/bin/find, "{{ model_manager_sdxl_runtime.path }}", "!", "-context", "*:container_file_t:*", "-print", "-quit"]
+  register: model_manager_runtime_unlabeled
+  changed_when: false
   when: model_manager_sdxl_runtime is not none
+- name: Preserve executable container labels only on the published runtime
+  ansible.builtin.command:
+    argv: [chcon, -R, --no-dereference, -t, container_file_t, "{{ model_manager_sdxl_runtime.path }}"]
+  when: model_manager_sdxl_runtime is not none and (model_manager_runtime_unlabeled.stdout | default('')) != ''
 - name: Create manager-owned state
   ansible.builtin.file:
     path: "{{ model_manager_state }}"
@@ -98,6 +102,27 @@
     group: root
     mode: "0644"
   loop: [server.py, hf.py, settings.py, store.py, worker.py, operations.py, download.py, file_lock.py, broker_service.py, broker.py, workload.py, native_admission.py, gguf_header.py, runtime_payload.py, admission_errors.py, image_mcp.py, image_publish.py]
+- name: Install the reasoning variant helper the broker runs after registrations (single source in the watoom-code role)
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../roles/watoom-code/files/enable-reasoning-variants.py"
+    dest: "/app/model-manager/releases/{{ model_manager_release }}/enable-reasoning-variants.py"
+    owner: root
+    group: root
+    mode: "0644"
+- name: Create the root-owned chat template directory
+  ansible.builtin.file:
+    path: /app/model-manager/chat-templates
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+- name: Install the owner's Qwen3.8 chat template that managed GGUF workloads mount read-only (workload.CHAT_TEMPLATES)
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../config/llm/qwen38-27b-chat-template.jinja"
+    dest: /app/model-manager/chat-templates/qwen38-27b.jinja
+    owner: root
+    group: root
+    mode: "0644"
 - name: Install existing native admission client without network maintenance actions
   ansible.builtin.copy:
     src: "{{ playbook_dir }}/../../tools/watoom-code/{{ item }}"

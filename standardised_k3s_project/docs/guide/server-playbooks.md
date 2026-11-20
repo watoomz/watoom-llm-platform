@@ -594,7 +594,7 @@ Update selected watoom-code parts
 
 Source: [`ansible/playbooks/watoom-code-parts.yml`](https://github.com/YOUR_GITHUB_USER/watoom-standardised-homelab/blob/main/standardised_k3s_project/ansible/playbooks/watoom-code-parts.yml). Description basis: first named play/task.
 
-Named steps: Update selected watoom-code parts; Native agents, guard-independent agent files and OpenSpec skill; Engine inspection skill; Image MCP; Image review collector; Image prompt scope; GUI reasoning variants; Kali isolation for built-in agents; SearXNG search plugin; Engine visual diagnosis skill. Further steps are in source.
+Named steps: Update selected watoom-code parts; Native agents, guard-independent agent files and OpenSpec skill; Engine inspection skill; Image MCP; Image review collector; Image prompt scope; GUI reasoning variants; Project search scope \(.rgignore per project group\); Kali isolation for built-in agents; SearXNG search plugin. Further steps are in source.
 
 ## ansible/playbooks/watoom-code-pose-worker.yml
 

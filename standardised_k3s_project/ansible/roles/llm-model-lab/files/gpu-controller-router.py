@@ -26,11 +26,6 @@ MODELS = {
         "url": "http://llama-cpp-swift-qwen38-coder.llama-cpp.svc.cluster.local:8000",
         "name": "Swift Qwen3.8 27B Coder 32K Stable",
     },
-    "qwen38-27b-ad-iq4-xs": {
-        "deployment": "llama-cpp-qwen38-atomic",
-        "url": "http://llama-cpp-qwen38-atomic.llama-cpp.svc.cluster.local:8000",
-        "name": "Qwen3.8 General Atomic AD-IQ4_XS",
-    },
     "qwen38-uncensored-mtp-iq4-xs": {
         "deployment": "llama-cpp-qwen38-uncensored-mtp",
         "url": "http://llama-cpp-qwen38-uncensored-mtp.llama-cpp.svc.cluster.local:8000",
@@ -61,7 +56,6 @@ DEFAULT_MODEL = "active-model"
 ACTIVE_MODEL_ALIAS = "active-model"
 
 MODEL_ALIASES = {
-    "qwen38-general": "qwen38-27b-ad-iq4-xs",
     "qwen38-uncensored-mtp": "qwen38-uncensored-mtp-iq4-xs",
     "ornith-1.5-9b": "ornith-1.5-9b-q8",
     "qwen35-defiant-fable-9b": "qwen35-defiant-fable-9b-q8",
@@ -70,7 +64,6 @@ MODEL_ALIASES = {
 VISIBLE_MODELS = {
     ACTIVE_MODEL_ALIAS: "Active Homelab Model / Loaded Backend",
     "swift-qwen38-coder": "Swift Qwen3.8 27B Coder / 32K Stable",
-    "qwen38-general": "Qwen3.8 General Atomic AD-IQ4_XS",
     "qwen38-uncensored-mtp": "Qwen3.8 Uncensored MTP IQ4_XS",
     "ornith-1.5-9b": "Ornith 1.5 9B Uncensored",
     "qwen35-defiant-fable-9b": "Qwen3.5 9B Defiant Fable plusIQ-TOOLS",

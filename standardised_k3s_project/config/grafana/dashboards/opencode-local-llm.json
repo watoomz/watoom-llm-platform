@@ -19,7 +19,34 @@
     "to": "now"
   },
   "templating": {
-    "list": []
+    "list": [
+      {
+        "name": "model",
+        "label": "Model",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": {
+          "query": "query_result(max by (model, name) (watoom_llm_model_info) * on (model) group_left () max by (model) (watoom_llama_slot_active))",
+          "refId": "model"
+        },
+        "definition": "query_result(max by (model, name) (watoom_llm_model_info) * on (model) group_left () max by (model) (watoom_llama_slot_active))",
+        "refresh": 2,
+        "sort": 1,
+        "multi": false,
+        "includeAll": false,
+        "current": {
+          "selected": true,
+          "text": "swift-qwen38-coder",
+          "value": "swift-qwen38-coder"
+        },
+        "options": [],
+        "hide": 0,
+        "regex": "/model=\"(?<value>[^\"]+)\".*name=\"(?<text>[^\"]+)\"/"
+      }
+    ]
   },
   "annotations": {
     "list": []
@@ -1103,7 +1130,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "round(\n  sum by (requested_model, backend_model) (\n    increase(watoom_llm_router_requests_total[30m])\n  )\n)",
+          "expr": "round(sum by (name, requested_model, backend_model) (label_replace(increase(watoom_llm_router_requests_total[30m]), \"model\", \"$1\", \"requested_model\", \"(.*)\") * on (model) group_left (name) max by (model, name) (watoom_llm_model_info)) or sum by (requested_model, backend_model) (increase(watoom_llm_router_requests_total[30m]) unless on (requested_model) label_replace(max by (model) (watoom_llm_model_info), \"requested_model\", \"$1\", \"model\", \"(.*)\")))",
           "instant": true,
           "range": false,
           "format": "table",
@@ -1118,7 +1145,22 @@
         "showHeader": true,
         "cellHeight": "sm"
       },
-      "description": "Requests observed during the trailing 30 minutes, rather than lifetime exporter counters."
+      "description": "Requests observed during the trailing 30 minutes, rather than lifetime exporter counters.",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "name": 0,
+              "requested_model": 1,
+              "backend_model": 2
+            },
+            "renameByName": {
+              "name": "model"
+            }
+          }
+        }
+      ]
     },
     {
       "id": 27,
@@ -3113,67 +3155,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "watoom_llama_slot_active{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"0\"}",
-          "legendFormat": "",
-          "range": true,
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "id": 72,
-      "type": "stat",
-      "title": "Slot 1 active",
-      "description": "WATOOM_PER_SLOT_V1: 1 while slot 1 owns a request; 0 after release.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 6,
-        "y": 121
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "watoom_llama_slot_active{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"1\"}",
+          "expr": "watoom_llama_slot_active{job=\"llama-perf\",model=\"$model\",slot=\"0\"}",
           "legendFormat": "",
           "range": true,
           "refId": "A"
@@ -3233,67 +3215,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "watoom_llama_slot_generated_tokens_per_second_current{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"0\"}",
-          "legendFormat": "",
-          "range": true,
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "id": 74,
-      "type": "stat",
-      "title": "Slot 1 live decode tok/s",
-      "description": "WATOOM_PER_SLOT_V1: Current native generation throughput on slot 1.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 18,
-        "y": 121
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops",
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "watoom_llama_slot_generated_tokens_per_second_current{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"1\"}",
+          "expr": "watoom_llama_slot_generated_tokens_per_second_current{job=\"llama-perf\",model=\"$model\",slot=\"0\"}",
           "legendFormat": "",
           "range": true,
           "refId": "A"
@@ -3351,21 +3273,10 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "watoom_llama_slot_active{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"0\"}",
+          "expr": "watoom_llama_slot_active{job=\"llama-perf\",model=\"$model\",slot=\"0\"}",
           "legendFormat": "slot 0",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "watoom_llama_slot_active{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"1\"}",
-          "legendFormat": "slot 1",
-          "range": true,
-          "refId": "B"
         }
       ]
     },
@@ -3420,7 +3331,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "watoom_llama_slot_prompt_tokens_per_second_current{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"0\"}",
+          "expr": "watoom_llama_slot_prompt_tokens_per_second_current{job=\"llama-perf\",model=\"$model\",slot=\"0\"}",
           "legendFormat": "slot 0 prompt tok/s",
           "range": true,
           "refId": "A"
@@ -3431,32 +3342,10 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "watoom_llama_slot_generated_tokens_per_second_current{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"0\"}",
+          "expr": "watoom_llama_slot_generated_tokens_per_second_current{job=\"llama-perf\",model=\"$model\",slot=\"0\"}",
           "legendFormat": "slot 0 decode tok/s",
           "range": true,
           "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "watoom_llama_slot_prompt_tokens_per_second_current{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"1\"}",
-          "legendFormat": "slot 1 prompt tok/s",
-          "range": true,
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "watoom_llama_slot_generated_tokens_per_second_current{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"1\"}",
-          "legendFormat": "slot 1 decode tok/s",
-          "range": true,
-          "refId": "D"
         }
       ]
     },
@@ -3513,7 +3402,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "watoom_llama_slot_last_prompt_tokens_per_second{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"0\"}",
+          "expr": "watoom_llama_slot_last_prompt_tokens_per_second{job=\"llama-perf\",model=\"$model\",slot=\"0\"}",
           "legendFormat": "",
           "range": true,
           "refId": "A"
@@ -3573,7 +3462,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "watoom_llama_slot_last_generated_tokens_per_second{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"0\"}",
+          "expr": "watoom_llama_slot_last_generated_tokens_per_second{job=\"llama-perf\",model=\"$model\",slot=\"0\"}",
           "legendFormat": "",
           "range": true,
           "refId": "A"
@@ -3633,187 +3522,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "100 * watoom_llama_slot_last_mtp_acceptance_ratio{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"0\"}",
-          "legendFormat": "",
-          "range": true,
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "id": 80,
-      "type": "stat",
-      "title": "Slot 1 last prompt tok/s",
-      "description": "WATOOM_PER_SLOT_V1: Final prompt speed for the last request using slot 1.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 12,
-        "y": 134
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops",
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "watoom_llama_slot_last_prompt_tokens_per_second{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"1\"}",
-          "legendFormat": "",
-          "range": true,
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "id": 81,
-      "type": "stat",
-      "title": "Slot 1 last decode tok/s",
-      "description": "WATOOM_PER_SLOT_V1: Final decode speed for the last request using slot 1.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 16,
-        "y": 134
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops",
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "watoom_llama_slot_last_generated_tokens_per_second{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"1\"}",
-          "legendFormat": "",
-          "range": true,
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "id": 82,
-      "type": "gauge",
-      "title": "Slot 1 last MTP",
-      "description": "WATOOM_PER_SLOT_V1: Last completed request MTP acceptance on slot 1.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 20,
-        "y": 134
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "min": 0,
-          "max": 100
-        },
-        "overrides": []
-      },
-      "options": {
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "100 * watoom_llama_slot_last_mtp_acceptance_ratio{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"1\"}",
+          "expr": "100 * watoom_llama_slot_last_mtp_acceptance_ratio{job=\"llama-perf\",model=\"$model\",slot=\"0\"}",
           "legendFormat": "",
           "range": true,
           "refId": "A"
@@ -3871,21 +3580,10 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "watoom_llama_slot_generated_tokens_current{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"0\"}",
+          "expr": "watoom_llama_slot_generated_tokens_current{job=\"llama-perf\",model=\"$model\",slot=\"0\"}",
           "legendFormat": "slot 0 generated",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "watoom_llama_slot_generated_tokens_current{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"1\"}",
-          "legendFormat": "slot 1 generated",
-          "range": true,
-          "refId": "B"
         }
       ]
     },
@@ -3940,21 +3638,10 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "watoom_llama_slot_generated_tokens_per_second_3s{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"0\"}",
+          "expr": "watoom_llama_slot_generated_tokens_per_second_3s{job=\"llama-perf\",model=\"$model\",slot=\"0\"}",
           "legendFormat": "slot 0 · 3s",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "watoom_llama_slot_generated_tokens_per_second_3s{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"1\"}",
-          "legendFormat": "slot 1 · 3s",
-          "range": true,
-          "refId": "B"
         }
       ]
     },
@@ -4025,7 +3712,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(watoom_llama_slot_active{job=\"llama-perf\",model=\"swift-qwen38-coder\"})",
+          "expr": "sum(watoom_llama_slot_active{job=\"llama-perf\",model=\"$model\"})",
           "legendFormat": "",
           "range": true,
           "refId": "A"
@@ -4085,7 +3772,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "100 * (sum(watoom_llama_slot_active{job=\"llama-perf\",model=\"swift-qwen38-coder\"})) / 2",
+          "expr": "100 * (sum(watoom_llama_slot_active{job=\"llama-perf\",model=\"$model\"})) / 2",
           "legendFormat": "",
           "range": true,
           "refId": "A"
@@ -4145,7 +3832,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(sum(watoom_llama_slot_active{job=\"llama-perf\",model=\"swift-qwen38-coder\"})) == bool 2",
+          "expr": "(sum(watoom_llama_slot_active{job=\"llama-perf\",model=\"$model\"})) == bool 2",
           "legendFormat": "",
           "range": true,
           "refId": "A"
@@ -4267,7 +3954,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "abs((sum(llamacpp:requests_processing{service=~\"llama-cpp-.+\"})) - (sum(watoom_llama_slot_active{job=\"llama-perf\",model=\"swift-qwen38-coder\"})))",
+          "expr": "abs((sum(llamacpp:requests_processing{service=~\"llama-cpp-.+\"})) - (sum(watoom_llama_slot_active{job=\"llama-perf\",model=\"$model\"})))",
           "legendFormat": "",
           "range": true,
           "refId": "A"
@@ -4327,7 +4014,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "count(watoom_llama_slot_active{job=\"llama-perf\",model=\"swift-qwen38-coder\"})",
+          "expr": "count(watoom_llama_slot_active{job=\"llama-perf\",model=\"$model\"})",
           "legendFormat": "",
           "range": true,
           "refId": "A"
@@ -4397,7 +4084,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(watoom_llama_slot_active{job=\"llama-perf\",model=\"swift-qwen38-coder\"})",
+          "expr": "sum(watoom_llama_slot_active{job=\"llama-perf\",model=\"$model\"})",
           "legendFormat": "log-derived active slots",
           "range": true,
           "refId": "B"
@@ -4408,7 +4095,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "abs((sum(llamacpp:requests_processing{service=~\"llama-cpp-.+\"})) - (sum(watoom_llama_slot_active{job=\"llama-perf\",model=\"swift-qwen38-coder\"})))",
+          "expr": "abs((sum(llamacpp:requests_processing{service=~\"llama-cpp-.+\"})) - (sum(watoom_llama_slot_active{job=\"llama-perf\",model=\"$model\"})))",
           "legendFormat": "parity delta",
           "range": true,
           "refId": "C"
@@ -4466,7 +4153,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(watoom_llama_slot_prompt_tokens_per_second_current{job=\"llama-perf\",model=\"swift-qwen38-coder\"})",
+          "expr": "sum(watoom_llama_slot_prompt_tokens_per_second_current{job=\"llama-perf\",model=\"$model\"})",
           "legendFormat": "combined prompt tok/s",
           "range": true,
           "refId": "A"
@@ -4477,7 +4164,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(watoom_llama_slot_generated_tokens_per_second_current{job=\"llama-perf\",model=\"swift-qwen38-coder\"})",
+          "expr": "sum(watoom_llama_slot_generated_tokens_per_second_current{job=\"llama-perf\",model=\"$model\"})",
           "legendFormat": "combined decode tok/s",
           "range": true,
           "refId": "B"
@@ -4535,21 +4222,10 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "100 * watoom_llama_slot_last_mtp_acceptance_ratio{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"0\"}",
+          "expr": "100 * watoom_llama_slot_last_mtp_acceptance_ratio{job=\"llama-perf\",model=\"$model\",slot=\"0\"}",
           "legendFormat": "slot 0 MTP %",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "100 * watoom_llama_slot_last_mtp_acceptance_ratio{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"1\"}",
-          "legendFormat": "slot 1 MTP %",
-          "range": true,
-          "refId": "B"
         }
       ]
     },
@@ -4604,21 +4280,10 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "watoom_llama_slot_last_generated_tokens_per_second{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"0\"}",
+          "expr": "watoom_llama_slot_last_generated_tokens_per_second{job=\"llama-perf\",model=\"$model\",slot=\"0\"}",
           "legendFormat": "slot 0 decode tok/s",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "watoom_llama_slot_last_generated_tokens_per_second{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"1\"}",
-          "legendFormat": "slot 1 decode tok/s",
-          "range": true,
-          "refId": "B"
         }
       ]
     },
@@ -4749,7 +4414,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "count(watoom_llama_slot_active{job=\"llama-perf\",model=\"swift-qwen38-coder\"})",
+          "expr": "count(watoom_llama_slot_active{job=\"llama-perf\",model=\"$model\"})",
           "legendFormat": "",
           "range": true,
           "refId": "A"
@@ -4809,7 +4474,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "time() - (max(watoom_llama_slot_last_event_unixtime{job=\"llama-perf\",model=\"swift-qwen38-coder\"}))",
+          "expr": "time() - (max(watoom_llama_slot_last_event_unixtime{job=\"llama-perf\",model=\"$model\"}))",
           "legendFormat": "",
           "range": true,
           "refId": "A"
@@ -4870,7 +4535,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "((sum(llamacpp:requests_processing{service=~\"llama-cpp-.+\"})) > bool 0) * ((time() - (max(watoom_llama_slot_last_event_unixtime{job=\"llama-perf\",model=\"swift-qwen38-coder\"}))) > bool 30)",
+          "expr": "((sum(llamacpp:requests_processing{service=~\"llama-cpp-.+\"})) > bool 0) * ((time() - (max(watoom_llama_slot_last_event_unixtime{job=\"llama-perf\",model=\"$model\"}))) > bool 30)",
           "legendFormat": "",
           "range": true,
           "refId": "A"
@@ -4928,21 +4593,10 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "time() - watoom_llama_slot_last_event_unixtime{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"0\"}",
+          "expr": "time() - watoom_llama_slot_last_event_unixtime{job=\"llama-perf\",model=\"$model\",slot=\"0\"}",
           "legendFormat": "slot 0 event age",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "time() - watoom_llama_slot_last_event_unixtime{job=\"llama-perf\",model=\"swift-qwen38-coder\",slot=\"1\"}",
-          "legendFormat": "slot 1 event age",
-          "range": true,
-          "refId": "B"
         }
       ]
     },
@@ -5009,7 +4663,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(watoom_llama_slot_active{job=\"llama-perf\",model=\"swift-qwen38-coder\"})",
+          "expr": "sum(watoom_llama_slot_active{job=\"llama-perf\",model=\"$model\"})",
           "legendFormat": "log-derived active slots",
           "range": true,
           "refId": "B"
@@ -5020,7 +4674,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "((sum(llamacpp:requests_processing{service=~\"llama-cpp-.+\"})) > bool 0) * ((time() - (max(watoom_llama_slot_last_event_unixtime{job=\"llama-perf\",model=\"swift-qwen38-coder\"}))) > bool 30)",
+          "expr": "((sum(llamacpp:requests_processing{service=~\"llama-cpp-.+\"})) > bool 0) * ((time() - (max(watoom_llama_slot_last_event_unixtime{job=\"llama-perf\",model=\"$model\"}))) > bool 30)",
           "legendFormat": "stale while active",
           "range": true,
           "refId": "C"

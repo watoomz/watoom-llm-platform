@@ -10,7 +10,7 @@ The agent prompts say WHEN to use a worker; this skill holds HOW. Read only the 
 | You are about to... | Read |
 |---|---|
 | call `watoom_specialist_list` / `watoom_specialist_run` (asset.search, asset.index, asset.inspect/optimize, world.compose incl. dungeons, character.prepare, material.derive), or generate with LLaMA-Mesh | `references/specialist-jobs.md` |
-| request `watoom_game_worker` (regression, import, capture, capture-p7, poo-vfx-inspect), read a Godot receipt, write a test runner, or run a parse-only check | `references/game-worker.md` |
+| request `watoom_game_worker` (godot-game for projects with gg_ui.json, otherwise regression, import, capture, capture-p7, poo-vfx-inspect), read a Godot receipt, write a test runner, or run a parse-only check | `references/game-worker.md` |
 | inspect, convert or assemble anything in Unreal (runtime paths, `/unreal-engine`, Hyper, GLTF export, map assembly) | `references/unreal.md` |
 | choose, acquire, download or accept assets (Fab library, formats, dependency closure, reference images, Blender skill choice) | `references/assets-and-downloads.md` |
 

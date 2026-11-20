@@ -16,6 +16,32 @@ const canonical = (value: unknown): string => {
   return JSON.stringify(value) ?? "undefined"
 }
 
+// Native tools that return a durable request_id for work that keeps running after the call returns.
+const EXTERNAL_JOB_TOOLS = ["watoom_game_worker", "watoom_asset_capture", "watoom_rig_game_job", "watoom_esp32"]
+const EXTERNAL_JOB_LIVE_STATUSES = ["QUEUED", "RUNNING", "WAITING_FOR_HEADROOM", "PAUSED"]
+// A deliberate sleep/wait between two polls is elapsed time, not a repeat. Bounded so an endless
+// sleep-and-poll loop with unchanged results still stops.
+const MAX_WAITS_BETWEEN_POLLS = 24
+
+const liveExternalJob = (content: ReadonlyArray<{ type: string; text?: string }> | undefined) =>
+  (content ?? []).some((item) => {
+    if (item.type !== "text" || typeof item.text !== "string") return false
+    try {
+      const value: unknown = JSON.parse(item.text)
+      return (
+        value !== null &&
+        typeof value === "object" &&
+        "request_id" in value &&
+        typeof value.request_id === "string" &&
+        "status" in value &&
+        typeof value.status === "string" &&
+        EXTERNAL_JOB_LIVE_STATUSES.includes(value.status)
+      )
+    } catch {
+      return false
+    }
+  })
+
 /** Uses the existing durable transcript, so restart cannot reset a stalled cycle.
  * A fresh user or external synthetic input resets the boundary; changing results constitute progress.
  * Live asynchronous jobs are a progress barrier, not a reason to cancel work.
@@ -29,18 +55,25 @@ export const reason = (messages: ReadonlyArray<SessionMessage.Info>) => {
         message.metadata?.source !== "handoff-recovery"),
   )
   const pending = new Map<string, { id: string; status: string }>()
+  let waits = 0
   const calls = messages.slice(boundary + 1).flatMap((message) =>
     message.type === "assistant"
       ? message.content.flatMap((part) => {
           if (part.type !== "tool" || (part.state.status !== "completed" && part.state.status !== "error")) return []
           // A wait is neither progress nor a repeat: it is skipped so it never counts toward, or breaks, a cycle.
-          if (part.name === "wait" || part.name === "sleep") return []
+          // It is remembered so that polls of a live external job on either side of it are not identical.
+          if (part.name === "wait" || part.name === "sleep") {
+            waits += 1
+            return []
+          }
           if (
             part.name === "shell" &&
             typeof part.state.input.command === "string" &&
             /^\s*sleep\s+\d+(?:\.\d+)?\s*;?\s*$/.test(part.state.input.command)
-          )
+          ) {
+            waits += 1
             return []
+          }
           const running = part.state.content?.some((item) => {
             if (item.type !== "text") return false
             try {
@@ -68,8 +101,11 @@ export const reason = (messages: ReadonlyArray<SessionMessage.Info>) => {
                   input: part.state.input,
                   status: part.state.status,
                   result: part.state.status === "error" ? part.state.error : part.state.content,
+                  ...(EXTERNAL_JOB_TOOLS.includes(part.name) && liveExternalJob(part.state.content)
+                    ? { waitsBefore: Math.min(waits, MAX_WAITS_BETWEEN_POLLS) }
+                    : {}),
                 })
-          if (["watoom_game_worker", "watoom_asset_capture", "watoom_rig_game_job"].includes(part.name)) {
+          if (EXTERNAL_JOB_TOOLS.includes(part.name)) {
             for (const item of part.state.content ?? []) {
               if (item.type !== "text") continue
               let value: unknown
@@ -85,7 +121,7 @@ export const reason = (messages: ReadonlyArray<SessionMessage.Info>) => {
                 typeof value.request_id === "string" &&
                 "status" in value &&
                 typeof value.status === "string" &&
-                ["QUEUED", "RUNNING", "WAITING_FOR_HEADROOM", "PAUSED"].includes(value.status)
+                EXTERNAL_JOB_LIVE_STATUSES.includes(value.status)
               )
                 pending.set(signature, { id: value.request_id, status: value.status })
             }

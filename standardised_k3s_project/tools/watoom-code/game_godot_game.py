@@ -7,7 +7,7 @@ project at /project (spec project_dir under .opencode/tmp/, never the live sourc
 files over 100 MB skipped and listed). Writes <evidence>/result.json; exit 0 on PASS. A start is never replayed after the launch.
 Prerequisite on Bazzite (probed first, fails before anything runs when missing): the Xvfb capture image must have python3 with numpy and Pillow (it does, 2026-11-17).
 """
-import argparse, hashlib, json, os, pathlib, shlex, subprocess, sys, time
+import argparse, hashlib, json, os, pathlib, shlex, subprocess, sys, tempfile, time
 import godot_game_spec
 from game_validation import GODOT, GODOT_SHA
 
@@ -25,7 +25,35 @@ SKIP_PULL = ['--exclude=.godot/', '--exclude=gg_data/jobs/', '--exclude=gg_data/
 # gg_data holds cross-step continuity (style.resolved.json, world/, census.json, scatter/) that a chained from_project
 # job needs to see from the job before it; only the scratch/job-history subdirs are excluded, same as SKIP_PULL.
 SKIP_FROM_PROJECT_GG_DATA = ['--exclude=/gg_data/jobs/', '--exclude=/gg_data/export/stage/', '--exclude=/gg_data/selftest*/']
+FROM_PROJECT_EXCLUDES = ['--exclude=/.git/', '--exclude=/.godot/', '--exclude=/.opencode/', *SKIP_FROM_PROJECT_GG_DATA, '--exclude=/addons/gg/.import_cache/']
+# Files over COPY_MAX_MB stay out of the local staged copy (it is kept per job) but go straight from the live project to
+# Bazzite over the 10 GbE link, hash-verified there, up to this total; the rest are listed in the receipt (T-0134: a
+# 245 MB hero.glb left main.tscn unloadable in every test).
+LARGE_MAX_GIB = 8
 
+
+
+def large_files(project):
+    """The from_project files left out for size, by the same rsync rules: sorted relative paths."""
+    with tempfile.TemporaryDirectory() as empty:
+        r = subprocess.run(['rsync', '-a', '--no-links', '--dry-run', '--out-format=%n', '--min-size=%dm' % godot_game_spec.COPY_MAX_MB, *FROM_PROJECT_EXCLUDES,
+                            str(project) + '/', empty + '/'], capture_output=True, text=True, timeout=300)
+    if r.returncode: raise RuntimeError('listing large project files failed: ' + r.stderr[-300:])
+    return sorted(n for n in r.stdout.splitlines() if n and not n.endswith('/') and (project / n).is_file() and not (project / n).is_symlink())
+
+
+def plan_large(project, names, budget):
+    """(send, skipped): send = [{path, bytes, sha256}] within budget bytes, smallest first so more of them fit."""
+    send, skipped, total = [], [], 0
+    for name in sorted(names, key=lambda n: ((project / n).stat().st_size, n)):
+        f = project / name; before = f.stat()
+        if total + before.st_size > budget:
+            skipped.append(name); continue
+        with f.open('rb') as h: digest = hashlib.file_digest(h, 'sha256').hexdigest()
+        after = f.stat()
+        if (after.st_size, after.st_mtime_ns) != (before.st_size, before.st_mtime_ns): raise RuntimeError(name + ' changed while it was hashed; submit a new job')
+        total += before.st_size; send.append({'path': name, 'bytes': before.st_size, 'sha256': digest})
+    return send, skipped
 
 
 def check_staging_path(project, staging):
@@ -112,11 +140,15 @@ def main():
             for d in reversed([staging, *[q for q in staging.parents if q != project and not q.exists()]]):
                 d.mkdir(mode=0o2770); os.chown(d, st.st_uid, st.st_gid); os.chmod(d, 0o2770)
         if spec.get('from_project'):   # the worker copies the live project itself: the model's tools cannot stage 40+ runtime files by hand
-            r = subprocess.run(['rsync', '-a', '--no-links', '--max-size=%dm' % godot_game_spec.COPY_MAX_MB, '--exclude=/.git/', '--exclude=/.godot/', '--exclude=/.opencode/', *SKIP_FROM_PROJECT_GG_DATA, '--exclude=/addons/gg/.import_cache/', str(project) + '/', str(staging) + '/'], capture_output=True, text=True, timeout=300)
+            r = subprocess.run(['rsync', '-a', '--no-links', '--max-size=%dm' % godot_game_spec.COPY_MAX_MB, *FROM_PROJECT_EXCLUDES, str(project) + '/', str(staging) + '/'], capture_output=True, text=True, timeout=300)
             if r.returncode: raise RuntimeError('copying the live project failed: ' + r.stderr[-300:])
             st = (project / '.opencode').stat()
             check_staging_path(project, staging)
             for q in [staging, *staging.rglob('*')]: os.chown(q, st.st_uid, st.st_gid, follow_symlinks=False)
+            large, skipped = plan_large(project, large_files(project), LARGE_MAX_GIB * 1024 ** 3)
+            receipt.update(large_files=large, skipped_large_files=skipped)
+        else:
+            large = []
         before = tree_hash(staging)
         with GODOT.open('rb') as f:
             if hashlib.file_digest(f, 'sha256').hexdigest() != GODOT_SHA: raise ValueError('Pinned Godot input changed')
@@ -129,7 +161,7 @@ def main():
         ram, disk = bz.free()
         need = (spec['memory_gib'] + RESERVE_GIB) * 1024 ** 3
         if ram < need: raise RuntimeError('Bazzite has %.1f GiB free RAM, needs %d' % (ram / 1024 ** 3, spec['memory_gib'] + RESERVE_GIB))
-        if disk < MIN_FREE_GIB * 1024 ** 3: raise RuntimeError('Bazzite has %.1f GiB free disk' % (disk / 1024 ** 3))
+        if disk < MIN_FREE_GIB * 1024 ** 3 + sum(x['bytes'] for x in large): raise RuntimeError('Bazzite has %.1f GiB free disk' % (disk / 1024 ** 3))
         name = 'watoom-godotgame-' + hashlib.sha256((str(project) + a.godot_game_job).encode()).hexdigest()[:12]
         held = bz.inhibit(name, spec['deadline_sec'] + 1800, 'Godot game job ' + name)
         home = bz.sh('printf %s "$HOME"', timeout=60, check=True).stdout.strip()
@@ -148,6 +180,12 @@ def main():
         for local, remote, extra in ([(str(godot_game_spec.SKILL.parent / n) + '/', r_skill + '/' + n + '/', ['--delete', *SKIP_SKILL]) for n in NEEDED_SKILLS] + [(str(staging) + '/', r_project + '/', ['--delete'])]):
             r = bz.push(local, remote, extra, timeout=900, attempts=3)
             if r.returncode: raise RuntimeError('sync failed: ' + r.stderr[-300:])
+        if large:   # after the --delete staging push, which would remove them
+            listing = a.evidence / 'large-files.txt'; listing.write_text(''.join(x['path'] + '\n' for x in large))
+            r = bz.push(str(project) + '/', r_project + '/', ['--files-from=' + str(listing), '--no-links'], timeout=1800, attempts=3)
+            if r.returncode: raise RuntimeError('large file sync failed: ' + r.stderr[-300:])
+            got = bz.sh('cd ~/%s && sha256sum -- %s' % (r_project, ' '.join(shlex.quote(x['path']) for x in large)), timeout=600, check=True).stdout
+            if [line.split(maxsplit=1)[0] for line in got.splitlines()] != [x['sha256'] for x in large]: raise RuntimeError('large files differ on Bazzite after sync; submit a new job')
         (a.evidence / 'steps.json').write_text(json.dumps(spec['steps']))
         for f, dst in ((a.evidence / 'steps.json', r_job + '/steps.json'), (HERE / 'godot_game_driver.py', r_job + '/godot_game_driver.py')):
             r = bz.push(str(f), dst, timeout=120, attempts=3)
@@ -158,7 +196,7 @@ def main():
         script = '%s > %s 2>&1; echo $? > %s' % (' '.join(shlex.quote(x) for x in podman), shlex.quote(job_dir + '/native.log'), shlex.quote(job_dir + '/exit_code'))
         launch = ' '.join(shlex.quote(x) for x in ['systemd-run', '--user', '--unit=' + name, '--collect', '-p', 'MemoryMax=%dG' % (spec['memory_gib'] + 1), '-p', 'CPUQuota=%d%%' % (CPUS * 100),
                                                    '-p', 'Nice=10', '-p', 'MemorySwapMax=0', '-p', 'TimeoutStopSec=10', '-p', 'KillMode=control-group', '-p', 'RuntimeMaxSec=%d' % (spec['deadline_sec'] + 60), '/bin/bash', '-c', script])
-        atomic(a.evidence / 'prepared.json', {'unit': name, 'project': str(project), 'staging': spec['directory'], 'staging_sha256': before, 'skill_sha256': skill_sha, 'godot_sha256': GODOT_SHA,
+        atomic(a.evidence / 'prepared.json', {'unit': name, 'project': str(project), 'staging': spec['directory'], 'staging_sha256': before, 'large_files': large, 'skill_sha256': skill_sha, 'godot_sha256': GODOT_SHA,
                                                'steps': len(spec['steps']), 'memory_limit': '%dGiB' % spec['memory_gib'], 'deadline_sec': spec['deadline_sec'], 'spec_sha256': spec['spec_sha256']})
     except Exception as e:
         fail(e, failure_stage='stage')

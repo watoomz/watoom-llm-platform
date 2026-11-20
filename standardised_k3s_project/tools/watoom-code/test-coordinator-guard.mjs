@@ -122,14 +122,14 @@ f=await fixture();
 const outer={agent:"watoom-workflow",sessionID:"s",messageID:"same-message",id:"same-call"};
 for(let n=0;n<BUDGET;n++)await f.raw("shell",{command:"identical"},outer);
 await assert.rejects(()=>f.raw("shell",{command:"identical"},outer),/HANDOFF_REQUIRED/);
-// Exhausted coordinators cannot burn tokens loading skills or rewriting checkpoints.
-f=await fixture(new Map(),{direct:6});
-await assert.rejects(()=>f.call("skill",{id:"opencode"}),/HANDOFF_REQUIRED/);
-assert(!("skill" in (await f.context()).tools));
+// Exhausted coordinators may still load skills (free knowledge) but cannot rewrite checkpoints or do work.
+f=await fixture(new Map(),{direct:BUDGET});
+await f.call("skill",{id:"opencode"});
+assert("skill" in (await f.context()).tools);
 await f.call("write",{path:"/p/.opencode/work/t/checkpoint.md",content:"handoff required"});
 await assert.rejects(()=>f.call("write",{path:"/p/.opencode/work/t/checkpoint.md",content:"same checkpoint again"}),/HANDOFF_REQUIRED/);
 assert(!("write" in (await f.context()).tools));
-assert.deepEqual(Object.keys((await f.context()).tools),["subagent"]);
+assert.deepEqual(Object.keys((await f.context()).tools).sort(),["skill","subagent"]);
 // Concurrent foreground subagent admission is serialized before native spawn.
 f=await fixture();
 const concurrent=await Promise.allSettled([
@@ -174,7 +174,7 @@ await assert.rejects(()=>f.call("subagent",{agent:"watoom-builder",sessionID:"re
 await f.call("subagent",{agent:"watoom-reviewer",sessionID:"review-recovery",result:{output:{sessionID:"review-recovery",status:"completed",output:receipt.content},content:[]}});
 assert.equal(f.store.get("session/review-recovery").pendingVisual,null);
 assert.equal(f.store.get("session/s").errors,2);
-await assert.rejects(()=>f.call("shell"),/HANDOFF_REQUIRED/);
+await assert.rejects(()=>f.call("shell"),/CRITIC_REQUIRED: .*agent watoom-critic/);
 console.log("PASS existing-child evidence recovery retains critic and pixel validation");
 
 // Repeated completed-without-receipt returns stop parent retries without accepting evidence.
@@ -698,6 +698,95 @@ f=await fixture();
 await f.call("shell",{command:"rg needle /project/file",result:noMatch},"watoom-investigator","miss");
 assert.equal(f.store.get("session/miss").errors,0);
 await f.call("shell",{command:"rg needle /project/file",result:noMatch},"watoom-builder","validation");
+assert.equal(f.store.get("session/validation").errors,0,"a builder's read-only search miss is information");
+await f.call("shell",{command:"npm test",result:noMatch},"watoom-builder","validation");
 assert.equal(f.store.get("session/validation").errors,1,"builder validation exits are not exempted");
 
 console.log("PASS read-only findings handoff, terminal transport, conservative no-match classification and unchanged repair/visual/security gates");
+
+{
+// 2026-11-20 rule audit: lookups, knowledge and gate restatements must not drive the coordinator into the critic loop.
+const {MISS_CAP,knowledgeTool,discoveryCall,gateRejection,handoffMessage}=await import("../../ansible/roles/watoom-code/files/coordinator-guard/index.js");
+const miss={metadata:{exit:1},content:[{type:"text",text:"Exited with code 1"}]};
+// Coordinator lookup misses: missing files and empty greps are information until MISS_CAP of them.
+let f=await fixture();
+await assert.rejects(()=>f.call("read",{filePath:"/p/missing",fail:true}));
+await f.call("shell",{command:"rg needle /p",result:miss});
+await assert.rejects(()=>f.call("read",{filePath:"/p/missing2",fail:true}));
+assert.equal(f.store.get("session/s").errors,0,"three lookup misses do not arm the critic gate");
+assert("shell" in (await f.context()).tools);
+await f.call("subagent",{agent:"watoom-investigator",result:{output:{sessionID:"inv",status:"completed"},content:[]}});
+for(let n=0;n<MISS_CAP;n++)await assert.rejects(()=>f.call("read",{filePath:"/p/gone-"+n,fail:true}));
+assert.equal(f.store.get("session/s").errors,1,"blind searching still converges on the critic");
+// Real execution failures still require the critic after two.
+f=await fixture();
+await assert.rejects(()=>f.call("shell",{command:"make build",fail:true}));
+await assert.rejects(()=>f.call("shell",{command:"make build",fail:true}));
+await assert.rejects(()=>f.call("subagent",{agent:"watoom-builder"}),/CRITIC_REQUIRED/);
+// Knowledge lookups are free: they never spend a budget and stay usable at the handoff gate.
+f=await fixture();
+const before=structuredClone(f.store.get("session/s") || {});
+for(let n=0;n<40;n++)await f.call("skill",{id:"opencode-"+n});
+const after=f.store.get("session/s");
+assert.equal(after.direct||0,before.direct||0);assert.equal(after.reads||0,before.reads||0);
+f=await fixture(new Map(),{direct:99});
+await f.call("skill",{id:"godot"});
+assert.deepEqual(Object.keys((await f.context()).tools).sort(),["skill","subagent","write"]);
+await assert.rejects(()=>f.call("shell"),/HANDOFF_REQUIRED/);
+for(const t of ["skill","watoom_skill_search","watoom_memory_recall","wlk_search","wlk_get"])assert(knowledgeTool(t) && discoveryCall(t,{}));
+// Worker status polls and wait are discovery; a worker request is execution.
+assert(discoveryCall("watoom_game_worker",{action:"status"}) && discoveryCall("wait",{}) && !discoveryCall("watoom_game_worker",{action:"request"}));
+f=await fixture();
+for(let n=0;n<BUDGET+4;n++)await f.call("read",{filePath:"/p/status-"+n});
+assert.equal(f.store.get("session/s").direct,0);
+// Gate restatements do not escalate errors; approach refusals still do.
+f=await fixture(new Map(),{direct:99});
+for(let n=0;n<4;n++)await f.call("shell",{command:"x"}).catch(()=>{});
+assert.equal(f.store.get("session/s").errors||0,0,"hitting the handoff gate repeatedly does not arm the critic gate");
+assert.equal(f.store.get("session/s").gateRejections,4);
+assert(gateRejection("COORDINATOR_HANDOFF_REQUIRED: x") && !gateRejection("EXTERNAL_GODOT_WORKER_REQUIRED: x") && !gateRejection("RECEIPT_INVALID: x"));
+// Every gate message names its exit.
+assert.match(handoffMessage({child:"c1"}),/sessionID c1/);
+assert.match(handoffMessage({errors:2}),/agent watoom-critic/);
+assert.match(handoffMessage({direct:BUDGET}),/reply with the final result now/);
+assert.match(handoffMessage({direct:BUDGET,gateCheckpointWritten:true}),/call subagent now/);
+// The knowledge-first note costs nothing and disappears once a lookup happened.
+f=await fixture();
+const kf=e=>e.system.some(s=>/KNOWLEDGE FIRST/.test(s.text));
+assert(kf(await f.context()));
+await f.call("skill",{id:"godot"});
+assert(!kf(await f.context()));
+console.log("PASS rule audit: lookups/knowledge/gate restatements do not loop the coordinator; real failures and receipts still escalate");
+}
+
+{
+// 2026-11-20 wasted-call audit: protected-path rules allow pure reads; ticket requests are validated at write; children learn their area.
+const {shellCannotWrite,shellReadOnly,assertWorkerProtocolAccess,assertTicketRequest}=await import("../../ansible/roles/watoom-code/files/coordinator-guard/index.js");
+const R="/p/.opencode/worker-requests/",G="/data/github/repo/tools/x.py";
+for(const c of [`ls -la ${R} 2>&1 | head -20`,`sed -n 30,80p ${G}`,`git -C /data/github/repo log -1 --format='%h %s' -- x 2>&1`,`diff /config/a.py ${G}`,`find ${R} -name "*.json"`])
+ {assert(shellCannotWrite(c),c);assert.doesNotThrow(()=>assertWorkerProtocolAccess("shell",{command:c}),c);}
+for(const c of [`echo x > ${R}a.json`,`rm ${R}a`,`sed -i s/a/b/ ${G}`,`find ${R} -delete`,`find ${R} -exec rm {} ;`,`ls $(rm ${R}a)`,`echo a | tee ${R}b`,`git -C /data/github/repo commit -am x`,`ls ${R} && touch ${R}x`,`sed -n 'w /tmp/x' ${G}`])
+ {assert(!shellCannotWrite(c),c);assert.throws(()=>assertWorkerProtocolAccess("shell",{command:c}),/WORKER_PROTOCOL_READ_ONLY|SOURCE_REPO_READ_ONLY/,c);}
+assert(!shellReadOnly(`ls -la ${R} 2>&1 | head -20`),"the auto-allow test stays strict");
+const T="/p/.opencode/tickets/";
+assert.throws(()=>assertTicketRequest("write",{path:T+"T-0109.json",content:'{"id":"T-0109","title":"x"}'}),/TICKET_REQUEST_INVALID/);
+assert.throws(()=>assertTicketRequest("write",{path:T+"a.json",content:'{"schema":1,"id":"a","action":"note","text":"x"}'}),/"ticket":"T-NNNN"/);
+assert.doesNotThrow(()=>assertTicketRequest("write",{path:T+"t1-note.json",content:'{"schema":1,"id":"t1-note","action":"note","ticket":"T-0001","text":"x"}'}));
+assert.doesNotThrow(()=>assertTicketRequest("write",{path:T+"new-bug.json",content:'{"schema":1,"id":"new-bug","title":"x"}'}));
+let f=await fixture();
+await f.call("write",{path:T+"T-9.json",content:"{}"}).catch(()=>{});
+assert.equal(f.store.get("session/s").errors||0,0,"an invalid ticket request is guidance, not a failure");
+f.store.set("session/kid",{version:1,direct:0,errors:0,isChild:true,callingAgent:"watoom-builder",reviews:[],calls:[]});
+assert((await f.context("watoom-builder",[],"kid")).system.some(s=>s.text.includes("children/kid/")),"a child is told its own writable area");
+console.log("PASS wasted-call audit: protected-path reads allowed, writes still refused; ticket requests validated at write; child work area named");
+}
+
+{
+const {assertSkillId}=await import("../../ansible/roles/watoom-code/files/coordinator-guard/index.js");
+assert.throws(()=>assertSkillId("skill",{id:"watoom-worker-contracts/references/game-worker.md"}),/read with path \/config\/skills\/watoom-worker-contracts\/references\/game-worker\.md/);
+assert.doesNotThrow(()=>assertSkillId("skill",{id:"watoom-worker-contracts"}));
+let f=await fixture();
+await f.call("skill",{id:"x/references/y.md"}).catch(()=>{});
+assert.equal(f.store.get("session/s").errors||0,0,"a skill-reference mix-up is guidance, not a failure");
+console.log("PASS skill called with a reference path names the exact file to read");
+}

@@ -36,5 +36,24 @@ class AccumulateTests(unittest.TestCase):
         self.assertEqual(state["other"]["generated_tokens"], 999.0)
 
 
+class PublishTests(unittest.TestCase):
+    def test_unloaded_model_keeps_its_lifetime_totals(self):
+        # 2026-11-20 regression: only models reporting in the current poll were published, so a model's all-time
+        # totals disappeared from Grafana as soon as it was unloaded.
+        import json, sys, tempfile
+        with tempfile.TemporaryDirectory() as d:
+            state = pathlib.Path(d) / "state.json"
+            out = pathlib.Path(d) / "out.prom"
+            state.write_text(json.dumps({"swift-qwen38-coder": {"generated_tokens": 31490.0, "_raw_generated_tokens": 0.0}}))
+            original, argv = acc.prom_query, sys.argv
+            acc.prom_query = lambda url, expr: {}  # nothing loaded right now
+            sys.argv = ["acc", "--state-file", str(state), "--output", str(out)]
+            try:
+                self.assertEqual(acc.main(), 0)
+            finally:
+                acc.prom_query, sys.argv = original, argv
+            self.assertIn('watoom_model_perf_lifetime_generated_tokens_total{model="swift-qwen38-coder"} 31490.0', out.read_text())
+
+
 if __name__ == "__main__":
     unittest.main()

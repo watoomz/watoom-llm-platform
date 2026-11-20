@@ -177,3 +177,37 @@ test("registered manual symbols trigger lookups for Ansible, Kubernetes, RHEL ro
   assert.equal(bareAttr.product, "cpp");
   assert.match(answerTopic(cards, bareAttr).line, /no_dangling/);
 });
+
+// ---- 2026-11-20: the live host never delivered a reasoning note (273 answerable doubts in two weeks, zero notes) ----
+test("Godot assignment / set-index errors name the property and its base type", () => {
+  const godot = "SCRIPT ERROR: Invalid assignment of property or key 'repeat' with value of type 'int' on a base object of type 'ImageTexture'.";
+  assert.deepEqual(extractErrorTopics(godot), [{product: "godot", kind: "symbol", query: "ImageTexture.repeat"}]);
+  assert.deepEqual(extractErrorTopics("Invalid set index 'albedo' (on base: 'StandardMaterial3D')"), [{product: "godot", kind: "symbol", query: "StandardMaterial3D.albedo"}]);
+});
+
+test("reasoning is read from the outgoing messages, without any event subscription", async () => {
+  const hooks = {}, tools = {};
+  const ctx = {options: {cards: [fixture]},
+    tool: {transform: async (fn) => fn({add: (x) => { tools[x.name] = x; }}), hook: async (n, cb) => { hooks["tool:" + n] = cb; }},
+    session: {hook: async (n, cb) => { hooks["session:" + n] = cb; }}};          // no ctx.event at all
+  await plugin.setup(ctx);
+  const thinking = {role: "assistant", content: [{type: "reasoning", text: "Wait, does Node.add_kid exist in this version? Let me check."}, {type: "text", text: "ok"}]};
+  const first = {sessionID: "r1", messages: [{role: "user", content: [{type: "text", text: "go"}]}, thinking], system: []};
+  hooks["session:context"](first);
+  assert.equal(first.messages.length, 3);
+  assert.match(first.messages[2].content[0].text, /no reference entry for Node\.add_kid/);
+  const again = {sessionID: "r1", messages: [{role: "user", content: [{type: "text", text: "go"}]}, thinking], system: []};
+  hooks["session:context"](again);
+  assert.equal(again.messages.length, 2, "the same reasoning is read once");
+  const status = JSON.parse((await tools.wlk_status.execute({})).content);
+  assert.equal(status.triggers.reasoning_notes, 1);
+  assert.equal(status.triggers.context_scans, 1);
+});
+
+test("an error carried only in output gets the note in output, leaving content untouched", async () => {
+  const {hooks} = await wire();
+  const event = {tool: "read", status: "completed", sessionID: "o1", result: {output: "SCRIPT ERROR: Invalid call. Nonexistent function 'add_kid' in base 'Node'."}};
+  hooks["tool:execute.after"](event);
+  assert.match(event.result.output, /^SCRIPT ERROR.*\n\nReference lookup/s);
+  assert.equal(event.result.content, undefined);
+});

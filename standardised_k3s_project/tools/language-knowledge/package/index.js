@@ -69,6 +69,8 @@ export async function install(ctx) {
   const reasoningBudget = new Budget({perPrompt: options.triggers?.reasoningPerPrompt ?? 2, perSession: 12});
   const errorBudget = new Budget({perPrompt: options.triggers?.errorsPerPrompt ?? 3, perSession: 30});
   const pending = new Map();   // sessionID -> note to show on the next model call
+  // Trigger counters, reported by wlk_status: these paths are otherwise invisible (a reasoning note is never persisted).
+  const stats = {error_notes: 0, reasoning_topics: 0, reasoning_notes: 0, reasoning_events: 0, context_scans: 0};
   let cleanup;
 
   if (ready && triggers.errors && ctx.tool?.hook) {
@@ -77,32 +79,64 @@ export async function install(ctx) {
       try {
         if (event.status !== "completed" || String(event.tool).startsWith("wlk_")) return;
         const r = event.result ?? {};
-        const text = typeof r.content === "string" ? r.content : Array.isArray(r.content) ? r.content.map((p) => p?.text ?? "").join("\n") : "";
+        // The host passes {output, content, metadata}; built-in tools may carry their text in output only.
+        const fromParts = (v) => typeof v === "string" ? v : Array.isArray(v) ? v.map((p) => p?.text ?? "").join("\n") : "";
+        const text = fromParts(r.content) || fromParts(r.output) || (r.output && typeof r.output === "object" ? JSON.stringify(r.output) : "");
         const found = answers(extractErrorTopics(text), errorBudget, event.sessionID);
         if (!found.length) return;
         const note = "\n\n" + formatNote(found);
-        event.result = {...r, content: typeof r.content === "string" ? r.content + note : [...(Array.isArray(r.content) ? r.content : []), {type: "text", text: note.trim()}]};
+        // Append to the field that carried the text, so the original output is never displaced.
+        if (fromParts(r.content)) event.result = {...r, content: typeof r.content === "string" ? r.content + note : [...r.content, {type: "text", text: note.trim()}]};
+        else if (typeof r.output === "string") event.result = {...r, output: r.output + note};
+        else return;
+        stats.error_notes++;
       } catch { /* a lookup must never break a tool call */ }
     });
   }
-  if (ready && triggers.reasoning && ctx.event?.subscribe && ctx.session?.hook) {
+  const readReasoning = (text, sessionID) => {
+    const found = answers(extractReasoningTopics(text), reasoningBudget, sessionID);
+    if (found.length) { stats.reasoning_topics += found.length; pending.set(sessionID, formatNote(found)); }
+  };
+  if (ready && triggers.reasoning && ctx.session?.hook) {
     // Qwen's "wait, does X exist?" reasoning: look the named API up and show the answer on the NEXT model call, as a plain
     // user-role data message at the END of the request (the cached prefix is untouched; nothing is persisted or looped).
+    // 2026-11-20: the session.reasoning.ended subscription produced no notes in two weeks while 273 answerable doubts
+    // occurred, so the context hook now also reads the newest assistant reasoning straight from the outgoing messages.
+    // Both feeds share the Budget, so one fact is never shown twice.
+    const scanned = new Map();   // sessionID -> Set of reasoning texts already read (bounded)
     const controller = new AbortController();
-    (async () => {
+    if (ctx.event?.subscribe) (async () => {
       for await (const event of ctx.event.subscribe({types: ["session.reasoning.ended"], signal: controller.signal})) {
         try {
           const data = event.data ?? event;
-          const found = answers(extractReasoningTopics(data.text), reasoningBudget, data.sessionID);
-          if (found.length) pending.set(data.sessionID, formatNote(found));
+          stats.reasoning_events++;
+          if (data.sessionID && typeof data.text === "string") readReasoning(data.text, data.sessionID);
         } catch { /* ignore */ }
       }
     })().catch(() => {});
     await ctx.session.hook("prompt", (event) => { reasoningBudget.newPrompt(event.sessionID); errorBudget.newPrompt(event.sessionID); pending.delete(event.sessionID); });
     await ctx.session.hook("context", (event) => {
+      try {
+        const messages = Array.isArray(event.messages) ? event.messages : [];
+        let seen = scanned.get(event.sessionID);
+        if (!seen) { seen = new Set(); scanned.set(event.sessionID, seen); if (scanned.size > 256) scanned.delete(scanned.keys().next().value); }
+        // Only the reasoning since the last user message: older turns were read when they were new.
+        for (let i = messages.length - 1; i >= 0 && messages[i]?.role !== "user"; i--) {
+          const parts = Array.isArray(messages[i]?.content) ? messages[i].content : [];
+          for (const part of parts) {
+            if (part?.type !== "reasoning" || typeof part.text !== "string" || !part.text) continue;
+            const key = part.text.length + ":" + part.text.slice(0, 64) + part.text.slice(-64);
+            if (seen.has(key)) continue;
+            seen.add(key); if (seen.size > 512) seen.delete(seen.values().next().value);
+            stats.context_scans++;
+            readReasoning(part.text, event.sessionID);
+          }
+        }
+      } catch { /* a lookup must never break a model call */ }
       const note = pending.get(event.sessionID);
-      if (!note) return;
+      if (!note || !Array.isArray(event.messages)) return;
       pending.delete(event.sessionID);
+      stats.reasoning_notes++;
       event.messages.push({role: "user", content: [{type: "text", text: note}]});
     });
     cleanup = () => controller.abort();
@@ -137,7 +171,7 @@ export async function install(ctx) {
       execute: guard((i) => ({result: engine.get(i.id, i.detail ?? "full")}))});
     editor.add({name: "wlk_status", options: {codemode: false}, input: {type: "object", properties: {}, additionalProperties: false},
       description: "Knowledge index status: generation, cards, products/versions loaded, cache and memory counters.",
-      execute: async () => ok({ready, load_error: loadError, vector_error: vectorError, status: engine.status()})});
+      execute: async () => ok({ready, load_error: loadError, vector_error: vectorError, status: engine.status(), triggers: stats})});
   });
   return cleanup;
 }

@@ -9,9 +9,9 @@
   "coverage": "tracked source plus untracked code candidates; not runtime deployment proof",
   "counts": {
     "ansible/playbooks": 92,
-    "ansible/roles": 1309,
-    "scripts": 77,
-    "tools": 1445
+    "ansible/roles": 1311,
+    "scripts": 78,
+    "tools": 1449
   },
   "roles": 29,
   "files": [
@@ -1275,8 +1275,8 @@
     },
     {
       "path": "ansible/playbooks/watoom-code-parts.yml",
-      "bytes": 2444,
-      "sha256": "1444dfaa8686c0f799e5d598ce16c992e7646f2c477f98f04b10f97ea1d6942c",
+      "bytes": 2653,
+      "sha256": "8a745a681ef117b2eb05f3ce3fa26d26d754f2b888ffe598bc6ab93d990d8674",
       "scope": "ansible/playbooks",
       "description": "Update selected watoom-code parts",
       "basis": "first named play/task",
@@ -1290,6 +1290,7 @@
         "Image review collector",
         "Image prompt scope",
         "GUI reasoning variants",
+        "Project search scope \\(.rgignore per project group\\)",
         "Kali isolation for built-in agents",
         "SearXNG search plugin",
         "Engine visual diagnosis skill",
@@ -2409,8 +2410,8 @@
     },
     {
       "path": "ansible/roles/homelab_rebuild/tasks/tuning.yml",
-      "bytes": 3812,
-      "sha256": "443787b4d79e16ffcce62ef5308a88aaaccddae019f84d6c2829cf113429217c",
+      "bytes": 5122,
+      "sha256": "cac5c753b9b53eb9e1d741b3825333dde72e224e74854a874702b2bde3608316",
       "scope": "ansible/roles",
       "description": "Homelab Rebuild / Configure sysctl tuning",
       "basis": "first named play/task",
@@ -2421,6 +2422,9 @@
         "\"Homelab Rebuild / Keep the legacy 99-watoom-tuning.conf from overriding swappiness\"",
         "\"Homelab Rebuild / Keep the legacy 99-watoom-tuning.conf from re-enabling the dirty ratios\"",
         "\"Homelab Rebuild / Compress zram swap with zstd\"",
+        "\"Homelab Rebuild / Label the on-disk /tmp directory as tmp\\_t\"",
+        "\"Homelab Rebuild / Create the on-disk /tmp directory\"",
+        "\"Homelab Rebuild / Bind /tmp to the on-disk directory at boot\"",
         "\"Homelab Rebuild / Stop desktop services a server does not use\"",
         "\"Homelab Rebuild / Cap journald disk usage\"",
         "\"Homelab Rebuild / Check active tuned profile\"",
@@ -2821,8 +2825,8 @@
     },
     {
       "path": "ansible/roles/llm-model-lab/files/gpu-controller-router.py",
-      "bytes": 37092,
-      "sha256": "161020df5d3f1b5e293217482cd703a0f464dd45c6e6da9605f9baed8f05fcdf",
+      "bytes": 36768,
+      "sha256": "dbccc4f10dd2b633749fa1261a91e1869f279a596fa650e923190b9fbe536ed3",
       "scope": "ansible/roles",
       "description": "Source component: gpu controller router. Inspect the source before use.",
       "basis": "filename summary",
@@ -2832,8 +2836,8 @@
     },
     {
       "path": "ansible/roles/llm-model-lab/files/gpu-controller.json",
-      "bytes": 3904,
-      "sha256": "0f07e7360d57b8f965473ffb371d3b8d893b609c905b2f834a26fd5cfcbf2d2b",
+      "bytes": 3555,
+      "sha256": "3d4711b6f1f0ab46885a127a7cf8023b263b30bc140b094fde5c2800d728c5db",
       "scope": "ansible/roles",
       "description": "Source component: gpu controller. Inspect the source before use.",
       "basis": "filename summary",
@@ -3053,8 +3057,8 @@
     },
     {
       "path": "ansible/roles/model-manager/defaults/main.yml",
-      "bytes": 2032,
-      "sha256": "6038babdf8d1d72cd81b4f73704c63c5fdb9fd9585db4c58df32d762b417c004",
+      "bytes": 2156,
+      "sha256": "cfb4dcd2bf32bd470a51d341a1493958bf6513775cdc8e9c9a172c68ed58797d",
       "scope": "ansible/roles",
       "description": "Source component: main. Inspect the source before use.",
       "basis": "filename summary",
@@ -3063,8 +3067,8 @@
     },
     {
       "path": "ansible/roles/model-manager/tasks/main.yml",
-      "bytes": 8948,
-      "sha256": "deb583367b9f523f974b36ac753995745479f5f43ac80d43914a09250209b7d1",
+      "bytes": 10457,
+      "sha256": "5cd6d42afa810ffea3f906b0e12f73c9bb547c1f191c84f961ac4a1f27107621",
       "scope": "ansible/roles",
       "description": "Require reviewed immutable manager artifact and source",
       "basis": "first named play/task",
@@ -3079,12 +3083,16 @@
         "Inspect same-name resources before installing",
         "Protect foreign resources from apply",
         "Require scoped immutable SDXL runtime path",
+        "Find published runtime files without the executable container label",
         "Preserve executable container labels only on the published runtime",
         "Create manager-owned state",
         "Create only dedicated model-manager storage",
         "Create root-owned broker runtime directory",
         "Create immutable runtime source directory",
         "Install versioned broker source",
+        "Install the reasoning variant helper the broker runs after registrations \\(single source in the watoom-code role\\)",
+        "Create the root-owned chat template directory",
+        "Install the owner's Qwen3.8 chat template that managed GGUF workloads mount read-only \\(workload.CHAT\\_TEMPLATES\\)",
         "Install existing native admission client without network maintenance actions",
         "Install standard context migration from authoritative application role",
         "Check operator-owned authentication file exists",
@@ -3726,8 +3734,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/defaults/main.yml",
-      "bytes": 18115,
-      "sha256": "9e86f859f76d26c4ebabe602e31287c9d394c11359e1d4740d417d0d58821566",
+      "bytes": 19504,
+      "sha256": "077e5648dad6d406be0efd3baa640423b61469067bfba7e3dbb69c839c95a5b4",
       "scope": "ansible/roles",
       "description": "reverse-engineer-feature",
       "basis": "first named play/task",
@@ -3801,8 +3809,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/coordinator-guard/index.js",
-      "bytes": 142963,
-      "sha256": "c75f3ce3a26736993e3b207252eb63bbb8d48358ed3bf342e2f80399a5cc4f1e",
+      "bytes": 156536,
+      "sha256": "2ef95415bd5b1fde92e86cc5f81a6a78d87f4ce7a129249bed37cc9d6b106d6f",
       "scope": "ansible/roles",
       "description": "Source component: index. Inspect the source before use.",
       "basis": "filename summary",
@@ -3832,8 +3840,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/enable-coordinator-guard.py",
-      "bytes": 2628,
-      "sha256": "2ae8ee8858df9e725b481e39b6b9509cb683e197c6c58e7599141e7bd67f5196",
+      "bytes": 3234,
+      "sha256": "f8536139d370a5dd7bd6a7afcd0767dff3e51cc47812b9fc1f65a1a7f17f90a1",
       "scope": "ansible/roles",
       "description": "Source component: enable coordinator guard. Inspect the source before use.",
       "basis": "filename summary",
@@ -4414,8 +4422,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/native/_src/shared/03_agent_selection_and_handoff_boundaries.md",
-      "bytes": 7610,
-      "sha256": "664f6db31caa7898a5db6503029003f81673190f4b812554291f17afde8742a6",
+      "bytes": 8028,
+      "sha256": "4c870b24b6d37e892b0e3a587d4ca848f302bffc979c90e876d99db8b18ae287",
       "scope": "ansible/roles",
       "description": "Source component: 03 agent selection and handoff boundaries. Inspect the source before use.",
       "basis": "filename summary",
@@ -4424,8 +4432,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/native/_src/shared/10_how_you_work.md",
-      "bytes": 3424,
-      "sha256": "1bd30221f58344de8552a71f14fb68b95bf44dea765a5df7acf43989cb83d299",
+      "bytes": 3997,
+      "sha256": "22bb9a2aa5584000b8ab41c9b72924bd5290ac09d9a2437534f837c1c31fea6d",
       "scope": "ansible/roles",
       "description": "Source component: 10 how you work. Inspect the source before use.",
       "basis": "filename summary",
@@ -4444,8 +4452,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/native/_src/shared/30_memory_and_tickets.md",
-      "bytes": 1603,
-      "sha256": "d3f540b55f1297c8e28f3a24bea57bc4b3e9e26ddcc7906eb224df05721f6da1",
+      "bytes": 1806,
+      "sha256": "31dc7b4bd50035f326743e50a401e73ca0aa34a22314d55df89a1066415240df",
       "scope": "ansible/roles",
       "description": "Source component: 30 memory and tickets. Inspect the source before use.",
       "basis": "filename summary",
@@ -4494,8 +4502,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/native/agents/watoom-3d-modeller.md",
-      "bytes": 15913,
-      "sha256": "48a38a76913a663c9b4bf674f126775d00c02eb81b9371f3e42c2e49e705a9f3",
+      "bytes": 16689,
+      "sha256": "c1a9cb15af70137e13519131c8f2b73bb5d04c0973a43dbb296fc236ffd8867b",
       "scope": "ansible/roles",
       "description": "Source component: watoom 3d modeller. Inspect the source before use.",
       "basis": "filename summary",
@@ -4504,8 +4512,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/native/agents/watoom-adversarial-tester.md",
-      "bytes": 15647,
-      "sha256": "046c2e9acf0f34718160e2836a6f3e1b164e4ff4f4b15d54a6b029f0f66e0971",
+      "bytes": 16423,
+      "sha256": "132380064ec3ce2aa2036e3ce857806ce84a875bbe07547bced48974e980fd67",
       "scope": "ansible/roles",
       "description": "Source component: watoom adversarial tester. Inspect the source before use.",
       "basis": "filename summary",
@@ -4514,8 +4522,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/native/agents/watoom-automation-expert.md",
-      "bytes": 15706,
-      "sha256": "e4949d395c53ebdc422cbb27691ec938ae8f3ff8bf2686121b273637ff2c74c2",
+      "bytes": 16482,
+      "sha256": "1eed6afe3f015f8df8994ad2309965bf3d69c3ca1d1549feb10ba05352ef1666",
       "scope": "ansible/roles",
       "description": "Source component: watoom automation expert. Inspect the source before use.",
       "basis": "filename summary",
@@ -4524,8 +4532,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/native/agents/watoom-blind-tester.md",
-      "bytes": 15627,
-      "sha256": "e1faecec6a148b02a44052f9208fbc9dcd357e9e7ae00cb2b0f80b5552a38f94",
+      "bytes": 16403,
+      "sha256": "7d7e049f0e889f0c39704c4cbb9be005ff933d9d6019041c5b6f2fb29dbbde7c",
       "scope": "ansible/roles",
       "description": "Source component: watoom blind tester. Inspect the source before use.",
       "basis": "filename summary",
@@ -4534,8 +4542,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/native/agents/watoom-builder.md",
-      "bytes": 15680,
-      "sha256": "c2af59367c02804e10c2bfba25cf5c2a83f4a53be83c8fe04a92223c9f086dbb",
+      "bytes": 16456,
+      "sha256": "c7e590a2b6cc0b88986d43d425197b3ce44d765f610d44c08c6878de86857651",
       "scope": "ansible/roles",
       "description": "Source component: watoom builder. Inspect the source before use.",
       "basis": "filename summary",
@@ -4544,8 +4552,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/native/agents/watoom-creative-writer.md",
-      "bytes": 15454,
-      "sha256": "ce42bbdf7b491bbeafc4defa159450c4ce7ab129b7c9b2aa4200f6567b5fd73e",
+      "bytes": 16230,
+      "sha256": "efcce4dab577621991186c7d904eb428da492e4c8a64e0c488a7a0ada0c50db6",
       "scope": "ansible/roles",
       "description": "Source component: watoom creative writer. Inspect the source before use.",
       "basis": "filename summary",
@@ -4554,8 +4562,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/native/agents/watoom-critic.md",
-      "bytes": 16361,
-      "sha256": "c7f5899239cd6c7dabb27c1d41f231f61a0c365bb99fc4d1e5c15c52e4e1f0e1",
+      "bytes": 17137,
+      "sha256": "085f161dacc7b4cf58a924f2b75bf1b26a21416e7f8a961ed00b69c93185c852",
       "scope": "ansible/roles",
       "description": "Source component: watoom critic. Inspect the source before use.",
       "basis": "filename summary",
@@ -4564,8 +4572,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/native/agents/watoom-developer.md",
-      "bytes": 15837,
-      "sha256": "23aa1e02621b7244630e72497ebe2397fb5b5499c6fc7eac6557bbed8afaf621",
+      "bytes": 16613,
+      "sha256": "53ced2180bc2c0b602c82cfe7f6bd7e287d17664f6c7630538633f567f9c33b1",
       "scope": "ansible/roles",
       "description": "Source component: watoom developer. Inspect the source before use.",
       "basis": "filename summary",
@@ -4574,8 +4582,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/native/agents/watoom-game-designer.md",
-      "bytes": 15169,
-      "sha256": "48bbb53625afdfbefc7afdb49ce3513a5c807b45a5644a0e038f6df72b531ea8",
+      "bytes": 15945,
+      "sha256": "d9b6323bedad498f50231cf3d0832a94b19c707b7255945c07ab1080dbb86ebd",
       "scope": "ansible/roles",
       "description": "Source component: watoom game designer. Inspect the source before use.",
       "basis": "filename summary",
@@ -4584,8 +4592,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/native/agents/watoom-integration-expert.md",
-      "bytes": 15934,
-      "sha256": "1bddba00e10e56ca6382abc72a4b256cc784a9c0ae89151216d03c913dd4cea9",
+      "bytes": 16710,
+      "sha256": "84a25cea27e413845ad441c268452ff760af1f9408975702846e476bf350c270",
       "scope": "ansible/roles",
       "description": "Source component: watoom integration expert. Inspect the source before use.",
       "basis": "filename summary",
@@ -4594,8 +4602,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/native/agents/watoom-investigator.md",
-      "bytes": 14993,
-      "sha256": "be5bbdb2f27be831d5ee7781c4c5fb638d5d32cbe66debc102e68c9af6045fa2",
+      "bytes": 15769,
+      "sha256": "91ffbd3ddb6a3e2c82eddbcadd16f675858355dc55f9fbdb5fff2a4a6edd639b",
       "scope": "ansible/roles",
       "description": "Source component: watoom investigator. Inspect the source before use.",
       "basis": "filename summary",
@@ -4604,8 +4612,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/native/agents/watoom-kali.md",
-      "bytes": 18964,
-      "sha256": "c216a4904d9cc3fedc8195e11e84ba3aa79219facffe028edf6ceac93bd81ab1",
+      "bytes": 19740,
+      "sha256": "bab48b8b3220dc9242fa9154acb24e970941f0b652b19909b5cbdaf15ce46ad3",
       "scope": "ansible/roles",
       "description": "Source component: watoom kali. Inspect the source before use.",
       "basis": "filename summary",
@@ -4614,8 +4622,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/native/agents/watoom-qa-tester.md",
-      "bytes": 15209,
-      "sha256": "d57f90e39d5945334094d19bb67336a022dc1515891699f7bd7e31460685bf8b",
+      "bytes": 15985,
+      "sha256": "0a6e8a26818489dce0e73ffd7b7870c31c7ca0f79d4611e13357f43d18f49daa",
       "scope": "ansible/roles",
       "description": "Source component: watoom qa tester. Inspect the source before use.",
       "basis": "filename summary",
@@ -4624,8 +4632,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/native/agents/watoom-researcher.md",
-      "bytes": 15257,
-      "sha256": "e8f05787d38150dafc8a986f11c6d273a8538c00a85aecb7ea7f0e319a2856d0",
+      "bytes": 16033,
+      "sha256": "e0f88bdbf192085a53d45ee29adfff3412a0e884b1a2e1f94394419c2cd73000",
       "scope": "ansible/roles",
       "description": "Source component: watoom researcher. Inspect the source before use.",
       "basis": "filename summary",
@@ -4634,8 +4642,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/native/agents/watoom-reviewer.md",
-      "bytes": 15195,
-      "sha256": "0479acd2125ff0ffa92d29c869b1554f1ec045f3fb72d87d37d8f5fad264690b",
+      "bytes": 15971,
+      "sha256": "4cb110a5395cb2d0e31577f22f539949dc768835ee72db1e9b3b6efed767ca82",
       "scope": "ansible/roles",
       "description": "Source component: watoom reviewer. Inspect the source before use.",
       "basis": "filename summary",
@@ -4644,8 +4652,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/native/agents/watoom-systems-designer.md",
-      "bytes": 15344,
-      "sha256": "334b512e84b227c8071686ea02cab3a2df365340e3f41e22150f273c4e4ee218",
+      "bytes": 16120,
+      "sha256": "3b537b4af92562fb1af39763b6f7f992b7986904f2ce5253483d17458ad506ad",
       "scope": "ansible/roles",
       "description": "Source component: watoom systems designer. Inspect the source before use.",
       "basis": "filename summary",
@@ -4654,8 +4662,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/native/agents/watoom-workflow.md",
-      "bytes": 22052,
-      "sha256": "07337966591b2b79e84f31d6a86b74205670c6c3b3cc9cdca179ffe98c41e92d",
+      "bytes": 23246,
+      "sha256": "e9166da8be392fd5149fcc5b21af9845bfafc09d74e9c644525d2ae02a1ec80f",
       "scope": "ansible/roles",
       "description": "Source component: watoom workflow. Inspect the source before use.",
       "basis": "filename summary",
@@ -4808,6 +4816,16 @@
         "--to-status",
         "--webhook-file"
       ]
+    },
+    {
+      "path": "ansible/roles/watoom-code/files/project-group.rgignore",
+      "bytes": 486,
+      "sha256": "b1bd575154c9d50c50fe1ea3f022c74e0cf081e1463d05f0eb89626e4d3255eb",
+      "scope": "ansible/roles",
+      "description": "Source component: project group. Inspect the source before use.",
+      "basis": "filename summary",
+      "code": false,
+      "vendored": false
     },
     {
       "path": "ansible/roles/watoom-code/files/projects/magpie-flight-godot-candidate-AGENTS.md",
@@ -11519,8 +11537,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/skills/watoom-godot-game/SKILL.md",
-      "bytes": 18961,
-      "sha256": "4070a5994c90e3cd0e6ca0b71426ba0fc4a463b120a8c10fce6bff9bb1252d47",
+      "bytes": 19147,
+      "sha256": "8d202486bef0764f61a3a897683078411be5d7c8228824c3185078e5f6ff7358",
       "scope": "ansible/roles",
       "description": "Source component: SKILL. Inspect the source before use.",
       "basis": "filename summary",
@@ -12502,8 +12520,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/skills/watoom-godot-game/scripts/gg_godot.py",
-      "bytes": 11397,
-      "sha256": "eba68c07265fd16b0ad4d464e70613839517b0da9a989fd1601ca25f23464391",
+      "bytes": 11780,
+      "sha256": "2bbe407caba305ef2f424c0234ecfe5a15e0207eaec92867f9d4f3a07d9f9041",
       "scope": "ansible/roles",
       "description": "The ONLY way scripts in this skill start Godot. Builds argv, runs it under xvfb, reads the result, scans the log.",
       "basis": "module docstring",
@@ -12884,8 +12902,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/skills/watoom-godot-game/scripts/test_gg_godot.py",
-      "bytes": 5048,
-      "sha256": "3c6193f07a327ca63e3b77508d8f0867cad2405df4ad3c9f78226fdfb42844ee",
+      "bytes": 5493,
+      "sha256": "71e5521c24a907267d30c1bfd1a864d1a1dbc274272cd1ba6e9133e2ece6e7b9",
       "scope": "ansible/roles",
       "description": "Test fixture/check: test gg godot. Inspect the source before use.",
       "basis": "filename summary",
@@ -16216,8 +16234,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/skills/watoom-worker-contracts/SKILL.md",
-      "bytes": 2190,
-      "sha256": "1322860136503e48ed0f76bf72205b5011d9e3d7e84d59466de5a1579096cdbc",
+      "bytes": 2241,
+      "sha256": "f22ccccb7ce5140cb7cbf7571b0dcda75b457c6648ca9d4082986597c880de6b",
       "scope": "ansible/roles",
       "description": "Source component: SKILL. Inspect the source before use.",
       "basis": "filename summary",
@@ -16236,8 +16254,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/files/skills/watoom-worker-contracts/references/game-worker.md",
-      "bytes": 9256,
-      "sha256": "404333608d4fea569a60ac9bccf464be4e7fb71da29200e493bfecfc7ed0c218",
+      "bytes": 10293,
+      "sha256": "d6b4564a4cefd3bec625e8876bace81c67628829188ac25b54f66f0040a03b16",
       "scope": "ansible/roles",
       "description": "Source component: game worker. Inspect the source before use.",
       "basis": "filename summary",
@@ -16711,8 +16729,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/tasks/main.yml",
-      "bytes": 16493,
-      "sha256": "81d2394e9c227f661ca11ab5ebbdcd3b475e59569ef9bde2ce302380aaa55717",
+      "bytes": 16583,
+      "sha256": "cb06867573bec4aa7cff09d6b35dc4a2f19c8d43205a227a4752e6a7fa36fd35",
       "scope": "ansible/roles",
       "description": "Install canonical project and capture layout",
       "basis": "first named play/task",
@@ -16725,6 +16743,7 @@
         "Compile and load SELinux module",
         "Persist project group SELinux labels",
         "Apply project group labels",
+        "Search scope for project groups",
         "Require isolated staging and immutable release",
         "Create private staging directories",
         "Install maintained native skills",
@@ -16874,15 +16893,16 @@
     },
     {
       "path": "ansible/roles/watoom-code/tasks/reasoning_variants.yml",
-      "bytes": 494,
-      "sha256": "1b8f75608debb256ced50f6ccefd6a42ec46241009c87b806e383c16b02d29b9",
+      "bytes": 866,
+      "sha256": "bee677e213ea1575d7f867d6cc784c619418cf68c4de0437c6c99f5cd1f9a1b9",
       "scope": "ansible/roles",
       "description": "Offer xhigh, medium, low and off reasoning variants without replacing user settings",
       "basis": "first named play/task",
       "code": false,
       "vendored": false,
       "task_names": [
-        "Offer xhigh, medium, low and off reasoning variants without replacing user settings"
+        "Offer xhigh, medium, low and off reasoning variants without replacing user settings",
+        "Record the reasoning variant spec for the Model Manager broker, which re-applies it after any registration"
       ],
       "role_references": []
     },
@@ -16900,6 +16920,20 @@
         "Install rig project sync timer",
         "Install rig project sync schedule",
         "Enable rig project sync"
+      ],
+      "role_references": []
+    },
+    {
+      "path": "ansible/roles/watoom-code/tasks/search_scope.yml",
+      "bytes": 334,
+      "sha256": "0818f6bf46f88eb28a3c69d59e1307a065f44d82cc5555d9f235c5a53c4a3870",
+      "scope": "ansible/roles",
+      "description": "Keep engine caches and per-job project copies out of WatooM-Code searches",
+      "basis": "first named play/task",
+      "code": false,
+      "vendored": false,
+      "task_names": [
+        "Keep engine caches and per-job project copies out of WatooM-Code searches"
       ],
       "role_references": []
     },
@@ -17030,8 +17064,8 @@
     },
     {
       "path": "ansible/roles/watoom-code/templates/resources.json.j2",
-      "bytes": 29984,
-      "sha256": "7e72c16bc482ac4232d91c04bf20a135142e12ebdc11c54de06c3450f44b8e9b",
+      "bytes": 29986,
+      "sha256": "5327683d1c3900d28c85f057cecfb13f6a2e2c66a6848d0055adcf23ae303cac",
       "scope": "ansible/roles",
       "description": "Source component: resources.json. Inspect the source before use.",
       "basis": "filename summary",
@@ -17574,6 +17608,21 @@
       "options": []
     },
     {
+      "path": "scripts/gpu-controller-reconfigure.py",
+      "bytes": 7609,
+      "sha256": "89cab07774002fa3a380b217c8076b3cf2bf86434bdf232136c7654696b97f04",
+      "scope": "scripts",
+      "description": "Apply a changed manifest to a STOPPED \\(replicas 0\\) GPU-controller model deployment and re-approve its identity.",
+      "basis": "module docstring",
+      "code": true,
+      "vendored": false,
+      "options": [
+        "--apply",
+        "--deployment",
+        "--manifest"
+      ]
+    },
+    {
       "path": "scripts/gpu-controller-repin-primary.py",
       "bytes": 4610,
       "sha256": "be15cea9cd18784c5218af4a5615e905c171e9865369d21168d9a6dc540bfccb",
@@ -17938,8 +17987,8 @@
     },
     {
       "path": "scripts/tests/test_watoom_model_perf_accumulator.py",
-      "bytes": 1678,
-      "sha256": "940838c4e97424a2bcde7c2d9612f581848d2c19e318de1703cf4bb1a2daac06",
+      "bytes": 2760,
+      "sha256": "52b08f060450c45bfe86eb058f2a3d555af1d522bb0dc8b98464caa0e2bba905",
       "scope": "scripts",
       "description": "Test fixture/check: test watoom model perf accumulator. Inspect the source before use.",
       "basis": "filename summary",
@@ -18021,8 +18070,8 @@
     },
     {
       "path": "scripts/watoom-model-perf-accumulator.py",
-      "bytes": 5986,
-      "sha256": "2b4bc4ca79319bc3447ce9f17a3d8aae3b3fbf3c32a77de33acd0db16546ec1b",
+      "bytes": 6111,
+      "sha256": "4234e65a039bc0637045ad8c13436e85608f437cdb837ddebd042df8d1162856",
       "scope": "scripts",
       "description": "Accumulate lifetime per-model performance counters for Grafana's all-time comparison panel.",
       "basis": "module docstring",
@@ -18036,8 +18085,8 @@
     },
     {
       "path": "scripts/watoom-node-textfile.sh",
-      "bytes": 2724,
-      "sha256": "9680459ef55034ed4d8d13d83ecb2cdbab8c3d3716735c0f4f53ebb87d0d5403",
+      "bytes": 5779,
+      "sha256": "f3736229c040e2f52caf20a30239ff4d623910544be181f5b62a83ebb1c3d801",
       "scope": "scripts",
       "description": "Source component: watoom node textfile. Inspect the source before use.",
       "basis": "filename summary",
@@ -18613,8 +18662,8 @@
     },
     {
       "path": "tools/break-glass/break_glass.py",
-      "bytes": 28316,
-      "sha256": "6e856339002584514ef2ef1ef74422679c8aedd290fc0fe1dd597628e00cbca7",
+      "bytes": 31945,
+      "sha256": "7c6733670ab866652d698dabb8de1ee55b310a910410509bea28888d4800f686",
       "scope": "tools",
       "description": "Break-glass recovery for the LLM / inference stack.",
       "basis": "module docstring",
@@ -18627,8 +18676,8 @@
     },
     {
       "path": "tools/break-glass/test_break_glass.py",
-      "bytes": 8912,
-      "sha256": "88caea3511f820619d350d224dc9a8a1f1563d7bd6ea055d12a36e36e2e34418",
+      "bytes": 10198,
+      "sha256": "c95665ef3c34d2544c4c0fb6945deff02bf621d20aae7ad3847660917c209b8b",
       "scope": "tools",
       "description": "Test fixture/check: test break glass. Inspect the source before use.",
       "basis": "filename summary",
@@ -25616,8 +25665,8 @@
     },
     {
       "path": "tools/language-knowledge/package/index.js",
-      "bytes": 10447,
-      "sha256": "b2f2efebdd3892a1b93ba5b20a7e87b6afbec3a402b6638f9bddeff6c6e3dbb0",
+      "bytes": 12950,
+      "sha256": "d99f819076cd5d66b323a63826a4c6e409666e068fc961368edac2ed1b1d1c7c",
       "scope": "tools",
       "description": "Source component: index. Inspect the source before use.",
       "basis": "filename summary",
@@ -25637,8 +25686,8 @@
     },
     {
       "path": "tools/language-knowledge/package/triggers.js",
-      "bytes": 17973,
-      "sha256": "0e01b57e0cded32419f57451a9ce850f2643be65267349e07d629572034e9e1b",
+      "bytes": 18298,
+      "sha256": "122757b9f2e157fc2bf4a169abd1ab9dd615e84e6111488cb6d8ea74b9bfff5d",
       "scope": "tools",
       "description": "Source component: triggers. Inspect the source before use.",
       "basis": "filename summary",
@@ -25909,8 +25958,8 @@
     },
     {
       "path": "tools/language-knowledge/tests/triggers.test.mjs",
-      "bytes": 12974,
-      "sha256": "ca40685ca5874786c598aaad7301798e0bf58944ce5c0bd5323d93a69c1db671",
+      "bytes": 15415,
+      "sha256": "7972216b6f4a9e94bb0e7830e510a43e61babcd5afb1a2e6ca7de440a34838cb",
       "scope": "tools",
       "description": "Test fixture/check: triggers.test. Inspect the source before use.",
       "basis": "filename summary",
@@ -25971,8 +26020,8 @@
     },
     {
       "path": "tools/llm/bge/embed_proxy.py",
-      "bytes": 10781,
-      "sha256": "3c3ad3f3eac0dc8b5dcc925a414c56e2fede5ffbf485e946a398ffe95611c81c",
+      "bytes": 12580,
+      "sha256": "5b87b35112b9a41ea53c5eb392151926aeb86951fba0c4fb3baf235930510eb7",
       "scope": "tools",
       "description": "OpenAI-compatible /v1/embeddings front end for a llama.cpp BGE server.",
       "basis": "module docstring",
@@ -25987,6 +26036,7 @@
         "--cls-id",
         "--concurrency",
         "--host",
+        "--max-batch-wait",
         "--model",
         "--port",
         "--sep-id"
@@ -25994,8 +26044,8 @@
     },
     {
       "path": "tools/llm/bge/tests/test_embed_proxy.py",
-      "bytes": 5639,
-      "sha256": "ed22506a5fe076032865069136c0e21a1f5c1b5c3e06e0f27996097f92aa9fb5",
+      "bytes": 7116,
+      "sha256": "de940a4414642223f2f4d3b06eaa18aab5b488801a91cefdc03200bb2a176702",
       "scope": "tools",
       "description": "Test fixture/check: test embed proxy. Inspect the source before use.",
       "basis": "filename summary",
@@ -26499,8 +26549,8 @@
     },
     {
       "path": "tools/model-manager/broker.py",
-      "bytes": 31117,
-      "sha256": "245b7a7af3d10bc3b010d669f0ffa1744a0738bf63645a0128b2f66a9a524d13",
+      "bytes": 32199,
+      "sha256": "04e86a323d28ec834523ee15ac59cb23314ea8cff23653c8e66d85eace44f5ee",
       "scope": "tools",
       "description": "Root-only bounded registration broker. No scale/exec or arbitrary kubectl API.",
       "basis": "module docstring",
@@ -26666,8 +26716,8 @@
     },
     {
       "path": "tools/model-manager/operations.py",
-      "bytes": 15243,
-      "sha256": "980f6cfb60cb945575059fa718b85d98da3a4e6a04598958659332ecae17e2a6",
+      "bytes": 19100,
+      "sha256": "7a6ffc66449758b298f1bf185c11af8ceaa9dc9a585c4ed58db8aa6f24d59803",
       "scope": "tools",
       "description": "Serialized managed artifact installation/removal, preserving shared references.",
       "basis": "module docstring",
@@ -26727,6 +26777,20 @@
       "vendored": false
     },
     {
+      "path": "tools/model-manager/reregister.py",
+      "bytes": 3463,
+      "sha256": "8e63538dbd20936412342f68854a98c818121ee3cadb466d47cb9636c4e2bb24",
+      "scope": "tools",
+      "description": "Operator entry point for Operations.reregister \\(T-0123\\): retire \\+ register a Model Manager model again so it picks up the broker's current workload \\(e.g. --metrics, Swift's runtime\\), files and mm-\\* identity kept.",
+      "basis": "module docstring",
+      "code": true,
+      "vendored": false,
+      "options": [
+        "--list",
+        "--set"
+      ]
+    },
+    {
       "path": "tools/model-manager/runtime_payload.py",
       "bytes": 8400,
       "sha256": "3e65bbe6da9aaa41f47f3cd9be5e63f00ce9baee5416ad7a3523fab72de26e6c",
@@ -26784,8 +26848,8 @@
     },
     {
       "path": "tools/model-manager/settings.py",
-      "bytes": 10783,
-      "sha256": "53b89e673b4198c77372950f76536aeac5ea6d5820c54ce221eaed61b84272e1",
+      "bytes": 11206,
+      "sha256": "17ca434a0f6b67574b691d70bfdc406f84c3c52ba6c0ecde684b056325d0a7ac",
       "scope": "tools",
       "description": "Typed settings and explicit, revision-scoped provenance.",
       "basis": "module docstring",
@@ -26843,8 +26907,8 @@
     },
     {
       "path": "tools/model-manager/test_core.py",
-      "bytes": 3599,
-      "sha256": "b73751a465cb7e57f4bb8fa466db90090c81d75c03120b2e949b82b66105112b",
+      "bytes": 3664,
+      "sha256": "700aeb4cca4c8d99b1cf9dfc0ba568b07973c0fe9f6f859d1bc4c8ac80c36744",
       "scope": "tools",
       "description": "Test fixture/check: test core. Inspect the source before use.",
       "basis": "filename summary",
@@ -26964,8 +27028,8 @@
     },
     {
       "path": "tools/model-manager/test_lora_mtp.py",
-      "bytes": 11161,
-      "sha256": "b1a279ed207165c10fead3406abdbaa4d1133be3a40885a96ae872b8f7cbed91",
+      "bytes": 12863,
+      "sha256": "21304f6cc5fc22d0c9ffaaf08a6a8fcaa1e159e286b106e481799609cfcac9f1",
       "scope": "tools",
       "description": "T-0086: GGUF LoRA adapters on an installed GGUF base, MTP speculation proven from the GGUF header, real names and the read-only all-models inventory row parsing.",
       "basis": "module docstring",
@@ -26986,10 +27050,21 @@
     },
     {
       "path": "tools/model-manager/test_operations.py",
-      "bytes": 6202,
-      "sha256": "e9018b49554f19a24ff9fbca9bd7addeaaf7f4bcf93834624223d6c002fa4609",
+      "bytes": 9622,
+      "sha256": "803b2c55cf273f7e17d59cb8fa1005a77efb7facaafa6348946a1c06c6483e4b",
       "scope": "tools",
       "description": "Test fixture/check: test operations. Inspect the source before use.",
+      "basis": "filename summary",
+      "code": true,
+      "vendored": false,
+      "options": []
+    },
+    {
+      "path": "tools/model-manager/test_reasoning_variants.py",
+      "bytes": 1253,
+      "sha256": "976f6bb8c7c34c031327bc7bfc0c9a2a01700bb14dbd4a6f3f9dc99ddc55b033",
+      "scope": "tools",
+      "description": "Test fixture/check: test reasoning variants. Inspect the source before use.",
       "basis": "filename summary",
       "code": true,
       "vendored": false,
@@ -27083,8 +27158,8 @@
     },
     {
       "path": "tools/model-manager/workload.py",
-      "bytes": 7765,
-      "sha256": "07d8cadc909a5cf53d83fa192600a657e93a51fcec88c2ec202a81135c3ca6cf",
+      "bytes": 9132,
+      "sha256": "6e03d76b99459756b4c9cb86a1f6ce4f7bd4cfbd03ccca534b77a02ffa94781c",
       "scope": "tools",
       "description": "Fixed owned workloads at replicas zero; no replica writer in this module.",
       "basis": "module docstring",
@@ -30429,8 +30504,8 @@
     },
     {
       "path": "tools/watoom-code/asset_capture_bridge.py",
-      "bytes": 11238,
-      "sha256": "ccb8f44db171a0aaefd03eb4e86da37aa47b372476fa7f5fa905da5100136873",
+      "bytes": 11229,
+      "sha256": "0063adc829e5e95fcb896d0c9e0472b5ebdb068596ff6a6df99cdfc053aee6c9",
       "scope": "tools",
       "description": "Native declarative capture bridge, dispatched under the existing worker lock.",
       "basis": "module docstring",
@@ -30440,8 +30515,8 @@
     },
     {
       "path": "tools/watoom-code/asset_capture_contract.py",
-      "bytes": 7690,
-      "sha256": "083c9c4674652e3045209c571cba86489eee406b6498529887126bb8e85150d7",
+      "bytes": 8299,
+      "sha256": "d912cac620773a38ecdc4c14aef9489e82ff1e8699d4cb14929d5c173c6f5cfb",
       "scope": "tools",
       "description": "Declarative asset capture contract shared by the operator and tests.",
       "basis": "module docstring",
@@ -31031,8 +31106,8 @@
     },
     {
       "path": "tools/watoom-code/game_godot_game.py",
-      "bytes": 18068,
-      "sha256": "2eda646ad7c1d7ef90e852d828e3ea21d882a1894d397e007af84d582d478673",
+      "bytes": 20963,
+      "sha256": "96dca968d7080a51c4c4531ff95c0d13db770c04c8a05fe31543f28ea91b1329",
       "scope": "tools",
       "description": "Operator-side typed watoom-godot-game job for a native game-worker request; the root dispatcher is the only caller.",
       "basis": "module docstring",
@@ -31062,8 +31137,8 @@
     },
     {
       "path": "tools/watoom-code/game_session_watchdog.py",
-      "bytes": 8498,
-      "sha256": "fedceb701be40f3c22401fa16201935b554993ea3d9365ce85a5e5e5b44d3722",
+      "bytes": 10036,
+      "sha256": "0c853f07e41cb2e237691392eccfb592169c8547df6f78abadb762f12a97bb00",
       "scope": "tools",
       "description": "Watchdog for game-project coordinator sessions that \"just stop\".",
       "basis": "module docstring",
@@ -31128,8 +31203,8 @@
     },
     {
       "path": "tools/watoom-code/game_worker_bridge.py",
-      "bytes": 37915,
-      "sha256": "e946c5ad3f234fc669317a69787d7e803d69f3b37036cba30d8f05cceb5ae430",
+      "bytes": 38757,
+      "sha256": "60e06ba863ce1a03f198dbf6164cdcdc8e1eec691a983ac79958b5883e508c93",
       "scope": "tools",
       "description": "Validate native worker requests and dispatch fixed operator-owned helpers.",
       "basis": "module docstring",
@@ -31150,8 +31225,8 @@
     },
     {
       "path": "tools/watoom-code/godot_game_spec.py",
-      "bytes": 13761,
-      "sha256": "22d9fecad48048d83dbf9dd5ab03899b989d31da30de6b47c25255d54d9ca997",
+      "bytes": 13815,
+      "sha256": "ecfcdb6ae44b4f154480f960363f470b9f42d2949d82aa677b29f8faaca0396b",
       "scope": "tools",
       "description": "Typed watoom-godot-game job: a fixed list of skill commands run against a staged game project; no shell, no paths, no engine flags.",
       "basis": "module docstring",
@@ -32636,6 +32711,16 @@
       "vendored": false
     },
     {
+      "path": "tools/watoom-code/source/memory-learning-20261121.json",
+      "bytes": 1280,
+      "sha256": "67e0a22011e167dd577dc1447119081c1dbeafa920014029c6e42b5c35de8aaf",
+      "scope": "tools",
+      "description": "Source component: memory learning 20261121. Inspect the source before use.",
+      "basis": "filename summary",
+      "code": false,
+      "vendored": false
+    },
+    {
       "path": "tools/watoom-code/source/port-v2.2.5-20261105.json",
       "bytes": 1757,
       "sha256": "2110b3c0ab79b51d97617c6090a027404817196c28ad74221a151d22310c8a7d",
@@ -32802,8 +32887,8 @@
     },
     {
       "path": "tools/watoom-code/test-coordinator-guard.mjs",
-      "bytes": 60783,
-      "sha256": "14fd29f3c7d65a5ba0bc1849d966f99910d9b135805d2a3914e88b186d2c2896",
+      "bytes": 67892,
+      "sha256": "1598b87e5f40c8ece84eed85c08f64667828801cbe559e67964a73f52f7a22af",
       "scope": "tools",
       "description": "Test fixture/check: test coordinator guard. Inspect the source before use.",
       "basis": "filename summary",
@@ -32835,8 +32920,8 @@
     },
     {
       "path": "tools/watoom-code/test-game-worker.mjs",
-      "bytes": 8101,
-      "sha256": "147dbcbb3f3fc8b80346814332a50b047008b8d38d40b77f70a63a391ecdcfd5",
+      "bytes": 8311,
+      "sha256": "df3538ba7df303837e9beebb11f409bb25681a1d20c615408cd526a9628c9d82",
       "scope": "tools",
       "description": "Test fixture/check: test game worker. Inspect the source before use.",
       "basis": "filename summary",
@@ -32846,8 +32931,8 @@
     },
     {
       "path": "tools/watoom-code/test-godot-external-only.mjs",
-      "bytes": 2232,
-      "sha256": "44b546544ea23ca3c3b9150ccd0637fbdc6bafcbd0661c8795d7eb7c205959ea",
+      "bytes": 4290,
+      "sha256": "12eccd5566235640216847562cf49615554d261566fda051fed11a5def412b57",
       "scope": "tools",
       "description": "Test fixture/check: test godot external only. Inspect the source before use.",
       "basis": "filename summary",
@@ -32890,8 +32975,8 @@
     },
     {
       "path": "tools/watoom-code/test-prompt-guard-consistency.mjs",
-      "bytes": 2279,
-      "sha256": "d629c87ac1f4acbddbd5b9477d2aa8a02badade0b658740a9be5d74162895961",
+      "bytes": 2417,
+      "sha256": "a097c9b6287beb0f8e649b578ca9d81442a00fa54f24bbbe67c16193102677c8",
       "scope": "tools",
       "description": "Test fixture/check: test prompt guard consistency. Inspect the source before use.",
       "basis": "filename summary",
@@ -33044,8 +33129,8 @@
     },
     {
       "path": "tools/watoom-code/test_game_godot_game.py",
-      "bytes": 6674,
-      "sha256": "10616cd3c27417bfc036a1003d92963f1cac4b780a39baf071a54e51a8bb873c",
+      "bytes": 7708,
+      "sha256": "1fa224d73b7333d0a7733c11745d83b722d7bc1ca2fabd3fd1cf3943fee5f29b",
       "scope": "tools",
       "description": "Test fixture/check: test game godot game. Inspect the source before use.",
       "basis": "filename summary",
@@ -33380,9 +33465,20 @@
       "options": []
     },
     {
+      "path": "tools/watoom-code/tests/test_game_session_watchdog.py",
+      "bytes": 1980,
+      "sha256": "11e46fe829a482306842a4f7edec51f7bef2682db969b90f43b86db11e243378",
+      "scope": "tools",
+      "description": "Test fixture/check: test game session watchdog. Inspect the source before use.",
+      "basis": "filename summary",
+      "code": true,
+      "vendored": false,
+      "options": []
+    },
+    {
       "path": "tools/watoom-code/tests/test_game_worker_bridge.py",
-      "bytes": 8776,
-      "sha256": "9e9fadb679ae6205d0196e11ca20fb7878b741f2c8cd9eb04ba8ace067c5b692",
+      "bytes": 11037,
+      "sha256": "c0d5b252ff652c6786cbbe086cc31b6ee4ad9319bdae35aa0e47b893e4a3635b",
       "scope": "tools",
       "description": "Test fixture/check: test game worker bridge. Inspect the source before use.",
       "basis": "filename summary",

@@ -5,10 +5,12 @@ Returns the stack to a known good state when gates, claims, holds or workers are
 fix them by hand. Two modes, both started from the Glance Command Center (PIN protected) or by the root operator:
 
   stale  Clears only what is provably orphaned: execution claims whose owner is interrupted and idle, finished or
-         very old worker pods/jobs/units, and a GPU owner whose process has ended. Live work is never touched.
+         very old worker pods/jobs/units, a GPU owner whose process has ended, and GPU deployment identity records
+         left stale by a deployment that was deleted and recreated instead of scaled. Live work is never touched.
   force  Stops the app, stops workers, repairs the app database (claims, queued inbox, running jobs), removes a
-         held deployment guard, recovers GPU ownership through the GPU controller, restarts the router, brings the
-         app back and checks health. Running work is interrupted; session history is preserved.
+         held deployment guard, reconciles stale GPU deployment identity records, recovers GPU ownership through
+         the GPU controller, restarts the router, brings the app back and checks health. Running work is
+         interrupted; session history is preserved.
 
 Every run snapshots the app database first and writes an evidence bundle under STATE/runs/<timestamp>/.
 `diagnose` is read-only. The root service runs `scan`, which also keeps STATE/status.json fresh for Glance.
@@ -17,6 +19,7 @@ import argparse
 import contextlib
 import fcntl
 import glob
+import hashlib
 import json
 import os
 import pathlib
@@ -34,6 +37,8 @@ GUARD_FILE = APP_DIR / "watoom-release-guard.json"
 GPU_STATE = pathlib.Path("/data/ai/helper-scripts/state/gpu-controller")
 GPU_SOCKET = pathlib.Path("/data/ai/helper-scripts/state/gpu-controller-private/worker.sock")
 GPU_CODE = pathlib.Path("/data/ai/helper-scripts/gpu-controller")
+GPU_CONTROLLER_CONFIG = pathlib.Path("/data/ai/helper-scripts/config/gpu-controller.json")
+GPU_CONTROLLER_UNIT = "watoom-gpu-controller.service"
 APP_NS, APP_DEPLOY = "watoom-code", "watoom-code"
 LLM_NS, ROUTER_DEPLOY = "llama-cpp", "llm-router"
 WORKER_LABEL = "app=watoom-toolkit-worker"
@@ -233,13 +238,64 @@ def owner_ended(status):
     return state not in ("active", "activating", "deactivating")
 
 
+def deployment_spec_digest(obj):
+    """Mirrors the GPU controller's own identity hash (g3h_service.ProductionActuator._get)."""
+    spec = dict(obj["spec"])
+    spec.pop("replicas", None)
+    return hashlib.sha256(json.dumps(spec, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def identity_mismatches():
+    """Deployments whose recorded identity no longer matches the live object: it was deleted and
+    recreated (e.g. during a model decommission) instead of scaled, which otherwise wedges the
+    controller permanently -- it can neither start (cutover-proof check) nor scale that name again
+    (_get identity check)."""
+    config = json.loads(GPU_CONTROLLER_CONFIG.read_text())
+    stale = []
+    for name, expected in config.get("deployment_identity", {}).items():
+        try:
+            obj = kub_json("-n", LLM_NS, "get", "deploy", name)
+        except RuntimeError:
+            stale.append(name)  # deployment no longer exists at all
+            continue
+        if obj["metadata"]["uid"] != expected.get("uid") or deployment_spec_digest(obj) != expected.get("spec_sha256"):
+            stale.append(name)
+    return stale
+
+
+def repair_deployment_identity(names):
+    """Drop stale deployment_identity records for recreated/removed deployments and refresh their
+    Service URL, then restart the controller so it picks up the corrected config. Only removes the
+    identity record (which the running config no longer needs to match); never touches urls/models
+    entries beyond refreshing the ClusterIP, so the deployment stays usable."""
+    if not names:
+        return "no stale identity records"
+    config = json.loads(GPU_CONTROLLER_CONFIG.read_text())
+    for name in names:
+        config["deployment_identity"].pop(name, None)
+        try:
+            svc = kub_json("-n", LLM_NS, "get", "svc", name)
+            config["urls"][name] = "http://%s:%d" % (svc["spec"]["clusterIP"], svc["spec"]["ports"][0]["port"])
+        except (RuntimeError, KeyError, IndexError):
+            pass  # service gone too; leave the URL for an operator to remove the model entirely
+    atomic_write(GPU_CONTROLLER_CONFIG, config, 0o600)
+    run(["systemctl", "restart", GPU_CONTROLLER_UNIT], timeout=30)
+    deadline = time.monotonic() + 30
+    while time.monotonic() < deadline:
+        if run(["systemctl", "is-active", GPU_CONTROLLER_UNIT], check=False).stdout.strip() == "active":
+            return "reconciled identity for %s; controller restarted" % ", ".join(names)
+        time.sleep(2)
+    raise RuntimeError("controller did not come back active after identity reconciliation")
+
+
 def gpu_state():
     status = gpu_client().call("status")
     leases = json.loads((GPU_STATE / "inference-leases.json").read_text()).get("leases", {})
     dead = [name[:12] for name, lease in leases.items() if process_identity(int(lease["pid"])) != str(lease["start"])]
     return {"owner": status.get("owner"), "phase": status.get("phase"), "uncertain": status.get("uncertain"),
             "generation": status.get("generation"), "primary": status.get("primary"),
-            "owner_ended": owner_ended(status), "leases": len(leases), "dead_leases": dead}
+            "owner_ended": owner_ended(status), "leases": len(leases), "dead_leases": dead,
+            "stale_identity": identity_mismatches()}
 
 
 def inference_state():
@@ -292,6 +348,8 @@ def problems(report):
             found.append("GPU phase is %s, not qwen-ready" % gpu["phase"])
         if gpu["dead_leases"]:
             found.append("%d inference lease(s) whose process is gone" % len(gpu["dead_leases"]))
+        if gpu.get("stale_identity"):
+            found.append("%d deployment(s) with a stale identity record (deleted/recreated instead of scaled): %s" % (len(gpu["stale_identity"]), ", ".join(gpu["stale_identity"][:4])))
     if "error" not in inference and (inference["router_ready"] < 1 or inference["selected_model_ready"] < 1):
         found.append("Inference not ready (router %s, model %s)" % (inference["router_ready"], inference["selected_model"]))
     return found
@@ -452,6 +510,8 @@ def execute(mode):
         if "error" not in before["database"] and before["database"]["claims"]:
             r.step("clear orphaned claims", clear_orphan_claims, run_dir, before)
         r.step("clean stale workers", clean_workers, False)
+        if "error" not in before["gpu"] and before["gpu"].get("stale_identity"):
+            r.step("reconcile deployment identity", repair_deployment_identity, before["gpu"].get("stale_identity"))
         if "error" not in before["gpu"] and (before["gpu"]["owner_ended"] or before["gpu"]["owner"]):
             r.step("recover ended GPU owner", recover_gpu, False)
     else:
@@ -460,6 +520,8 @@ def execute(mode):
             if r.step("stop app", scale_app, 0):
                 r.step("repair database and guard", force_database_and_guard, run_dir)
             r.step("stop workers", clean_workers, True)
+            if "error" not in before["gpu"] and before["gpu"].get("stale_identity"):
+                r.step("reconcile deployment identity", repair_deployment_identity, before["gpu"].get("stale_identity"))
             r.step("recover GPU", recover_gpu, True)
             r.step("restart router", restart_router)
         finally:

@@ -31,6 +31,8 @@ export type ToolRecord = {
   status: "completed" | "error"
   input: unknown
   exit?: number
+  /** The call completed but reported a failed outcome, e.g. a worker job status of FAILED. */
+  failed?: boolean
   time: number
 }
 
@@ -43,6 +45,23 @@ const text = (value: string, max: number) => typeof value === "string" && value.
 const list = (value: readonly string[], items: number, max: number) =>
   Array.isArray(value) && value.length <= items && value.every((item) => text(item, max) && item.trim().length > 0)
 const squash = (value: string) => value.replace(/\s+/g, " ").trim()
+
+/**
+ * Text a cited call can be matched against: the call input's JSON form plus every raw string value inside it. The raw
+ * strings matter because JSON.stringify escapes quotes and backslashes, so a shell command typed as `-w "%{http_code}\n"`
+ * could never be found in the JSON form even when it was exactly what ran.
+ */
+const haystack = (input: unknown): string[] => {
+  const strings: string[] = []
+  const walk = (item: unknown) => {
+    if (typeof item === "string") strings.push(squash(item))
+    else if (Array.isArray(item)) item.forEach(walk)
+    else if (item && typeof item === "object") Object.values(item).forEach(walk)
+  }
+  walk(input)
+  return [squash(JSON.stringify(input ?? "")), ...strings]
+}
+const mentions = (record: { readonly input?: unknown }, needle: string) => haystack(record.input).some((text) => text.includes(needle))
 
 export function validate(input: Input): string | undefined {
   if (!KINDS.includes(input.kind)) return "LEARN_KIND_INVALID"
@@ -70,17 +89,33 @@ export function validate(input: Input): string | undefined {
  * completed (shell exit 0) and, if commands are listed, a cited call actually ran one of them.
  * A known failure is diagnostic: it needs a cited call that actually failed.
  */
+/**
+ * What the model could cite instead: its latest calls of that tool (a short excerpt each), or the tools it did call.
+ * Without this, a model retries the same wrong `contains` (seen 12x in one session, 2026-11-21).
+ */
+function candidates(tool: string, records: readonly ToolRecord[]) {
+  const same = records.filter((record) => record.name === tool).toSorted((a, b) => b.time - a.time).slice(0, 3)
+  if (same.length)
+    return (
+      ". Copy `contains` verbatim from one of your latest " + tool + " calls: " +
+      same.map((record) => JSON.stringify((haystack(record.input).slice(1).toSorted((x, y) => y.length - x.length)[0] ?? "").slice(0, 160))).join(" | ")
+    )
+  const tools = [...new Set(records.map((record) => record.name))].slice(0, 12)
+  return ". You made no " + tool + " call in this session" + (tools.length ? "; cite one of: " + tools.join(", ") : "")
+}
+
 export function verify(input: Input, records: readonly ToolRecord[]): Verified | string {
   const cited: ToolRecord[] = []
   for (const reference of input.evidence) {
     const needle = squash(reference.contains)
     const match = records
-      .filter((record) => record.name === reference.tool && squash(JSON.stringify(record.input ?? "")).includes(needle))
+      .filter((record) => record.name === reference.tool && mentions(record, needle))
       .toSorted((a, b) => b.time - a.time)[0]
-    if (!match) return "LEARN_EVIDENCE_NOT_FOUND: no " + reference.tool + " call in this session contains " + JSON.stringify(reference.contains)
+    if (!match) return "LEARN_EVIDENCE_NOT_FOUND: no " + reference.tool + " call in this session contains " + JSON.stringify(reference.contains) + candidates(reference.tool, records)
     cited.push(match)
   }
-  const succeeded = (record: ToolRecord) => record.status === "completed" && (record.exit === undefined || record.exit === 0)
+  const succeeded = (record: ToolRecord) =>
+    record.status === "completed" && !record.failed && (record.exit === undefined || record.exit === 0)
   const describe = (record: ToolRecord) =>
     record.name + " " + record.id + " " + (succeeded(record) ? "succeeded" : "failed") + (record.exit === undefined ? "" : " exit " + record.exit) + " at " + new Date(record.time).toISOString()
   const latest = Math.max(...cited.map((record) => record.time))
@@ -92,7 +127,7 @@ export function verify(input: Input, records: readonly ToolRecord[]): Verified |
   if (!passing.length) return "LEARN_UNVERIFIED: no cited call succeeded; record it as known-failure or rerun the procedure"
   if (input.commands.length) {
     const ran = passing.some((record) =>
-      input.commands.some((command) => squash(JSON.stringify(record.input ?? "")).includes(squash(command).slice(0, 60))),
+      input.commands.some((command) => mentions(record, squash(command).slice(0, 60))),
     )
     if (!ran) return "LEARN_UNVERIFIED: no succeeded cited call ran one of the listed commands"
   }
@@ -154,6 +189,8 @@ export type Knowledge = {
   kind: Kind
   status: "verified" | "diagnostic"
   title: string
+  environment: string
+  problem: string
   solution: string
   commands: string[]
   rollback: string
@@ -173,6 +210,8 @@ export function read(value: Envelope): Knowledge | undefined {
       kind: parsed.kind,
       status: parsed.status === "verified" ? "verified" : "diagnostic",
       title: String(parsed.title),
+      environment: String(parsed.environment ?? ""),
+      problem: String(parsed.problem ?? ""),
       solution: String(parsed.solution),
       commands: Array.isArray(parsed.commands) ? parsed.commands.map(String) : [],
       rollback: String(parsed.rollback ?? ""),
@@ -197,6 +236,29 @@ export function current(values: readonly Knowledge[]) {
 }
 
 /** Short provenance-bearing summaries within a character budget (about 4 characters per token). */
+const STOP = new Set("about after also and because been before both could does done each from have into just like make more most must need only other over same should some such than that their them then there these they this those through under used using very want were what when where which while will with without would your test tests game project".split(" "))
+const terms = (text: string) => new Set(text.toLowerCase().match(/[a-z0-9_]{4,}/g) ?? [])
+
+/**
+ * Items that share at least one distinctive query word (not a stopword, not part of the project's own name), most
+ * shared words first. AgentMemory returns any item of the project for a sparse store, so without this the same note
+ * comes back for unrelated queries. A query naming only the project (an overview) keeps every item.
+ */
+export function relevant(values: readonly Knowledge[], query: string, repository: string) {
+  const own = terms(repository.split("/").at(-1) ?? "")
+  const wanted = [...terms(query)].filter((term) => !STOP.has(term) && !own.has(term))
+  if (!wanted.length) return [...values]
+  const score = (value: Knowledge) => {
+    const text = terms([value.title, value.environment, value.problem, value.solution, ...value.commands].join(" "))
+    return wanted.filter((term) => text.has(term) || [...text].some((word) => word.startsWith(term) || term.startsWith(word) && word.length >= 5)).length
+  }
+  return values
+    .map((value, index) => ({ value, index, hits: score(value) }))
+    .filter((item) => item.hits > 0)
+    .toSorted((a, b) => b.hits - a.hits || a.index - b.index)
+    .map((item) => item.value)
+}
+
 export function render(values: readonly Knowledge[], budget: number) {
   const lines: string[] = []
   let used = 0
@@ -204,8 +266,9 @@ export function render(values: readonly Knowledge[], budget: number) {
     const command = value.commands[0] ? " Command: " + squash(value.commands[0]).slice(0, 160) + "." : ""
     const line =
       "- [" + value.kind + (value.status === "verified" ? ", verified " : ", diagnostic ") + value.validatedAt.slice(0, 10) + "] " +
-      squash(value.title) + ": " + squash(value.solution).slice(0, 360) + command +
-      " (ref " + value.job + "#" + value.seq + ", session " + value.sourceSession + ")"
+      squash(value.title) + ": " +
+      (value.kind === "known-failure" && value.problem ? "Symptom: " + squash(value.problem).slice(0, 200) + " Fix: " : "") +
+      squash(value.solution).slice(0, 360) + command + " (ref " + value.job + "#" + value.seq + ")"
     if (used + line.length > budget) break
     lines.push(line)
     used += line.length

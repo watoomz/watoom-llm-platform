@@ -15,7 +15,6 @@
   "urls": {
     "llama-cpp-swift-qwen38-coder": "http://10.243.62.171:8000",
     "llama-cpp-llama-mesh": "http://10.243.160.201:8000",
-    "llama-cpp-qwen38-atomic": "http://10.243.73.24:8000",
     "llama-cpp-qwen38-uncensored-mtp": "http://10.243.17.184:8000",
     "llama-cpp-ornith-15-9b": "http://10.243.251.255:8000",
     "llama-cpp-qwen35-defiant-fable-9b": "http://10.243.192.220:8000",
@@ -25,7 +24,6 @@
   "aliases": {
     "llama-cpp-swift-qwen38-coder": "swift-qwen38-coder",
     "llama-cpp-llama-mesh": "llama-mesh-q8",
-    "llama-cpp-qwen38-atomic": "qwen38-27b-ad-iq4-xs",
     "llama-cpp-qwen38-uncensored-mtp": "qwen38-uncensored-mtp-iq4-xs",
     "llama-cpp-ornith-15-9b": "ornith-1.5-9b-q8",
     "llama-cpp-qwen35-defiant-fable-9b": "qwen35-defiant-fable-9b-q8",
@@ -41,13 +39,9 @@
       "uid": "db86c806-3d5b-403a-8f83-1ed6e0be6525",
       "spec_sha256": "a91a1a01b997d46a92d25bf34b4df2cf919fc9b3c3367652c1b63580b15158d8"
     },
-    "llama-cpp-qwen38-atomic": {
-      "uid": "4afe5080-0de6-465f-9101-c4d5128ff9d9",
-      "spec_sha256": "9e463fa7763425ab4f4e59c1ad336e069d45be9967bac12fe98fa306d78b64ff"
-    },
     "llama-cpp-qwen38-uncensored-mtp": {
       "uid": "e2887c0b-ed64-41f8-8805-8552c8ea006d",
-      "spec_sha256": "250f3def2be5bf74b027046a5621b920c152cc4ef8d5ee9775de3251627d570d"
+      "spec_sha256": "c8f38ba8ccb394f6730bc0e0c33bda8b4505c9001121a43514a95132a38b294b"
     },
     "llama-cpp-ornith-15-9b": {
       "uid": "6f030cec-6c65-4d37-9d05-547de4a52b5b",
@@ -69,7 +63,6 @@
   "cutover_required": true,
   "models": {
     "llama-cpp-swift-qwen38-coder": "swift-qwen38-coder",
-    "llama-cpp-qwen38-atomic": "qwen38-27b-ad-iq4-xs",
     "llama-cpp-qwen38-uncensored-mtp": "qwen38-uncensored-mtp-iq4-xs",
     "llama-cpp-ornith-15-9b": "ornith-1.5-9b-q8",
     "llama-cpp-qwen35-defiant-fable-9b": "qwen35-defiant-fable-9b-q8",

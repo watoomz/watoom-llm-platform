@@ -42,7 +42,7 @@ async function fixture(denied = false, wrongProject = false) {
         revise: () => Effect.fail(Error("unused revision fixture")),
         flush: Effect.void,
         learn: () => Effect.die(Error("unused learning fixture")),
-        recall: () => Effect.die(Error("unused recall fixture")),
+        recall: () => Effect.succeed(["- [decision, verified 2026-11-21] fixture knowledge"]),
         remember: (e) =>
           Effect.sync(() => {
             writes.push(e)
@@ -106,6 +106,7 @@ test("native command registration and execution use authenticated caller scope",
     { scope: { project: "project-a", repository: "/fixture", agent: "fixture" }, query: "knowledge" },
   ])
   expect(f.published).toHaveLength(2)
+  expect(JSON.stringify(f.published[1])).toContain("fixture knowledge")
 })
 test("permission rejection, wrong project and invalid input cause no memory writes", async () => {
   for (const f of [await fixture(true), await fixture(false, true)]) {
